@@ -3,6 +3,7 @@ import { Camera, Heart, Users, User } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { RelationshipStatusIcon } from "./RelationshipStatusIcon";
 import {
   Tooltip,
   TooltipContent,
@@ -18,6 +19,7 @@ interface ProfileHeaderProps {
   onAvatarChange?: (url: string) => void;
   sexualOrientation?: string | null;
   seeking?: string[] | null;
+  relationshipType?: string[] | null;
 }
 
 export function ProfileHeader({ 
@@ -27,7 +29,8 @@ export function ProfileHeader({
   canEdit = false,
   onAvatarChange,
   sexualOrientation,
-  seeking
+  seeking,
+  relationshipType
 }: ProfileHeaderProps) {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
@@ -140,6 +143,10 @@ export function ProfileHeader({
         </h1>
 
         <div className="flex items-center justify-center space-x-4">
+          {relationshipType && relationshipType.length > 0 && (
+            <RelationshipStatusIcon type={relationshipType[0]} />
+          )}
+          
           {sexualOrientation && (
             <TooltipProvider>
               <Tooltip>
