@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface MessageInputProps {
   newMessage: string;
-  setNewMessage: (message: string) => void;
+  setNewMessage: React.Dispatch<React.SetStateAction<string>>;
   onSend: (e: React.FormEvent) => void;
   conversationId: string;
 }
@@ -38,7 +38,6 @@ export function MessageInput({ newMessage, setNewMessage, onSend, conversationId
         .from('message_media')
         .getPublicUrl(filePath);
 
-      // Add the image URL to the message
       setNewMessage(`[Image](${publicUrl})`);
     } catch (error: any) {
       toast({
