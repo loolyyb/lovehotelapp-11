@@ -1,7 +1,18 @@
 import { Heart } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getCurrentVersion } from "@/utils/versionControl";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [version, setVersion] = useState("1.0.0");
+
+  useEffect(() => {
+    const fetchVersion = async () => {
+      const currentVersion = await getCurrentVersion();
+      setVersion(currentVersion);
+    };
+    fetchVersion();
+  }, []);
 
   return (
     <footer className="w-full py-4 px-6 mt-auto border-t bg-white/80 backdrop-blur-sm">
@@ -10,7 +21,7 @@ export const Footer = () => {
           <Heart className="w-4 h-4 text-burgundy fill-current" />
         </div>
         <div className="font-playfair">
-          Propulsé par LooLyyb
+          LooLyyb Dating v{version}
         </div>
         <div className="flex items-center gap-1">
           <span>&copy;</span>
