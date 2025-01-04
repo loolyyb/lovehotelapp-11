@@ -56,11 +56,25 @@ export async function getCurrentVersion(): Promise<string> {
       .from('admin_settings')
       .select('value')
       .eq('key', 'app_version')
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     
-    const versionData = data?.value as VersionData;
+    // If no version exists yet, create it
+    if (!data) {
+      const defaultVersion = '1.0.0';
+      const { error: insertError } = await supabase
+        .from('admin_settings')
+        .insert({
+          key: 'app_version',
+          value: { version: defaultVersion } as VersionData,
+        });
+
+      if (insertError) throw insertError;
+      return defaultVersion;
+    }
+    
+    const versionData = data.value as VersionData;
     return versionData?.version || '1.0.0';
   } catch (error) {
     console.error('Error getting current version:', error);
