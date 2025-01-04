@@ -18,10 +18,21 @@ interface ProfileCardProps {
 export function ProfileCard({ profile, preferences }: ProfileCardProps) {
   const navigate = useNavigate();
 
+  const handleProfileClick = () => {
+    navigate(`/profile/${profile.id}`);
+  };
+
   return (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow duration-300 animate-fadeIn bg-white/80 backdrop-blur-sm cursor-pointer transform hover:scale-105 transition-all"
-      onClick={() => navigate(`/profile/${profile.id}`)}
+      onClick={handleProfileClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          handleProfileClick();
+        }
+      }}
     >
       <CardContent className="p-6">
         <div className="flex flex-col items-center space-y-4">
