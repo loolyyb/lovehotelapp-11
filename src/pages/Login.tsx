@@ -12,16 +12,16 @@ export default function Login() {
     // Check if user is already logged in
     supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/"); // Changed from "/profile" to "/" to redirect to profiles page
+        navigate("/");
       }
     });
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pink-50 to-rose-100">
-      <div className="w-full max-w-md px-4 py-4">
+    <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center bg-gradient-to-r from-pink-50 to-rose-100 pt-12">
+      <div className="w-full max-w-md px-4">
         <Card className="p-8 space-y-4">
-          <h1 className="text-3xl font-playfair text-center mb-8">Welcome Back</h1>
+          <h1 className="text-3xl font-playfair text-center mb-6">Welcome Back</h1>
           <Auth
             supabaseClient={supabase}
             appearance={{
