@@ -47,7 +47,7 @@ export function Header({ userProfile }: { userProfile?: any }) {
               <img 
                 src="https://lovehotelaparis.fr/wp-content/uploads/2024/09/logo-web-love-hotel.png"
                 alt="Love Hotel Logo"
-                className="h-16 mx-auto mb-4 object-contain"
+                className="h-24 mx-auto mb-6 object-contain"
               />
               <nav className="flex flex-col gap-4">
                 <Link 
