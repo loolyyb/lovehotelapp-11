@@ -12,8 +12,15 @@ import { LogOut, Home, User } from "lucide-react";
 export function Header({ userProfile }: { userProfile?: any }) {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (userProfile?.avatar_url) {
+      setAvatarUrl(userProfile.avatar_url);
+    }
+  }, [userProfile?.avatar_url]);
 
   useEffect(() => {
     if (!userProfile?.user_id) return;
@@ -173,7 +180,7 @@ export function Header({ userProfile }: { userProfile?: any }) {
             
             <Link to="/profile" className="hover:opacity-80 transition-opacity">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={userProfile?.avatar_url} alt={userProfile?.full_name} />
+                <AvatarImage src={avatarUrl} alt={userProfile?.full_name} />
                 <AvatarFallback>{userProfile?.full_name?.[0] || '?'}</AvatarFallback>
               </Avatar>
             </Link>

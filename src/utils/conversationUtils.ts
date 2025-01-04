@@ -31,16 +31,6 @@ export const getTargetUserId = async (profileId: string) => {
       return null;
     }
 
-    if (!profile.user_id) {
-      console.error('This appears to be a test profile:', profileId);
-      toast({
-        variant: "destructive",
-        title: "Profil de test",
-        description: "Désolé, vous ne pouvez pas envoyer de message à ce profil de test.",
-      });
-      return null;
-    }
-    
     return profile.user_id;
   } catch (error) {
     console.error('Error in getTargetUserId:', error);
