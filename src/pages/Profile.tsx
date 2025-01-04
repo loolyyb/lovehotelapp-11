@@ -12,6 +12,7 @@ import { ProfileSeeking } from "@/components/profile/ProfileSeeking";
 import { ProfileRelationshipType } from "@/components/profile/ProfileRelationshipType";
 import { ProfilePhotoGallery } from "@/components/profile/ProfilePhotoGallery";
 import { Save } from "lucide-react";
+import { GroupSubscription } from "@/components/profile/GroupSubscription";
 
 export default function Profile() {
   const [loading, setLoading] = useState(true);
@@ -153,37 +154,23 @@ export default function Profile() {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-8">
-              <ProfileDescription
-                initialDescription={profile?.description}
-                onSave={(description) => updateProfile({ description })}
-              />
+            <ProfileDescription
+              initialDescription={profile?.description}
+              onSave={(description) => updateProfile({ description })}
+            />
 
-              <ProfileStatus
-                status={profile?.status}
-                onStatusChange={(status) => updateProfile({ status })}
-              />
+            <ProfileStatus
+              status={profile?.status}
+              onStatusChange={(status) => updateProfile({ status })}
+            />
 
-              <ProfileRelationshipType
-                relationshipType={profile?.relationship_type?.[0] || null}
-                onRelationshipTypeChange={(type) => updateProfile({ relationship_type: [type] })}
-              />
-            </div>
-
-            <div className="space-y-8">
-              <ProfileOrientation
-                orientation={profile?.sexual_orientation}
-                onOrientationChange={(orientation) => updateProfile({ sexual_orientation: orientation })}
-              />
-
-              <ProfileSeeking
-                seeking={profile?.seeking}
-                status={profile?.status}
-                orientation={profile?.sexual_orientation}
-                onSeekingChange={(seeking) => updateProfile({ seeking })}
-              />
-            </div>
+            <ProfileRelationshipType
+              relationshipType={profile?.relationship_type?.[0] || null}
+              onRelationshipTypeChange={(type) => updateProfile({ relationship_type: [type] })}
+            />
           </div>
+
+          <GroupSubscription userId={profile?.user_id} />
 
           <ProfilePhotoGallery
             photos={profile?.photo_urls}
