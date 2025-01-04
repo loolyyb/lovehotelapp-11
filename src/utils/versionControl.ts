@@ -37,7 +37,7 @@ export function needsUpdate(currentVersion: string, targetVersion: string): bool
 export function incrementVersion(version: string): string {
   const versionObj = parseVersion(version);
   versionObj.minor += 0.1;
-  // Arrondir à une décimale pour éviter les problèmes de précision des nombres flottants
+  // Round to one decimal place to avoid floating point precision issues
   const newMinor = Math.round(versionObj.minor * 10) / 10;
   return `${versionObj.major}.${newMinor}.${versionObj.patch}`;
 }
@@ -51,7 +51,10 @@ export async function getCurrentVersion(): Promise<string> {
       .single();
 
     if (error) throw error;
-    return data?.value?.version || '1.0.0';
+    
+    // Safely access the version property
+    const version = data?.value?.version;
+    return version || '1.0.0';
   } catch (error) {
     console.error('Error getting current version:', error);
     return '1.0.0';

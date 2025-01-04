@@ -3,8 +3,9 @@ export interface AdminSettingsTable {
     id: string;
     key: string;
     value: {
-      current: string;
-      available: string[];
+      version?: string;
+      current?: string;
+      available?: string[];
     };
     created_at: string;
     updated_at: string;
@@ -13,8 +14,9 @@ export interface AdminSettingsTable {
     id?: string;
     key: string;
     value: {
-      current: string;
-      available: string[];
+      version?: string;
+      current?: string;
+      available?: string[];
     };
     created_at?: string;
     updated_at?: string;
@@ -23,8 +25,9 @@ export interface AdminSettingsTable {
     id?: string;
     key?: string;
     value?: {
-      current: string;
-      available: string[];
+      version?: string;
+      current?: string;
+      available?: string[];
     };
     created_at?: string;
     updated_at?: string;
