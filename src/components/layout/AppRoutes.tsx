@@ -10,6 +10,7 @@ import Admin from "@/pages/Admin";
 import Messages from "@/pages/Messages";
 import MatchingScores from "@/pages/MatchingScores";
 import Events from "@/pages/Events";
+import Challenges from "@/pages/Challenges";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -45,6 +46,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/events"
         element={session ? <Events /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/challenges"
+        element={session ? <Challenges /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/lover-coin"

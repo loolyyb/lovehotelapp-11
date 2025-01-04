@@ -72,6 +72,89 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_participations: {
+        Row: {
+          challenge_id: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          points_earned: number | null
+          proof_urls: string[] | null
+          status: string | null
+          updated_at: string
+          user1_id: string | null
+          user2_id: string | null
+        }
+        Insert: {
+          challenge_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          points_earned?: number | null
+          proof_urls?: string[] | null
+          status?: string | null
+          updated_at?: string
+          user1_id?: string | null
+          user2_id?: string | null
+        }
+        Update: {
+          challenge_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          points_earned?: number | null
+          proof_urls?: string[] | null
+          status?: string | null
+          updated_at?: string
+          user1_id?: string | null
+          user2_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participations_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          challenge_type: Database["public"]["Enums"]["challenge_type"]
+          created_at: string
+          description: string | null
+          duration: unknown | null
+          id: string
+          points: number | null
+          requirements: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          challenge_type: Database["public"]["Enums"]["challenge_type"]
+          created_at?: string
+          description?: string | null
+          duration?: unknown | null
+          id?: string
+          points?: number | null
+          requirements?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          challenge_type?: Database["public"]["Enums"]["challenge_type"]
+          created_at?: string
+          description?: string | null
+          duration?: unknown | null
+          id?: string
+          points?: number | null
+          requirements?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           blocked_by: string | null
@@ -490,6 +573,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      challenge_type: "quiz" | "puzzle" | "photo" | "activity"
       event_type: "bdsm" | "jacuzzi" | "gastronomy" | "other"
       interest_type:
         | "bdsm"
