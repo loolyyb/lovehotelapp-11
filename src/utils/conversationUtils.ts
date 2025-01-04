@@ -9,7 +9,6 @@ export const getCurrentUserId = async () => {
 
 export const getTargetUserId = async (profileId: string) => {
   try {
-    // D'abord, on récupère le profil avec l'ID fourni
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, user_id, username, full_name')
@@ -31,7 +30,7 @@ export const getTargetUserId = async (profileId: string) => {
       return null;
     }
 
-    return profile.user_id;
+    return profile.id; // Retourne l'ID du profil au lieu de user_id
   } catch (error) {
     console.error('Error in getTargetUserId:', error);
     toast({
@@ -45,11 +44,21 @@ export const getTargetUserId = async (profileId: string) => {
 
 export const createOrGetConversation = async (currentUserId: string, targetUserId: string) => {
   try {
+    // D'abord, récupérer l'ID du profil de l'utilisateur courant
+    const { data: currentUserProfile, error: currentUserError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', currentUserId)
+      .single();
+
+    if (currentUserError) throw currentUserError;
+    if (!currentUserProfile) throw new Error("Profil de l'utilisateur courant non trouvé");
+
     // Vérifier si une conversation existe déjà
     const { data: existingConversations, error: queryError } = await supabase
       .from('conversations')
       .select('id')
-      .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${targetUserId}),and(user1_id.eq.${targetUserId},user2_id.eq.${currentUserId})`)
+      .or(`and(user1_id.eq.${currentUserProfile.id},user2_id.eq.${targetUserId}),and(user1_id.eq.${targetUserId},user2_id.eq.${currentUserProfile.id})`)
       .eq('status', 'active');
 
     if (queryError) throw queryError;
@@ -58,11 +67,11 @@ export const createOrGetConversation = async (currentUserId: string, targetUserI
       return { id: existingConversations[0].id, isNew: false };
     }
 
-    // Créer une nouvelle conversation
+    // Créer une nouvelle conversation avec les IDs de profil
     const { data: newConversation, error: insertError } = await supabase
       .from('conversations')
       .insert({
-        user1_id: currentUserId,
+        user1_id: currentUserProfile.id,
         user2_id: targetUserId,
         status: 'active'
       })
