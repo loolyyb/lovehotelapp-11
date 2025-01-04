@@ -7,6 +7,7 @@ import Profile from "./pages/Profile";
 import Profiles from "./pages/Profiles";
 import ProfileDetails from "./pages/ProfileDetails";
 import Landing from "./pages/Landing";
+import RideauxOuverts from "./pages/RideauxOuverts";
 import { Header } from "./components/layout/Header";
 import { MobileNavBar } from "./components/layout/MobileNavBar";
 import { Toaster } from "@/components/ui/toaster";
@@ -87,6 +88,10 @@ function App() {
             <Route
               path="/lover-coin"
               element={<div className="p-8 text-center">Page LoverCoin en construction</div>}
+            />
+            <Route
+              path="/rideaux-ouverts"
+              element={<RideauxOuverts />}
             />
           </Routes>
         </div>

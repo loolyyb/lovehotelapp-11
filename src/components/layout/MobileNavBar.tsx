@@ -34,15 +34,15 @@ export const MobileNavBar = () => {
           <span className="text-xs mt-1">Recherche</span>
         </Link>
 
-        <a
-          href="https://lovehotelaparis.fr/rideaux-ouverts/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex flex-col items-center p-2 text-rose/80"
+        <Link
+          to="/rideaux-ouverts"
+          className={`flex flex-col items-center p-2 ${
+            isActive("/rideaux-ouverts") ? "text-champagne" : "text-rose/80"
+          }`}
         >
           <Blinds className="w-5 h-5 stroke-[1.5]" />
           <span className="text-xs mt-1">Rideaux</span>
-        </a>
+        </Link>
 
         <Link
           to="/lover-coin"
