@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { MessagesSquare } from "lucide-react";
+import { MessagesSquare, Percent } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -129,6 +129,14 @@ export function Header({ userProfile }: { userProfile?: any }) {
                   {unreadCount}
                 </span>
               )}
+            </Link>
+
+            <Link 
+              to="/matching-scores" 
+              className="hover:opacity-80 transition-opacity"
+              title="Scores de compatibilité"
+            >
+              <Percent className="h-5 w-5 text-burgundy stroke-[1.5]" />
             </Link>
             
             <NotificationsMenu />

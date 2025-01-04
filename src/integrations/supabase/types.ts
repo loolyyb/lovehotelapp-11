@@ -245,7 +245,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          interests: string[] | null
+          interests: Database["public"]["Enums"]["interest_type"][] | null
           location: string | null
           max_age: number | null
           min_age: number | null
@@ -256,7 +256,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          interests?: string[] | null
+          interests?: Database["public"]["Enums"]["interest_type"][] | null
           location?: string | null
           max_age?: number | null
           min_age?: number | null
@@ -267,7 +267,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          interests?: string[] | null
+          interests?: Database["public"]["Enums"]["interest_type"][] | null
           location?: string | null
           max_age?: number | null
           min_age?: number | null
@@ -342,7 +342,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      interest_type:
+        | "bdsm"
+        | "jacuzzi"
+        | "gastronomie"
+        | "rideaux_ouverts"
+        | "speed_dating"
+        | "libertinage"
+        | "art"
     }
     CompositeTypes: {
       [_ in never]: never
