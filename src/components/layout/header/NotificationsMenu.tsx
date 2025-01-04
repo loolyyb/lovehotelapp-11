@@ -8,17 +8,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import { Database } from "@/integrations/supabase/types/database.types";
 
-interface Notification {
-  id: string;
-  title: string;
-  content: string;
-  type: string;
-  link_url?: string;
-  image_url?: string;
-  is_read: boolean;
-  created_at: string;
-}
+type Notification = Database['public']['Tables']['notifications']['Row'];
 
 export function NotificationsMenu() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
