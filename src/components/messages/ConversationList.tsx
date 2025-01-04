@@ -12,12 +12,25 @@ interface ConversationListProps {
 
 export function ConversationList({ onSelectConversation, selectedConversationId }: ConversationListProps) {
   const [conversations, setConversations] = useState<any[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    getCurrentUser();
     fetchConversations();
     subscribeToNewMessages();
   }, []);
+
+  const getCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    } catch (error) {
+      console.error("Error getting current user:", error);
+    }
+  };
 
   const fetchConversations = async () => {
     try {
@@ -89,8 +102,7 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
       </div>
       <div className="flex-1 overflow-y-auto">
         {conversations.map((conversation) => {
-          const { data: { user } } = await supabase.auth.getUser();
-          const otherUser = conversation.user1.id === user?.id ? conversation.user2 : conversation.user1;
+          const otherUser = conversation.user1_id === currentUserId ? conversation.user2 : conversation.user1;
           const lastMessage = conversation.messages?.[0];
 
           return (
