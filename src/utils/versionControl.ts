@@ -1,10 +1,18 @@
 import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
 interface Version {
   major: number;
   minor: number;
   patch: number;
 }
+
+type AdminSettings = Tables<"admin_settings">;
+type VersionData = {
+  version: string;
+  current?: string;
+  available?: string[];
+};
 
 export function parseVersion(version: string): Version {
   const [major, minor, patch] = version.split(".").map(Number);
@@ -52,9 +60,8 @@ export async function getCurrentVersion(): Promise<string> {
 
     if (error) throw error;
     
-    // Safely access the version property
-    const version = data?.value?.version;
-    return version || '1.0.0';
+    const versionData = data?.value as VersionData;
+    return versionData?.version || '1.0.0';
   } catch (error) {
     console.error('Error getting current version:', error);
     return '1.0.0';
@@ -70,7 +77,7 @@ export async function updateVersion(): Promise<void> {
       .from('admin_settings')
       .upsert({
         key: 'app_version',
-        value: { version: newVersion },
+        value: { version: newVersion } as VersionData,
       });
 
     if (error) throw error;
