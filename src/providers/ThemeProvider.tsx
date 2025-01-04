@@ -30,6 +30,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Vous devez être connecté pour changer le thème");
     }
 
+    if (!themes[themeName]) {
+      throw new Error(`Le thème "${themeName}" n'existe pas`);
+    }
+
     setCurrentThemeName(themeName);
     setTheme(themes[themeName]);
   };
@@ -44,7 +48,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    throw new Error("useTheme doit être utilisé à l'intérieur d'un ThemeProvider");
   }
   return context;
 }

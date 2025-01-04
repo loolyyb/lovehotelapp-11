@@ -2,28 +2,43 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { useTheme } from "@/providers/ThemeProvider";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeName } from "@/types/theme";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useNavigate } from "react-router-dom";
 import { AdvertisementManager } from "./AdvertisementManager";
+import { Loader } from "lucide-react";
 
 export function AdminDashboard() {
   const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
   const { session } = useAuthSession();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (!session) {
       navigate('/login');
+      toast({
+        title: "Accès refusé",
+        description: "Vous devez être connecté pour accéder au tableau de bord administrateur.",
+        variant: "destructive",
+      });
     }
-  }, [session, navigate]);
+  }, [session, navigate, toast]);
 
   const handleThemeChange = async (themeName: ThemeName) => {
-    if (!session) return;
+    if (!session) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour changer le thème.",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    setIsLoading(true);
     try {
       // Update theme in UI
       await switchTheme(themeName);
@@ -47,9 +62,11 @@ export function AdminDashboard() {
       console.error('Error updating theme:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour le thème.",
+        description: "Impossible de mettre à jour le thème. Veuillez réessayer.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -72,14 +89,18 @@ export function AdminDashboard() {
                 onClick={() => handleThemeChange("default")}
                 variant={currentThemeName === "default" ? "secondary" : "outline"}
                 className="cursor-pointer hover:bg-secondary/80"
+                disabled={isLoading}
               >
+                {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
                 Thème par défaut
               </Button>
               <Button
                 onClick={() => handleThemeChange("lover")}
                 variant={currentThemeName === "lover" ? "secondary" : "outline"}
                 className="cursor-pointer hover:bg-secondary/80"
+                disabled={isLoading}
               >
+                {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
                 Thème Lover
               </Button>
             </div>
