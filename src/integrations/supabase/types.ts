@@ -131,6 +131,45 @@ export type Database = {
           },
         ]
       }
+      live_streams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          room_number: string | null
+          stream_type: Database["public"]["Enums"]["stream_type"]
+          streamer_id: string
+          title: string | null
+          updated_at: string
+          viewer_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          room_number?: string | null
+          stream_type: Database["public"]["Enums"]["stream_type"]
+          streamer_id: string
+          title?: string | null
+          updated_at?: string
+          viewer_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          room_number?: string | null
+          stream_type?: Database["public"]["Enums"]["stream_type"]
+          streamer_id?: string
+          title?: string | null
+          updated_at?: string
+          viewer_count?: number | null
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string
@@ -340,6 +379,35 @@ export type Database = {
         }
         Relationships: []
       }
+      stream_viewers: {
+        Row: {
+          id: string
+          joined_at: string
+          stream_id: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          stream_id: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          stream_id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_viewers_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -356,6 +424,7 @@ export type Database = {
         | "speed_dating"
         | "libertinage"
         | "art"
+      stream_type: "video" | "audio"
     }
     CompositeTypes: {
       [_ in never]: never
