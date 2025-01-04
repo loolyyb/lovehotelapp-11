@@ -7,9 +7,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { getCurrentUserId, getTargetUserId, createOrGetConversation } from "@/utils/conversationUtils";
 
 interface ProfileActionsProps {
   profileId: string;
@@ -22,50 +22,15 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    getCurrentUser();
-    getTargetUserId();
+    loadUserIds();
   }, [profileId]);
 
-  const getCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('id', user.id)
-        .single();
-      
-      setCurrentUserId(profile?.user_id || user.id);
-    }
-  };
-
-  const getTargetUserId = async () => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('id', profileId)
-        .single();
-      
-      if (error) throw error;
-      if (!profile?.user_id) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de trouver l'utilisateur cible.",
-        });
-        return;
-      }
-      
-      setTargetUserId(profile.user_id);
-    } catch (error) {
-      console.error('Error fetching target user:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de trouver l'utilisateur cible.",
-      });
-    }
+  const loadUserIds = async () => {
+    const current = await getCurrentUserId();
+    setCurrentUserId(current);
+    
+    const target = await getTargetUserId(profileId);
+    setTargetUserId(target);
   };
 
   const handleLike = () => {
@@ -102,44 +67,16 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
     }
 
     try {
-      // Check if a conversation already exists
-      const { data: existingConversations, error: queryError } = await supabase
-        .from('conversations')
-        .select('id, user1_id, user2_id')
-        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${targetUserId}),and(user1_id.eq.${targetUserId},user2_id.eq.${currentUserId})`)
-        .eq('status', 'active');
-
-      if (queryError) throw queryError;
-
-      const existingConversation = existingConversations?.[0];
-
-      if (existingConversation) {
-        navigate('/messages', { state: { conversationId: existingConversation.id } });
-        return;
+      const { id: conversationId, isNew } = await createOrGetConversation(currentUserId, targetUserId);
+      
+      if (isNew) {
+        toast({
+          title: "Conversation créée",
+          description: "Vous pouvez maintenant envoyer un message.",
+        });
       }
 
-      // Create new conversation
-      const { data: newConversation, error: conversationError } = await supabase
-        .from('conversations')
-        .insert({
-          user1_id: currentUserId,
-          user2_id: targetUserId,
-          status: 'active'
-        })
-        .select()
-        .single();
-
-      if (conversationError) throw conversationError;
-      if (!newConversation) throw new Error("Failed to create conversation");
-
-      toast({
-        title: "Conversation créée",
-        description: "Vous pouvez maintenant envoyer un message.",
-      });
-
-      // Navigate to messages with the new conversation selected
-      navigate('/messages', { state: { conversationId: newConversation.id } });
-
+      navigate('/messages', { state: { conversationId } });
     } catch (error) {
       console.error('Error creating conversation:', error);
       toast({
