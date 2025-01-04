@@ -1,19 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, MessageCircle, Blinds, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Tables } from "@/integrations/supabase/types";
 import { ProfileGallery } from "@/components/profile/ProfileGallery";
 import { ProfileSeekingDisplay } from "@/components/profile/ProfileSeekingDisplay";
 import { RelationshipStatusIcon } from "@/components/profile/RelationshipStatusIcon";
+import { ProfileActions } from "@/components/profile/ProfileActions";
+import { ProfilePreferences } from "@/components/profile/ProfilePreferences";
 
 export default function ProfileDetails() {
   const { id } = useParams();
@@ -48,7 +44,6 @@ export default function ProfileDetails() {
 
       setProfile(profileData);
 
-      // Only fetch preferences if user_id exists
       if (profileData.user_id) {
         const { data: preferencesData, error: preferencesError } = await supabase
           .from("preferences")
@@ -73,27 +68,6 @@ export default function ProfileDetails() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLike = () => {
-    toast({
-      title: "Coup de cœur envoyé !",
-      description: "Cette personne sera notifiée de votre intérêt.",
-    });
-  };
-
-  const handleCurtainRequest = () => {
-    toast({
-      title: "Demande envoyée !",
-      description: "Votre intérêt pour un moment rideau ouvert a été enregistré.",
-    });
-  };
-
-  const handleMessage = () => {
-    toast({
-      title: "Bientôt disponible",
-      description: "La messagerie sera disponible prochainement.",
-    });
   };
 
   if (loading) {
@@ -162,56 +136,7 @@ export default function ProfileDetails() {
               ))}
             </div>
 
-            <div className="flex flex-wrap gap-4 justify-center mt-6">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={handleLike}
-                      className="bg-burgundy hover:bg-burgundy/90"
-                    >
-                      <Heart className="mr-2 h-5 w-5" />
-                      Coup de cœur
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Envoyer un coup de cœur</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={handleCurtainRequest}
-                      variant="outline"
-                      className="border-burgundy text-burgundy hover:bg-burgundy/10"
-                    >
-                      <Blinds className="mr-2 h-5 w-5" />
-                      Rideau ouvert
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Demander un moment rideau ouvert</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={handleMessage}
-                      variant="outline"
-                      className="border-burgundy text-burgundy hover:bg-burgundy/10"
-                    >
-                      <MessageCircle className="mr-2 h-5 w-5" />
-                      Message
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Envoyer un message</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+            <ProfileActions />
           </div>
 
           {profile.description && (
@@ -225,20 +150,7 @@ export default function ProfileDetails() {
           
           <ProfileSeekingDisplay seeking={profile.seeking} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {preferences?.location && (
-              <div className="p-4 bg-champagne/30 rounded-lg">
-                <h3 className="font-semibold text-burgundy mb-2">Localisation</h3>
-                <p className="text-gray-700">{preferences.location}</p>
-              </div>
-            )}
-            {profile.sexual_orientation && (
-              <div className="p-4 bg-champagne/30 rounded-lg">
-                <h3 className="font-semibold text-burgundy mb-2">Orientation</h3>
-                <p className="text-gray-700">{profile.sexual_orientation}</p>
-              </div>
-            )}
-          </div>
+          <ProfilePreferences preferences={preferences} profile={profile} />
         </div>
       </div>
     </div>

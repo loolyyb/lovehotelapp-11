@@ -83,7 +83,7 @@ export type Database = {
           is_loolyb_holder: boolean | null
           is_love_hotel_member: boolean | null
           photo_urls: string[] | null
-          relationship_type: "casual" | "serious" | "libertine" | null;
+          relationship_type: string | null
           seeking: string[] | null
           sexual_orientation: string | null
           status: string | null
@@ -101,7 +101,7 @@ export type Database = {
           is_loolyb_holder?: boolean | null
           is_love_hotel_member?: boolean | null
           photo_urls?: string[] | null
-          relationship_type?: "casual" | "serious" | "libertine" | null;
+          relationship_type?: string | null
           seeking?: string[] | null
           sexual_orientation?: string | null
           status?: string | null
@@ -119,7 +119,7 @@ export type Database = {
           is_loolyb_holder?: boolean | null
           is_love_hotel_member?: boolean | null
           photo_urls?: string[] | null
-          relationship_type?: "casual" | "serious" | "libertine" | null;
+          relationship_type?: string | null
           seeking?: string[] | null
           sexual_orientation?: string | null
           status?: string | null
