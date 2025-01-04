@@ -78,7 +78,7 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
       // Check if a conversation already exists
       const { data: existingConversations, error: queryError } = await supabase
         .from('conversations')
-        .select('id')
+        .select('id, user1_id, user2_id')  // Added user1_id and user2_id to the select
         .or(`user1_id.eq.${currentUserId},user2_id.eq.${currentUserId}`)
         .or(`user1_id.eq.${targetUserId},user2_id.eq.${targetUserId}`)
         .eq('status', 'active');
