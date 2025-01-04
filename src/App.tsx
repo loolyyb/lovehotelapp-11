@@ -7,12 +7,16 @@ import { useIsMobile } from "./hooks/use-mobile";
 import { useAuthSession } from "./hooks/useAuthSession";
 import { AppRoutes } from "./components/layout/AppRoutes";
 import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
-import { appConfig } from "./config/app.config";
 
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
-  const { currentThemeName } = useTheme();
+  const { currentThemeName, switchTheme } = useTheme();
+
+  // Switch to lover theme on component mount
+  React.useEffect(() => {
+    switchTheme("lover");
+  }, []);
 
   if (loading) {
     return <div>Loading...</div>;
