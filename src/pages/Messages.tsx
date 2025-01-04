@@ -3,16 +3,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { MessageList } from "@/components/messages/MessageList";
 import { MessageView } from "@/components/messages/MessageView";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "react-router-dom";
 
 export default function Messages() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const { toast } = useToast();
+  const location = useLocation();
 
   useEffect(() => {
     fetchConversations();
     subscribeToNewMessages();
-  }, []);
+
+    // Check if there's a conversationId in the navigation state
+    if (location.state?.conversationId) {
+      setSelectedConversation(location.state.conversationId);
+    }
+  }, [location.state]);
 
   const fetchConversations = async () => {
     try {
