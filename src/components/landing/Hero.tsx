@@ -4,8 +4,24 @@ import { Coins, Hotel, Utensils, Calendar, Users, Heart } from "lucide-react";
 
 export const Hero = () => {
   return (
-    <section className="min-h-screen pt-24 flex items-center justify-center bg-gradient-to-b from-champagne to-cream px-4">
-      <div className="max-w-6xl mx-auto text-center">
+    <section className="min-h-screen pt-24 flex items-center justify-center bg-gradient-to-b from-champagne to-cream px-4 relative overflow-hidden">
+      {/* Background Illustrations */}
+      <div className="absolute inset-0 pointer-events-none opacity-5">
+        <div className="absolute top-20 left-10 w-64 h-64">
+          <Heart className="w-full h-full text-burgundy" />
+        </div>
+        <div className="absolute bottom-20 right-10 w-48 h-48">
+          <Hotel className="w-full h-full text-burgundy" />
+        </div>
+        <div className="absolute top-1/2 left-1/3 w-40 h-40">
+          <Coins className="w-full h-full text-burgundy" />
+        </div>
+        <div className="absolute bottom-1/3 right-1/4 w-56 h-56">
+          <Utensils className="w-full h-full text-burgundy" />
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
