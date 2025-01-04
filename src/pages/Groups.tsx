@@ -8,8 +8,16 @@ interface Group {
   id: string;
   name: string;
   description: string;
-  group_type: string;
+  group_type: 'bdsm' | 'libertins' | 'rideaux_ouverts' | 'other';
   member_count: number;
+}
+
+interface GroupResponse {
+  id: string;
+  name: string;
+  description: string;
+  group_type: 'bdsm' | 'libertins' | 'rideaux_ouverts' | 'other';
+  member_count: { count: number }[];
 }
 
 export default function Groups() {
@@ -32,7 +40,14 @@ export default function Groups() {
         .order('name');
       
       if (error) throw error;
-      setGroups(data || []);
+
+      // Transform the data to match our Group interface
+      const transformedGroups: Group[] = (data as GroupResponse[]).map(group => ({
+        ...group,
+        member_count: group.member_count[0]?.count || 0
+      }));
+
+      setGroups(transformedGroups);
     } catch (error) {
       console.error('Error fetching groups:', error);
       toast({

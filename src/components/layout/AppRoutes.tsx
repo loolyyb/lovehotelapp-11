@@ -7,6 +7,7 @@ import MatchingScores from "@/pages/MatchingScores";
 import Events from "@/pages/Events";
 import Challenges from "@/pages/Challenges";
 import Groups from "@/pages/Groups";
+import type { Session } from "@supabase/supabase-js";
 
 export function AppRoutes({ session }: { session: Session | null }) {
   return (
