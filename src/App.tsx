@@ -4,6 +4,7 @@ import { Session } from "@supabase/supabase-js";
 import { supabase } from "./integrations/supabase/client";
 import Login from "./pages/Login";
 import Index from "./pages/Index";
+import Profile from "./pages/Profile";
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -39,7 +40,11 @@ function App() {
         />
         <Route
           path="/login"
-          element={!session ? <Login /> : <Navigate to="/" replace />}
+          element={!session ? <Login /> : <Navigate to="/profile" replace />}
+        />
+        <Route
+          path="/profile"
+          element={session ? <Profile /> : <Navigate to="/login" replace />}
         />
       </Routes>
     </Router>
