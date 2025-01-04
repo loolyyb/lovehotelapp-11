@@ -5,6 +5,7 @@ import { supabase } from "./integrations/supabase/client";
 import Login from "./pages/Login";
 import Index from "./pages/Index";
 import Profile from "./pages/Profile";
+import Profiles from "./pages/Profiles";
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -36,11 +37,11 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={session ? <Index /> : <Navigate to="/login" replace />}
+          element={session ? <Profiles /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/login"
-          element={!session ? <Login /> : <Navigate to="/profile" replace />}
+          element={!session ? <Login /> : <Navigate to="/" replace />}
         />
         <Route
           path="/profile"
