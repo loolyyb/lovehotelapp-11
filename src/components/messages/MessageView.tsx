@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { MessageHeader } from "./MessageHeader";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
@@ -7,6 +6,7 @@ import { useMessageHandlers } from "@/hooks/useMessageHandlers";
 import { useMessageSubscription } from "@/hooks/useMessageSubscription";
 import { useMessageRetrieval } from "@/hooks/useMessageRetrieval";
 import { useConversationInit } from "@/hooks/useConversationInit";
+import { useToast } from "@/hooks/use-toast";
 
 interface MessageViewProps {
   conversationId: string;
@@ -21,7 +21,6 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Custom hooks for message functionality
   const { sendMessage } = useMessageHandlers({ 
     currentUserId, 
     conversationId, 
@@ -52,10 +51,6 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   useEffect(() => {
     console.log("Initializing MessageView with conversationId:", conversationId);
     getCurrentUser();
-
-    return () => {
-      console.log("Cleaning up MessageView");
-    };
   }, [conversationId]);
 
   useEffect(() => {
