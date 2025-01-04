@@ -125,6 +125,26 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
       <div className="p-4 border-b border-rose/20">
         <h2 className="text-lg font-semibold text-burgundy">Messages</h2>
       </div>
+
+      {/* Advertisement Section */}
+      <div className="p-4 border-b border-rose/20 bg-cream hover:bg-rose/5 transition-colors">
+        <a 
+          href="https://lovehotel.io" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
+            alt="Love Hotel Advertisement"
+            className="w-full h-32 object-cover rounded-lg mb-2"
+          />
+          <p className="text-sm text-burgundy text-center">
+            Découvrez Love Hotel - Votre destination romantique
+          </p>
+        </a>
+      </div>
+
       <div className="flex-1 overflow-y-auto">
         {conversations.map((conversation) => {
           const otherUser = conversation.user1.id === currentUserProfileId 
