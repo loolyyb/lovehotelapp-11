@@ -9,10 +9,19 @@ export const useAuthSession = () => {
 
   const refreshSession = async () => {
     try {
+      setLoading(true);
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
+      
       if (currentSession?.user) {
-        await fetchUserProfile(currentSession.user.id);
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', currentSession.user.id)
+          .single();
+        
+        if (error) throw error;
+        setUserProfile(profile);
       } else {
         setUserProfile(null);
       }
@@ -25,24 +34,22 @@ export const useAuthSession = () => {
     }
   };
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-      
-      if (error) throw error;
-      setUserProfile(profile);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      setUserProfile(null);
-    }
-  };
-
   useEffect(() => {
     refreshSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        await refreshSession();
+      } else {
+        setSession(null);
+        setUserProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return { session, loading, userProfile, refreshSession };

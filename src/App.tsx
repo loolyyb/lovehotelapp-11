@@ -53,8 +53,8 @@ function AppContent() {
 
   useEffect(() => {
     const initTheme = async () => {
+      if (!session) return;
       try {
-        if (!session) return;
         await switchTheme("lover");
       } catch (error) {
         console.error("Erreur lors du changement de thème:", error);
