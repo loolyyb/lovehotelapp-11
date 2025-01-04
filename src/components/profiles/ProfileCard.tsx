@@ -8,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileCardProps {
   profile: Tables<"profiles">;
@@ -15,8 +16,13 @@ interface ProfileCardProps {
 }
 
 export function ProfileCard({ profile, preferences }: ProfileCardProps) {
+  const navigate = useNavigate();
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 animate-fadeIn bg-white/80 backdrop-blur-sm">
+    <Card 
+      className="overflow-hidden hover:shadow-lg transition-shadow duration-300 animate-fadeIn bg-white/80 backdrop-blur-sm cursor-pointer transform hover:scale-105 transition-all"
+      onClick={() => navigate(`/profile/${profile.id}`)}
+    >
       <CardContent className="p-6">
         <div className="flex flex-col items-center space-y-4">
           <Avatar className="w-32 h-32 border-4 border-rose shadow-lg">
