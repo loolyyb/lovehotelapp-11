@@ -1,0 +1,16 @@
+{
+  "name": "Love Hotel",
+  "short_name": "Love Hotel",
+  "description": "Une expérience de dating exclusive",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
