@@ -9,11 +9,11 @@ import {
 export type RelationshipType = "casual" | "serious" | "libertine" | null;
 
 interface RelationshipStatusIconProps {
-  type: RelationshipType;
+  type: string | RelationshipType;
   className?: string;
 }
 
-const getStatusConfig = (type: RelationshipType) => {
+const getStatusConfig = (type: string | RelationshipType) => {
   switch (type) {
     case "casual":
       return {

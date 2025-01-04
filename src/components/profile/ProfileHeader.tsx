@@ -144,7 +144,7 @@ export function ProfileHeader({
 
         <div className="flex items-center justify-center space-x-4">
           {relationshipType && relationshipType.length > 0 && (
-            <RelationshipStatusIcon type={relationshipType[0]} />
+            <RelationshipStatusIcon type={relationshipType[0] as "casual" | "serious" | "libertine" | null} />
           )}
           
           {sexualOrientation && (
