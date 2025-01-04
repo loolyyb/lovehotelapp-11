@@ -10,7 +10,7 @@ export const Footer = () => {
           <Heart className="w-4 h-4 text-burgundy fill-current" />
         </div>
         <div className="font-playfair">
-          Propulsé par L&apos;OLIB
+          Propulsé par LooLyyb
         </div>
         <div className="flex items-center gap-1">
           <span>&copy;</span>
