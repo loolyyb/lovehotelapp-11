@@ -23,44 +23,42 @@ export function GroupSubscription({ userId }: GroupSubscriptionProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchGroups();
-    fetchUserGroups();
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch groups first
+        const { data: groupsData, error: groupsError } = await supabase
+          .from('groups')
+          .select('*')
+          .order('name');
+        
+        if (groupsError) throw groupsError;
+        setGroups(groupsData || []);
+
+        // Then fetch user groups
+        const { data: userGroupsData, error: userGroupsError } = await supabase
+          .from('group_members')
+          .select('group_id')
+          .eq('user_id', userId);
+        
+        if (userGroupsError) throw userGroupsError;
+        setUserGroups(userGroupsData?.map(item => item.group_id) || []);
+
+      } catch (error) {
+        console.error('Error loading groups data:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les données des groupes.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, [userId]);
-
-  const fetchGroups = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('groups')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      setGroups(data || []);
-    } catch (error) {
-      console.error('Error fetching groups:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les groupes.",
-      });
-    }
-  };
-
-  const fetchUserGroups = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('group_members')
-        .select('group_id')
-        .eq('user_id', userId);
-      
-      if (error) throw error;
-      setUserGroups(data?.map(item => item.group_id) || []);
-    } catch (error) {
-      console.error('Error fetching user groups:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGroupToggle = async (groupId: string) => {
     const isCurrentlyMember = userGroups.includes(groupId);
