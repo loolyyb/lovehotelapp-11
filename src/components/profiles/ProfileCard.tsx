@@ -2,6 +2,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Heart, Blinds } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProfileCardProps {
   profile: Tables<"profiles">;
@@ -63,7 +69,16 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
                 <div className="w-5 h-5 rounded-full bg-burgundy" />
               )}
               {preferences?.open_curtains && (
-                <Blinds className="w-5 h-5 text-burgundy" title="Rideaux ouverts" />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Blinds className="w-5 h-5 text-burgundy" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Rideaux ouverts</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
           </div>
