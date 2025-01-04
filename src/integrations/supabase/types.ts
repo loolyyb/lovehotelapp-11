@@ -33,6 +33,45 @@ export type Database = {
         }
         Relationships: []
       }
+      advertisements: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          description: string | null
+          format: string
+          id: string
+          image_url: string | null
+          link_url: string | null
+          location: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          format: string
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          location: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          format?: string
+          id?: string
+          image_url?: string | null
+          link_url?: string | null
+          location?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           blocked_by: string | null
