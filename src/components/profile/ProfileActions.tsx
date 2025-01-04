@@ -28,17 +28,44 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    setCurrentUserId(user?.id || null);
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('id', user.id)
+        .single();
+      
+      setCurrentUserId(profile?.user_id || user.id);
+    }
   };
 
   const getTargetUserId = async () => {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('user_id')
-      .eq('id', profileId)
-      .maybeSingle();
-    
-    setTargetUserId(profile?.user_id || null);
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('id', profileId)
+        .single();
+      
+      if (error) throw error;
+      if (!profile?.user_id) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de trouver l'utilisateur cible.",
+        });
+        return;
+      }
+      
+      setTargetUserId(profile.user_id);
+    } catch (error) {
+      console.error('Error fetching target user:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de trouver l'utilisateur cible.",
+      });
+    }
   };
 
   const handleLike = () => {
@@ -78,17 +105,13 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
       // Check if a conversation already exists
       const { data: existingConversations, error: queryError } = await supabase
         .from('conversations')
-        .select('id, user1_id, user2_id')  // Added user1_id and user2_id to the select
-        .or(`user1_id.eq.${currentUserId},user2_id.eq.${currentUserId}`)
-        .or(`user1_id.eq.${targetUserId},user2_id.eq.${targetUserId}`)
+        .select('id, user1_id, user2_id')
+        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${targetUserId}),and(user1_id.eq.${targetUserId},user2_id.eq.${currentUserId})`)
         .eq('status', 'active');
 
       if (queryError) throw queryError;
 
-      const existingConversation = existingConversations?.find(
-        conv => (conv.user1_id === currentUserId && conv.user2_id === targetUserId) ||
-               (conv.user1_id === targetUserId && conv.user2_id === currentUserId)
-      );
+      const existingConversation = existingConversations?.[0];
 
       if (existingConversation) {
         navigate('/messages', { state: { conversationId: existingConversation.id } });
@@ -104,7 +127,7 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
           status: 'active'
         })
         .select()
-        .maybeSingle();
+        .single();
 
       if (conversationError) throw conversationError;
       if (!newConversation) throw new Error("Failed to create conversation");
