@@ -140,9 +140,15 @@ export default function ProfileDetails() {
             </div>
           )}
 
-          <ProfileGallery photos={profile.photo_urls} />
+          {/* Ajout explicite de la galerie photos */}
+          {profile.photo_urls && profile.photo_urls.length > 0 && (
+            <ProfileGallery photos={profile.photo_urls} />
+          )}
           
-          <ProfileSeekingDisplay seeking={profile.seeking} />
+          {/* Ajout explicite de l'affichage des motivations */}
+          {profile.seeking && profile.seeking.length > 0 && (
+            <ProfileSeekingDisplay seeking={profile.seeking} />
+          )}
 
           <ProfilePreferences preferences={preferences} profile={profile} />
         </div>
