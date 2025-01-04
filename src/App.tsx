@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Header } from "./components/layout/Header";
 import { MobileNavBar } from "./components/layout/MobileNavBar";
@@ -7,6 +8,7 @@ import { useIsMobile } from "./hooks/use-mobile";
 import { useAuthSession } from "./hooks/useAuthSession";
 import { AppRoutes } from "./components/layout/AppRoutes";
 import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
+import { appConfig } from "./config/app.config";
 
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
@@ -14,9 +16,9 @@ function AppContent() {
   const { currentThemeName, switchTheme } = useTheme();
 
   // Switch to lover theme on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     switchTheme("lover");
-  }, []);
+  }, [switchTheme]);
 
   if (loading) {
     return <div>Loading...</div>;
