@@ -18,26 +18,28 @@ export default function Login() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pink-50 to-rose-100 p-4">
-      <Card className="w-full max-w-md p-8 space-y-4">
-        <h1 className="text-3xl font-playfair text-center mb-8">Welcome Back</h1>
-        <Auth
-          supabaseClient={supabase}
-          appearance={{
-            theme: ThemeSupa,
-            variables: {
-              default: {
-                colors: {
-                  brand: '#7C3A47',
-                  brandAccent: '#96495B',
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-pink-50 to-rose-100">
+      <div className="w-full max-w-md px-4 py-4">
+        <Card className="p-8 space-y-4">
+          <h1 className="text-3xl font-playfair text-center mb-8">Welcome Back</h1>
+          <Auth
+            supabaseClient={supabase}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#7C3A47',
+                    brandAccent: '#96495B',
+                  }
                 }
               }
-            }
-          }}
-          providers={[]}
-          theme="light"
-        />
-      </Card>
+            }}
+            providers={[]}
+            theme="light"
+          />
+        </Card>
+      </div>
     </div>
   );
 }

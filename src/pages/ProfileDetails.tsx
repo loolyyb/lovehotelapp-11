@@ -90,8 +90,8 @@ export default function ProfileDetails() {
   const relationshipType = profile.relationship_type as RelationshipType | null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 pt-20 px-4 pb-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100">
+      <div className="max-w-4xl mx-auto px-4 py-4">
         <Button
           variant="ghost"
           className="mb-4"
