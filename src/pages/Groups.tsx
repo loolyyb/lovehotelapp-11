@@ -12,14 +12,6 @@ interface Group {
   member_count: number;
 }
 
-interface GroupResponse {
-  id: string;
-  name: string;
-  description: string;
-  group_type: 'bdsm' | 'libertins' | 'rideaux_ouverts' | 'other';
-  member_count: { count: number }[];
-}
-
 export default function Groups() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,23 +23,32 @@ export default function Groups() {
 
   const fetchGroups = async () => {
     try {
-      const { data, error } = await supabase
+      // First, get all groups
+      const { data: groupsData, error: groupsError } = await supabase
         .from('groups')
-        .select(`
-          *,
-          member_count:group_members(count)
-        `)
+        .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (groupsError) throw groupsError;
 
-      // Transform the data to match our Group interface
-      const transformedGroups: Group[] = (data as GroupResponse[]).map(group => ({
-        ...group,
-        member_count: group.member_count[0]?.count || 0
-      }));
+      // Then, get member counts for each group
+      const groupsWithCounts = await Promise.all(
+        (groupsData || []).map(async (group) => {
+          const { count, error: countError } = await supabase
+            .from('group_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('group_id', group.id);
+          
+          if (countError) throw countError;
+          
+          return {
+            ...group,
+            member_count: count || 0
+          };
+        })
+      );
 
-      setGroups(transformedGroups);
+      setGroups(groupsWithCounts);
     } catch (error) {
       console.error('Error fetching groups:', error);
       toast({
