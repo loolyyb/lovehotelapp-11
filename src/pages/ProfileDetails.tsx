@@ -87,8 +87,6 @@ export default function ProfileDetails() {
     );
   }
 
-  const relationshipType = profile.relationship_type as RelationshipType | null;
-
   return (
     <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100">
       <div className="max-w-4xl mx-auto px-4 py-4">
@@ -108,15 +106,10 @@ export default function ProfileDetails() {
                 avatarUrl={profile.avatar_url}
                 fullName={profile.full_name}
                 bio={profile.bio}
+                sexualOrientation={profile.sexual_orientation}
+                seeking={profile.seeking}
+                relationshipType={profile.relationship_type}
               />
-              {profile.is_love_hotel_member && relationshipType && (
-                <div className="absolute -top-2 -right-2">
-                  <RelationshipStatusIcon 
-                    type={relationshipType}
-                    className="shadow-lg"
-                  />
-                </div>
-              )}
             </div>
 
             <div className="flex flex-wrap gap-4 justify-center">
@@ -140,12 +133,10 @@ export default function ProfileDetails() {
             </div>
           )}
 
-          {/* Ajout explicite de la galerie photos */}
           {profile.photo_urls && profile.photo_urls.length > 0 && (
             <ProfileGallery photos={profile.photo_urls} />
           )}
           
-          {/* Ajout explicite de l'affichage des motivations */}
           {profile.seeking && profile.seeking.length > 0 && (
             <ProfileSeekingDisplay seeking={profile.seeking} />
           )}
