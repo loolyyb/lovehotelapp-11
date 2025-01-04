@@ -11,19 +11,45 @@ import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
 import { appConfig } from "./config/app.config";
 import { useToast } from "./hooks/use-toast";
 import { Loader } from "lucide-react";
+import { supabase } from "./integrations/supabase/client";
 
 function AppContent() {
-  const { session, loading, userProfile } = useAuthSession();
+  const { session, loading, userProfile, refreshSession } = useAuthSession();
   const isMobile = useIsMobile();
   const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (session && window.location.pathname === '/') {
-      navigate('/profile');
-    }
-  }, [session, navigate]);
+    const checkAndRefreshSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession && window.location.pathname !== '/' && window.location.pathname !== '/login') {
+          navigate('/');
+        } else if (currentSession && window.location.pathname === '/') {
+          navigate('/profile');
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
+        navigate('/');
+      }
+    };
+
+    checkAndRefreshSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN') {
+        navigate('/profile');
+      } else if (event === 'SIGNED_OUT') {
+        navigate('/');
+      }
+      await refreshSession();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, refreshSession]);
 
   useEffect(() => {
     const initTheme = async () => {
