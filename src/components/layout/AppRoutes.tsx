@@ -7,12 +7,14 @@ import MatchingScores from "@/pages/MatchingScores";
 import Events from "@/pages/Events";
 import Challenges from "@/pages/Challenges";
 import Groups from "@/pages/Groups";
+import Login from "@/pages/Login";
 import type { Session } from "@supabase/supabase-js";
 
 export function AppRoutes({ session }: { session: Session | null }) {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
       <Route
         path="/profile"
         element={
