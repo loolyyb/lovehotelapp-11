@@ -13,7 +13,12 @@ import { appConfig } from "./config/app.config";
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
-  const { currentThemeName } = useTheme();
+  const { currentThemeName, switchTheme } = useTheme();
+
+  useEffect(() => {
+    // Set lover theme by default
+    switchTheme("lover");
+  }, [switchTheme]);
 
   if (loading) {
     return <div>Loading...</div>;
