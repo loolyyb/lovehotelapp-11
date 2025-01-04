@@ -18,7 +18,7 @@ interface Profile {
 export default function MatchingScores() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedInterest, setSelectedInterest] = useState<string>("");
+  const [selectedInterest, setSelectedInterest] = useState<string>("all");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -92,7 +92,14 @@ export default function MatchingScores() {
         (b.compatibility_score || 0) - (a.compatibility_score || 0)
       );
 
-      setProfiles(sortedProfiles);
+      // Filter by selected interest if not "all"
+      const filteredProfiles = selectedInterest === "all" 
+        ? sortedProfiles 
+        : sortedProfiles.filter((profile: any) => 
+            profile.preferences?.interests?.includes(selectedInterest)
+          );
+
+      setProfiles(filteredProfiles);
     } catch (error: any) {
       console.error("Error fetching profiles:", error);
       toast({

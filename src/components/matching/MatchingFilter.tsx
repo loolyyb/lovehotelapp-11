@@ -19,7 +19,7 @@ export function MatchingFilter({ selectedInterest, onInterestChange }: MatchingF
           <SelectValue placeholder="Filtrer par intérêt" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Tous les intérêts</SelectItem>
+          <SelectItem value="all">Tous les intérêts</SelectItem>
           <SelectItem value="bdsm">BDSM</SelectItem>
           <SelectItem value="jacuzzi">Jacuzzi</SelectItem>
           <SelectItem value="gastronomie">Gastronomie</SelectItem>
