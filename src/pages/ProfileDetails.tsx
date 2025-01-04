@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { ProfileGallery } from "@/components/profile/ProfileGallery";
 import { ProfileSeekingDisplay } from "@/components/profile/ProfileSeekingDisplay";
-import { RelationshipStatusIcon, RelationshipType } from "@/components/profile/RelationshipStatusIcon";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfilePreferences } from "@/components/profile/ProfilePreferences";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -123,7 +122,7 @@ export default function ProfileDetails() {
               ))}
             </div>
 
-            <ProfileActions />
+            <ProfileActions profileId={profile.id} />
           </div>
 
           {profile.description && (

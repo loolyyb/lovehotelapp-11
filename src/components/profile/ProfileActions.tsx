@@ -7,9 +7,27 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-export function ProfileActions() {
+interface ProfileActionsProps {
+  profileId: string;
+}
+
+export function ProfileActions({ profileId }: ProfileActionsProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCurrentUser();
+  }, []);
+
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setCurrentUserId(user?.id || null);
+  };
 
   const handleLike = () => {
     toast({
@@ -25,11 +43,61 @@ export function ProfileActions() {
     });
   };
 
-  const handleMessage = () => {
-    toast({
-      title: "Bientôt disponible",
-      description: "La messagerie sera disponible prochainement.",
-    });
+  const handleMessage = async () => {
+    if (!currentUserId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour envoyer un message.",
+      });
+      return;
+    }
+
+    try {
+      // Check if a conversation already exists
+      const { data: existingConversation } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profileId}),and(user1_id.eq.${profileId},user2_id.eq.${currentUserId})`)
+        .eq('status', 'active')
+        .single();
+
+      if (existingConversation) {
+        navigate('/messages', { state: { conversationId: existingConversation.id } });
+        return;
+      }
+
+      // Create new conversation
+      const { data: newConversation, error: conversationError } = await supabase
+        .from('conversations')
+        .insert([
+          {
+            user1_id: currentUserId,
+            user2_id: profileId,
+            status: 'active'
+          }
+        ])
+        .select()
+        .single();
+
+      if (conversationError) throw conversationError;
+
+      toast({
+        title: "Conversation créée",
+        description: "Vous pouvez maintenant envoyer un message.",
+      });
+
+      // Navigate to messages with the new conversation selected
+      navigate('/messages', { state: { conversationId: newConversation.id } });
+
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de créer la conversation.",
+      });
+    }
   };
 
   return (
