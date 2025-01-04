@@ -5,42 +5,50 @@ const features = [
   {
     icon: Hotel,
     title: "Love Rooms",
-    description: "Réservez des chambres luxueuses pour vos moments romantiques dans nos établissements partenaires.",
+    description:
+      "Réservez des chambres luxueuses pour vos moments romantiques.",
   },
   {
     icon: Coins,
     title: "LooLyyb Coin",
-    description: "Une monnaie dédiée aux amoureux pour des expériences uniques et des avantages exclusifs.",
+    description:
+      "Une monnaie dédiée aux amoureux pour des expériences uniques.",
   },
   {
     icon: Utensils,
     title: "Restaurant Lovers",
-    description: "Un restaurant exclusif pour des dîners romantiques mémorables et des rencontres de qualité.",
+    description:
+      "Un restaurant exclusif pour des dîners romantiques mémorables.",
   },
   {
     icon: Calendar,
     title: "Events Exclusifs",
-    description: "Speed dating, soirées à thème et événements VIP réguliers pour nos membres.",
+    description:
+      "Speed dating, soirées à thème et événements VIP réguliers.",
   },
   {
     icon: Crown,
     title: "Expérience Premium",
-    description: "Un service haut de gamme pour des rencontres authentiques et raffinées.",
+    description:
+      "Un service haut de gamme pour des rencontres de qualité.",
   },
   {
     icon: Users,
     title: "Communauté Select",
-    description: "Rejoignez une communauté de célibataires raffinés partageant les mêmes valeurs.",
+    description:
+      "Rejoignez une communauté de célibataires raffinés et authentiques.",
   },
   {
     icon: Heart,
     title: "Matching Intelligent",
-    description: "Un algorithme sophistiqué pour des rencontres qui vous correspondent vraiment.",
+    description:
+      "Un algorithme sophistiqué pour des rencontres qui vous correspondent.",
   },
   {
     icon: Lock,
     title: "Confidentialité",
-    description: "Votre vie privée est notre priorité absolue avec une sécurité renforcée.",
+    description:
+      "Votre vie privée est notre priorité absolue.",
   },
 ];
 

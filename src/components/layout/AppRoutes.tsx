@@ -1,68 +1,68 @@
-import { Routes, Route } from "react-router-dom";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Home from "@/pages/Home";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Session } from "@supabase/supabase-js";
+import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
+import Profiles from "@/pages/Profiles";
+import ProfileDetails from "@/pages/ProfileDetails";
+import Landing from "@/pages/Landing";
+import RideauxOuverts from "@/pages/RideauxOuverts";
+import Admin from "@/pages/Admin";
 import Messages from "@/pages/Messages";
 import MatchingScores from "@/pages/MatchingScores";
 import Events from "@/pages/Events";
 import Challenges from "@/pages/Challenges";
-import Groups from "@/pages/Groups";
-import Login from "@/pages/Login";
-import type { Session } from "@supabase/supabase-js";
 
-export function AppRoutes({ session }: { session: Session | null }) {
+interface AppRoutesProps {
+  session: Session | null;
+}
+
+export const AppRoutes = ({ session }: AppRoutesProps) => {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={session ? <Profiles /> : <Landing />}
+      />
+      <Route
+        path="/login"
+        element={!session ? <Login /> : <Navigate to="/" replace />}
+      />
       <Route
         path="/profile"
-        element={
-          <ProtectedRoute session={session}>
-            <Profile />
-          </ProtectedRoute>
-        }
+        element={session ? <Profile /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/profile/:id"
+        element={session ? <ProfileDetails /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/messages"
-        element={
-          <ProtectedRoute session={session}>
-            <Messages />
-          </ProtectedRoute>
-        }
+        element={session ? <Messages /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/matching-scores"
-        element={
-          <ProtectedRoute session={session}>
-            <MatchingScores />
-          </ProtectedRoute>
-        }
+        element={session ? <MatchingScores /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/events"
-        element={
-          <ProtectedRoute session={session}>
-            <Events />
-          </ProtectedRoute>
-        }
+        element={session ? <Events /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/challenges"
-        element={
-          <ProtectedRoute session={session}>
-            <Challenges />
-          </ProtectedRoute>
-        }
+        element={session ? <Challenges /> : <Navigate to="/login" replace />}
       />
       <Route
-        path="/groups"
-        element={
-          <ProtectedRoute session={session}>
-            <Groups />
-          </ProtectedRoute>
-        }
+        path="/lover-coin"
+        element={<div className="p-8 text-center">Page LoverCoin en construction</div>}
+      />
+      <Route
+        path="/rideaux-ouverts"
+        element={<RideauxOuverts />}
+      />
+      <Route
+        path="/admin"
+        element={<Admin />}
       />
     </Routes>
   );
-}
+};

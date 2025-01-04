@@ -23,7 +23,7 @@ export function Header({ userProfile }: { userProfile?: any }) {
   useEffect(() => {
     if (!userProfile?.user_id) return;
 
-    // S'abonner aux nouveaux messages
+    // Subscribe to new messages
     const channel = supabase
       .channel('schema-db-changes')
       .on(
