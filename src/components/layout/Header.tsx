@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu } from "lucide-react";
+import { Menu, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -11,8 +11,88 @@ import { LogOut, Home, User } from "lucide-react";
 
 export function Header({ userProfile }: { userProfile?: any }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!userProfile?.user_id) return;
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages'
+        },
+        (payload: any) => {
+          // Only count messages where the current user is the recipient
+          const conversation = payload.new.conversation_id;
+          checkIfUserIsRecipient(conversation, payload.new);
+        }
+      )
+      .subscribe();
+
+    // Initial fetch of unread messages
+    fetchUnreadMessages();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userProfile]);
+
+  const fetchUnreadMessages = async () => {
+    try {
+      // Get all conversations where the user is a participant
+      const { data: conversations } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`user1_id.eq.${userProfile?.user_id},user2_id.eq.${userProfile?.user_id}`)
+        .eq('status', 'active');
+
+      if (!conversations) return;
+
+      // Get unread messages count from these conversations
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('id')
+        .in('conversation_id', conversations.map(c => c.id))
+        .is('read_at', null)
+        .neq('sender_id', userProfile?.user_id);
+
+      if (error) throw error;
+      
+      setUnreadCount(messages?.length || 0);
+    } catch (error) {
+      console.error('Error fetching unread messages:', error);
+    }
+  };
+
+  const checkIfUserIsRecipient = async (conversationId: string, message: any) => {
+    try {
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .single();
+
+      if (!conversation) return;
+
+      // If the message is for the current user and they didn't send it
+      if (
+        (conversation.user1_id === userProfile?.user_id || 
+         conversation.user2_id === userProfile?.user_id) && 
+        message.sender_id !== userProfile?.user_id
+      ) {
+        setUnreadCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error checking message recipient:', error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -78,12 +158,26 @@ export function Header({ userProfile }: { userProfile?: any }) {
             </SheetContent>
           </Sheet>
 
-          <Link to="/profile" className="hover:opacity-80 transition-opacity">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={userProfile?.avatar_url} alt={userProfile?.full_name} />
-              <AvatarFallback>{userProfile?.full_name?.[0] || '?'}</AvatarFallback>
-            </Avatar>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link 
+              to="/messages" 
+              className="relative hover:opacity-80 transition-opacity"
+            >
+              <MessageCircle className="h-6 w-6 text-burgundy" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-rose text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
+            
+            <Link to="/profile" className="hover:opacity-80 transition-opacity">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={userProfile?.avatar_url} alt={userProfile?.full_name} />
+                <AvatarFallback>{userProfile?.full_name?.[0] || '?'}</AvatarFallback>
+              </Avatar>
+            </Link>
+          </div>
         </div>
       </div>
     </header>
