@@ -10,15 +10,21 @@ export function SessionManager({ refreshSession }: SessionManagerProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("App mounting, checking session...");
+    console.log("SessionManager mounting, checking session...");
     const checkAndRefreshSession = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         console.log("Session check result:", currentSession);
-        if (!currentSession && window.location.pathname !== '/' && window.location.pathname !== '/login') {
-          console.log("No session, redirecting to home");
-          navigate('/');
-        } else if (currentSession && window.location.pathname === '/') {
+        
+        const currentPath = window.location.pathname;
+        console.log("Current path:", currentPath);
+
+        if (!currentSession) {
+          if (currentPath !== '/' && currentPath !== '/login') {
+            console.log("No session, redirecting to home");
+            navigate('/');
+          }
+        } else if (currentPath === '/') {
           console.log("Session exists, redirecting to profile");
           navigate('/profile');
         }

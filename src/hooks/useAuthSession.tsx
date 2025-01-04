@@ -8,22 +8,50 @@ export const useAuthSession = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
 
   const refreshSession = async () => {
-    console.log("Refreshing session...");
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log("Refreshing session...");
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw sessionError;
+      }
+
       console.log("Current session:", currentSession);
       setSession(currentSession);
       
       if (currentSession?.user) {
-        const { data: profile, error } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', currentSession.user.id)
           .single();
         
-        if (error) {
-          console.error('Error fetching profile:', error);
-          setUserProfile(null);
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          if (profileError.code === 'PGRST116') {
+            // No profile found, create one
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert([
+                { 
+                  user_id: currentSession.user.id,
+                  full_name: currentSession.user.email?.split('@')[0] || 'New User',
+                  visibility: 'public'
+                }
+              ])
+              .select()
+              .single();
+
+            if (createError) {
+              console.error('Error creating profile:', createError);
+              throw createError;
+            }
+            console.log("New profile created:", newProfile);
+            setUserProfile(newProfile);
+          } else {
+            throw profileError;
+          }
         } else {
           console.log("Profile loaded:", profile);
           setUserProfile(profile);
@@ -33,7 +61,7 @@ export const useAuthSession = () => {
         setUserProfile(null);
       }
     } catch (error) {
-      console.error('Error refreshing session:', error);
+      console.error('Error in refreshSession:', error);
       setSession(null);
       setUserProfile(null);
     } finally {
@@ -47,8 +75,8 @@ export const useAuthSession = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log("Auth state changed:", _event, session);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session);
       if (session) {
         await refreshSession();
       } else {

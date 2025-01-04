@@ -7,9 +7,12 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, session }: ProtectedRouteProps) {
+  console.log("ProtectedRoute check - Session:", session);
   if (!session) {
+    console.log("No session, redirecting to home");
     return <Navigate to="/" replace />;
   }
 
+  console.log("Session valid, rendering protected content");
   return <>{children}</>;
 }
