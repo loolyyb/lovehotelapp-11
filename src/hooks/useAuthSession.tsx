@@ -8,8 +8,10 @@ export const useAuthSession = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
 
   const refreshSession = async () => {
+    console.log("Refreshing session...");
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log("Current session:", currentSession);
       setSession(currentSession);
       
       if (currentSession?.user) {
@@ -23,9 +25,11 @@ export const useAuthSession = () => {
           console.error('Error fetching profile:', error);
           setUserProfile(null);
         } else {
+          console.log("Profile loaded:", profile);
           setUserProfile(profile);
         }
       } else {
+        console.log("No current session, clearing profile");
         setUserProfile(null);
       }
     } catch (error) {
@@ -38,11 +42,13 @@ export const useAuthSession = () => {
   };
 
   useEffect(() => {
+    console.log("Initial session check...");
     refreshSession();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log("Auth state changed:", _event, session);
       if (session) {
         await refreshSession();
       } else {

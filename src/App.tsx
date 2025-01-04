@@ -21,12 +21,16 @@ function AppContent() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("App mounting, checking session...");
     const checkAndRefreshSession = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("Session check result:", currentSession);
         if (!currentSession && window.location.pathname !== '/' && window.location.pathname !== '/login') {
+          console.log("No session, redirecting to home");
           navigate('/');
         } else if (currentSession && window.location.pathname === '/') {
+          console.log("Session exists, redirecting to profile");
           navigate('/profile');
         }
       } catch (error) {
@@ -71,6 +75,7 @@ function AppContent() {
   }, [session, switchTheme, toast]);
 
   if (loading) {
+    console.log("App is loading...");
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader className="w-8 h-8 animate-spin text-primary" />
@@ -78,6 +83,7 @@ function AppContent() {
     );
   }
 
+  console.log("App rendered with session:", session);
   return (
     <div 
       data-theme={currentThemeName} 
