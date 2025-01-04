@@ -104,7 +104,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       .from('messages')
       .update({ read_at: new Date().toISOString() })
       .eq('conversation_id', conversationId)
-      .eq('sender_id', currentUserId)
+      .neq('sender_id', currentUserId)
       .is('read_at', null);
   };
 
