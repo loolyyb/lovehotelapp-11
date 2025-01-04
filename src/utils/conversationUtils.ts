@@ -12,7 +12,7 @@ export const getTargetUserId = async (profileId: string) => {
     // D'abord, on récupère le profil avec l'ID fourni
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('user_id')
+      .select('id, user_id, username, full_name')
       .eq('id', profileId)
       .maybeSingle();
     
@@ -32,11 +32,11 @@ export const getTargetUserId = async (profileId: string) => {
     }
 
     if (!profile.user_id) {
-      console.error('Profile found but no user_id associated:', profileId);
+      console.error('This appears to be a test profile:', profileId);
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Ce profil n'est pas associé à un utilisateur.",
+        title: "Profil de test",
+        description: "Désolé, vous ne pouvez pas envoyer de message à ce profil de test.",
       });
       return null;
     }
