@@ -30,22 +30,35 @@ export default function ProfileDetails() {
         .from("profiles")
         .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
-
-      const { data: preferencesData, error: preferencesError } = await supabase
-        .from("preferences")
-        .select("*")
-        .eq("user_id", profileData.user_id)
-        .single();
-
-      if (preferencesError && preferencesError.code !== "PGRST116") {
-        throw preferencesError;
+      if (!profileData) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Ce profil n'existe pas.",
+        });
+        navigate("/");
+        return;
       }
 
       setProfile(profileData);
-      setPreferences(preferencesData);
+
+      // Only fetch preferences if user_id exists
+      if (profileData.user_id) {
+        const { data: preferencesData, error: preferencesError } = await supabase
+          .from("preferences")
+          .select("*")
+          .eq("user_id", profileData.user_id)
+          .maybeSingle();
+
+        if (preferencesError && preferencesError.code !== "PGRST116") {
+          throw preferencesError;
+        }
+
+        setPreferences(preferencesData);
+      }
     } catch (error: any) {
       console.error("Error fetching profile:", error);
       toast({
