@@ -10,6 +10,7 @@ import { ProfileSeekingDisplay } from "@/components/profile/ProfileSeekingDispla
 import { RelationshipStatusIcon, RelationshipType } from "@/components/profile/RelationshipStatusIcon";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfilePreferences } from "@/components/profile/ProfilePreferences";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
 
 export default function ProfileDetails() {
   const { id } = useParams();
@@ -102,11 +103,11 @@ export default function ProfileDetails() {
 
         <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-xl p-6 md:p-8 space-y-8 animate-fadeIn">
           <div className="flex flex-col items-center space-y-6">
-            <div className="relative w-48 h-48 md:w-64 md:h-64">
-              <img
-                src={profile.avatar_url ?? "/placeholder.svg"}
-                alt={profile.full_name ?? "Profile"}
-                className="w-full h-full object-cover rounded-full border-4 border-rose shadow-lg"
+            <div className="relative">
+              <ProfileHeader 
+                avatarUrl={profile.avatar_url}
+                fullName={profile.full_name}
+                bio={profile.bio}
               />
               {profile.is_love_hotel_member && relationshipType && (
                 <div className="absolute -top-2 -right-2">
@@ -115,15 +116,6 @@ export default function ProfileDetails() {
                     className="shadow-lg"
                   />
                 </div>
-              )}
-            </div>
-
-            <div className="text-center space-y-4">
-              <h1 className="text-3xl md:text-4xl font-bold text-burgundy">
-                {profile.full_name}
-              </h1>
-              {profile.bio && (
-                <p className="text-gray-600 max-w-2xl text-lg">{profile.bio}</p>
               )}
             </div>
 
