@@ -33,21 +33,21 @@ export function ProfileRelationshipType({
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="casual" id="casual" />
           <Label htmlFor="casual" className="flex items-center gap-2">
-            <Heart className="w-4 h-4 text-blue-500" />
+            <Heart className="w-4 h-4 text-blue-500 fill-current" />
             D'un soir
           </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="serious" id="serious" />
           <Label htmlFor="serious" className="flex items-center gap-2">
-            <Heart className="w-4 h-4 text-rose-400" />
+            <Heart className="w-4 h-4 text-rose-400 fill-current" />
             Sérieux
           </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="libertine" id="libertine" />
           <Label htmlFor="libertine" className="flex items-center gap-2">
-            <Heart className="w-4 h-4 text-red-600" />
+            <Heart className="w-4 h-4 text-red-600 fill-current" />
             Libertine
           </Label>
         </div>
