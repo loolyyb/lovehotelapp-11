@@ -13,6 +13,7 @@ import {
 import { Tables } from "@/integrations/supabase/types";
 import { ProfileGallery } from "@/components/profile/ProfileGallery";
 import { ProfileSeekingDisplay } from "@/components/profile/ProfileSeekingDisplay";
+import { RelationshipStatusIcon } from "@/components/profile/RelationshipStatusIcon";
 
 export default function ProfileDetails() {
   const { id } = useParams();
@@ -132,8 +133,11 @@ export default function ProfileDetails() {
                 className="w-full h-full object-cover rounded-full border-4 border-rose shadow-lg"
               />
               {profile.is_love_hotel_member && (
-                <div className="absolute -top-2 -right-2 bg-rose rounded-full p-2">
-                  <Heart className="w-6 h-6 text-burgundy fill-current" />
+                <div className="absolute -top-2 -right-2">
+                  <RelationshipStatusIcon 
+                    type={profile.relationship_type} 
+                    className="shadow-lg"
+                  />
                 </div>
               )}
             </div>
