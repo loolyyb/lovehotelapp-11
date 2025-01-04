@@ -69,7 +69,7 @@ export default function Challenges() {
               <p className="text-gray-600 mb-4">{challenge.description}</p>
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="bg-burgundy/10 text-burgundy">
-                  {challenge.points} points
+                  {challenge.points} tokens
                 </Badge>
                 <Badge variant="outline">
                   {challenge.challenge_type}
