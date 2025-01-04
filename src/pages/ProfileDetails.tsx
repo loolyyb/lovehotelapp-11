@@ -109,7 +109,7 @@ export default function ProfileDetails() {
               {profile.is_love_hotel_member && (
                 <div className="absolute -top-2 -right-2">
                   <RelationshipStatusIcon 
-                    type={profile.relationship_type} 
+                    type={profile.relationship_type ?? null}
                     className="shadow-lg"
                   />
                 </div>

@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-type RelationshipType = "casual" | "serious" | "libertine" | null;
+export type RelationshipType = "casual" | "serious" | "libertine" | null;
 
 interface RelationshipStatusIconProps {
   type: RelationshipType;

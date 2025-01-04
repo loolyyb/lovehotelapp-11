@@ -1,3 +1,4 @@
+import { Database } from './database.types';
 export * from './database.types';
 export * from './matches.types';
 export * from './preferences.types';
