@@ -7,6 +7,7 @@ import ProfileDetails from "@/pages/ProfileDetails";
 import Landing from "@/pages/Landing";
 import RideauxOuverts from "@/pages/RideauxOuverts";
 import Admin from "@/pages/Admin";
+import Messages from "@/pages/Messages";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -30,6 +31,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/profile/:id"
         element={session ? <ProfileDetails /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/messages"
+        element={session ? <Messages /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/lover-coin"
