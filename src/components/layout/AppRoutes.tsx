@@ -6,6 +6,7 @@ import Profiles from "@/pages/Profiles";
 import ProfileDetails from "@/pages/ProfileDetails";
 import Landing from "@/pages/Landing";
 import RideauxOuverts from "@/pages/RideauxOuverts";
+import Admin from "@/pages/Admin";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -37,6 +38,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/rideaux-ouverts"
         element={<RideauxOuverts />}
+      />
+      <Route
+        path="/admin"
+        element={<Admin />}
       />
     </Routes>
   );
