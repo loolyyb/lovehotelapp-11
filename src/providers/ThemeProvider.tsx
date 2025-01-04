@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState } from "react";
 import { type CustomTheme, ThemeName } from "@/types/theme";
 import { themes } from "@/config/themes.config";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ThemeContextType {
   theme: CustomTheme;
   currentThemeName: ThemeName;
   updateTheme: (newTheme: Partial<CustomTheme>) => void;
-  switchTheme: (themeName: ThemeName) => void;
+  switchTheme: (themeName: ThemeName) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -23,7 +24,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
-  const switchTheme = (themeName: ThemeName) => {
+  const switchTheme = async (themeName: ThemeName) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error("Vous devez être connecté pour changer le thème");
+    }
+
     setCurrentThemeName(themeName);
     setTheme(themes[themeName]);
   };

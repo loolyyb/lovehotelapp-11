@@ -26,7 +26,7 @@ export function AdminDashboard() {
 
     try {
       // Update theme in UI
-      switchTheme(themeName);
+      await switchTheme(themeName);
       
       // Update theme in database
       const { error } = await supabase
