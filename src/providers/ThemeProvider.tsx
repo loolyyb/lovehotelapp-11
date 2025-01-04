@@ -1,41 +1,19 @@
 import React, { createContext, useContext, useState } from "react";
-import { type CustomTheme } from "@/types/theme";
-
-const defaultTheme: CustomTheme = {
-  name: "default",
-  version: "1.0.0",
-  colors: {
-    primary: "hsl(346 33% 33%)",
-    secondary: "hsl(210 40% 96.1%)",
-    accent: "hsl(210 40% 96.1%)",
-    background: "hsl(0 0% 100%)",
-    text: "hsl(222.2 84% 4.9%)",
-  },
-  fonts: {
-    heading: "'Cormorant Garamond', serif",
-    body: "'Montserrat', sans-serif",
-  },
-  spacing: {
-    headerHeight: "4.5rem",
-    mobileNavHeight: "4rem",
-  },
-  breakpoints: {
-    sm: "640px",
-    md: "768px",
-    lg: "1024px",
-    xl: "1280px",
-  },
-};
+import { type CustomTheme, ThemeName } from "@/types/theme";
+import { themes } from "@/config/themes.config";
 
 interface ThemeContextType {
   theme: CustomTheme;
+  currentThemeName: ThemeName;
   updateTheme: (newTheme: Partial<CustomTheme>) => void;
+  switchTheme: (themeName: ThemeName) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<CustomTheme>(defaultTheme);
+  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
+  const [theme, setTheme] = useState<CustomTheme>(themes[currentThemeName]);
 
   const updateTheme = (newTheme: Partial<CustomTheme>) => {
     setTheme((current) => ({
@@ -45,8 +23,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const switchTheme = (themeName: ThemeName) => {
+    setCurrentThemeName(themeName);
+    setTheme(themes[themeName]);
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, updateTheme }}>
+    <ThemeContext.Provider value={{ theme, currentThemeName, updateTheme, switchTheme }}>
       {children}
     </ThemeContext.Provider>
   );

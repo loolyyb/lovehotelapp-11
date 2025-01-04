@@ -26,3 +26,5 @@ export interface CustomTheme extends ThemeConfig {
   name: string;
   version: string;
 }
+
+export type ThemeName = 'default' | 'lover';
