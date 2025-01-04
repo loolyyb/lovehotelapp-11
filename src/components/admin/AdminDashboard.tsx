@@ -4,12 +4,13 @@ import { useTheme } from "@/providers/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeName } from "@/types/theme";
 
 export function AdminDashboard() {
   const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
 
-  const handleThemeChange = async (themeName: string) => {
+  const handleThemeChange = async (themeName: ThemeName) => {
     try {
       // Update theme in UI
       switchTheme(themeName);
