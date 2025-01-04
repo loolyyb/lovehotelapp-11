@@ -1,8 +1,14 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera } from "lucide-react";
+import { Camera, Heart, Users, User } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProfileHeaderProps {
   avatarUrl?: string | null;
@@ -10,6 +16,8 @@ interface ProfileHeaderProps {
   bio?: string | null;
   canEdit?: boolean;
   onAvatarChange?: (url: string) => void;
+  sexualOrientation?: string | null;
+  seeking?: string[] | null;
 }
 
 export function ProfileHeader({ 
@@ -17,7 +25,9 @@ export function ProfileHeader({
   fullName, 
   bio, 
   canEdit = false,
-  onAvatarChange 
+  onAvatarChange,
+  sexualOrientation,
+  seeking
 }: ProfileHeaderProps) {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
@@ -66,6 +76,38 @@ export function ProfileHeader({
     }
   };
 
+  const getOrientationLabel = (orientation: string | null) => {
+    switch (orientation) {
+      case "straight":
+        return "Hétérosexuel(le)";
+      case "gay":
+        return "Homosexuel(le)";
+      case "bisexual":
+        return "Bisexuel(le)";
+      case "pansexual":
+        return "Pansexuel(le)";
+      default:
+        return "Non spécifié";
+    }
+  };
+
+  const getSeekingLabel = (value: string) => {
+    switch (value) {
+      case "single_man":
+        return { label: "Un homme", icon: <User className="w-4 h-4" /> };
+      case "single_woman":
+        return { label: "Une femme", icon: <User className="w-4 h-4" /> };
+      case "couple_mf":
+        return { label: "Un couple (homme-femme)", icon: <Users className="w-4 h-4" /> };
+      case "couple_mm":
+        return { label: "Un couple (homme-homme)", icon: <Users className="w-4 h-4" /> };
+      case "couple_ff":
+        return { label: "Un couple (femme-femme)", icon: <Users className="w-4 h-4" /> };
+      default:
+        return { label: value, icon: <User className="w-4 h-4" /> };
+    }
+  };
+
   return (
     <div className="flex flex-col items-center space-y-6">
       <div className="relative w-48 h-48 md:w-64 md:h-64">
@@ -93,11 +135,51 @@ export function ProfileHeader({
       </div>
 
       <div className="text-center space-y-4">
-        <h1 className="text-3xl md:text-4xl font-bold text-burgundy">
+        <h1 className="text-3xl md:text-4xl font-bold text-burgundy font-cormorant">
           {fullName || 'Anonyme'}
         </h1>
+
+        <div className="flex items-center justify-center space-x-4">
+          {sexualOrientation && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="bg-rose/20 rounded-full p-2">
+                    <Heart className="w-5 h-5 text-burgundy" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{getOrientationLabel(sexualOrientation)}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          {seeking && seeking.length > 0 && (
+            <div className="flex gap-2">
+              {seeking.map((item, index) => {
+                const { label, icon } = getSeekingLabel(item);
+                return (
+                  <TooltipProvider key={index}>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <div className="bg-rose/20 rounded-full p-2">
+                          {icon}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Recherche : {label}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
         {bio && (
-          <p className="text-gray-600 max-w-2xl text-lg">{bio}</p>
+          <p className="text-gray-600 max-w-2xl text-lg font-montserrat">{bio}</p>
         )}
       </div>
     </div>
