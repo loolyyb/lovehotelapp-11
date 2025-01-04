@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Heart, WindowIcon } from "lucide-react";
+import { MapPin, Heart, Window } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 
 interface ProfileCardProps {
@@ -63,7 +63,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
                 <div className="w-5 h-5 rounded-full bg-burgundy" />
               )}
               {preferences?.open_curtains && (
-                <WindowIcon className="w-5 h-5 text-burgundy" title="Rideaux ouverts" />
+                <Window className="w-5 h-5 text-burgundy" title="Rideaux ouverts" />
               )}
             </div>
           </div>

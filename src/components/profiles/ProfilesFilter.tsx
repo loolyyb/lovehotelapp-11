@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, MapPin, Heart, Users, WindowIcon } from "lucide-react";
+import { Filter, MapPin, Heart, Users, Window } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -149,7 +149,7 @@ export function ProfilesFilter({ onFilterChange }: ProfilesFilterProps) {
               onCheckedChange={(checked) => handleFilterChange("openCurtains", checked)}
             />
             <Label htmlFor="open-curtains" className="flex items-center gap-2 cursor-pointer">
-              <WindowIcon className="w-4 h-4" />
+              <Window className="w-4 h-4" />
               Rideaux ouverts
             </Label>
           </div>
