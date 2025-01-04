@@ -1,10 +1,12 @@
 import { Hero } from "@/components/landing/Hero";
 import { Features } from "@/components/landing/Features";
 import { CTA } from "@/components/landing/CTA";
+import { Header } from "@/components/landing/Header";
 
 const Index = () => {
   return (
     <main className="min-h-screen bg-cream">
+      <Header />
       <Hero />
       <Features />
       <CTA />
