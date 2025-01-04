@@ -5,6 +5,7 @@ import { supabase } from "./integrations/supabase/client";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Profiles from "./pages/Profiles";
+import Landing from "./pages/Landing";
 import { NavigationMenu } from "./components/navigation/NavigationMenu";
 
 function App() {
@@ -38,7 +39,7 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={session ? <Profiles /> : <Navigate to="/login" replace />}
+          element={session ? <Profiles /> : <Landing />}
         />
         <Route
           path="/login"

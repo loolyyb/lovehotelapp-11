@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProfileCard } from "@/components/profiles/ProfileCard";
 import { Tables } from "@/integrations/supabase/types";
 import { useToast } from "@/components/ui/use-toast";
-import { Header } from "@/components/landing/Header";
+import { useNavigate } from "react-router-dom";
 
 type ProfileWithPreferences = {
   profile: Tables<"profiles">;
@@ -14,10 +14,19 @@ export default function Profiles() {
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState<ProfileWithPreferences[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    checkAuth();
     fetchProfiles();
   }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/login");
+    }
+  };
 
   const fetchProfiles = async () => {
     try {
@@ -60,8 +69,7 @@ export default function Profiles() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100">
-      <Header />
+    <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 pt-20">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-playfair text-burgundy text-center mb-8 animate-fadeIn">
           Découvrez des profils
