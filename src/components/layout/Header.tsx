@@ -35,12 +35,7 @@ export function Header({ userProfile }: { userProfile?: any }) {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm shadow-sm">
-      <div className="container mx-auto px-4 flex flex-col items-center">
-        <img 
-          src="https://lovehotelaparis.fr/wp-content/uploads/2024/09/logo-web-love-hotel.png"
-          alt="Love Hotel Logo"
-          className="h-16 my-2 object-contain"
-        />
+      <div className="container mx-auto px-4">
         <div className="w-full h-16 flex items-center justify-between">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
@@ -49,7 +44,12 @@ export function Header({ userProfile }: { userProfile?: any }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 bg-white/95 backdrop-blur-sm">
-              <nav className="flex flex-col gap-4 mt-8">
+              <img 
+                src="https://lovehotelaparis.fr/wp-content/uploads/2024/09/logo-web-love-hotel.png"
+                alt="Love Hotel Logo"
+                className="h-16 mx-auto mb-4 object-contain"
+              />
+              <nav className="flex flex-col gap-4">
                 <Link 
                   to="/" 
                   className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
