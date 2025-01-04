@@ -4,13 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 interface UseMessageHandlersProps {
   currentUserId: string | null;
   conversationId: string;
+  newMessage: string;
   setNewMessage: (message: string) => void;
   toast: ReturnType<typeof useToast>["toast"];
 }
 
 export const useMessageHandlers = ({ 
   currentUserId, 
-  conversationId, 
+  conversationId,
+  newMessage,
   setNewMessage,
   toast 
 }: UseMessageHandlersProps) => {

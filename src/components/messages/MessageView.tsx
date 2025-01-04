@@ -22,7 +22,13 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const { toast } = useToast();
 
   // Custom hooks for message functionality
-  const { sendMessage } = useMessageHandlers({ currentUserId, conversationId, setNewMessage, toast });
+  const { sendMessage } = useMessageHandlers({ 
+    currentUserId, 
+    conversationId, 
+    newMessage,
+    setNewMessage, 
+    toast 
+  });
   const { subscribeToNewMessages } = useMessageSubscription({ conversationId, setMessages });
   const { fetchMessages, markMessagesAsRead } = useMessageRetrieval({ 
     conversationId, 
