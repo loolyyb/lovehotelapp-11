@@ -1,78 +1,17 @@
-import React, { useEffect } from "react";
-import { BrowserRouter as Router, useNavigate } from "react-router-dom";
-import { Header } from "./components/layout/Header";
-import { MobileNavBar } from "./components/layout/MobileNavBar";
-import { Toaster } from "@/components/ui/toaster";
-import { Footer } from "./components/layout/Footer";
-import { useIsMobile } from "./hooks/use-mobile";
-import { useAuthSession } from "./hooks/useAuthSession";
-import { AppRoutes } from "./components/layout/AppRoutes";
-import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
-import { appConfig } from "./config/app.config";
-import { useToast } from "./hooks/use-toast";
+import React from "react";
+import { BrowserRouter as Router } from "react-router-dom";
 import { Loader } from "lucide-react";
-import { supabase } from "./integrations/supabase/client";
+import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
+import { useAuthSession } from "./hooks/useAuthSession";
+import { useThemeInit } from "./hooks/useThemeInit";
+import { SessionManager } from "./components/auth/SessionManager";
+import { MainContent } from "./components/layout/MainContent";
 
 function AppContent() {
   const { session, loading, userProfile, refreshSession } = useAuthSession();
-  const isMobile = useIsMobile();
-  const { currentThemeName, switchTheme } = useTheme();
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { currentThemeName } = useTheme();
 
-  useEffect(() => {
-    console.log("App mounting, checking session...");
-    const checkAndRefreshSession = async () => {
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        console.log("Session check result:", currentSession);
-        if (!currentSession && window.location.pathname !== '/' && window.location.pathname !== '/login') {
-          console.log("No session, redirecting to home");
-          navigate('/');
-        } else if (currentSession && window.location.pathname === '/') {
-          console.log("Session exists, redirecting to profile");
-          navigate('/profile');
-        }
-      } catch (error) {
-        console.error("Session check error:", error);
-        navigate('/');
-      }
-    };
-
-    checkAndRefreshSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session);
-      if (event === 'SIGNED_IN') {
-        navigate('/profile');
-      } else if (event === 'SIGNED_OUT') {
-        navigate('/');
-      }
-      await refreshSession();
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate, refreshSession]);
-
-  useEffect(() => {
-    const initTheme = async () => {
-      if (!session) return;
-      try {
-        await switchTheme("lover");
-      } catch (error) {
-        console.error("Erreur lors du changement de thème:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger le thème. Veuillez vous connecter et réessayer.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    initTheme();
-  }, [session, switchTheme, toast]);
+  useThemeInit(session);
 
   if (loading) {
     console.log("App is loading...");
@@ -85,18 +24,14 @@ function AppContent() {
 
   console.log("App rendered with session:", session);
   return (
-    <div 
-      data-theme={currentThemeName} 
-      className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}
-    >
-      {session && <Header userProfile={userProfile} />}
-      <div className="flex-grow pt-[4.5rem]">
-        <AppRoutes session={session} />
-      </div>
-      <Footer />
-      {appConfig.features.enablePWA && <MobileNavBar />}
-      <Toaster />
-    </div>
+    <>
+      <SessionManager refreshSession={refreshSession} />
+      <MainContent 
+        session={session}
+        userProfile={userProfile}
+        currentThemeName={currentThemeName}
+      />
+    </>
   );
 }
 
