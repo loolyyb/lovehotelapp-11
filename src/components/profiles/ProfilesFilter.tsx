@@ -68,11 +68,11 @@ export function ProfilesFilter({ onFilterChange }: ProfilesFilterProps) {
             <h2 className="text-lg font-semibold text-burgundy">Filtrer les profils</h2>
           </div>
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden">
+            <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
               {isOpen ? (
-                <ChevronUp className="h-4 w-4" />
+                <ChevronUp className="h-4 w-4 text-burgundy" />
               ) : (
-                <ChevronDown className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4 text-burgundy" />
               )}
             </Button>
           </CollapsibleTrigger>
