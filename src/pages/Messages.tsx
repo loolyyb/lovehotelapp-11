@@ -14,7 +14,7 @@ export default function Messages() {
   }, [location.state]);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-cream pt-16">
+    <div className="flex h-[calc(100vh-4rem)] bg-cream pt-12">
       <div className={`w-full md:w-[380px] border-r border-rose/20 ${selectedConversation ? 'hidden md:block' : ''}`}>
         <ConversationList
           onSelectConversation={setSelectedConversation}
