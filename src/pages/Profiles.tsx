@@ -32,15 +32,22 @@ export default function Profiles() {
 
   const fetchProfiles = async () => {
     try {
+      // First fetch all profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*");
 
       if (profilesError) throw profilesError;
 
+      // Then fetch preferences only for profiles that have a user_id
+      const userIds = profilesData
+        .map(profile => profile.user_id)
+        .filter(id => id !== null);
+
       const { data: preferencesData, error: preferencesError } = await supabase
         .from("preferences")
-        .select("*");
+        .select("*")
+        .in('user_id', userIds);
 
       if (preferencesError) throw preferencesError;
 
