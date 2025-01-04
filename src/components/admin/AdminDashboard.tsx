@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { ThemeName } from "@/types/theme";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import { useNavigate } from "react-router-dom";
 
 interface Advertisement {
   id: string;
@@ -24,12 +26,20 @@ export function AdminDashboard() {
   const { toast } = useToast();
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [loading, setLoading] = useState(true);
+  const { session } = useAuthSession();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (!session) {
+      navigate('/login');
+      return;
+    }
     fetchAdvertisements();
-  }, []);
+  }, [session, navigate]);
 
   const fetchAdvertisements = async () => {
+    if (!session) return;
+    
     try {
       const { data, error } = await supabase
         .from('advertisements')
@@ -51,6 +61,8 @@ export function AdminDashboard() {
   };
 
   const handleThemeChange = async (themeName: ThemeName) => {
+    if (!session) return;
+
     try {
       // Update theme in UI
       switchTheme(themeName);
@@ -81,6 +93,8 @@ export function AdminDashboard() {
   };
 
   const toggleAdvertisementStatus = async (id: string, currentStatus: boolean) => {
+    if (!session) return;
+
     try {
       const { error } = await supabase
         .from('advertisements')
@@ -105,6 +119,8 @@ export function AdminDashboard() {
   };
 
   const updateAdvertisement = async (id: string, updates: Partial<Advertisement>) => {
+    if (!session) return;
+
     try {
       const { error } = await supabase
         .from('advertisements')
@@ -127,6 +143,10 @@ export function AdminDashboard() {
       });
     }
   };
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
