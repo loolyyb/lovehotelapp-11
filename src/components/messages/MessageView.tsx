@@ -122,7 +122,8 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         .insert({
           conversation_id: conversationId,
           sender_id: currentUserId,
-          content: newMessage.trim()
+          content: newMessage.trim(),
+          media_type: newMessage.startsWith('[Image]') ? 'image' : 'text'
         });
 
       if (error) throw error;
@@ -138,7 +139,11 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
 
   return (
     <div className="h-full flex flex-col bg-cream">
-      <MessageHeader otherUser={otherUser} onBack={onBack} />
+      <MessageHeader 
+        otherUser={otherUser} 
+        onBack={onBack} 
+        conversationId={conversationId}
+      />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
@@ -155,6 +160,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         newMessage={newMessage}
         setNewMessage={setNewMessage}
         onSend={sendMessage}
+        conversationId={conversationId}
       />
     </div>
   );

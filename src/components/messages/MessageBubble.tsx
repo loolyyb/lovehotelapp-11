@@ -7,6 +7,9 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
+  const isImage = message.content.startsWith('[Image]');
+  const imageUrl = isImage ? message.content.match(/\((.*?)\)/)[1] : null;
+
   return (
     <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
       <div
@@ -16,7 +19,11 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
             : 'bg-rose/20 text-gray-800 rounded-bl-none'
         }`}
       >
-        <p className="break-words">{message.content}</p>
+        {isImage ? (
+          <img src={imageUrl} alt="Message" className="max-w-full rounded" />
+        ) : (
+          <p className="break-words whitespace-pre-wrap">{message.content}</p>
+        )}
         <div
           className={`text-xs mt-1 ${
             isCurrentUser ? 'text-rose/80' : 'text-gray-500'
