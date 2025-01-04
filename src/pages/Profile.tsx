@@ -9,6 +9,7 @@ import { ProfileDescription } from "@/components/profile/ProfileDescription";
 import { ProfileStatus } from "@/components/profile/ProfileStatus";
 import { ProfileOrientation } from "@/components/profile/ProfileOrientation";
 import { ProfileSeeking } from "@/components/profile/ProfileSeeking";
+import { Save } from "lucide-react";
 
 export default function Profile() {
   const [loading, setLoading] = useState(true);
@@ -156,11 +157,11 @@ export default function Profile() {
 
           <div className="pt-8 flex justify-center">
             <Button 
-              onClick={handleSignOut}
-              variant="destructive"
-              className="px-8 py-6 text-lg hover:bg-rose transition-colors"
+              onClick={() => updateProfile(profile)}
+              className="px-8 py-6 text-lg bg-burgundy hover:bg-burgundy/90 text-white flex items-center gap-2"
             >
-              Se déconnecter
+              <Save className="w-5 h-5" />
+              Enregistrer les modifications
             </Button>
           </div>
         </Card>
