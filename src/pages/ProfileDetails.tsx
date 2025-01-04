@@ -86,6 +86,8 @@ export default function ProfileDetails() {
     );
   }
 
+  const relationshipType = profile.relationship_type as RelationshipType | null;
+
   return (
     <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 pt-20 px-4 pb-8">
       <div className="max-w-4xl mx-auto">
@@ -106,10 +108,10 @@ export default function ProfileDetails() {
                 alt={profile.full_name ?? "Profile"}
                 className="w-full h-full object-cover rounded-full border-4 border-rose shadow-lg"
               />
-              {profile.is_love_hotel_member && (
+              {profile.is_love_hotel_member && relationshipType && (
                 <div className="absolute -top-2 -right-2">
                   <RelationshipStatusIcon 
-                    type={profile.relationship_type as RelationshipType}
+                    type={relationshipType}
                     className="shadow-lg"
                   />
                 </div>
