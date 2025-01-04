@@ -9,19 +9,36 @@ import { useAuthSession } from "./hooks/useAuthSession";
 import { AppRoutes } from "./components/layout/AppRoutes";
 import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
 import { appConfig } from "./config/app.config";
+import { useToast } from "./components/ui/use-toast";
 
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
   const { currentThemeName, switchTheme } = useTheme();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Set lover theme by default
-    switchTheme("lover");
-  }, [switchTheme]);
+    const initTheme = async () => {
+      try {
+        // Set lover theme by default
+        await switchTheme("lover");
+      } catch (error) {
+        console.error("Erreur lors du changement de thème:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger le thème. Veuillez réessayer.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    if (session) {
+      initTheme();
+    }
+  }, [session, switchTheme, toast]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>Chargement...</div>;
   }
 
   return (
