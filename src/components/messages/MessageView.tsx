@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { MessageHeader } from "./MessageHeader";
 import { MessageBubble } from "./MessageBubble";
@@ -7,6 +6,7 @@ import { MessageInput } from "./MessageInput";
 import { useMessageHandlers } from "@/hooks/useMessageHandlers";
 import { useMessageSubscription } from "@/hooks/useMessageSubscription";
 import { useMessageRetrieval } from "@/hooks/useMessageRetrieval";
+import { useConversationInit } from "@/hooks/useConversationInit";
 
 interface MessageViewProps {
   conversationId: string;
@@ -29,12 +29,24 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     setNewMessage, 
     toast 
   });
-  const { subscribeToNewMessages } = useMessageSubscription({ conversationId, setMessages });
+
+  const { subscribeToNewMessages } = useMessageSubscription({ 
+    conversationId, 
+    setMessages 
+  });
+
   const { fetchMessages, markMessagesAsRead } = useMessageRetrieval({ 
     conversationId, 
     currentUserId, 
     setMessages, 
     toast 
+  });
+
+  const { getCurrentUser } = useConversationInit({
+    conversationId,
+    setMessages,
+    setCurrentUserId,
+    setOtherUser,
   });
 
   useEffect(() => {
@@ -43,65 +55,15 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
 
     return () => {
       console.log("Cleaning up MessageView");
-      const channel = supabase.channel('messages-changes');
-      supabase.removeChannel(channel);
     };
   }, [conversationId]);
 
-  const getCurrentUser = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error("No authenticated user found");
-        return;
-      }
-      console.log("Current user ID:", user.id);
-      setCurrentUserId(user.id);
-
-      // Get current user's profile
-      const { data: currentUserProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error("Error fetching current user profile:", profileError);
-        return;
-      }
-
-      // Fetch conversation with related profiles
-      const { data: conversation, error: convError } = await supabase
-        .from('conversations')
-        .select(`
-          *,
-          user1:profiles!conversations_user1_id_fkey(*),
-          user2:profiles!conversations_user2_id_fkey(*)
-        `)
-        .eq('id', conversationId)
-        .single();
-
-      if (convError) {
-        console.error("Error fetching conversation:", convError);
-        return;
-      }
-
-      if (conversation) {
-        console.log("Fetched conversation:", conversation);
-        const otherUserData = conversation.user1.id === currentUserProfile.id 
-          ? conversation.user2 
-          : conversation.user1;
-        console.log("Other user data:", otherUserData);
-        setOtherUser(otherUserData);
-        
-        // Now that we have the current user, fetch messages
-        await fetchMessages();
-        subscribeToNewMessages();
-      }
-    } catch (error) {
-      console.error("Error in getCurrentUser:", error);
+  useEffect(() => {
+    if (currentUserId) {
+      fetchMessages();
+      subscribeToNewMessages();
     }
-  };
+  }, [currentUserId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
