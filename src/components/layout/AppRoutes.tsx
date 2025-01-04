@@ -8,6 +8,7 @@ import Landing from "@/pages/Landing";
 import RideauxOuverts from "@/pages/RideauxOuverts";
 import Admin from "@/pages/Admin";
 import Messages from "@/pages/Messages";
+import MatchingScores from "@/pages/MatchingScores";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -35,6 +36,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/messages"
         element={session ? <Messages /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/matching-scores"
+        element={session ? <MatchingScores /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/lover-coin"
