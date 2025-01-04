@@ -1,4 +1,4 @@
-import { Home, Search, Grid, Bitcoin } from "lucide-react";
+import { House, Search, Blinds, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "react-router-dom";
@@ -20,7 +20,7 @@ export const MobileNavBar = () => {
             isActive("/") ? "text-champagne" : "text-rose/80"
           }`}
         >
-          <Home className="w-6 h-6" />
+          <House className="w-5 h-5 stroke-[1.5]" />
           <span className="text-xs mt-1">Accueil</span>
         </Link>
 
@@ -30,7 +30,7 @@ export const MobileNavBar = () => {
             isActive("/profiles") ? "text-champagne" : "text-rose/80"
           }`}
         >
-          <Search className="w-6 h-6" />
+          <Search className="w-5 h-5 stroke-[1.5]" />
           <span className="text-xs mt-1">Recherche</span>
         </Link>
 
@@ -40,7 +40,7 @@ export const MobileNavBar = () => {
           rel="noopener noreferrer"
           className="flex flex-col items-center p-2 text-rose/80"
         >
-          <Grid className="w-6 h-6" />
+          <Blinds className="w-5 h-5 stroke-[1.5]" />
           <span className="text-xs mt-1">Rideaux</span>
         </a>
 
@@ -50,7 +50,7 @@ export const MobileNavBar = () => {
             isActive("/lover-coin") ? "text-champagne" : "text-rose/80"
           }`}
         >
-          <Bitcoin className="w-6 h-6" />
+          <Heart className="w-5 h-5 stroke-[1.5]" />
           <span className="text-xs mt-1">LoverCoin</span>
         </Link>
       </div>
