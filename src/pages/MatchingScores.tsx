@@ -5,6 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles } from "lucide-react";
 import { MatchingFilter } from "@/components/matching/MatchingFilter";
 import { MatchingCard } from "@/components/matching/MatchingCard";
+import { Database } from "@/integrations/supabase/types";
+
+type InterestType = Database["public"]["Enums"]["interest_type"];
 
 interface Profile {
   id: string;
@@ -15,13 +18,13 @@ interface Profile {
 }
 
 interface Preferences {
-  interests: string[];
+  interests: InterestType[];
 }
 
 export default function MatchingScores() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedInterest, setSelectedInterest] = useState<string>("all");
+  const [selectedInterest, setSelectedInterest] = useState<InterestType | "all">("all");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -75,15 +78,15 @@ export default function MatchingScores() {
 
       // Create a map of user_id to preferences
       const preferencesMap = new Map(
-        otherPreferences.map((pref) => [pref.user_id, pref.interests || []])
+        otherPreferences.map((pref) => [pref.user_id, (pref.interests || []) as InterestType[]])
       );
 
       // Calculate compatibility scores
-      const userInterests = userPreferences?.interests || [];
+      const userInterests = (userPreferences?.interests || []) as InterestType[];
       const scoredProfiles = otherProfiles.map((profile: any) => {
-        const profileInterests = preferencesMap.get(profile.user_id) || [];
+        const profileInterests = (preferencesMap.get(profile.user_id) || []) as InterestType[];
         
-        const commonInterests = userInterests.filter((interest: string) => 
+        const commonInterests = userInterests.filter((interest: InterestType) => 
           profileInterests.includes(interest)
         );
         
