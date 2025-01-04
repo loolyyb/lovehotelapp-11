@@ -83,7 +83,7 @@ export default function Messages() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-cream">
+    <div className="flex h-[calc(100vh-4rem)] bg-cream pt-16"> {/* Added pt-16 for header space */}
       <div className={`w-full md:w-[380px] border-r border-rose/20 ${selectedConversation ? 'hidden md:block' : ''}`}>
         <MessageList
           conversations={conversations}
