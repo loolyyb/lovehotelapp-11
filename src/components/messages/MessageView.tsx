@@ -23,36 +23,50 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     fetchMessages();
     subscribeToNewMessages();
     markMessagesAsRead();
+
+    // Cleanup subscription on unmount
+    return () => {
+      const channel = supabase.channel('messages-changes');
+      supabase.removeChannel(channel);
+    };
   }, [conversationId]);
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    setCurrentUserId(user?.id || null);
+    if (!user) return;
+    setCurrentUserId(user.id);
+
+    // Fetch the conversation to get the other user's profile
+    const { data: conversation } = await supabase
+      .from('conversations')
+      .select(`
+        *,
+        user1:profiles!conversations_user1_id_fkey(*),
+        user2:profiles!conversations_user2_id_fkey(*)
+      `)
+      .eq('id', conversationId)
+      .single();
+
+    if (conversation) {
+      // Get the current user's profile ID
+      const { data: currentUserProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (currentUserProfile) {
+        // Set the other user based on which user in the conversation is not the current user
+        const otherUserData = conversation.user1_id === currentUserProfile.id 
+          ? conversation.user2 
+          : conversation.user1;
+        setOtherUser(otherUserData);
+      }
+    }
   };
 
   const fetchMessages = async () => {
     try {
-      const { data: conversation } = await supabase
-        .from('conversations')
-        .select(`
-          *,
-          user1:profiles!conversations_user1_profile_fkey(
-            avatar_url,
-            full_name
-          ),
-          user2:profiles!conversations_user2_profile_fkey(
-            avatar_url,
-            full_name
-          )
-        `)
-        .eq('id', conversationId)
-        .single();
-
-      if (conversation) {
-        const otherUserData = conversation.user1_id === currentUserId ? conversation.user2 : conversation.user1;
-        setOtherUser(otherUserData);
-      }
-
       const { data: messages, error } = await supabase
         .from('messages')
         .select('*')
@@ -60,9 +74,12 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
+      
+      console.log("Fetched messages:", messages); // Debug log
       setMessages(messages || []);
       scrollToBottom();
     } catch (error: any) {
+      console.error("Error fetching messages:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -83,6 +100,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
+          console.log("New message received:", payload); // Debug log
           setMessages(current => [...current, payload.new]);
           scrollToBottom();
           if (payload.new.sender_id !== currentUserId) {
@@ -100,12 +118,16 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const markMessagesAsRead = async () => {
     if (!currentUserId) return;
 
-    await supabase
+    const { error } = await supabase
       .from('messages')
       .update({ read_at: new Date().toISOString() })
       .eq('conversation_id', conversationId)
       .neq('sender_id', currentUserId)
       .is('read_at', null);
+
+    if (error) {
+      console.error("Error marking messages as read:", error);
+    }
   };
 
   const scrollToBottom = () => {
@@ -129,6 +151,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       if (error) throw error;
       setNewMessage("");
     } catch (error: any) {
+      console.error("Error sending message:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
