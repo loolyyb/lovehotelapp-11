@@ -8,15 +8,22 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Handle CORS preflight requests
-if (req.method === "OPTIONS") {
-  return new Response(null, { headers: corsHeaders });
+interface EmailRequest {
+  to: string[];
+  subject: string;
+  html: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log("Starting test email send...");
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
+    const emailRequest: EmailRequest = await req.json();
+    console.log("Sending email with request:", emailRequest);
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -24,10 +31,10 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "onboarding@resend.dev",
-        to: ["loolyyb@gmail.com"],
-        subject: "Hello World",
-        html: "<p>Congrats on sending your <strong>first email</strong>!</p>"
+        from: "Love Hotel <no-reply@gilleskorzec.com>",
+        to: emailRequest.to,
+        subject: emailRequest.subject,
+        html: emailRequest.html,
       }),
     });
 
@@ -40,14 +47,14 @@ const handler = async (req: Request): Promise<Response> => {
       });
     } else {
       const error = await res.text();
-      console.error("Error from Resend API:", error);
+      console.error("Error sending email:", error);
       return new Response(JSON.stringify({ error }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
   } catch (error: any) {
-    console.error("Error in send-email function:", error);
+    console.error("Error in sendemail function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
