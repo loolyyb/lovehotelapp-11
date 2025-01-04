@@ -8,6 +8,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LogOut, Home, User } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Header({ userProfile }: { userProfile?: any }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -153,14 +159,6 @@ export function Header({ userProfile }: { userProfile?: any }) {
                   <User className="h-5 w-5" />
                   <span>Mon Profil</span>
                 </Link>
-                <Button
-                  variant="outline"
-                  className="mt-auto border-burgundy text-burgundy hover:bg-burgundy/5 flex items-center gap-2"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-5 w-5" />
-                  Se déconnecter
-                </Button>
               </nav>
             </SheetContent>
           </Sheet>
@@ -178,12 +176,31 @@ export function Header({ userProfile }: { userProfile?: any }) {
               )}
             </Link>
             
-            <Link to="/profile" className="hover:opacity-80 transition-opacity">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={avatarUrl} alt={userProfile?.full_name} />
-                <AvatarFallback>{userProfile?.full_name?.[0] || '?'}</AvatarFallback>
-              </Avatar>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="p-0 hover:bg-transparent">
+                  <Avatar className="h-10 w-10 cursor-pointer">
+                    <AvatarImage src={avatarUrl} alt={userProfile?.full_name} />
+                    <AvatarFallback>{userProfile?.full_name?.[0] || '?'}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
+                    <User className="h-4 w-4" />
+                    <span>Mon Profil</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="flex items-center gap-2 text-burgundy cursor-pointer"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Se déconnecter</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
