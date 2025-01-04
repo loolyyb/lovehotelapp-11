@@ -12,7 +12,7 @@ export default function Login() {
     // Check if user is already logged in
     supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/profile");
+        navigate("/"); // Changed from "/profile" to "/" to redirect to profiles page
       }
     });
   }, [navigate]);
