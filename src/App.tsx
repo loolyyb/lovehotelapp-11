@@ -6,6 +6,8 @@ import { Footer } from "./components/layout/Footer";
 import { useIsMobile } from "./hooks/use-mobile";
 import { useAuthSession } from "./hooks/useAuthSession";
 import { AppRoutes } from "./components/layout/AppRoutes";
+import { ThemeProvider } from "./providers/ThemeProvider";
+import { appConfig } from "./config/app.config";
 
 function App() {
   const { session, loading, userProfile } = useAuthSession();
@@ -16,17 +18,19 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className={`min-h-screen w-full overflow-x-hidden flex flex-col ${isMobile ? "pb-20" : ""}`}>
-        {session && <Header userProfile={userProfile} />}
-        <div className="flex-grow pt-[4.5rem]">
-          <AppRoutes session={session} />
+    <ThemeProvider>
+      <Router>
+        <div className={`min-h-screen w-full overflow-x-hidden flex flex-col ${isMobile ? "pb-20" : ""}`}>
+          {session && <Header userProfile={userProfile} />}
+          <div className="flex-grow pt-[4.5rem]">
+            <AppRoutes session={session} />
+          </div>
+          <Footer />
+          {appConfig.features.enablePWA && <MobileNavBar />}
+          <Toaster />
         </div>
-        <Footer />
-        <MobileNavBar />
-        <Toaster />
-      </div>
-    </Router>
+      </Router>
+    </ThemeProvider>
   );
 }
 
