@@ -13,19 +13,17 @@ import { appConfig } from "./config/app.config";
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
-  const { currentThemeName, switchTheme } = useTheme();
-
-  // Switch to lover theme on component mount
-  useEffect(() => {
-    switchTheme("lover");
-  }, [switchTheme]);
+  const { currentThemeName } = useTheme();
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
   return (
-    <div data-theme={currentThemeName} className={`min-h-screen w-full overflow-x-hidden flex flex-col ${isMobile ? "pb-20" : ""}`}>
+    <div 
+      data-theme={currentThemeName} 
+      className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}
+    >
       {session && <Header userProfile={userProfile} />}
       <div className="flex-grow pt-[4.5rem]">
         <AppRoutes session={session} />

@@ -5,7 +5,7 @@ import { Header } from "@/components/landing/Header";
 
 const Index = () => {
   return (
-    <main className="min-h-screen bg-cream">
+    <main className="min-h-screen bg-background">
       <Header />
       <Hero />
       <Features />
