@@ -63,7 +63,7 @@ function App() {
     <Router>
       <div className="min-h-screen w-full overflow-x-hidden flex flex-col">
         {session && <Header userProfile={userProfile} />}
-        <div className="flex-grow pt-16"> {/* Added padding-top to account for fixed header */}
+        <div className="flex-grow pt-[4.5rem]">
           <Routes>
             <Route
               path="/"

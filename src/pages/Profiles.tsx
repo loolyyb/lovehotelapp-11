@@ -129,8 +129,8 @@ export default function Profiles() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 pt-20">
-      <div className="container mx-auto px-4 py-8">
+    <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100">
+      <div className="container mx-auto px-4 py-4">
         <h1 className="text-4xl font-playfair text-burgundy text-center mb-8 animate-fadeIn">
           Découvrez des profils
         </h1>
