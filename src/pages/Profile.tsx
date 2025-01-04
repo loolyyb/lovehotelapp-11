@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { MapPin, Calendar, Heart, Camera, Edit } from "lucide-react";
+import { MapPin, Calendar, Heart, Camera, Edit, Mail, Gift } from "lucide-react";
 
 export default function Profile() {
   const [loading, setLoading] = useState(true);
@@ -95,79 +95,103 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 p-4">
       <div className="max-w-4xl mx-auto">
-        <Card className="p-8 space-y-8 animate-fadeIn">
-          <div className="flex flex-col items-center space-y-4 relative">
+        <Card className="p-8 space-y-8 bg-white/80 backdrop-blur-sm shadow-xl rounded-xl animate-fadeIn">
+          {/* Profile Header Section */}
+          <div className="flex flex-col items-center space-y-6 relative">
             <div className="relative group">
-              <Avatar className="w-32 h-32 border-4 border-rose shadow-lg">
-                <AvatarImage src={profile?.avatar_url} alt={profile?.full_name} />
-                <AvatarFallback className="text-2xl bg-burgundy text-white">
+              <Avatar className="w-40 h-40 border-4 border-rose shadow-lg transition-transform duration-300 group-hover:scale-105">
+                <AvatarImage 
+                  src={profile?.avatar_url} 
+                  alt={profile?.full_name}
+                  className="object-cover"
+                />
+                <AvatarFallback className="text-4xl bg-burgundy text-white">
                   {profile?.full_name?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <button className="absolute bottom-0 right-0 bg-burgundy p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="w-4 h-4" />
+              <button className="absolute bottom-2 right-2 bg-burgundy p-3 rounded-full text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-y-0 translate-y-2 shadow-lg">
+                <Camera className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-3xl font-bold text-burgundy">{profile?.full_name || 'Anonyme'}</h1>
-              <button className="text-gray-400 hover:text-burgundy transition-colors">
-                <Edit className="w-4 h-4" />
-              </button>
+
+            <div className="text-center space-y-2">
+              <div className="flex items-center justify-center space-x-3">
+                <h1 className="text-4xl font-bold text-burgundy">{profile?.full_name || 'Anonyme'}</h1>
+                <button className="text-gray-400 hover:text-burgundy transition-colors p-2 rounded-full hover:bg-rose/10">
+                  <Edit className="w-5 h-5" />
+                </button>
+              </div>
+              {profile?.bio && (
+                <p className="text-gray-600 max-w-md text-lg">{profile.bio}</p>
+              )}
             </div>
-            {profile?.bio && (
-              <p className="text-gray-600 text-center max-w-md">{profile.bio}</p>
-            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2 text-gray-600">
-                <MapPin className="w-5 h-5" />
+          {/* Profile Information Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+            {/* Left Column - Basic Info */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3 text-gray-700 text-lg">
+                <MapPin className="w-6 h-6 text-burgundy" />
                 <span>{preferences?.location || 'Paris, France'}</span>
               </div>
-              <div className="flex items-center space-x-2 text-gray-600">
-                <Calendar className="w-5 h-5" />
-                <span>Membre depuis {new Date(profile?.created_at).toLocaleDateString()}</span>
+              <div className="flex items-center space-x-3 text-gray-700 text-lg">
+                <Mail className="w-6 h-6 text-burgundy" />
+                <span>Messages disponibles</span>
+              </div>
+              <div className="flex items-center space-x-3 text-gray-700 text-lg">
+                <Gift className="w-6 h-6 text-burgundy" />
+                <span>25 ans</span>
               </div>
               {preferences?.interests && preferences.interests.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {preferences.interests.map((interest: string, index: number) => (
-                    <span 
-                      key={index}
-                      className="px-3 py-1 bg-rose/20 text-burgundy rounded-full text-sm"
-                    >
-                      {interest}
-                    </span>
-                  ))}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-burgundy text-lg">Centres d'intérêt</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {preferences.interests.map((interest: string, index: number) => (
+                      <span 
+                        key={index}
+                        className="px-4 py-2 bg-rose/20 text-burgundy rounded-full text-sm font-medium hover:bg-rose/30 transition-colors cursor-default"
+                      >
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Heart className={`w-5 h-5 ${profile?.is_love_hotel_member ? 'text-rose' : 'text-gray-400'}`} />
-                <span>{profile?.is_love_hotel_member ? 'Membre Love Hotel' : 'Non membre'}</span>
+            {/* Right Column - Membership & Preferences */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3">
+                <Heart className={`w-6 h-6 ${profile?.is_love_hotel_member ? 'text-rose' : 'text-gray-400'}`} />
+                <span className="text-lg">{profile?.is_love_hotel_member ? 'Membre Love Hotel' : 'Non membre'}</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className={`w-5 h-5 rounded-full ${profile?.is_loolyb_holder ? 'bg-burgundy' : 'bg-gray-400'}`} />
-                <span>{profile?.is_loolyb_holder ? 'Détenteur LooLyyb' : 'Non détenteur'}</span>
+              <div className="flex items-center space-x-3">
+                <div className={`w-6 h-6 rounded-full ${profile?.is_loolyb_holder ? 'bg-burgundy' : 'bg-gray-400'}`} />
+                <span className="text-lg">{profile?.is_loolyb_holder ? 'Détenteur LooLyyb' : 'Non détenteur'}</span>
               </div>
               {preferences && (
-                <div className="mt-4 p-4 bg-champagne/20 rounded-lg">
-                  <h3 className="font-semibold text-burgundy mb-2">Préférences</h3>
-                  <p className="text-sm text-gray-600">
-                    Âge: {preferences.min_age} - {preferences.max_age} ans
-                  </p>
+                <div className="p-6 bg-champagne/30 rounded-xl space-y-4 backdrop-blur-sm">
+                  <h3 className="font-semibold text-burgundy text-lg">Préférences</h3>
+                  <div className="space-y-2 text-gray-700">
+                    <p className="text-lg">
+                      Âge: {preferences.min_age} - {preferences.max_age} ans
+                    </p>
+                    <p className="text-lg">
+                      Localisation préférée: {preferences.location}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="pt-6 flex justify-center">
+          {/* Sign Out Button */}
+          <div className="pt-8 flex justify-center">
             <Button 
               onClick={handleSignOut}
               variant="destructive"
-              className="hover:bg-rose transition-colors"
+              className="px-8 py-6 text-lg hover:bg-rose transition-colors"
             >
               Se déconnecter
             </Button>
