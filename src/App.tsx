@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "./integrations/supabase/client";
 import Login from "./pages/Login";
-import Index from "./pages/Index";
 import Profile from "./pages/Profile";
 import Profiles from "./pages/Profiles";
+import { NavigationMenu } from "./components/navigation/NavigationMenu";
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -34,6 +34,7 @@ function App() {
 
   return (
     <Router>
+      {session && <NavigationMenu />}
       <Routes>
         <Route
           path="/"
