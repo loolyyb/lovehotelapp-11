@@ -46,9 +46,15 @@ export default function Challenges() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-4">
         <Trophy className="w-8 h-8 text-burgundy" />
         <h1 className="text-3xl font-bold text-burgundy">Défis en Couple</h1>
+      </div>
+
+      <div className="bg-cream/50 p-6 rounded-lg mb-8 shadow-sm">
+        <p className="text-gray-700 font-montserrat leading-relaxed">
+          Découvrez nos défis excitants conçus pour les couples ! Participez à différents types de challenges - des quiz coquins aux défis photos sensuels, en passant par des activités ludiques à deux. À chaque défi relevé, gagnez des tokens LooLyyb, une cryptomonnaie innovante et prometteuse. Accumulez suffisamment de tokens pour bénéficier d'avantages exclusifs comme des abonnements gratuits, des réductions sur nos services, ou convertissez-les en argent réel. Plus vous relevez de défis, plus vos récompenses sont importantes !
+        </p>
       </div>
 
       {loading ? (
