@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     getProfile();
@@ -22,16 +24,46 @@ export default function Profile() {
         return;
       }
 
-      const { data, error } = await supabase
+      // First try to get the existing profile
+      const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
+      if (fetchError) throw fetchError;
+
+      // If no profile exists, create one
+      if (!existingProfile) {
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            { 
+              user_id: user.id,
+              full_name: user.email?.split('@')[0] || 'New User', // Default name from email
+              is_love_hotel_member: false,
+              is_loolyb_holder: false
+            }
+          ])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        setProfile(newProfile);
+        toast({
+          title: "Profil créé",
+          description: "Votre profil a été créé avec succès.",
+        });
+      } else {
+        setProfile(existingProfile);
+      }
+    } catch (error: any) {
       console.error('Error loading profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger votre profil. Veuillez réessayer.",
+      });
     } finally {
       setLoading(false);
     }
