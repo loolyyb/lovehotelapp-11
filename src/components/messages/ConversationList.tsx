@@ -75,6 +75,7 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
   };
 
   const subscribeToNewMessages = () => {
+    console.log("Setting up real-time subscription for messages");
     const channel = supabase
       .channel('messages-changes')
       .on(
@@ -102,7 +103,16 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
       </div>
       <div className="flex-1 overflow-y-auto">
         {conversations.map((conversation) => {
-          const otherUser = conversation.user1_id === currentUserId ? conversation.user2 : conversation.user1;
+          // Get the profile of the other user in the conversation
+          const { data: currentUserProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('user_id', currentUserId)
+            .single();
+            
+          const otherUser = conversation.user1.id === currentUserProfile?.id 
+            ? conversation.user2 
+            : conversation.user1;
           const lastMessage = conversation.messages?.[0];
 
           return (
