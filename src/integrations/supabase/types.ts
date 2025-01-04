@@ -279,6 +279,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          allowed_viewers: string[] | null
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -295,8 +296,10 @@ export type Database = {
           updated_at: string
           user_id: string | null
           username: string | null
+          visibility: string
         }
         Insert: {
+          allowed_viewers?: string[] | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -313,8 +316,10 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           username?: string | null
+          visibility?: string
         }
         Update: {
+          allowed_viewers?: string[] | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -331,6 +336,7 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           username?: string | null
+          visibility?: string
         }
         Relationships: []
       }

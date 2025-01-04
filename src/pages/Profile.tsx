@@ -56,7 +56,12 @@ export default function Profile() {
             user_id: user.id,
             full_name: user.email?.split('@')[0] || 'New User',
             is_love_hotel_member: false,
-            is_loolyb_holder: false
+            is_loolyb_holder: false,
+            relationship_type: [],
+            seeking: [],
+            photo_urls: [],
+            visibility: 'public',
+            allowed_viewers: []
           }])
           .select()
           .single();
@@ -83,6 +88,16 @@ export default function Profile() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user');
+
+      // Ensure relationship_type is always an array
+      if (updates.relationship_type && !Array.isArray(updates.relationship_type)) {
+        updates.relationship_type = [updates.relationship_type];
+      }
+
+      // Ensure seeking is always an array
+      if (updates.seeking && !Array.isArray(updates.seeking)) {
+        updates.seeking = [updates.seeking];
+      }
 
       const { error } = await supabase
         .from('profiles')
@@ -132,6 +147,9 @@ export default function Profile() {
             bio={profile?.bio}
             canEdit={true}
             onAvatarChange={handleAvatarChange}
+            sexualOrientation={profile?.sexual_orientation}
+            seeking={profile?.seeking}
+            relationshipType={profile?.relationship_type}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -147,8 +165,8 @@ export default function Profile() {
               />
 
               <ProfileRelationshipType
-                relationshipType={profile?.relationship_type}
-                onRelationshipTypeChange={(type) => updateProfile({ relationship_type: type })}
+                relationshipType={profile?.relationship_type?.[0] || null}
+                onRelationshipTypeChange={(type) => updateProfile({ relationship_type: [type] })}
               />
             </div>
 
