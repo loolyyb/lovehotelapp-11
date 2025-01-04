@@ -5,50 +5,42 @@ const features = [
   {
     icon: Hotel,
     title: "Love Rooms",
-    description:
-      "Réservez des chambres luxueuses pour vos moments romantiques.",
+    description: "Réservez des chambres luxueuses pour vos moments romantiques dans nos établissements partenaires.",
   },
   {
     icon: Coins,
     title: "LooLyyb Coin",
-    description:
-      "Une monnaie dédiée aux amoureux pour des expériences uniques.",
+    description: "Une monnaie dédiée aux amoureux pour des expériences uniques et des avantages exclusifs.",
   },
   {
     icon: Utensils,
     title: "Restaurant Lovers",
-    description:
-      "Un restaurant exclusif pour des dîners romantiques mémorables.",
+    description: "Un restaurant exclusif pour des dîners romantiques mémorables et des rencontres de qualité.",
   },
   {
     icon: Calendar,
     title: "Events Exclusifs",
-    description:
-      "Speed dating, soirées à thème et événements VIP réguliers.",
+    description: "Speed dating, soirées à thème et événements VIP réguliers pour nos membres.",
   },
   {
     icon: Crown,
     title: "Expérience Premium",
-    description:
-      "Un service haut de gamme pour des rencontres de qualité.",
+    description: "Un service haut de gamme pour des rencontres authentiques et raffinées.",
   },
   {
     icon: Users,
     title: "Communauté Select",
-    description:
-      "Rejoignez une communauté de célibataires raffinés et authentiques.",
+    description: "Rejoignez une communauté de célibataires raffinés partageant les mêmes valeurs.",
   },
   {
     icon: Heart,
     title: "Matching Intelligent",
-    description:
-      "Un algorithme sophistiqué pour des rencontres qui vous correspondent.",
+    description: "Un algorithme sophistiqué pour des rencontres qui vous correspondent vraiment.",
   },
   {
     icon: Lock,
     title: "Confidentialité",
-    description:
-      "Votre vie privée est notre priorité absolue.",
+    description: "Votre vie privée est notre priorité absolue avec une sécurité renforcée.",
   },
 ];
 
