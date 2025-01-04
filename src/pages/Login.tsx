@@ -8,14 +8,14 @@ export default function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check current auth status
+    // Vérifier l'état de l'authentification actuel
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/profile");
       }
     });
 
-    // Listen for auth changes
+    // Écouter les changements d'état d'authentification
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
