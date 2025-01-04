@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageView } from "@/components/messages/MessageView";
 import { ConversationList } from "@/components/messages/ConversationList";
 import { useLocation } from "react-router-dom";
@@ -8,7 +8,6 @@ export default function Messages() {
   const location = useLocation();
 
   useEffect(() => {
-    // Check if there's a conversationId in the navigation state
     if (location.state?.conversationId) {
       setSelectedConversation(location.state.conversationId);
     }
