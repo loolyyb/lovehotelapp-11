@@ -11,6 +11,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tables } from "@/integrations/supabase/types";
+import { ProfileGallery } from "@/components/profile/ProfileGallery";
+import { ProfileSeekingDisplay } from "@/components/profile/ProfileSeekingDisplay";
 
 export default function ProfileDetails() {
   const { id } = useParams();
@@ -214,6 +216,10 @@ export default function ProfileDetails() {
               <p className="text-gray-700 whitespace-pre-wrap">{profile.description}</p>
             </div>
           )}
+
+          <ProfileGallery photos={profile.photo_urls} />
+          
+          <ProfileSeekingDisplay seeking={profile.seeking} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {preferences?.location && (
