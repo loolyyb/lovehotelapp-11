@@ -8,7 +8,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
   const isImage = message.content.startsWith('[Image]');
-  const imageUrl = isImage ? message.content.match(/\((.*?)\)/)[1] : null;
+  const imageUrl = isImage ? message.content.match(/\((.*?)\)/)?.[1] : null;
 
   return (
     <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
