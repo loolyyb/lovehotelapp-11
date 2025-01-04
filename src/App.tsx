@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { BrowserRouter as Router } from "react-router-dom";
+import { BrowserRouter as Router, useNavigate } from "react-router-dom";
 import { Header } from "./components/layout/Header";
 import { MobileNavBar } from "./components/layout/MobileNavBar";
 import { Toaster } from "@/components/ui/toaster";
@@ -17,6 +17,13 @@ function AppContent() {
   const isMobile = useIsMobile();
   const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (session && window.location.pathname === '/') {
+      navigate('/profile');
+    }
+  }, [session, navigate]);
 
   useEffect(() => {
     const initTheme = async () => {
