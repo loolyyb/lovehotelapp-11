@@ -6,9 +6,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type InterestType = "all" | "bdsm" | "jacuzzi" | "gastronomie" | "rideaux_ouverts" | "speed_dating" | "libertinage" | "art";
+
 interface MatchingFilterProps {
-  selectedInterest: string;
-  onInterestChange: (value: string) => void;
+  selectedInterest: InterestType;
+  onInterestChange: (value: InterestType) => void;
 }
 
 export function MatchingFilter({ selectedInterest, onInterestChange }: MatchingFilterProps) {

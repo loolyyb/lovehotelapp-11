@@ -8,6 +8,7 @@ import { MatchingCard } from "@/components/matching/MatchingCard";
 import { Database } from "@/integrations/supabase/types";
 
 type InterestType = Database["public"]["Enums"]["interest_type"];
+type FilterInterestType = InterestType | "all";
 
 interface Profile {
   id: string;
@@ -24,7 +25,7 @@ interface Preferences {
 export default function MatchingScores() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedInterest, setSelectedInterest] = useState<InterestType | "all">("all");
+  const [selectedInterest, setSelectedInterest] = useState<FilterInterestType>("all");
   const { toast } = useToast();
   const navigate = useNavigate();
 
