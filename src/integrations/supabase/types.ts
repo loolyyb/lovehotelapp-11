@@ -83,10 +83,10 @@ export type Database = {
           is_loolyb_holder: boolean | null
           is_love_hotel_member: boolean | null
           photo_urls: string[] | null
+          relationship_type: "casual" | "serious" | "libertine" | null;
           seeking: string[] | null
           sexual_orientation: string | null
           status: string | null
-          relationship_type: "casual" | "serious" | "libertine" | null
           updated_at: string
           user_id: string | null
           username: string | null
@@ -101,10 +101,10 @@ export type Database = {
           is_loolyb_holder?: boolean | null
           is_love_hotel_member?: boolean | null
           photo_urls?: string[] | null
+          relationship_type?: "casual" | "serious" | "libertine" | null;
           seeking?: string[] | null
           sexual_orientation?: string | null
           status?: string | null
-          relationship_type?: "casual" | "serious" | "libertine" | null
           updated_at?: string
           user_id?: string | null
           username?: string | null
@@ -119,10 +119,10 @@ export type Database = {
           is_loolyb_holder?: boolean | null
           is_love_hotel_member?: boolean | null
           photo_urls?: string[] | null
+          relationship_type?: "casual" | "serious" | "libertine" | null;
           seeking?: string[] | null
           sexual_orientation?: string | null
           status?: string | null
-          relationship_type?: "casual" | "serious" | "libertine" | null
           updated_at?: string
           user_id?: string | null
           username?: string | null
@@ -208,8 +208,8 @@ export type TablesUpdate<
     : never
   : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
     ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-      Update: infer U
-    }
+        Update: infer U
+      }
       ? U
       : never
     : never
