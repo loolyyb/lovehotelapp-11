@@ -11,8 +11,11 @@ interface Profile {
   full_name: string;
   avatar_url: string;
   bio: string;
-  interests: string[];
   compatibility_score?: number;
+}
+
+interface Preferences {
+  interests: string[];
 }
 
 export default function MatchingScores() {
@@ -34,7 +37,7 @@ export default function MatchingScores() {
         return;
       }
 
-      // Fetch user preferences using maybeSingle() instead of single()
+      // Fetch user preferences
       const { data: userPreferences, error: preferencesError } = await supabase
         .from("preferences")
         .select("interests")
@@ -55,31 +58,38 @@ export default function MatchingScores() {
         if (insertError) throw insertError;
       }
 
-      const { data: profiles, error: profilesError } = await supabase
+      // Fetch other profiles
+      const { data: otherProfiles, error: profilesError } = await supabase
         .from("profiles")
-        .select(`
-          id,
-          full_name,
-          avatar_url,
-          bio,
-          preferences (
-            interests
-          )
-        `)
+        .select("id, full_name, avatar_url, bio")
         .neq("user_id", session.user.id);
 
       if (profilesError) throw profilesError;
 
+      // Fetch preferences for other profiles
+      const { data: otherPreferences, error: otherPreferencesError } = await supabase
+        .from("preferences")
+        .select("interests, user_id");
+
+      if (otherPreferencesError) throw otherPreferencesError;
+
+      // Create a map of user_id to preferences
+      const preferencesMap = new Map(
+        otherPreferences.map((pref) => [pref.user_id, pref.interests || []])
+      );
+
       // Calculate compatibility scores
       const userInterests = userPreferences?.interests || [];
-      const scoredProfiles = profiles.map((profile: any) => {
-        const profileInterests = profile.preferences?.interests || [];
+      const scoredProfiles = otherProfiles.map((profile: any) => {
+        const profileInterests = preferencesMap.get(profile.user_id) || [];
         
         const commonInterests = userInterests.filter((interest: string) => 
           profileInterests.includes(interest)
         );
         
-        const compatibilityScore = (commonInterests.length / Math.max(userInterests.length, profileInterests.length)) * 100;
+        const compatibilityScore = userInterests.length && profileInterests.length
+          ? (commonInterests.length / Math.max(userInterests.length, profileInterests.length)) * 100
+          : 0;
 
         return {
           ...profile,
@@ -95,9 +105,10 @@ export default function MatchingScores() {
       // Filter by selected interest if not "all"
       const filteredProfiles = selectedInterest === "all" 
         ? sortedProfiles 
-        : sortedProfiles.filter((profile: any) => 
-            profile.preferences?.interests?.includes(selectedInterest)
-          );
+        : sortedProfiles.filter((profile: any) => {
+            const profileInterests = preferencesMap.get(profile.user_id) || [];
+            return profileInterests.includes(selectedInterest);
+          });
 
       setProfiles(filteredProfiles);
     } catch (error: any) {
