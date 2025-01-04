@@ -11,9 +11,9 @@ export const getTargetUserId = async (profileId: string) => {
   try {
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, user_id, username, full_name')
+      .select('id')
       .eq('id', profileId)
-      .maybeSingle();
+      .single();
     
     if (profileError) {
       console.error('Error fetching profile:', profileError);
@@ -30,7 +30,7 @@ export const getTargetUserId = async (profileId: string) => {
       return null;
     }
 
-    return profile.id; // Retourne l'ID du profil au lieu de user_id
+    return profile.id;
   } catch (error) {
     console.error('Error in getTargetUserId:', error);
     toast({
@@ -44,30 +44,39 @@ export const getTargetUserId = async (profileId: string) => {
 
 export const createOrGetConversation = async (currentUserId: string, targetUserId: string) => {
   try {
-    // D'abord, récupérer l'ID du profil de l'utilisateur courant
+    // Get current user's profile ID
     const { data: currentUserProfile, error: currentUserError } = await supabase
       .from('profiles')
       .select('id')
       .eq('user_id', currentUserId)
       .single();
 
-    if (currentUserError) throw currentUserError;
-    if (!currentUserProfile) throw new Error("Profil de l'utilisateur courant non trouvé");
+    if (currentUserError) {
+      console.error('Error getting current user profile:', currentUserError);
+      throw currentUserError;
+    }
 
-    // Vérifier si une conversation existe déjà
+    if (!currentUserProfile) {
+      throw new Error("Current user profile not found");
+    }
+
+    // Check if conversation exists
     const { data: existingConversations, error: queryError } = await supabase
       .from('conversations')
       .select('id')
       .or(`and(user1_id.eq.${currentUserProfile.id},user2_id.eq.${targetUserId}),and(user1_id.eq.${targetUserId},user2_id.eq.${currentUserProfile.id})`)
       .eq('status', 'active');
 
-    if (queryError) throw queryError;
+    if (queryError) {
+      console.error('Error checking existing conversations:', queryError);
+      throw queryError;
+    }
 
     if (existingConversations && existingConversations.length > 0) {
       return { id: existingConversations[0].id, isNew: false };
     }
 
-    // Créer une nouvelle conversation avec les IDs de profil
+    // Create new conversation using profile IDs
     const { data: newConversation, error: insertError } = await supabase
       .from('conversations')
       .insert({
@@ -78,8 +87,14 @@ export const createOrGetConversation = async (currentUserId: string, targetUserI
       .select('id')
       .single();
 
-    if (insertError) throw insertError;
-    if (!newConversation) throw new Error("Échec de la création de la conversation");
+    if (insertError) {
+      console.error('Error creating conversation:', insertError);
+      throw insertError;
+    }
+
+    if (!newConversation) {
+      throw new Error("Failed to create conversation");
+    }
 
     return { id: newConversation.id, isNew: true };
   } catch (error) {
