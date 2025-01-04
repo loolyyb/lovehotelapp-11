@@ -19,14 +19,26 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [targetUserId, setTargetUserId] = useState<string | null>(null);
 
   useEffect(() => {
     getCurrentUser();
-  }, []);
+    getTargetUserId();
+  }, [profileId]);
 
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setCurrentUserId(user?.id || null);
+  };
+
+  const getTargetUserId = async () => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('user_id')
+      .eq('id', profileId)
+      .maybeSingle();
+    
+    setTargetUserId(profile?.user_id || null);
   };
 
   const handleLike = () => {
@@ -53,14 +65,30 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
       return;
     }
 
+    if (!targetUserId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de trouver l'utilisateur cible.",
+      });
+      return;
+    }
+
     try {
       // Check if a conversation already exists
-      const { data: existingConversation } = await supabase
+      const { data: existingConversations, error: queryError } = await supabase
         .from('conversations')
         .select('id')
-        .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${profileId}),and(user1_id.eq.${profileId},user2_id.eq.${currentUserId})`)
-        .eq('status', 'active')
-        .single();
+        .or(`user1_id.eq.${currentUserId},user2_id.eq.${currentUserId}`)
+        .or(`user1_id.eq.${targetUserId},user2_id.eq.${targetUserId}`)
+        .eq('status', 'active');
+
+      if (queryError) throw queryError;
+
+      const existingConversation = existingConversations?.find(
+        conv => (conv.user1_id === currentUserId && conv.user2_id === targetUserId) ||
+               (conv.user1_id === targetUserId && conv.user2_id === currentUserId)
+      );
 
       if (existingConversation) {
         navigate('/messages', { state: { conversationId: existingConversation.id } });
@@ -70,17 +98,16 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
       // Create new conversation
       const { data: newConversation, error: conversationError } = await supabase
         .from('conversations')
-        .insert([
-          {
-            user1_id: currentUserId,
-            user2_id: profileId,
-            status: 'active'
-          }
-        ])
+        .insert({
+          user1_id: currentUserId,
+          user2_id: targetUserId,
+          status: 'active'
+        })
         .select()
-        .single();
+        .maybeSingle();
 
       if (conversationError) throw conversationError;
+      if (!newConversation) throw new Error("Failed to create conversation");
 
       toast({
         title: "Conversation créée",
