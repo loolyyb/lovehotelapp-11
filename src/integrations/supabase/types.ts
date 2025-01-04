@@ -82,6 +82,7 @@ export type Database = {
           id: string
           is_loolyb_holder: boolean | null
           is_love_hotel_member: boolean | null
+          photo_urls: string[] | null
           seeking: string[] | null
           sexual_orientation: string | null
           status: string | null
@@ -98,6 +99,7 @@ export type Database = {
           id?: string
           is_loolyb_holder?: boolean | null
           is_love_hotel_member?: boolean | null
+          photo_urls?: string[] | null
           seeking?: string[] | null
           sexual_orientation?: string | null
           status?: string | null
@@ -114,6 +116,7 @@ export type Database = {
           id?: string
           is_loolyb_holder?: boolean | null
           is_love_hotel_member?: boolean | null
+          photo_urls?: string[] | null
           seeking?: string[] | null
           sexual_orientation?: string | null
           status?: string | null
