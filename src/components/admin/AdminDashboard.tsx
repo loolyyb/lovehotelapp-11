@@ -52,14 +52,16 @@ export function AdminDashboard() {
             <div className="space-x-4">
               <Button
                 onClick={() => handleThemeChange("default")}
-                variant={currentThemeName === "default" ? "default" : "outline"}
+                variant={currentThemeName === "default" ? "secondary" : "outline"}
+                className="cursor-pointer hover:bg-secondary/80"
                 disabled={currentThemeName === "default"}
               >
                 Thème par défaut
               </Button>
               <Button
                 onClick={() => handleThemeChange("lover")}
-                variant={currentThemeName === "lover" ? "default" : "outline"}
+                variant={currentThemeName === "lover" ? "secondary" : "outline"}
+                className="cursor-pointer hover:bg-secondary/80"
                 disabled={currentThemeName === "lover"}
               >
                 Thème Lover
