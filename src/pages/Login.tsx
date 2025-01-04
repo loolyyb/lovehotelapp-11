@@ -1,44 +1,54 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 
 export default function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.onAuthStateChange((event, session) => {
+    // Check current auth status
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        navigate("/profile");
       }
     });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        navigate("/profile");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center bg-gradient-to-r from-pink-50 to-rose-100 pt-12">
-      <div className="w-full max-w-md px-4">
-        <Card className="p-8 space-y-4">
-          <h1 className="text-3xl font-playfair text-center mb-6">Welcome Back</h1>
-          <Auth
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: '#7C3A47',
-                    brandAccent: '#96495B',
-                  }
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-champagne to-cream px-4">
+      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
+        <h1 className="text-3xl font-cormorant text-burgundy font-bold text-center mb-8">
+          Connexion
+        </h1>
+        <Auth
+          supabaseClient={supabase}
+          appearance={{
+            theme: ThemeSupa,
+            variables: {
+              default: {
+                colors: {
+                  brand: '#800020',
+                  brandAccent: '#600018',
                 }
               }
-            }}
-            providers={[]}
-            theme="light"
-          />
-        </Card>
+            }
+          }}
+          providers={[]}
+          redirectTo={window.location.origin}
+        />
       </div>
     </div>
   );
