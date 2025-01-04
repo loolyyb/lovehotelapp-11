@@ -9,7 +9,6 @@ export const useAuthSession = () => {
 
   const refreshSession = async () => {
     try {
-      setLoading(true);
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
       
@@ -20,8 +19,12 @@ export const useAuthSession = () => {
           .eq('user_id', currentSession.user.id)
           .single();
         
-        if (error) throw error;
-        setUserProfile(profile);
+        if (error) {
+          console.error('Error fetching profile:', error);
+          setUserProfile(null);
+        } else {
+          setUserProfile(profile);
+        }
       } else {
         setUserProfile(null);
       }
