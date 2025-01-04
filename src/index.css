@@ -29,26 +29,39 @@
   }
 
   [data-theme="lover"] {
-    --background: 300 100% 98%;
-    --foreground: 270 60% 20%;
-    --card: 300 100% 98%;
-    --card-foreground: 270 60% 20%;
-    --popover: 300 100% 98%;
-    --popover-foreground: 270 60% 20%;
-    --primary: 270 60% 50%;
+    /* Couleurs principales */
+    --background: 350 100% 98%; /* Fond blanc légèrement rosé */
+    --foreground: 346 33% 33%; /* Texte principal en bordeaux */
+    
+    /* Cartes et conteneurs */
+    --card: 0 0% 100%;
+    --card-foreground: 346 33% 33%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 346 33% 33%;
+    
+    /* Couleurs d'action */
+    --primary: 346 80% 60%; /* Rose vif pour les actions principales */
     --primary-foreground: 0 0% 100%;
-    --secondary: 300 90% 60%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 260 40% 54%;
-    --muted-foreground: 0 0% 100%;
-    --accent: 260 40% 54%;
+    --secondary: 350 100% 96%; /* Rose très pâle pour les éléments secondaires */
+    --secondary-foreground: 346 33% 33%;
+    
+    /* Éléments d'interface */
+    --muted: 346 20% 90%;
+    --muted-foreground: 346 33% 45%;
+    --accent: 346 80% 60%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 260 40% 54%;
-    --input: 260 40% 54%;
-    --ring: 270 60% 50%;
-    --radius: 1.5rem;
+    
+    /* États et retours */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Bordures et inputs */
+    --border: 346 30% 90%;
+    --input: 346 30% 90%;
+    --ring: 346 80% 60%;
+    
+    /* Radius pour les composants */
+    --radius: 1rem;
   }
 }
 
@@ -65,10 +78,46 @@
   }
 }
 
+/* Classes utilitaires pour le thème lover */
 .font-cormorant {
   font-family: 'Cormorant Garamond', serif;
 }
 
 .font-montserrat {
   font-family: 'Montserrat', sans-serif;
+}
+
+/* Effets visuels pour le thème lover */
+[data-theme="lover"] .glass-card {
+  @apply bg-white/70 backdrop-blur-sm border border-white/20 shadow-lg;
+}
+
+[data-theme="lover"] .hover-scale {
+  @apply transition-transform duration-300 hover:scale-105;
+}
+
+[data-theme="lover"] .button-gradient {
+  background: linear-gradient(135deg, hsl(346, 80%, 60%) 0%, hsl(346, 70%, 50%) 100%);
+  @apply hover:opacity-90 transition-opacity duration-300;
+}
+
+[data-theme="lover"] .card-gradient {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 240, 245, 0.9) 100%);
+  @apply backdrop-blur-sm border border-white/20;
+}
+
+/* Animations pour le thème lover */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-theme="lover"] .animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
 }
