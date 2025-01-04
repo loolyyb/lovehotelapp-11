@@ -4,41 +4,50 @@ import { toast } from "@/hooks/use-toast";
 export const getCurrentUserId = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('user_id')
-    .eq('id', user.id)
-    .maybeSingle();
-  
-  return profile?.user_id || user.id;
+  return user.id;
 };
 
 export const getTargetUserId = async (profileId: string) => {
   try {
-    const { data: profile, error } = await supabase
+    // D'abord, on récupère le profil avec l'ID fourni
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('user_id')
       .eq('id', profileId)
       .maybeSingle();
     
-    if (error) throw error;
-    if (!profile?.user_id) {
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      throw profileError;
+    }
+
+    if (!profile) {
+      console.error('No profile found with ID:', profileId);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de trouver l'utilisateur cible.",
+        description: "Profil introuvable.",
+      });
+      return null;
+    }
+
+    if (!profile.user_id) {
+      console.error('Profile found but no user_id associated:', profileId);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Ce profil n'est pas associé à un utilisateur.",
       });
       return null;
     }
     
     return profile.user_id;
   } catch (error) {
-    console.error('Error fetching target user:', error);
+    console.error('Error in getTargetUserId:', error);
     toast({
       variant: "destructive",
       title: "Erreur",
-      description: "Impossible de trouver l'utilisateur cible.",
+      description: "Impossible de récupérer les informations de l'utilisateur.",
     });
     return null;
   }
@@ -46,38 +55,36 @@ export const getTargetUserId = async (profileId: string) => {
 
 export const createOrGetConversation = async (currentUserId: string, targetUserId: string) => {
   try {
-    // Check if a conversation already exists
+    // Vérifier si une conversation existe déjà
     const { data: existingConversations, error: queryError } = await supabase
       .from('conversations')
-      .select('id, user1_id, user2_id')
+      .select('id')
       .or(`and(user1_id.eq.${currentUserId},user2_id.eq.${targetUserId}),and(user1_id.eq.${targetUserId},user2_id.eq.${currentUserId})`)
       .eq('status', 'active');
 
     if (queryError) throw queryError;
 
-    const existingConversation = existingConversations?.[0];
-
-    if (existingConversation) {
-      return { id: existingConversation.id, isNew: false };
+    if (existingConversations && existingConversations.length > 0) {
+      return { id: existingConversations[0].id, isNew: false };
     }
 
-    // Create new conversation
-    const { data: newConversation, error: conversationError } = await supabase
+    // Créer une nouvelle conversation
+    const { data: newConversation, error: insertError } = await supabase
       .from('conversations')
       .insert({
         user1_id: currentUserId,
         user2_id: targetUserId,
         status: 'active'
       })
-      .select()
-      .maybeSingle();
+      .select('id')
+      .single();
 
-    if (conversationError) throw conversationError;
-    if (!newConversation) throw new Error("Failed to create conversation");
+    if (insertError) throw insertError;
+    if (!newConversation) throw new Error("Échec de la création de la conversation");
 
     return { id: newConversation.id, isNew: true };
   } catch (error) {
-    console.error('Error managing conversation:', error);
+    console.error('Error in createOrGetConversation:', error);
     throw error;
   }
 };
