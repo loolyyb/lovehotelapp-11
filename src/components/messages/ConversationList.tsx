@@ -13,6 +13,7 @@ interface ConversationListProps {
 export function ConversationList({ onSelectConversation, selectedConversationId }: ConversationListProps) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -20,6 +21,12 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
     fetchConversations();
     subscribeToNewMessages();
   }, []);
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchCurrentUserProfile();
+    }
+  }, [currentUserId]);
 
   const getCurrentUser = async () => {
     try {
@@ -29,6 +36,23 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
       }
     } catch (error) {
       console.error("Error getting current user:", error);
+    }
+  };
+
+  const fetchCurrentUserProfile = async () => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', currentUserId)
+        .single();
+
+      if (error) throw error;
+      if (profile) {
+        setCurrentUserProfileId(profile.id);
+      }
+    } catch (error) {
+      console.error("Error fetching current user profile:", error);
     }
   };
 
@@ -103,14 +127,7 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
       </div>
       <div className="flex-1 overflow-y-auto">
         {conversations.map((conversation) => {
-          // Get the profile of the other user in the conversation
-          const { data: currentUserProfile } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('user_id', currentUserId)
-            .single();
-            
-          const otherUser = conversation.user1.id === currentUserProfile?.id 
+          const otherUser = conversation.user1.id === currentUserProfileId 
             ? conversation.user2 
             : conversation.user1;
           const lastMessage = conversation.messages?.[0];
