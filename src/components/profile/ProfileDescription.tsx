@@ -1,6 +1,7 @@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileDescriptionProps {
   initialDescription?: string | null;
@@ -9,6 +10,18 @@ interface ProfileDescriptionProps {
 
 export function ProfileDescription({ initialDescription, onSave }: ProfileDescriptionProps) {
   const [description, setDescription] = useState(initialDescription ?? "");
+  const { toast } = useToast();
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (e.target.value.length <= 300) {
+      setDescription(e.target.value);
+      onSave(e.target.value);
+      toast({
+        title: "Description mise à jour",
+        description: "Votre description a été enregistrée avec succès.",
+      });
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -16,12 +29,7 @@ export function ProfileDescription({ initialDescription, onSave }: ProfileDescri
       <Textarea
         id="description"
         value={description}
-        onChange={(e) => {
-          if (e.target.value.length <= 300) {
-            setDescription(e.target.value);
-            onSave(e.target.value);
-          }
-        }}
+        onChange={handleChange}
         placeholder="Décrivez-vous en quelques mots..."
         className="min-h-[100px]"
       />

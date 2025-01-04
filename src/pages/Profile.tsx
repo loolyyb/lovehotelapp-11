@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileDescription } from "@/components/profile/ProfileDescription";
 import { ProfileStatus } from "@/components/profile/ProfileStatus";
@@ -92,7 +92,7 @@ export default function Profile() {
       setProfile((prev: any) => ({ ...prev, ...updates }));
       toast({
         title: "Profil mis à jour",
-        description: "Vos modifications ont été enregistrées.",
+        description: "Vos modifications ont été enregistrées avec succès.",
       });
     } catch (error: any) {
       console.error('Error updating profile:', error);

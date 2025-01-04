@@ -1,6 +1,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { User, Users } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileSeekingProps {
   seeking?: string[] | null;
@@ -10,6 +11,8 @@ interface ProfileSeekingProps {
 }
 
 export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }: ProfileSeekingProps) {
+  const { toast } = useToast();
+
   const handleSeekingChange = (value: string, checked: boolean) => {
     const newSeeking = seeking ? [...seeking] : [];
     if (checked) {
@@ -21,6 +24,10 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
       }
     }
     onSeekingChange(newSeeking);
+    toast({
+      title: "Préférences mises à jour",
+      description: "Vos préférences de recherche ont été modifiées avec succès.",
+    });
   };
 
   const getAvailableOptions = () => {

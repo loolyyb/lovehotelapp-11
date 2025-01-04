@@ -1,6 +1,7 @@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Heart } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileOrientationProps {
   orientation?: string | null;
@@ -8,12 +9,22 @@ interface ProfileOrientationProps {
 }
 
 export function ProfileOrientation({ orientation, onOrientationChange }: ProfileOrientationProps) {
+  const { toast } = useToast();
+
+  const handleOrientationChange = (value: string) => {
+    onOrientationChange(value);
+    toast({
+      title: "Orientation mise à jour",
+      description: "Votre orientation a été modifiée avec succès.",
+    });
+  };
+
   return (
     <div className="space-y-4">
       <Label>Orientation sexuelle</Label>
       <RadioGroup
         value={orientation ?? undefined}
-        onValueChange={onOrientationChange}
+        onValueChange={handleOrientationChange}
         className="flex flex-col space-y-2"
       >
         <div className="flex items-center space-x-2">

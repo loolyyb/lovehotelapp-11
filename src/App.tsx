@@ -7,6 +7,7 @@ import Profile from "./pages/Profile";
 import Profiles from "./pages/Profiles";
 import Landing from "./pages/Landing";
 import { NavigationMenu } from "./components/navigation/NavigationMenu";
+import { Toaster } from "@/components/ui/toaster";
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -50,6 +51,7 @@ function App() {
           element={session ? <Profile /> : <Navigate to="/login" replace />}
         />
       </Routes>
+      <Toaster />
     </Router>
   );
 }
