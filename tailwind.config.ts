@@ -18,6 +18,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        montserrat: ['Montserrat', 'sans-serif'],
+        cormorant: ['Cormorant Garamond', 'serif'],
+      },
       colors: {
         champagne: "#F7E6D0",
         rose: "#E8C1C5",
