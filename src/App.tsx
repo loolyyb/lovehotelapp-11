@@ -36,22 +36,24 @@ function App() {
 
   return (
     <Router>
-      {session && <NavigationMenu />}
-      <Routes>
-        <Route
-          path="/"
-          element={session ? <Profiles /> : <Landing />}
-        />
-        <Route
-          path="/login"
-          element={!session ? <Login /> : <Navigate to="/" replace />}
-        />
-        <Route
-          path="/profile"
-          element={session ? <Profile /> : <Navigate to="/login" replace />}
-        />
-      </Routes>
-      <Toaster />
+      <div className="min-h-screen w-full overflow-x-hidden">
+        {session && <NavigationMenu />}
+        <Routes>
+          <Route
+            path="/"
+            element={session ? <Profiles /> : <Landing />}
+          />
+          <Route
+            path="/login"
+            element={!session ? <Login /> : <Navigate to="/" replace />}
+          />
+          <Route
+            path="/profile"
+            element={session ? <Profile /> : <Navigate to="/login" replace />}
+          />
+        </Routes>
+        <Toaster />
+      </div>
     </Router>
   );
 }
