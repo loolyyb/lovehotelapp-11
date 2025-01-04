@@ -9,6 +9,8 @@ import { ProfileDescription } from "@/components/profile/ProfileDescription";
 import { ProfileStatus } from "@/components/profile/ProfileStatus";
 import { ProfileOrientation } from "@/components/profile/ProfileOrientation";
 import { ProfileSeeking } from "@/components/profile/ProfileSeeking";
+import { ProfileRelationshipType } from "@/components/profile/ProfileRelationshipType";
+import { ProfilePhotoGallery } from "@/components/profile/ProfilePhotoGallery";
 import { Save } from "lucide-react";
 
 export default function Profile() {
@@ -108,6 +110,10 @@ export default function Profile() {
     await updateProfile({ avatar_url: avatarUrl });
   };
 
+  const handlePhotosChange = async (photos: string[]) => {
+    await updateProfile({ photo_urls: photos });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 flex items-center justify-center">
@@ -139,6 +145,11 @@ export default function Profile() {
                 status={profile?.status}
                 onStatusChange={(status) => updateProfile({ status })}
               />
+
+              <ProfileRelationshipType
+                relationshipType={profile?.relationship_type}
+                onRelationshipTypeChange={(type) => updateProfile({ relationship_type: type })}
+              />
             </div>
 
             <div className="space-y-8">
@@ -155,6 +166,11 @@ export default function Profile() {
               />
             </div>
           </div>
+
+          <ProfilePhotoGallery
+            photos={profile?.photo_urls}
+            onPhotosChange={handlePhotosChange}
+          />
 
           <div className="pt-8 flex justify-center">
             <Button 
