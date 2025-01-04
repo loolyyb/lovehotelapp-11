@@ -104,6 +104,10 @@ export default function Profile() {
     }
   };
 
+  const handleAvatarChange = async (avatarUrl: string) => {
+    await updateProfile({ avatar_url: avatarUrl });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 flex items-center justify-center">
@@ -120,6 +124,8 @@ export default function Profile() {
             avatarUrl={profile?.avatar_url}
             fullName={profile?.full_name}
             bio={profile?.bio}
+            canEdit={true}
+            onAvatarChange={handleAvatarChange}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
