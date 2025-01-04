@@ -42,12 +42,19 @@ export function needsUpdate(currentVersion: string, targetVersion: string): bool
   return compareVersions(currentVersion, targetVersion) === -1;
 }
 
-export function incrementVersion(version: string): string {
+export function incrementVersion(version: string, isMajorUpdate: boolean = false): string {
   const versionObj = parseVersion(version);
-  versionObj.minor += 0.1;
-  // Round to one decimal place to avoid floating point precision issues
-  const newMinor = Math.round(versionObj.minor * 10) / 10;
-  return `${versionObj.major}.${newMinor}.${versionObj.patch}`;
+  
+  if (isMajorUpdate) {
+    // Pour les mises à jour majeures, on incrémente le numéro mineur (0.1.0)
+    versionObj.minor += 1;
+    versionObj.patch = 0;
+  } else {
+    // Pour les petites mises à jour, on incrémente juste le patch (0.0.1)
+    versionObj.patch += 1;
+  }
+  
+  return `${versionObj.major}.${versionObj.minor}.${versionObj.patch}`;
 }
 
 export async function getCurrentVersion(): Promise<string> {
@@ -82,10 +89,10 @@ export async function getCurrentVersion(): Promise<string> {
   }
 }
 
-export async function updateVersion(): Promise<void> {
+export async function updateVersion(isMajorUpdate: boolean = false): Promise<void> {
   try {
     const currentVersion = await getCurrentVersion();
-    const newVersion = incrementVersion(currentVersion);
+    const newVersion = incrementVersion(currentVersion, isMajorUpdate);
 
     const { error } = await supabase
       .from('admin_settings')
