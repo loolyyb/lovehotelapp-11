@@ -8,7 +8,6 @@ export default function Messages() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const { toast } = useToast();
-  const user = supabase.auth.getUser();
 
   useEffect(() => {
     fetchConversations();
@@ -24,11 +23,11 @@ export default function Messages() {
         .from('conversations')
         .select(`
           *,
-          user1:profiles!conversations_user1_id_fkey(
+          user1:profiles!conversations_user1_profile_fkey(
             avatar_url,
             full_name
           ),
-          user2:profiles!conversations_user2_id_fkey(
+          user2:profiles!conversations_user2_profile_fkey(
             avatar_url,
             full_name
           ),
