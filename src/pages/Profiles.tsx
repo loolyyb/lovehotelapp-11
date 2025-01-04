@@ -105,6 +105,11 @@ export default function Profiles() {
       );
     }
 
+    // Filter by open curtains preference
+    if (criteria.openCurtains) {
+      filtered = filtered.filter(({ preferences }) => preferences?.open_curtains === true);
+    }
+
     setFilteredProfiles(filtered);
   };
 

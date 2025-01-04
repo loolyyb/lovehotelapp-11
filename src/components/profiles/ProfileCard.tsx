@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Heart } from "lucide-react";
+import { MapPin, Heart, Window } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 
 interface ProfileCardProps {
@@ -55,16 +55,17 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
               </div>
             )}
 
-            {(profile.is_love_hotel_member || profile.is_loolyb_holder) && (
-              <div className="flex items-center justify-center space-x-3 mt-3">
-                {profile.is_love_hotel_member && (
-                  <Heart className="w-5 h-5 text-rose" />
-                )}
-                {profile.is_loolyb_holder && (
-                  <div className="w-5 h-5 rounded-full bg-burgundy" />
-                )}
-              </div>
-            )}
+            <div className="flex items-center justify-center space-x-3 mt-3">
+              {profile.is_love_hotel_member && (
+                <Heart className="w-5 h-5 text-rose" />
+              )}
+              {profile.is_loolyb_holder && (
+                <div className="w-5 h-5 rounded-full bg-burgundy" />
+              )}
+              {preferences?.open_curtains && (
+                <Window className="w-5 h-5 text-burgundy" title="Rideaux ouverts" />
+              )}
+            </div>
           </div>
         </div>
       </CardContent>

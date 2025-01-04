@@ -44,6 +44,7 @@ export type Database = {
           location: string | null
           max_age: number | null
           min_age: number | null
+          open_curtains: boolean | null
           updated_at: string
           user_id: string | null
         }
@@ -54,6 +55,7 @@ export type Database = {
           location?: string | null
           max_age?: number | null
           min_age?: number | null
+          open_curtains?: boolean | null
           updated_at?: string
           user_id?: string | null
         }
@@ -64,6 +66,7 @@ export type Database = {
           location?: string | null
           max_age?: number | null
           min_age?: number | null
+          open_curtains?: boolean | null
           updated_at?: string
           user_id?: string | null
         }

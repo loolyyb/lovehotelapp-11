@@ -8,8 +8,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, MapPin, Heart, Users } from "lucide-react";
+import { Filter, MapPin, Heart, Users, Window } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export type FilterCriteria = {
   searchTerm: string;
@@ -18,6 +20,7 @@ export type FilterCriteria = {
   status?: string;
   orientation?: string;
   membershipType?: string[];
+  openCurtains?: boolean;
 };
 
 interface ProfilesFilterProps {
@@ -28,6 +31,7 @@ export function ProfilesFilter({ onFilterChange }: ProfilesFilterProps) {
   const [filters, setFilters] = useState<FilterCriteria>({
     searchTerm: "",
     membershipType: [],
+    openCurtains: false,
   });
 
   const handleFilterChange = (key: keyof FilterCriteria, value: any) => {
@@ -120,21 +124,35 @@ export function ProfilesFilter({ onFilterChange }: ProfilesFilterProps) {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 pt-2">
-          <Badge
-            variant={filters.membershipType?.includes("love_hotel") ? "default" : "outline"}
-            className="cursor-pointer hover:bg-rose"
-            onClick={() => toggleMembershipType("love_hotel")}
-          >
-            Love Hotel Member
-          </Badge>
-          <Badge
-            variant={filters.membershipType?.includes("loolyb") ? "default" : "outline"}
-            className="cursor-pointer hover:bg-rose"
-            onClick={() => toggleMembershipType("loolyb")}
-          >
-            LooLyb Holder
-          </Badge>
+        <div className="flex flex-wrap items-center gap-4 pt-2">
+          <div className="flex flex-wrap gap-2">
+            <Badge
+              variant={filters.membershipType?.includes("love_hotel") ? "default" : "outline"}
+              className="cursor-pointer hover:bg-rose"
+              onClick={() => toggleMembershipType("love_hotel")}
+            >
+              Love Hotel Member
+            </Badge>
+            <Badge
+              variant={filters.membershipType?.includes("loolyb") ? "default" : "outline"}
+              className="cursor-pointer hover:bg-rose"
+              onClick={() => toggleMembershipType("loolyb")}
+            >
+              LooLyb Holder
+            </Badge>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="open-curtains"
+              checked={filters.openCurtains}
+              onCheckedChange={(checked) => handleFilterChange("openCurtains", checked)}
+            />
+            <Label htmlFor="open-curtains" className="flex items-center gap-2 cursor-pointer">
+              <Window className="w-4 h-4" />
+              Rideaux ouverts
+            </Label>
+          </div>
         </div>
       </div>
     </Card>
