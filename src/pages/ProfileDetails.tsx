@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 import { ProfileGallery } from "@/components/profile/ProfileGallery";
 import { ProfileSeekingDisplay } from "@/components/profile/ProfileSeekingDisplay";
-import { RelationshipStatusIcon } from "@/components/profile/RelationshipStatusIcon";
+import { RelationshipStatusIcon, RelationshipType } from "@/components/profile/RelationshipStatusIcon";
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfilePreferences } from "@/components/profile/ProfilePreferences";
 
@@ -109,7 +109,7 @@ export default function ProfileDetails() {
               {profile.is_love_hotel_member && (
                 <div className="absolute -top-2 -right-2">
                   <RelationshipStatusIcon 
-                    type={profile.relationship_type ?? null}
+                    type={profile.relationship_type as RelationshipType}
                     className="shadow-lg"
                   />
                 </div>
