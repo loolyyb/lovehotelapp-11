@@ -20,6 +20,7 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
   const navigate = useNavigate();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
+  const [isTestProfile, setIsTestProfile] = useState(false);
 
   useEffect(() => {
     loadUserIds();
@@ -30,10 +31,21 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
     setCurrentUserId(current);
     
     const target = await getTargetUserId(profileId);
+    if (!target) {
+      setIsTestProfile(true);
+    }
     setTargetUserId(target);
   };
 
   const handleLike = () => {
+    if (isTestProfile) {
+      toast({
+        variant: "destructive",
+        title: "Profil de test",
+        description: "Vous ne pouvez pas interagir avec un profil de test.",
+      });
+      return;
+    }
     toast({
       title: "Coup de cœur envoyé !",
       description: "Cette personne sera notifiée de votre intérêt.",
@@ -41,6 +53,14 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
   };
 
   const handleCurtainRequest = () => {
+    if (isTestProfile) {
+      toast({
+        variant: "destructive",
+        title: "Profil de test",
+        description: "Vous ne pouvez pas interagir avec un profil de test.",
+      });
+      return;
+    }
     toast({
       title: "Demande envoyée !",
       description: "Votre intérêt pour un moment rideau ouvert a été enregistré.",
@@ -48,6 +68,15 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
   };
 
   const handleMessage = async () => {
+    if (isTestProfile) {
+      toast({
+        variant: "destructive",
+        title: "Profil de test",
+        description: "Vous ne pouvez pas envoyer de message à un profil de test.",
+      });
+      return;
+    }
+
     if (!currentUserId) {
       toast({
         variant: "destructive",
@@ -95,13 +124,14 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
             <Button
               onClick={handleLike}
               className="bg-burgundy hover:bg-burgundy/90"
+              disabled={isTestProfile}
             >
               <Heart className="mr-2 h-5 w-5" />
               Coup de cœur
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Envoyer un coup de cœur</p>
+            <p>{isTestProfile ? "Action non disponible sur un profil de test" : "Envoyer un coup de cœur"}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -111,13 +141,14 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
               onClick={handleCurtainRequest}
               variant="outline"
               className="border-burgundy text-burgundy hover:bg-burgundy/10"
+              disabled={isTestProfile}
             >
               <Blinds className="mr-2 h-5 w-5" />
               Rideau ouvert
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Demander un moment rideau ouvert</p>
+            <p>{isTestProfile ? "Action non disponible sur un profil de test" : "Demander un moment rideau ouvert"}</p>
           </TooltipContent>
         </Tooltip>
 
@@ -127,13 +158,14 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
               onClick={handleMessage}
               variant="outline"
               className="border-burgundy text-burgundy hover:bg-burgundy/10"
+              disabled={isTestProfile}
             >
               <MessageCircle className="mr-2 h-5 w-5" />
               Message
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Envoyer un message</p>
+            <p>{isTestProfile ? "Action non disponible sur un profil de test" : "Envoyer un message"}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
