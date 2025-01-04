@@ -54,7 +54,6 @@ export function AdminDashboard() {
                 onClick={() => handleThemeChange("default")}
                 variant={currentThemeName === "default" ? "secondary" : "outline"}
                 className="cursor-pointer hover:bg-secondary/80"
-                disabled={currentThemeName === "default"}
               >
                 Thème par défaut
               </Button>
@@ -62,7 +61,6 @@ export function AdminDashboard() {
                 onClick={() => handleThemeChange("lover")}
                 variant={currentThemeName === "lover" ? "secondary" : "outline"}
                 className="cursor-pointer hover:bg-secondary/80"
-                disabled={currentThemeName === "lover"}
               >
                 Thème Lover
               </Button>
