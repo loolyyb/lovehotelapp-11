@@ -1,15 +1,10 @@
-import { Button } from "@/components/ui/button";
 import { Heart, MessageCircle, Blinds } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getCurrentUserId, getTargetUserId, createOrGetConversation } from "@/utils/conversationUtils";
+import { ProfileActionButton } from "./ProfileActionButton";
 
 interface ProfileActionsProps {
   profileId: string;
@@ -37,13 +32,17 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
     setTargetUserId(target);
   };
 
+  const handleTestProfileError = () => {
+    toast({
+      variant: "destructive",
+      title: "Profil de test",
+      description: "Vous ne pouvez pas interagir avec un profil de test.",
+    });
+  };
+
   const handleLike = () => {
     if (isTestProfile) {
-      toast({
-        variant: "destructive",
-        title: "Profil de test",
-        description: "Vous ne pouvez pas interagir avec un profil de test.",
-      });
+      handleTestProfileError();
       return;
     }
     toast({
@@ -54,11 +53,7 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
 
   const handleCurtainRequest = () => {
     if (isTestProfile) {
-      toast({
-        variant: "destructive",
-        title: "Profil de test",
-        description: "Vous ne pouvez pas interagir avec un profil de test.",
-      });
+      handleTestProfileError();
       return;
     }
     toast({
@@ -69,11 +64,7 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
 
   const handleMessage = async () => {
     if (isTestProfile) {
-      toast({
-        variant: "destructive",
-        title: "Profil de test",
-        description: "Vous ne pouvez pas envoyer de message à un profil de test.",
-      });
+      handleTestProfileError();
       return;
     }
 
@@ -119,55 +110,34 @@ export function ProfileActions({ profileId }: ProfileActionsProps) {
   return (
     <div className="flex flex-wrap gap-4 justify-center mt-6">
       <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleLike}
-              className="bg-burgundy hover:bg-burgundy/90"
-              disabled={isTestProfile}
-            >
-              <Heart className="mr-2 h-5 w-5" />
-              Coup de cœur
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{isTestProfile ? "Action non disponible sur un profil de test" : "Envoyer un coup de cœur"}</p>
-          </TooltipContent>
-        </Tooltip>
+        <ProfileActionButton
+          icon={Heart}
+          label="Coup de cœur"
+          onClick={handleLike}
+          disabled={isTestProfile}
+          tooltipText="Envoyer un coup de cœur"
+          disabledTooltipText="Action non disponible sur un profil de test"
+        />
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleCurtainRequest}
-              variant="outline"
-              className="border-burgundy text-burgundy hover:bg-burgundy/10"
-              disabled={isTestProfile}
-            >
-              <Blinds className="mr-2 h-5 w-5" />
-              Rideau ouvert
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{isTestProfile ? "Action non disponible sur un profil de test" : "Demander un moment rideau ouvert"}</p>
-          </TooltipContent>
-        </Tooltip>
+        <ProfileActionButton
+          icon={Blinds}
+          label="Rideau ouvert"
+          onClick={handleCurtainRequest}
+          disabled={isTestProfile}
+          variant="outline"
+          tooltipText="Demander un moment rideau ouvert"
+          disabledTooltipText="Action non disponible sur un profil de test"
+        />
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleMessage}
-              variant="outline"
-              className="border-burgundy text-burgundy hover:bg-burgundy/10"
-              disabled={isTestProfile}
-            >
-              <MessageCircle className="mr-2 h-5 w-5" />
-              Message
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{isTestProfile ? "Action non disponible sur un profil de test" : "Envoyer un message"}</p>
-          </TooltipContent>
-        </Tooltip>
+        <ProfileActionButton
+          icon={MessageCircle}
+          label="Message"
+          onClick={handleMessage}
+          disabled={isTestProfile}
+          variant="outline"
+          tooltipText="Envoyer un message"
+          disabledTooltipText="Action non disponible sur un profil de test"
+        />
       </TooltipProvider>
     </div>
   );
