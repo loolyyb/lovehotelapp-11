@@ -136,7 +136,8 @@
 }
 
 #lovehotel-booking button {
-  @apply bg-primary text-white font-medium px-4 py-2 rounded-lg hover:opacity-90 transition-all duration-300 shadow-sm;
+  background-color: #EB476D;
+  @apply text-white font-medium px-4 py-2 rounded-lg hover:opacity-90 transition-all duration-300 shadow-sm;
 }
 
 #lovehotel-booking input,
