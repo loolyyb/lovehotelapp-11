@@ -1,4 +1,6 @@
 import { Tables } from "@/integrations/supabase/types";
+import { MapPin, Heart } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface ProfilePreferencesProps {
   preferences: Tables<"preferences"> | null;
@@ -11,16 +13,29 @@ export function ProfilePreferences({ preferences, profile }: ProfilePreferencesP
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {preferences?.location && (
-        <div className="p-4 bg-champagne/30 rounded-lg">
-          <h3 className="font-semibold text-burgundy mb-2">Localisation</h3>
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          className="glass-card p-6 rounded-xl space-y-3"
+        >
+          <div className="flex items-center gap-2 text-burgundy">
+            <MapPin className="w-5 h-5" />
+            <h3 className="font-semibold">Localisation</h3>
+          </div>
           <p className="text-gray-700">{preferences.location}</p>
-        </div>
+        </motion.div>
       )}
+      
       {profile.sexual_orientation && (
-        <div className="p-4 bg-champagne/30 rounded-lg">
-          <h3 className="font-semibold text-burgundy mb-2">Orientation</h3>
+        <motion.div 
+          whileHover={{ scale: 1.02 }}
+          className="glass-card p-6 rounded-xl space-y-3"
+        >
+          <div className="flex items-center gap-2 text-burgundy">
+            <Heart className="w-5 h-5" />
+            <h3 className="font-semibold">Orientation</h3>
+          </div>
           <p className="text-gray-700">{profile.sexual_orientation}</p>
-        </div>
+        </motion.div>
       )}
     </div>
   );
