@@ -1,0 +1,23 @@
+@layer components {
+  #lovehotel-booking .tabs {
+    @apply flex space-x-2 mb-6 border-b border-purple-200;
+  }
+
+  #lovehotel-booking .tab {
+    @apply px-6 py-3 text-purple-600 font-medium rounded-t-lg transition-all duration-300 relative;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  #lovehotel-booking .tab:hover {
+    @apply text-purple-800 bg-purple-50;
+  }
+
+  #lovehotel-booking .tab.active {
+    @apply text-purple-900 bg-white border-t border-l border-r border-purple-200;
+  }
+
+  #lovehotel-booking .tab.active::after {
+    content: '';
+    @apply absolute bottom-[-1px] left-0 right-0 h-[2px] bg-purple-600;
+  }
+}
