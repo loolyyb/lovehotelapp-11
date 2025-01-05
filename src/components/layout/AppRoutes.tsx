@@ -5,6 +5,7 @@ import Profile from "@/pages/Profile";
 import Profiles from "@/pages/Profiles";
 import ProfileDetails from "@/pages/ProfileDetails";
 import Landing from "@/pages/Landing";
+import Features from "@/pages/Features";
 import RideauxOuverts from "@/pages/RideauxOuverts";
 import Admin from "@/pages/Admin";
 import Messages from "@/pages/Messages";
@@ -52,6 +53,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
         element={session ? <Challenges /> : <Navigate to="/login" replace />}
       />
       <Route
+        path="/features"
+        element={<Features />}
+      />
+      <Route
         path="/lover-coin"
         element={<div className="p-8 text-center">Page LoverCoin en construction</div>}
       />
@@ -65,4 +70,4 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       />
     </Routes>
   );
-};
+}

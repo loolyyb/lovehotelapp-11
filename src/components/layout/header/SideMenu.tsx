@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Menu, Home, User } from "lucide-react";
+import { Menu, Home, User, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -28,6 +28,14 @@ export function SideMenu() {
           >
             <Home className="h-5 w-5" />
             <span>Accueil</span>
+          </Link>
+          <Link 
+            to="/features" 
+            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            <Info className="h-5 w-5" />
+            <span>Nos Fonctionnalités</span>
           </Link>
           <Link 
             to="/profile" 
