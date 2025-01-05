@@ -8,7 +8,7 @@ const features = [
   {
     icon: Hotel,
     title: "Love Rooms",
-    description: "Réservez des chambres luxueuses dans notre Love Hôtel. Profitez d'une expérience unique et romantique dans un cadre d'exception.",
+    description: "Réservez des chambres luxueuses pour vos moments romantiques.",
     memberOnly: true
   },
   {
@@ -110,7 +110,7 @@ export default function Features() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <Card className="p-6 h-full bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-300 border-rose-100">
+              <Card className="p-6 h-full bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-300 border-rose-100 hover:shadow-lg hover:-translate-y-1">
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
                     <feature.icon className="w-8 h-8 text-burgundy" />
@@ -134,14 +134,14 @@ export default function Features() {
           ))}
         </div>
 
-        {/* CTA Section */}
+        {/* CTA Section with improved contrast */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="text-center bg-burgundy/90 backdrop-blur-sm rounded-2xl p-8 md:p-12"
+          className="text-center bg-burgundy rounded-2xl p-8 md:p-12 shadow-xl"
         >
-          <h2 className="text-3xl md:text-4xl font-cormorant font-bold text-white mb-6">
+          <h2 className="text-3xl md:text-4xl font-cormorant font-bold text-white mb-6 [text-shadow:_0_1px_2px_rgb(0_0_0_/_20%)]">
             Prêt à Vivre l'Expérience ?
           </h2>
           <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
@@ -151,7 +151,7 @@ export default function Features() {
             <Button
               onClick={() => navigate("/login")}
               size="lg"
-              className="bg-white text-burgundy hover:bg-white/90"
+              className="bg-white text-burgundy hover:bg-white/90 transition-all duration-300 transform hover:scale-105"
             >
               Créer un Compte
             </Button>
@@ -159,7 +159,7 @@ export default function Features() {
               onClick={() => navigate("/login")}
               size="lg"
               variant="outline"
-              className="border-white text-white hover:bg-white/10"
+              className="border-2 border-white text-white hover:bg-white/10 transition-all duration-300 transform hover:scale-105"
             >
               Se Connecter
             </Button>
