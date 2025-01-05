@@ -1,4 +1,4 @@
-import { CircleSlash, Users, GenderMale, Mask, Camera } from "lucide-react";
+import { CircleSlash, Users, Users2, Lock, Camera } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -34,14 +34,14 @@ const getStatusConfig = (type: string | RelationshipType) => {
         color: "text-red-600",
         bgColor: "bg-red-100",
         label: "Relation libertine",
-        Icon: GenderMale
+        Icon: Users2
       };
     case "bdsm":
       return {
         color: "text-purple-600",
         bgColor: "bg-purple-100",
         label: "BDSM",
-        Icon: Mask
+        Icon: Lock
       };
     case "exhibitionist":
       return {

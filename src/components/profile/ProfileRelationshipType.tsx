@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label";
-import { CircleSlash, Users, GenderMale, Mask, Camera } from "lucide-react";
+import { CircleSlash, Users, Users2, Lock, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RelationshipTypeCheckbox } from "./relationship/RelationshipTypeCheckbox";
 
@@ -24,13 +24,13 @@ const RELATIONSHIP_TYPES = [
   {
     id: "libertine",
     label: "Libertine",
-    icon: GenderMale,
+    icon: Users2,
     iconColor: "text-red-600"
   },
   {
     id: "bdsm",
     label: "BDSM",
-    icon: Mask,
+    icon: Lock,
     iconColor: "text-purple-600"
   },
   {
