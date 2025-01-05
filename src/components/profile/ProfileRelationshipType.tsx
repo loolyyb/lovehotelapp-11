@@ -1,6 +1,6 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Heart, Camera, Cage } from "lucide-react";
+import { Heart, Camera, Prison } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProfileRelationshipTypeProps {
@@ -80,7 +80,7 @@ export function ProfileRelationshipType({
             onCheckedChange={(checked) => handleTypeChange('bdsm', checked as boolean)}
           />
           <Label htmlFor="bdsm" className="flex items-center gap-2">
-            <Cage className="w-4 h-4 text-purple-600 fill-current" />
+            <Prison className="w-4 h-4 text-purple-600 fill-current" />
             BDSM
           </Label>
         </div>

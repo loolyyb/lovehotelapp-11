@@ -1,4 +1,4 @@
-import { Heart, Cage } from "lucide-react";
+import { Heart, Prison } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -50,7 +50,7 @@ const getStatusConfig = (type: string | RelationshipType) => {
 
 export function RelationshipStatusIcon({ type, className = "" }: RelationshipStatusIconProps) {
   const config = getStatusConfig(type);
-  const Icon = type === "bdsm" ? Cage : Heart;
+  const Icon = type === "bdsm" ? Prison : Heart;
 
   return (
     <TooltipProvider>
