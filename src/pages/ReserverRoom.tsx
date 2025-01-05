@@ -12,7 +12,7 @@ const ReserverRoom = () => {
 
       <style>
         {`
-          /* Styles de base pour le conteneur du module */
+          /* Base styles for the container */
           .booking-container {
             width: 100%;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%);
@@ -21,15 +21,15 @@ const ReserverRoom = () => {
             overflow: hidden;
           }
 
-          /* Styles pour le module de réservation */
-          #lovehotel-booking.booking-module {
+          /* Styles for the booking module */
+          #lovehotel-booking {
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 !important;
             padding: 1rem !important;
           }
 
-          /* Styles pour les onglets */
+          /* Styles for tabs */
           #lovehotel-booking [role="tab"] {
             background: transparent !important;
             color: var(--primary) !important;
@@ -54,7 +54,7 @@ const ReserverRoom = () => {
             box-shadow: 0 4px 12px rgba(255, 52, 129, 0.25) !important;
           }
 
-          /* Styles pour les inputs */
+          /* Styles for inputs */
           #lovehotel-booking input,
           #lovehotel-booking select {
             width: 100% !important;
@@ -75,7 +75,7 @@ const ReserverRoom = () => {
             transform: translateY(-1px) !important;
           }
 
-          /* Styles pour les boutons */
+          /* Styles for buttons */
           #lovehotel-booking button {
             background: linear-gradient(135deg, #FF3481 0%, #FF0066 100%) !important;
             color: white !important;
@@ -100,7 +100,7 @@ const ReserverRoom = () => {
             box-shadow: 0 6px 16px rgba(255, 52, 129, 0.3) !important;
           }
 
-          /* Styles pour les labels */
+          /* Styles for labels */
           #lovehotel-booking label {
             color: var(--primary) !important;
             font-weight: 500 !important;
@@ -109,9 +109,9 @@ const ReserverRoom = () => {
             font-size: 0.95rem !important;
           }
 
-          /* Ajustements responsifs */
+          /* Responsive adjustments */
           @media (max-width: 768px) {
-            #lovehotel-booking.booking-module {
+            #lovehotel-booking {
               padding: 0.75rem !important;
             }
 
