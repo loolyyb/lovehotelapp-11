@@ -12,24 +12,26 @@ const ReserverRoom = () => {
 
       <style>
         {`
-          /* Base styles for the container */
+          /* Isolate booking module styles */
           .booking-container {
             width: 100%;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%);
             border-radius: 1rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             overflow: hidden;
+            isolation: isolate; /* Create a new stacking context */
           }
 
-          /* Styles for the booking module */
+          /* Scope all booking module styles under #lovehotel-booking */
           #lovehotel-booking {
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 !important;
             padding: 1rem !important;
+            z-index: 1 !important; /* Ensure it stays within its container */
           }
 
-          /* Styles for tabs */
+          /* Override external booking module styles */
           #lovehotel-booking [role="tab"] {
             background: transparent !important;
             color: var(--primary) !important;
@@ -40,6 +42,7 @@ const ReserverRoom = () => {
             cursor: pointer !important;
             transition: all 0.3s ease !important;
             font-weight: 500 !important;
+            z-index: 1 !important;
           }
 
           #lovehotel-booking [role="tab"]:hover {
@@ -54,7 +57,6 @@ const ReserverRoom = () => {
             box-shadow: 0 4px 12px rgba(255, 52, 129, 0.25) !important;
           }
 
-          /* Styles for inputs */
           #lovehotel-booking input,
           #lovehotel-booking select {
             width: 100% !important;
@@ -65,6 +67,7 @@ const ReserverRoom = () => {
             transition: all 0.2s ease !important;
             font-size: 0.95rem !important;
             margin-bottom: 1rem !important;
+            z-index: 1 !important;
           }
 
           #lovehotel-booking input:focus,
@@ -75,7 +78,6 @@ const ReserverRoom = () => {
             transform: translateY(-1px) !important;
           }
 
-          /* Styles for buttons */
           #lovehotel-booking button {
             background: linear-gradient(135deg, #FF3481 0%, #FF0066 100%) !important;
             color: white !important;
@@ -93,6 +95,7 @@ const ReserverRoom = () => {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
+            z-index: 1 !important;
           }
 
           #lovehotel-booking button:hover {
@@ -100,13 +103,13 @@ const ReserverRoom = () => {
             box-shadow: 0 6px 16px rgba(255, 52, 129, 0.3) !important;
           }
 
-          /* Styles for labels */
           #lovehotel-booking label {
             color: var(--primary) !important;
             font-weight: 500 !important;
             margin-bottom: 0.5rem !important;
             display: block !important;
             font-size: 0.95rem !important;
+            z-index: 1 !important;
           }
 
           /* Responsive adjustments */
