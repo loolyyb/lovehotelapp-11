@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { BedDouble } from "lucide-react";
+import { ReservationHeader } from '@/components/reservation/ReservationHeader';
+import { BookingModule } from '@/components/reservation/BookingModule';
 
 const ReserverRoom = () => {
   useEffect(() => {
@@ -16,18 +17,8 @@ const ReserverRoom = () => {
   return (
     <div className="w-full min-h-screen bg-background pt-20">
       <div className="container mx-auto px-4">
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <BedDouble className="h-8 w-8 text-rose-500" />
-            <h1 className="text-3xl font-cormorant font-semibold text-primary">
-              Réserver une Love Room
-            </h1>
-          </div>
-          
-          <div className="w-full">
-            <div id="lovehotel-booking" className="booking-module" />
-          </div>
-        </div>
+        <ReservationHeader />
+        <BookingModule />
       </div>
 
       <style>
@@ -43,7 +34,7 @@ const ReserverRoom = () => {
             width: 100%;
             max-width: 100%;
             margin: 0 auto;
-            padding: 1.5rem;
+            padding: 2rem;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%);
             border-radius: 1rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -141,15 +132,6 @@ const ReserverRoom = () => {
             animation: shine 3s infinite;
           }
 
-          @keyframes shine {
-            0% {
-              transform: translateX(-100%) rotate(45deg);
-            }
-            100% {
-              transform: translateX(100%) rotate(45deg);
-            }
-          }
-
           /* Style labels and text */
           .booking-module label {
             color: var(--primary);
@@ -162,17 +144,6 @@ const ReserverRoom = () => {
           /* Add subtle animations */
           .booking-module > div {
             animation: fadeIn 0.3s ease-out;
-          }
-
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-              transform: translateY(5px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
           }
 
           /* Responsive adjustments */
@@ -190,27 +161,6 @@ const ReserverRoom = () => {
               width: 100%;
               padding: 0.75rem 1rem;
             }
-          }
-
-          /* Fix header positioning */
-          header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 50;
-            background: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          }
-
-          /* Ensure content starts below header */
-          main {
-            padding-top: 4.5rem;
-          }
-
-          /* Reset any conflicting styles */
-          #root {
-            padding: 0;
           }
         `}
       </style>
