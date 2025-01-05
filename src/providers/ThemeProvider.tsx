@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 import { type CustomTheme, ThemeName } from "@/types/theme";
 import { themes } from "@/config/themes.config";
-import { supabase } from "@/integrations/supabase/client";
 
 interface ThemeContextType {
   theme: CustomTheme;
@@ -25,21 +24,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   const switchTheme = async (themeName: ThemeName) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      throw new Error("Vous devez être connecté pour changer le thème");
-    }
-
     if (!themes[themeName]) {
-      throw new Error(`Le thème "${themeName}" n'existe pas`);
+      throw new Error(`Theme "${themeName}" not found`);
     }
-
     setCurrentThemeName(themeName);
     setTheme(themes[themeName]);
   };
 
+  const value = {
+    theme,
+    currentThemeName,
+    updateTheme,
+    switchTheme,
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, currentThemeName, updateTheme, switchTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
@@ -48,7 +48,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error("useTheme doit être utilisé à l'intérieur d'un ThemeProvider");
+    throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
 }
