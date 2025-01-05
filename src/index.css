@@ -106,6 +106,33 @@
   @apply backdrop-blur-sm border border-white/20;
 }
 
+/* Personnalisation du module de réservation */
+#lovehotel-booking {
+  font-family: 'Montserrat', sans-serif;
+}
+
+#lovehotel-booking button {
+  @apply bg-burgundy-600 hover:bg-burgundy-700 transition-colors duration-300;
+}
+
+#lovehotel-booking input,
+#lovehotel-booking select {
+  @apply border-burgundy-200 focus:border-burgundy-400 focus:ring-burgundy-400;
+  font-family: 'Montserrat', sans-serif;
+}
+
+#lovehotel-booking .calendar {
+  @apply border-burgundy-200;
+}
+
+#lovehotel-booking .calendar-day.selected {
+  @apply bg-burgundy-600 text-white;
+}
+
+#lovehotel-booking .calendar-day:hover:not(.disabled) {
+  @apply bg-burgundy-100;
+}
+
 /* Animations pour le thème lover */
 @keyframes fadeIn {
   from {
