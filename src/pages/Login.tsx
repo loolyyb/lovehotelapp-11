@@ -35,6 +35,54 @@ export default function Login() {
                 }
               }
             }}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: "Adresse e-mail",
+                  password_label: "Mot de passe",
+                  email_input_placeholder: "Votre adresse e-mail",
+                  password_input_placeholder: "Votre mot de passe",
+                  button_label: "Se connecter",
+                  loading_button_label: "Connexion en cours ...",
+                  social_provider_text: "Se connecter avec {{provider}}",
+                  link_text: "Vous avez déjà un compte ? Connectez-vous",
+                },
+                sign_up: {
+                  email_label: "Adresse e-mail",
+                  password_label: "Mot de passe",
+                  email_input_placeholder: "Votre adresse e-mail",
+                  password_input_placeholder: "Votre mot de passe",
+                  button_label: "S'inscrire",
+                  loading_button_label: "Inscription en cours ...",
+                  social_provider_text: "S'inscrire avec {{provider}}",
+                  link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
+                },
+                forgotten_password: {
+                  email_label: "Adresse e-mail",
+                  password_label: "Mot de passe",
+                  email_input_placeholder: "Votre adresse e-mail",
+                  button_label: "Envoyer les instructions",
+                  loading_button_label: "Envoi des instructions ...",
+                  link_text: "Mot de passe oublié ?",
+                },
+                update_password: {
+                  password_label: "Nouveau mot de passe",
+                  password_input_placeholder: "Votre nouveau mot de passe",
+                  button_label: "Mettre à jour le mot de passe",
+                  loading_button_label: "Mise à jour du mot de passe ...",
+                },
+                verify_otp: {
+                  email_input_label: "Adresse e-mail",
+                  email_input_placeholder: "Votre adresse e-mail",
+                  phone_input_label: "Numéro de téléphone",
+                  phone_input_placeholder: "Votre numéro de téléphone",
+                  token_input_label: "Code",
+                  token_input_placeholder: "Votre code de vérification",
+                  button_label: "Vérifier",
+                  loading_button_label: "Vérification en cours ...",
+                }
+              }
+            }}
             providers={[]}
             theme="light"
           />
