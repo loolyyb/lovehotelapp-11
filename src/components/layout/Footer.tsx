@@ -8,8 +8,13 @@ export const Footer = () => {
 
   useEffect(() => {
     const fetchVersion = async () => {
-      const currentVersion = await getCurrentVersion();
-      setVersion(currentVersion);
+      try {
+        const currentVersion = await getCurrentVersion();
+        console.log("Current version fetched:", currentVersion); // Debug log
+        setVersion(currentVersion);
+      } catch (error) {
+        console.error("Error fetching version:", error);
+      }
     };
     fetchVersion();
   }, []);

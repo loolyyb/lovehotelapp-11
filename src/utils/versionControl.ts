@@ -46,11 +46,9 @@ export function incrementVersion(version: string, isMajorUpdate: boolean = false
   const versionObj = parseVersion(version);
   
   if (isMajorUpdate) {
-    // Pour les mises à jour majeures, on incrémente le numéro mineur (0.1.0)
     versionObj.minor += 1;
     versionObj.patch = 0;
   } else {
-    // Pour les petites mises à jour, on incrémente juste le patch (0.0.1)
     versionObj.patch += 1;
   }
   
@@ -59,16 +57,20 @@ export function incrementVersion(version: string, isMajorUpdate: boolean = false
 
 export async function getCurrentVersion(): Promise<string> {
   try {
+    console.log("Fetching current version from database..."); // Debug log
     const { data, error } = await supabase
       .from('admin_settings')
       .select('value')
       .eq('key', 'app_version')
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error fetching version:", error); // Debug log
+      throw error;
+    }
     
-    // If no version exists yet, create it with version 1.0.20
     if (!data) {
+      console.log("No version found, creating initial version 1.0.20"); // Debug log
       const initialVersion = '1.0.20';
       const { error: insertError } = await supabase
         .from('admin_settings')
@@ -77,11 +79,15 @@ export async function getCurrentVersion(): Promise<string> {
           value: { version: initialVersion } as VersionData,
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Error inserting initial version:", insertError); // Debug log
+        throw insertError;
+      }
       return initialVersion;
     }
     
     const versionData = data.value as VersionData;
+    console.log("Version data retrieved:", versionData); // Debug log
     return versionData?.version || '1.0.20';
   } catch (error) {
     console.error('Error getting current version:', error);
@@ -92,7 +98,9 @@ export async function getCurrentVersion(): Promise<string> {
 export async function updateVersion(isMajorUpdate: boolean = false): Promise<void> {
   try {
     const currentVersion = await getCurrentVersion();
+    console.log("Current version before update:", currentVersion); // Debug log
     const newVersion = incrementVersion(currentVersion, isMajorUpdate);
+    console.log("New version to be set:", newVersion); // Debug log
 
     const { error } = await supabase
       .from('admin_settings')
@@ -101,8 +109,11 @@ export async function updateVersion(isMajorUpdate: boolean = false): Promise<voi
         value: { version: newVersion } as VersionData,
       });
 
-    if (error) throw error;
-    console.log(`Version updated to ${newVersion}`);
+    if (error) {
+      console.error("Error updating version:", error); // Debug log
+      throw error;
+    }
+    console.log(`Version successfully updated to ${newVersion}`); // Debug log
   } catch (error) {
     console.error('Error updating version:', error);
   }
