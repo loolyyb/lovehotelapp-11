@@ -1,12 +1,45 @@
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Heart, Camera, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { RelationshipTypeCheckbox } from "./relationship/RelationshipTypeCheckbox";
 
 interface ProfileRelationshipTypeProps {
   relationshipType?: string[] | null;
   onRelationshipTypeChange: (types: string[]) => void;
 }
+
+const RELATIONSHIP_TYPES = [
+  {
+    id: "casual",
+    label: "D'un soir",
+    icon: Heart,
+    iconColor: "text-blue-500"
+  },
+  {
+    id: "serious",
+    label: "Sérieux",
+    icon: Heart,
+    iconColor: "text-rose-400"
+  },
+  {
+    id: "libertine",
+    label: "Libertine",
+    icon: Heart,
+    iconColor: "text-red-600"
+  },
+  {
+    id: "bdsm",
+    label: "BDSM",
+    icon: Lock,
+    iconColor: "text-purple-600"
+  },
+  {
+    id: "exhibitionist",
+    label: "Exhibitionnisme / Book photo",
+    icon: Camera,
+    iconColor: "text-purple-500"
+  }
+];
 
 export function ProfileRelationshipType({ 
   relationshipType, 
@@ -40,61 +73,17 @@ export function ProfileRelationshipType({
         </p>
       </div>
       <div className="space-y-2">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="casual"
-            checked={relationshipType?.includes('casual')}
-            onCheckedChange={(checked) => handleTypeChange('casual', checked as boolean)}
+        {RELATIONSHIP_TYPES.map((type) => (
+          <RelationshipTypeCheckbox
+            key={type.id}
+            id={type.id}
+            label={type.label}
+            checked={relationshipType?.includes(type.id) ?? false}
+            onCheckedChange={(checked) => handleTypeChange(type.id, checked)}
+            icon={type.icon}
+            iconColor={type.iconColor}
           />
-          <Label htmlFor="casual" className="flex items-center gap-2">
-            <Heart className="w-4 h-4 text-blue-500 fill-current" />
-            D'un soir
-          </Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="serious"
-            checked={relationshipType?.includes('serious')}
-            onCheckedChange={(checked) => handleTypeChange('serious', checked as boolean)}
-          />
-          <Label htmlFor="serious" className="flex items-center gap-2">
-            <Heart className="w-4 h-4 text-rose-400 fill-current" />
-            Sérieux
-          </Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="libertine"
-            checked={relationshipType?.includes('libertine')}
-            onCheckedChange={(checked) => handleTypeChange('libertine', checked as boolean)}
-          />
-          <Label htmlFor="libertine" className="flex items-center gap-2">
-            <Heart className="w-4 h-4 text-red-600 fill-current" />
-            Libertine
-          </Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="bdsm"
-            checked={relationshipType?.includes('bdsm')}
-            onCheckedChange={(checked) => handleTypeChange('bdsm', checked as boolean)}
-          />
-          <Label htmlFor="bdsm" className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-purple-600 fill-current" />
-            BDSM
-          </Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="exhibitionist"
-            checked={relationshipType?.includes('exhibitionist')}
-            onCheckedChange={(checked) => handleTypeChange('exhibitionist', checked as boolean)}
-          />
-          <Label htmlFor="exhibitionist" className="flex items-center gap-2">
-            <Camera className="w-4 h-4 text-purple-500 fill-current" />
-            Exhibitionnisme / Book photo
-          </Label>
-        </div>
+        ))}
       </div>
     </div>
   );
