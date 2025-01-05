@@ -30,13 +30,25 @@ export function ProfileStatus({ status, onStatusChange }: ProfileStatusProps) {
           <SelectItem value="single_man">
             <div className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              <span>Homme seul</span>
+              <span>Homme célibataire</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="married_man">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              <span>Homme marié</span>
             </div>
           </SelectItem>
           <SelectItem value="single_woman">
             <div className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              <span>Femme seule</span>
+              <span>Femme célibataire</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="married_woman">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              <span>Femme mariée</span>
             </div>
           </SelectItem>
           <SelectItem value="couple_mf">
