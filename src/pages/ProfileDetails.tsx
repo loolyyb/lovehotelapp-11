@@ -10,6 +10,7 @@ import { ProfileSeekingDisplay } from "@/components/profile/ProfileSeekingDispla
 import { ProfileActions } from "@/components/profile/ProfileActions";
 import { ProfilePreferences } from "@/components/profile/ProfilePreferences";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { motion } from "framer-motion";
 
 export default function ProfileDetails() {
   const { id } = useParams();
@@ -73,7 +74,13 @@ export default function ProfileDetails() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 flex items-center justify-center">
-        <div className="animate-pulse text-burgundy">Chargement...</div>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="animate-pulse text-burgundy"
+        >
+          Chargement...
+        </motion.div>
       </div>
     );
   }
@@ -87,20 +94,40 @@ export default function ProfileDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100"
+    >
       <div className="max-w-4xl mx-auto px-4 py-4">
         <Button
           variant="ghost"
-          className="mb-4"
+          className="mb-4 hover:bg-white/50 transition-colors"
           onClick={() => navigate(-1)}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour
         </Button>
 
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-xl p-6 md:p-8 space-y-8 animate-fadeIn">
-          <div className="flex flex-col items-center space-y-6">
-            <div className="relative">
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white/80 backdrop-blur-sm rounded-xl shadow-xl p-6 md:p-8 space-y-8"
+        >
+          <div className="flex flex-col items-center space-y-6 relative">
+            {/* Decorative background elements */}
+            <div className="absolute inset-0 -z-10 overflow-hidden">
+              <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-rose-100/50 rounded-full mix-blend-multiply filter blur-xl" />
+              <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-burgundy-100/50 rounded-full mix-blend-multiply filter blur-xl" />
+            </div>
+
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
               <ProfileHeader 
                 avatarUrl={profile.avatar_url}
                 fullName={profile.full_name}
@@ -109,40 +136,71 @@ export default function ProfileDetails() {
                 seeking={profile.seeking}
                 relationshipType={profile.relationship_type}
               />
-            </div>
+            </motion.div>
 
-            <div className="flex flex-wrap gap-4 justify-center">
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="flex flex-wrap gap-4 justify-center"
+            >
               {preferences?.interests?.map((interest, index) => (
-                <span
+                <motion.span
                   key={index}
-                  className="px-4 py-2 bg-rose/20 text-burgundy rounded-full text-sm"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  className="px-4 py-2 bg-rose/20 text-burgundy rounded-full text-sm hover:bg-rose/30 transition-colors"
                 >
                   {interest}
-                </span>
+                </motion.span>
               ))}
-            </div>
+            </motion.div>
 
             <ProfileActions profileId={profile.id} />
           </div>
 
           {profile.description && (
-            <div className="mt-8 p-6 bg-champagne/30 rounded-lg">
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="mt-8 p-6 bg-champagne/30 rounded-lg backdrop-blur-sm"
+            >
               <h2 className="text-xl font-semibold text-burgundy mb-4">À propos</h2>
               <p className="text-gray-700 whitespace-pre-wrap">{profile.description}</p>
-            </div>
+            </motion.div>
           )}
 
           {profile.photo_urls && profile.photo_urls.length > 0 && (
-            <ProfileGallery photos={profile.photo_urls} />
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.7 }}
+            >
+              <ProfileGallery photos={profile.photo_urls} />
+            </motion.div>
           )}
           
           {profile.seeking && profile.seeking.length > 0 && (
-            <ProfileSeekingDisplay seeking={profile.seeking} />
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
+              <ProfileSeekingDisplay seeking={profile.seeking} />
+            </motion.div>
           )}
 
-          <ProfilePreferences preferences={preferences} profile={profile} />
-        </div>
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.9 }}
+          >
+            <ProfilePreferences preferences={preferences} profile={profile} />
+          </motion.div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
