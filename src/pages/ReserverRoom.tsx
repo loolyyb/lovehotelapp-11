@@ -3,92 +3,112 @@ import { BedDouble } from "lucide-react";
 
 const ReserverRoom = () => {
   useEffect(() => {
+    // Load only the JavaScript, not the CSS
     const script = document.createElement('script');
     script.type = 'module';
     script.src = 'https://booking.lovehotel.io/assets/index.js';
     document.body.appendChild(script);
 
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://booking.lovehotel.io/assets/index.css';
-    link.id = 'booking-styles';
-    document.head.appendChild(link);
-
     return () => {
       document.body.removeChild(script);
-      const styleSheet = document.getElementById('booking-styles');
-      if (styleSheet) {
-        document.head.removeChild(styleSheet);
-      }
     };
   }, []); 
 
   return (
-    <div className="booking-page-container relative w-full">
-      <div className="booking-content px-4 py-4 w-full max-w-full overflow-x-hidden">
+    <div className="w-full min-h-screen bg-background">
+      <div className="container mx-auto px-4 pt-20">
         <div className="bg-white rounded-lg shadow-md p-4 mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <BedDouble className="h-6 w-6 text-burgundy" />
-            <h1 className="text-2xl font-cormorant text-burgundy">Réserver une Love Room</h1>
+            <BedDouble className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-cormorant text-primary">Réserver une Love Room</h1>
           </div>
           
-          <div className="booking-module-container w-full">
-            <div id="lovehotel-booking" className="w-full min-h-[800px]" />
+          <div className="w-full">
+            <div id="lovehotel-booking" className="booking-module" />
           </div>
         </div>
       </div>
 
       <style>
         {`
-          .booking-page-container {
-            position: relative;
-            width: 100%;
-            margin: 0;
-            padding: 0;
+          /* Reset all external styles */
+          #lovehotel-booking * {
+            all: revert;
+            font-family: 'Montserrat', sans-serif;
           }
 
-          .booking-content {
-            position: relative;
-            margin-top: 4.5rem;
-            padding-top: 1rem;
-            z-index: 1;
-          }
-
-          .booking-module-container {
+          /* Custom styling for the booking module */
+          .booking-module {
             width: 100%;
             max-width: 100%;
-            overflow-x: hidden;
-            position: relative;
-            z-index: 1;
+            margin: 0 auto;
+            padding: 1rem;
           }
 
-          #lovehotel-booking {
-            all: revert;
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
+          /* Style tabs */
+          .booking-module [role="tab"] {
+            background: var(--background);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-right: 0.5rem;
+            cursor: pointer;
           }
 
-          /* Ensure the header stays fixed and above the booking module */
+          .booking-module [role="tab"][aria-selected="true"] {
+            background: var(--primary);
+            color: white;
+          }
+
+          /* Style inputs */
+          .booking-module input,
+          .booking-module select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+          }
+
+          /* Style buttons */
+          .booking-module button {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+          }
+
+          .booking-module button:hover {
+            opacity: 0.9;
+          }
+
+          /* Ensure proper spacing */
+          .booking-module > div {
+            margin-bottom: 1rem;
+          }
+
+          /* Fix header positioning */
           header {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 50 !important;
-            background: white !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: white;
           }
 
-          /* Reset any root padding that might interfere */
+          /* Ensure content starts below header */
+          main {
+            padding-top: 4.5rem;
+          }
+
+          /* Reset any conflicting styles */
           #root {
-            padding-top: 0 !important;
-          }
-
-          /* Ensure the booking module doesn't affect global styles */
-          body {
-            margin: 0 !important;
-            padding: 0 !important;
+            padding: 0;
           }
         `}
       </style>
