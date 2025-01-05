@@ -1,4 +1,4 @@
-import { Heart, Lock } from "lucide-react";
+import { CircleSlash, Users, GenderMale, Mask, Camera } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -19,45 +19,57 @@ const getStatusConfig = (type: string | RelationshipType) => {
       return {
         color: "text-blue-500",
         bgColor: "bg-blue-100",
-        label: "Relation sans lendemain"
+        label: "Relation sans lendemain",
+        Icon: CircleSlash
       };
     case "serious":
       return {
         color: "text-rose-400",
         bgColor: "bg-rose-100",
-        label: "Relation sérieuse"
+        label: "Relations sérieuses",
+        Icon: Users
       };
     case "libertine":
       return {
         color: "text-red-600",
         bgColor: "bg-red-100",
-        label: "Relation libertine"
+        label: "Relation libertine",
+        Icon: GenderMale
       };
     case "bdsm":
       return {
         color: "text-purple-600",
         bgColor: "bg-purple-100",
-        label: "BDSM"
+        label: "BDSM",
+        Icon: Mask
+      };
+    case "exhibitionist":
+      return {
+        color: "text-purple-500",
+        bgColor: "bg-purple-100",
+        label: "Exhibitionnisme",
+        Icon: Camera
       };
     default:
       return {
         color: "text-gray-400",
         bgColor: "bg-gray-100",
-        label: "Non spécifié"
+        label: "Non spécifié",
+        Icon: Users
       };
   }
 };
 
 export function RelationshipStatusIcon({ type, className = "" }: RelationshipStatusIconProps) {
   const config = getStatusConfig(type);
-  const Icon = type === "bdsm" ? Lock : Heart;
+  const { Icon } = config;
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={`${config.bgColor} rounded-full p-2 ${className}`}>
-            <Icon className={`w-5 h-5 ${config.color} fill-current`} />
+            <Icon className={`w-5 h-5 ${config.color}`} />
           </div>
         </TooltipTrigger>
         <TooltipContent>

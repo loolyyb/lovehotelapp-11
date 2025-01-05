@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label";
-import { Heart, Camera, Lock } from "lucide-react";
+import { CircleSlash, Users, GenderMale, Mask, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { RelationshipTypeCheckbox } from "./relationship/RelationshipTypeCheckbox";
 
@@ -12,25 +12,25 @@ const RELATIONSHIP_TYPES = [
   {
     id: "casual",
     label: "D'un soir",
-    icon: Heart,
+    icon: CircleSlash,
     iconColor: "text-blue-500"
   },
   {
     id: "serious",
-    label: "Sérieux",
-    icon: Heart,
+    label: "Relations sérieuses",
+    icon: Users,
     iconColor: "text-rose-400"
   },
   {
     id: "libertine",
     label: "Libertine",
-    icon: Heart,
+    icon: GenderMale,
     iconColor: "text-red-600"
   },
   {
     id: "bdsm",
     label: "BDSM",
-    icon: Lock,
+    icon: Mask,
     iconColor: "text-purple-600"
   },
   {
