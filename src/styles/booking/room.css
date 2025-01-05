@@ -12,6 +12,10 @@
   }
 
   #lovehotel-booking .room-card {
-    @apply bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300;
+    @apply bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow duration-300 w-full;
+  }
+
+  #lovehotel-booking .room-list {
+    @apply w-full;
   }
 }

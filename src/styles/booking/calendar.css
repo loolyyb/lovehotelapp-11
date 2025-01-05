@@ -1,6 +1,10 @@
 @layer components {
   #lovehotel-booking .calendar {
-    @apply border-rose-200 rounded-lg shadow-sm p-4 bg-white;
+    @apply border-rose-200 rounded-lg shadow-sm p-4 bg-white w-full;
+  }
+
+  #lovehotel-booking .calendar-container {
+    @apply w-full;
   }
 
   #lovehotel-booking .calendar-day {

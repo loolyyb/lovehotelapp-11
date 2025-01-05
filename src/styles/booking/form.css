@@ -3,10 +3,11 @@
   #lovehotel-booking select {
     @apply border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-lg px-3 py-2 w-full transition-all duration-300;
     font-family: 'Montserrat', sans-serif;
+    min-width: 100%;
   }
 
   #lovehotel-booking .form-group {
-    @apply space-y-2 mb-4;
+    @apply space-y-2 mb-4 w-full;
   }
 
   #lovehotel-booking label {
@@ -19,5 +20,13 @@
 
   #lovehotel-booking .success-message {
     @apply text-green-600 bg-green-50 p-4 rounded-lg text-sm;
+  }
+
+  #lovehotel-booking form {
+    @apply w-full;
+  }
+
+  #lovehotel-booking .form-container {
+    @apply w-full;
   }
 }
