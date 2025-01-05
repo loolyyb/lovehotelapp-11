@@ -46,11 +46,9 @@ export function incrementVersion(version: string, isMajorUpdate: boolean = false
   const versionObj = parseVersion(version);
   
   if (isMajorUpdate) {
-    // Pour les mises à jour majeures, on incrémente le numéro mineur (0.1.0)
     versionObj.minor += 1;
     versionObj.patch = 0;
   } else {
-    // Pour les petites mises à jour, on incrémente juste le patch (0.0.1)
     versionObj.patch += 1;
   }
   
@@ -67,9 +65,9 @@ export async function getCurrentVersion(): Promise<string> {
 
     if (error) throw error;
     
-    // If no version exists yet, create it
+    // If no version exists yet, create it with the new version
     if (!data) {
-      const defaultVersion = '1.0.0';
+      const defaultVersion = '1.0.195';
       const { error: insertError } = await supabase
         .from('admin_settings')
         .insert({
@@ -81,11 +79,20 @@ export async function getCurrentVersion(): Promise<string> {
       return defaultVersion;
     }
     
-    const versionData = data.value as VersionData;
-    return versionData?.version || '1.0.0';
+    // Update existing version to 1.0.195
+    const { error: updateError } = await supabase
+      .from('admin_settings')
+      .update({
+        value: { version: '1.0.195' } as VersionData,
+      })
+      .eq('key', 'app_version');
+
+    if (updateError) throw updateError;
+    
+    return '1.0.195';
   } catch (error) {
     console.error('Error getting current version:', error);
-    return '1.0.0';
+    return '1.0.195';
   }
 }
 
