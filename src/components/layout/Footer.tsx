@@ -1,29 +1,33 @@
+import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCurrentVersion } from "@/utils/versionControl";
 
-export function Footer() {
-  const [version, setVersion] = useState("1.0.20");
+export const Footer = () => {
+  const currentYear = new Date().getFullYear();
+  const [version, setVersion] = useState("1.0.0");
 
   useEffect(() => {
-    getCurrentVersion().then(setVersion);
+    const fetchVersion = async () => {
+      const currentVersion = await getCurrentVersion();
+      setVersion(currentVersion);
+    };
+    fetchVersion();
   }, []);
 
   return (
-    <footer className="py-6 md:px-8 md:py-0">
-      <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-        <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-          Built by{" "}
-          <a
-            href="https://loveh.app"
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium underline underline-offset-4"
-          >
-            Love Hotel
-          </a>
-          . v{version}
-        </p>
+    <footer className="w-full py-4 px-6 mt-auto border-t bg-white/80 backdrop-blur-sm">
+      <div className="max-w-6xl mx-auto flex items-center justify-between text-sm text-gray-600">
+        <div className="flex items-center gap-2">
+          <Heart className="w-4 h-4 text-burgundy fill-current" />
+        </div>
+        <div className="font-playfair">
+          LooLyyb Dating v{version}
+        </div>
+        <div className="flex items-center gap-1">
+          <span>&copy;</span>
+          <span>{currentYear}</span>
+        </div>
       </div>
     </footer>
   );
-}
+};
