@@ -4,18 +4,30 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { useLogger } from "@/hooks/useLogger";
 
 export default function Login() {
   const navigate = useNavigate();
+  const logger = useLogger('Login');
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.onAuthStateChange((event, session) => {
+    logger.debug('Composant Login monté');
+    
+    const handleAuthChange = (event: string, session: any) => {
+      logger.info('Changement d\'état d\'authentification', { event, hasSession: !!session });
+      
       if (session) {
         navigate("/");
       }
-    });
-  }, [navigate]);
+    };
+
+    // Check if user is already logged in
+    supabase.auth.onAuthStateChange(handleAuthChange);
+
+    return () => {
+      logger.debug('Composant Login démonté');
+    };
+  }, [navigate, logger]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center bg-gradient-to-r from-pink-50 to-rose-100 pt-12">
