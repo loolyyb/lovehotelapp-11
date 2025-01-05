@@ -3,20 +3,17 @@ import { BedDouble } from "lucide-react";
 
 const ReserverRoom = () => {
   useEffect(() => {
-    // Add script dynamically
     const script = document.createElement('script');
     script.type = 'module';
     script.src = 'https://booking.lovehotel.io/assets/index.js';
     document.body.appendChild(script);
 
-    // Add stylesheet dynamically with a unique identifier
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://booking.lovehotel.io/assets/index.css';
     link.id = 'booking-styles';
     document.head.appendChild(link);
 
-    // Cleanup function
     return () => {
       document.body.removeChild(script);
       const styleSheet = document.getElementById('booking-styles');
@@ -43,15 +40,16 @@ const ReserverRoom = () => {
 
       <style>
         {`
-          /* Reset any global styles that might affect the header */
+          /* Reset global styles */
           .booking-page-container {
             position: relative;
             width: 100%;
             margin: 0;
             padding: 0;
+            padding-top: 0 !important;
           }
 
-          /* Ensure content starts below the fixed header */
+          /* Content positioning */
           .booking-content {
             position: relative;
             z-index: 1;
@@ -59,7 +57,7 @@ const ReserverRoom = () => {
             padding-top: 0;
           }
 
-          /* Contain the booking module styles */
+          /* Module container */
           .booking-module-container {
             width: 100%;
             max-width: 100%;
@@ -68,7 +66,7 @@ const ReserverRoom = () => {
             z-index: 1;
           }
 
-          /* Reset booking module styles */
+          /* Reset module styles */
           #lovehotel-booking {
             all: revert;
             width: 100% !important;
@@ -77,9 +75,22 @@ const ReserverRoom = () => {
             padding: 0 !important;
           }
 
-          /* Override any styles that might affect the header */
+          /* Ensure header stays at top */
+          body {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+          }
+
+          /* Reset any root padding */
           #root {
             padding-top: 0 !important;
+          }
+
+          /* Ensure header stays above content */
+          header {
+            position: fixed !important;
+            top: 0 !important;
+            z-index: 50 !important;
           }
         `}
       </style>
