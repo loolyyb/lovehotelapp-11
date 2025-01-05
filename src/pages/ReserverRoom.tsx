@@ -23,14 +23,8 @@ const ReserverRoom = () => {
 
       <style>
         {`
-          /* Reset all external styles */
-          #lovehotel-booking * {
-            all: revert;
-            font-family: 'Montserrat', sans-serif;
-          }
-
-          /* Custom styling for the booking module */
-          .booking-module {
+          /* Styles prioritaires pour notre application */
+          #lovehotel-booking.booking-module {
             width: 100%;
             max-width: 100%;
             margin: 0 auto;
@@ -40,8 +34,8 @@ const ReserverRoom = () => {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
           }
 
-          /* Style tabs */
-          .booking-module [role="tab"] {
+          /* Surcharge des styles pour les tabs avec une plus grande spécificité */
+          #lovehotel-booking [role="tab"] {
             background: transparent;
             color: var(--primary);
             padding: 0.75rem 1.5rem;
@@ -51,45 +45,42 @@ const ReserverRoom = () => {
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: 500;
-            position: relative;
-            overflow: hidden;
           }
 
-          .booking-module [role="tab"]:hover {
+          #lovehotel-booking [role="tab"]:hover {
             background: rgba(255, 52, 129, 0.05);
             transform: translateY(-1px);
           }
 
-          .booking-module [role="tab"][aria-selected="true"] {
+          #lovehotel-booking [role="tab"][aria-selected="true"] {
             background: linear-gradient(135deg, #FF3481 0%, #FF0066 100%);
             color: white;
             border-color: transparent;
             box-shadow: 0 4px 12px rgba(255, 52, 129, 0.25);
           }
 
-          /* Style inputs */
-          .booking-module input,
-          .booking-module select {
+          /* Surcharge des styles pour les inputs avec une plus grande spécificité */
+          #lovehotel-booking input,
+          #lovehotel-booking select {
             width: 100%;
             padding: 0.875rem;
             border: 2px solid rgba(255, 52, 129, 0.2);
             border-radius: 0.75rem;
-            margin-bottom: 1rem;
             background: white;
             transition: all 0.2s ease;
             font-size: 0.95rem;
           }
 
-          .booking-module input:focus,
-          .booking-module select:focus {
+          #lovehotel-booking input:focus,
+          #lovehotel-booking select:focus {
             outline: none;
             border-color: #FF3481;
             box-shadow: 0 0 0 3px rgba(255, 52, 129, 0.1);
             transform: translateY(-1px);
           }
 
-          /* Style buttons */
-          .booking-module button {
+          /* Surcharge des styles pour les boutons avec une plus grande spécificité */
+          #lovehotel-booking button {
             background: linear-gradient(135deg, #FF3481 0%, #FF0066 100%);
             color: white;
             padding: 0.875rem 1.75rem;
@@ -102,47 +93,15 @@ const ReserverRoom = () => {
             letter-spacing: 0.5px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 12px rgba(255, 52, 129, 0.25);
           }
 
-          .booking-module button:hover {
+          #lovehotel-booking button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(255, 52, 129, 0.3);
           }
 
-          .booking-module button:active {
-            transform: translateY(0);
-          }
-
-          /* Add shine effect to buttons */
-          .booking-module button::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-              45deg,
-              transparent 0%,
-              rgba(255, 255, 255, 0.1) 50%,
-              transparent 100%
-            );
-            transform: rotate(45deg);
-            animation: shine 3s infinite;
-          }
-
-          @keyframes shine {
-            0% {
-              transform: translateX(-100%) rotate(45deg);
-            }
-            100% {
-              transform: translateX(100%) rotate(45deg);
-            }
-          }
-
-          /* Style labels and text */
-          .booking-module label {
+          /* Styles pour les labels avec une plus grande spécificité */
+          #lovehotel-booking label {
             color: var(--primary);
             font-weight: 500;
             margin-bottom: 0.5rem;
@@ -150,34 +109,18 @@ const ReserverRoom = () => {
             font-size: 0.95rem;
           }
 
-          /* Add subtle animations */
-          .booking-module > div {
-            animation: fadeIn 0.3s ease-out;
-          }
-
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-              transform: translateY(5px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-
-          /* Responsive adjustments */
+          /* Ajustements responsifs avec une plus grande spécificité */
           @media (max-width: 768px) {
-            .booking-module {
+            #lovehotel-booking.booking-module {
               padding: 1rem;
             }
 
-            .booking-module [role="tab"] {
+            #lovehotel-booking [role="tab"] {
               padding: 0.625rem 1.25rem;
               font-size: 0.9rem;
             }
 
-            .booking-module button {
+            #lovehotel-booking button {
               width: 100%;
               padding: 0.75rem 1rem;
             }
