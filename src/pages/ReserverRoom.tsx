@@ -1,21 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { ReservationHeader } from '@/components/reservation/ReservationHeader';
 import { BookingModule } from '@/components/reservation/BookingModule';
 
 const ReserverRoom = () => {
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://booking.lovehotel.io/assets/index.js';
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []); 
-
   return (
-    <div className="w-full min-h-screen bg-background pt-4">
+    <div className="w-full min-h-screen bg-background">
       <div className="container mx-auto px-4">
         <ReservationHeader />
         <BookingModule />
@@ -23,18 +12,25 @@ const ReserverRoom = () => {
 
       <style>
         {`
-          /* Styles prioritaires pour notre application */
+          /* Styles de base pour le conteneur du module */
+          .booking-container {
+            margin-top: 0.5rem;
+            width: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+          }
+
+          /* Styles pour le module de réservation */
           #lovehotel-booking.booking-module {
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 !important;
             padding: 1rem !important;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%) !important;
-            border-radius: 1rem !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
           }
 
-          /* Surcharge des styles pour les tabs avec une plus grande spécificité */
+          /* Styles pour les onglets */
           #lovehotel-booking [role="tab"] {
             background: transparent !important;
             color: var(--primary) !important;
@@ -59,7 +55,7 @@ const ReserverRoom = () => {
             box-shadow: 0 4px 12px rgba(255, 52, 129, 0.25) !important;
           }
 
-          /* Surcharge des styles pour les inputs avec une plus grande spécificité */
+          /* Styles pour les inputs */
           #lovehotel-booking input,
           #lovehotel-booking select {
             width: 100% !important;
@@ -80,7 +76,7 @@ const ReserverRoom = () => {
             transform: translateY(-1px) !important;
           }
 
-          /* Surcharge des styles pour les boutons avec une plus grande spécificité */
+          /* Styles pour les boutons */
           #lovehotel-booking button {
             background: linear-gradient(135deg, #FF3481 0%, #FF0066 100%) !important;
             color: white !important;
@@ -105,7 +101,7 @@ const ReserverRoom = () => {
             box-shadow: 0 6px 16px rgba(255, 52, 129, 0.3) !important;
           }
 
-          /* Styles pour les labels avec une plus grande spécificité */
+          /* Styles pour les labels */
           #lovehotel-booking label {
             color: var(--primary) !important;
             font-weight: 500 !important;
@@ -114,21 +110,15 @@ const ReserverRoom = () => {
             font-size: 0.95rem !important;
           }
 
-          /* Ajustements pour réduire l'espace entre le header et le premier widget */
+          /* Suppression des marges indésirables */
           #lovehotel-booking > div:first-child {
             margin-top: 0 !important;
-            padding-top: 0 !important;
           }
 
-          /* Suppression des marges par défaut du module */
-          #lovehotel-booking > div {
-            margin-top: 0 !important;
-          }
-
-          /* Ajustements responsifs avec une plus grande spécificité */
+          /* Ajustements responsifs */
           @media (max-width: 768px) {
             #lovehotel-booking.booking-module {
-              padding: 1rem !important;
+              padding: 0.75rem !important;
             }
 
             #lovehotel-booking [role="tab"] {
