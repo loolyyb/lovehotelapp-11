@@ -1,4 +1,4 @@
-import { Heart } from "lucide-react";
+import { Heart, Sword } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export type RelationshipType = "casual" | "serious" | "libertine" | null;
+export type RelationshipType = "casual" | "serious" | "libertine" | "bdsm" | null;
 
 interface RelationshipStatusIconProps {
   type: string | RelationshipType;
@@ -33,6 +33,12 @@ const getStatusConfig = (type: string | RelationshipType) => {
         bgColor: "bg-red-100",
         label: "Relation libertine"
       };
+    case "bdsm":
+      return {
+        color: "text-purple-600",
+        bgColor: "bg-purple-100",
+        label: "BDSM"
+      };
     default:
       return {
         color: "text-gray-400",
@@ -44,13 +50,14 @@ const getStatusConfig = (type: string | RelationshipType) => {
 
 export function RelationshipStatusIcon({ type, className = "" }: RelationshipStatusIconProps) {
   const config = getStatusConfig(type);
+  const Icon = type === "bdsm" ? Sword : Heart;
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={`${config.bgColor} rounded-full p-2 ${className}`}>
-            <Heart className={`w-5 h-5 ${config.color} fill-current`} />
+            <Icon className={`w-5 h-5 ${config.color} fill-current`} />
           </div>
         </TooltipTrigger>
         <TooltipContent>

@@ -1,6 +1,6 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Heart, Camera } from "lucide-react";
+import { Heart, Camera, Sword } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProfileRelationshipTypeProps {
@@ -33,7 +33,12 @@ export function ProfileRelationshipType({
 
   return (
     <div className="space-y-4">
-      <Label>Type de relation recherchée</Label>
+      <div className="space-y-1">
+        <Label>Type de relation ou expérience recherchée</Label>
+        <p className="text-sm text-muted-foreground italic">
+          (Plusieurs options possibles)
+        </p>
+      </div>
       <div className="space-y-2">
         <div className="flex items-center space-x-2">
           <Checkbox
@@ -66,6 +71,17 @@ export function ProfileRelationshipType({
           <Label htmlFor="libertine" className="flex items-center gap-2">
             <Heart className="w-4 h-4 text-red-600 fill-current" />
             Libertine
+          </Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="bdsm"
+            checked={relationshipType?.includes('bdsm')}
+            onCheckedChange={(checked) => handleTypeChange('bdsm', checked as boolean)}
+          />
+          <Label htmlFor="bdsm" className="flex items-center gap-2">
+            <Sword className="w-4 h-4 text-purple-600 fill-current" />
+            BDSM
           </Label>
         </div>
         <div className="flex items-center space-x-2">
