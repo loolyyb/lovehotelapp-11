@@ -14,7 +14,6 @@ const ReserverRoom = () => {
         {`
           /* Styles de base pour le conteneur du module */
           .booking-container {
-            margin-top: 0.5rem;
             width: 100%;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%);
             border-radius: 1rem;
@@ -108,11 +107,6 @@ const ReserverRoom = () => {
             margin-bottom: 0.5rem !important;
             display: block !important;
             font-size: 0.95rem !important;
-          }
-
-          /* Suppression des marges indésirables */
-          #lovehotel-booking > div:first-child {
-            margin-top: 0 !important;
           }
 
           /* Ajustements responsifs */
