@@ -4,7 +4,7 @@ import { ReservationHeader } from '@/components/reservation/ReservationHeader';
 const ReserverRoom = () => {
   return (
     <div className="w-full min-h-screen bg-background">
-      <div className="container mx-auto px-1">
+      <div className="w-full max-w-[1400px] mx-auto px-0 sm:px-1">
         <ReservationHeader />
       </div>
     </div>

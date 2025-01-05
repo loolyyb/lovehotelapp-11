@@ -12,7 +12,7 @@ export const ReservationHeader = () => {
       <iframe 
         src="https://booking.lovehotel.io" 
         className="w-full min-h-[800px] border-none rounded-xl shadow-lg"
-        style={{ minWidth: '100%' }}
+        style={{ minWidth: '100%', width: '100%' }}
         title="Love Hotel Booking"
       />
     </div>
