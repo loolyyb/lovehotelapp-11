@@ -134,7 +134,7 @@ export default function Features() {
           ))}
         </div>
 
-        {/* CTA Section with improved contrast */}
+        {/* CTA Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -161,8 +161,7 @@ export default function Features() {
               <Button
                 onClick={() => navigate("/login")}
                 size="lg"
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white/10 transition-all duration-300 transform hover:scale-105"
+                className="bg-rose-50 text-burgundy-900 hover:bg-white transition-all duration-300 transform hover:scale-105 font-semibold"
               >
                 Se Connecter
               </Button>
