@@ -1,10 +1,14 @@
 @layer components {
   #lovehotel-booking .calendar {
     @apply border-rose-200 rounded-lg shadow-sm p-4 bg-white w-full;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   #lovehotel-booking .calendar-container {
     @apply w-full;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   #lovehotel-booking .calendar-day {

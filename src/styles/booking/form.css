@@ -3,7 +3,7 @@
   #lovehotel-booking select {
     @apply border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-lg px-3 py-2 w-full transition-all duration-300;
     font-family: 'Montserrat', sans-serif;
-    min-width: 100%;
+    width: 100%;
   }
 
   #lovehotel-booking .form-group {
@@ -28,5 +28,17 @@
 
   #lovehotel-booking .form-container {
     @apply w-full;
+  }
+
+  /* Force the booking module to take full width */
+  #lovehotel-booking {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure all direct children of the booking module also take full width */
+  #lovehotel-booking > * {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
