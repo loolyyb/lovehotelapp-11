@@ -21,7 +21,7 @@ export default function Login() {
     <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center bg-gradient-to-r from-pink-50 to-rose-100 pt-12">
       <div className="w-full max-w-md px-4">
         <Card className="p-8 space-y-4">
-          <h1 className="text-3xl font-playfair text-center mb-6">Welcome Back</h1>
+          <h1 className="text-3xl font-playfair text-center mb-6">Se Connecter</h1>
           <Auth
             supabaseClient={supabase}
             appearance={{
@@ -34,6 +34,43 @@ export default function Login() {
                   }
                 }
               }
+            }}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: "Adresse email",
+                  password_label: "Mot de passe",
+                  button_label: "Se connecter",
+                  loading_button_label: "Connexion en cours...",
+                  social_provider_text: "Se connecter avec {{provider}}",
+                  link_text: "Vous avez déjà un compte ? Connectez-vous",
+                },
+                sign_up: {
+                  email_label: "Adresse email",
+                  password_label: "Mot de passe",
+                  button_label: "S'inscrire",
+                  loading_button_label: "Inscription en cours...",
+                  social_provider_text: "S'inscrire avec {{provider}}",
+                  link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
+                },
+                magic_link: {
+                  email_input_label: "Adresse email",
+                  button_label: "Envoyer le lien magique",
+                  loading_button_label: "Envoi du lien magique...",
+                  link_text: "Envoyer un lien magique",
+                },
+                forgotten_password: {
+                  email_label: "Adresse email",
+                  button_label: "Réinitialiser le mot de passe",
+                  loading_button_label: "Envoi des instructions...",
+                  link_text: "Mot de passe oublié ?",
+                },
+                update_password: {
+                  password_label: "Nouveau mot de passe",
+                  button_label: "Mettre à jour le mot de passe",
+                  loading_button_label: "Mise à jour du mot de passe...",
+                },
+              },
             }}
             providers={[]}
             theme="light"
