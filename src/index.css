@@ -109,40 +109,69 @@
 /* Personnalisation du module de réservation */
 #lovehotel-booking {
   font-family: 'Montserrat', sans-serif;
+  @apply max-w-4xl mx-auto;
 }
 
 #lovehotel-booking button {
-  @apply bg-rose-600 hover:bg-rose-700 transition-colors duration-300;
+  @apply bg-primary text-white font-medium px-4 py-2 rounded-lg hover:opacity-90 transition-all duration-300 shadow-sm;
 }
 
 #lovehotel-booking input,
 #lovehotel-booking select {
-  @apply border-rose-200 focus:border-rose-400 focus:ring-rose-400;
+  @apply border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-lg px-3 py-2 w-full transition-all duration-300;
   font-family: 'Montserrat', sans-serif;
 }
 
 #lovehotel-booking .calendar {
-  @apply border-rose-200;
+  @apply border-rose-200 rounded-lg shadow-sm p-4 bg-white;
+}
+
+#lovehotel-booking .calendar-day {
+  @apply rounded-md hover:bg-rose-50 transition-colors duration-200;
 }
 
 #lovehotel-booking .calendar-day.selected {
-  @apply bg-rose-600 text-white;
+  @apply bg-primary text-white font-medium;
 }
 
 #lovehotel-booking .calendar-day:hover:not(.disabled) {
   @apply bg-rose-100;
 }
 
+#lovehotel-booking .calendar-day.disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
 #lovehotel-booking .price {
-  @apply text-rose-600 font-semibold;
+  @apply text-primary font-semibold text-lg;
 }
 
 #lovehotel-booking .room-type {
-  @apply text-rose-800 font-cormorant text-xl;
+  @apply text-burgundy-800 font-cormorant text-2xl font-semibold mb-2;
 }
 
 #lovehotel-booking .room-description {
-  @apply text-gray-600 font-montserrat;
+  @apply text-gray-600 font-montserrat text-sm leading-relaxed;
+}
+
+#lovehotel-booking .room-card {
+  @apply bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300;
+}
+
+#lovehotel-booking .form-group {
+  @apply space-y-2 mb-4;
+}
+
+#lovehotel-booking label {
+  @apply text-burgundy-700 font-medium text-sm;
+}
+
+#lovehotel-booking .error-message {
+  @apply text-rose-600 text-sm mt-1;
+}
+
+#lovehotel-booking .success-message {
+  @apply text-green-600 bg-green-50 p-4 rounded-lg text-sm;
 }
 
 /* Animations pour le thème lover */
