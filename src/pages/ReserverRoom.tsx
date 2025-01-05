@@ -40,24 +40,20 @@ const ReserverRoom = () => {
 
       <style>
         {`
-          /* Reset global styles */
           .booking-page-container {
             position: relative;
             width: 100%;
             margin: 0;
             padding: 0;
-            padding-top: 0 !important;
           }
 
-          /* Content positioning */
           .booking-content {
             position: relative;
+            margin-top: 4.5rem;
+            padding-top: 1rem;
             z-index: 1;
-            margin-top: 0;
-            padding-top: 0;
           }
 
-          /* Module container */
           .booking-module-container {
             width: 100%;
             max-width: 100%;
@@ -66,7 +62,6 @@ const ReserverRoom = () => {
             z-index: 1;
           }
 
-          /* Reset module styles */
           #lovehotel-booking {
             all: revert;
             width: 100% !important;
@@ -75,22 +70,25 @@ const ReserverRoom = () => {
             padding: 0 !important;
           }
 
-          /* Ensure header stays at top */
-          body {
-            margin-top: 0 !important;
-            padding-top: 0 !important;
+          /* Ensure the header stays fixed and above the booking module */
+          header {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 50 !important;
+            background: white !important;
           }
 
-          /* Reset any root padding */
+          /* Reset any root padding that might interfere */
           #root {
             padding-top: 0 !important;
           }
 
-          /* Ensure header stays above content */
-          header {
-            position: fixed !important;
-            top: 0 !important;
-            z-index: 50 !important;
+          /* Ensure the booking module doesn't affect global styles */
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
           }
         `}
       </style>
