@@ -1,6 +1,6 @@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Heart } from "lucide-react";
+import { Heart, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProfileRelationshipTypeProps {
@@ -49,6 +49,13 @@ export function ProfileRelationshipType({
           <Label htmlFor="libertine" className="flex items-center gap-2">
             <Heart className="w-4 h-4 text-red-600 fill-current" />
             Libertine
+          </Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="exhibitionist" id="exhibitionist" />
+          <Label htmlFor="exhibitionist" className="flex items-center gap-2">
+            <Camera className="w-4 h-4 text-purple-500 fill-current" />
+            Exhibitionnisme / Book photo
           </Label>
         </div>
       </RadioGroup>

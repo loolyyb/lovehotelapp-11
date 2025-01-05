@@ -48,6 +48,20 @@ export function ProfileOrientation({ orientation, onOrientationChange }: Profile
             Bisexuel(le)
           </Label>
         </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="pansexual" id="pansexual" />
+          <Label htmlFor="pansexual" className="flex items-center gap-2">
+            <Heart className="w-4 h-4" />
+            Pansexuel(le)
+          </Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="non_binary" id="non_binary" />
+          <Label htmlFor="non_binary" className="flex items-center gap-2">
+            <Heart className="w-4 h-4" />
+            Non-genré(e)
+          </Label>
+        </div>
       </RadioGroup>
     </div>
   );
