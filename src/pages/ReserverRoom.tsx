@@ -15,7 +15,7 @@ const ReserverRoom = () => {
   }, []); 
 
   return (
-    <div className="w-full min-h-screen bg-background pt-16">
+    <div className="w-full min-h-screen bg-background pt-8">
       <div className="container mx-auto px-4">
         <ReservationHeader />
         <BookingModule />
@@ -25,13 +25,13 @@ const ReserverRoom = () => {
         {`
           /* Styles prioritaires pour notre application */
           #lovehotel-booking.booking-module {
-            width: 100%;
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 2rem;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%);
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            padding: 2rem !important;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%) !important;
+            border-radius: 1rem !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
           }
 
           /* Surcharge des styles pour les tabs avec une plus grande spécificité */
@@ -69,6 +69,7 @@ const ReserverRoom = () => {
             background: white !important;
             transition: all 0.2s ease !important;
             font-size: 0.95rem !important;
+            margin-bottom: 1rem !important;
           }
 
           #lovehotel-booking input:focus,
@@ -93,6 +94,10 @@ const ReserverRoom = () => {
             letter-spacing: 0.5px !important;
             position: relative !important;
             overflow: hidden !important;
+            width: auto !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
           }
 
           #lovehotel-booking button:hover {
@@ -107,6 +112,12 @@ const ReserverRoom = () => {
             margin-bottom: 0.5rem !important;
             display: block !important;
             font-size: 0.95rem !important;
+          }
+
+          /* Ajustements pour réduire l'espace entre le header et le premier widget */
+          #lovehotel-booking > div:first-child {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
           }
 
           /* Ajustements responsifs avec une plus grande spécificité */
