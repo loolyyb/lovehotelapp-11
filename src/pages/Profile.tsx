@@ -5,12 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
-import { ProfileDescription } from "@/components/profile/ProfileDescription";
-import { ProfileStatus } from "@/components/profile/ProfileStatus";
-import { ProfileOrientation } from "@/components/profile/ProfileOrientation";
-import { ProfileSeeking } from "@/components/profile/ProfileSeeking";
-import { ProfileRelationshipType } from "@/components/profile/ProfileRelationshipType";
-import { ProfilePhotoGallery } from "@/components/profile/ProfilePhotoGallery";
+import { ProfileForm } from "@/components/profile/form/ProfileForm";
 import { Save } from "lucide-react";
 
 export default function Profile() {
@@ -89,12 +84,10 @@ export default function Profile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user');
 
-      // Ensure relationship_type is always an array
       if (updates.relationship_type && !Array.isArray(updates.relationship_type)) {
         updates.relationship_type = [updates.relationship_type];
       }
 
-      // Ensure seeking is always an array
       if (updates.seeking && !Array.isArray(updates.seeking)) {
         updates.seeking = [updates.seeking];
       }
@@ -116,17 +109,9 @@ export default function Profile() {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de mettre à jour votre profil. Veuillez réessayer.",
+        description: "Impossible de mettre à jour votre profil.",
       });
     }
-  };
-
-  const handleAvatarChange = async (avatarUrl: string) => {
-    await updateProfile({ avatar_url: avatarUrl });
-  };
-
-  const handlePhotosChange = async (photos: string[]) => {
-    await updateProfile({ photo_urls: photos });
   };
 
   if (loading) {
@@ -146,48 +131,15 @@ export default function Profile() {
             fullName={profile?.full_name}
             bio={profile?.bio}
             canEdit={true}
-            onAvatarChange={handleAvatarChange}
+            onAvatarChange={(url) => updateProfile({ avatar_url: url })}
             sexualOrientation={profile?.sexual_orientation}
             seeking={profile?.seeking}
             relationshipType={profile?.relationship_type}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-8">
-              <ProfileDescription
-                initialDescription={profile?.description}
-                onSave={(description) => updateProfile({ description })}
-              />
-
-              <ProfileStatus
-                status={profile?.status}
-                onStatusChange={(status) => updateProfile({ status })}
-              />
-
-              <ProfileRelationshipType
-                relationshipType={profile?.relationship_type?.[0] || null}
-                onRelationshipTypeChange={(type) => updateProfile({ relationship_type: [type] })}
-              />
-            </div>
-
-            <div className="space-y-8">
-              <ProfileOrientation
-                orientation={profile?.sexual_orientation}
-                onOrientationChange={(orientation) => updateProfile({ sexual_orientation: orientation })}
-              />
-
-              <ProfileSeeking
-                seeking={profile?.seeking}
-                status={profile?.status}
-                orientation={profile?.sexual_orientation}
-                onSeekingChange={(seeking) => updateProfile({ seeking })}
-              />
-            </div>
-          </div>
-
-          <ProfilePhotoGallery
-            photos={profile?.photo_urls}
-            onPhotosChange={handlePhotosChange}
+          <ProfileForm
+            profile={profile}
+            onUpdate={updateProfile}
           />
 
           <div className="pt-8 flex justify-center">
