@@ -31,12 +31,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme(themes[themeName]);
   };
 
-  const value = {
-    theme,
-    currentThemeName,
-    updateTheme,
-    switchTheme,
-  };
+  const value = React.useMemo(
+    () => ({
+      theme,
+      currentThemeName,
+      updateTheme,
+      switchTheme,
+    }),
+    [theme, currentThemeName]
+  );
 
   return (
     <ThemeContext.Provider value={value}>
