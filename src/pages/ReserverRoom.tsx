@@ -15,7 +15,7 @@ const ReserverRoom = () => {
   }, []); 
 
   return (
-    <div className="w-full min-h-screen bg-background pt-8">
+    <div className="w-full min-h-screen bg-background pt-4">
       <div className="container mx-auto px-4">
         <ReservationHeader />
         <BookingModule />
@@ -27,8 +27,8 @@ const ReserverRoom = () => {
           #lovehotel-booking.booking-module {
             width: 100% !important;
             max-width: 100% !important;
-            margin: 0 auto !important;
-            padding: 2rem !important;
+            margin: 0 !important;
+            padding: 1rem !important;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.95) 100%) !important;
             border-radius: 1rem !important;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
@@ -118,6 +118,11 @@ const ReserverRoom = () => {
           #lovehotel-booking > div:first-child {
             margin-top: 0 !important;
             padding-top: 0 !important;
+          }
+
+          /* Suppression des marges par défaut du module */
+          #lovehotel-booking > div {
+            margin-top: 0 !important;
           }
 
           /* Ajustements responsifs avec une plus grande spécificité */
