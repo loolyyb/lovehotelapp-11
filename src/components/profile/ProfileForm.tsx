@@ -1,10 +1,10 @@
-import { ProfileDescription } from "../ProfileDescription";
-import { ProfileStatus } from "../ProfileStatus";
-import { ProfileOrientation } from "../ProfileOrientation";
-import { ProfileSeeking } from "../ProfileSeeking";
-import { ProfileRelationshipType } from "../ProfileRelationshipType";
-import { ProfilePhotoGallery } from "../ProfilePhotoGallery";
-import { ProfilePreferencesQuestions } from "../ProfilePreferencesQuestions";
+import { ProfileDescription } from "./ProfileDescription";
+import { ProfileStatus } from "./ProfileStatus";
+import { ProfileOrientation } from "./ProfileOrientation";
+import { ProfileSeeking } from "./ProfileSeeking";
+import { ProfileRelationshipType } from "./ProfileRelationshipType";
+import { ProfilePhotoGallery } from "./ProfilePhotoGallery";
+import { ProfilePreferencesQuestions } from "./ProfilePreferencesQuestions";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
