@@ -2,6 +2,13 @@ import React, { useEffect } from 'react';
 
 export const BookingModule = () => {
   useEffect(() => {
+    // Create the booking element first
+    const bookingElement = document.getElementById('lovehotel-booking');
+    if (!bookingElement) {
+      console.error('Booking element not found');
+      return;
+    }
+
     // Cleanup old script and stylesheet if they exist
     const oldScript = document.querySelector('script[src="https://booking.lovehotel.io/assets/index.js"]');
     const oldStylesheet = document.querySelector('link[href="https://booking.lovehotel.io/assets/index.css"]');
@@ -29,8 +36,8 @@ export const BookingModule = () => {
   }, []);
 
   return (
-    <div className="booking-container">
-      <div id="lovehotel-booking" />
+    <div className="booking-container mt-4">
+      <div id="lovehotel-booking"></div>
     </div>
   );
 };
