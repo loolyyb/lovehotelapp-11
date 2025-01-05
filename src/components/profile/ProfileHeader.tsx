@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { RelationshipStatusIcon } from "./RelationshipStatusIcon";
+import { motion } from "framer-motion";
 import {
   Tooltip,
   TooltipContent,
@@ -112,17 +113,38 @@ export function ProfileHeader({
   };
 
   return (
-    <div className="flex flex-col items-center space-y-6">
-      <div className="relative w-48 h-48 md:w-64 md:h-64">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col items-center space-y-6"
+    >
+      <motion.div 
+        className="relative w-48 h-48 md:w-64 md:h-64"
+        whileHover={{ scale: 1.05 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <motion.div
+          className="absolute inset-0 rounded-full bg-gradient-to-r from-rose-300 via-burgundy-300 to-rose-300"
+          animate={{
+            scale: [1, 1.02, 1],
+            rotate: [0, 5, -5, 0],
+          }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            repeatType: "reverse",
+          }}
+        />
         <img
           src={avatarUrl ?? "/placeholder.svg"}
           alt={fullName ?? "Profile"}
-          className="w-full h-full object-cover rounded-full border-4 border-rose shadow-lg"
+          className="w-full h-full object-cover rounded-full border-4 border-white shadow-lg relative z-10"
         />
         {canEdit && (
           <label 
             htmlFor="avatar-upload" 
-            className="absolute bottom-2 right-2 p-2 bg-white rounded-full shadow-lg cursor-pointer hover:bg-gray-100 transition-colors"
+            className="absolute bottom-2 right-2 p-2 bg-white rounded-full shadow-lg cursor-pointer hover:bg-gray-100 transition-all duration-200 transform hover:scale-110 z-20"
           >
             <Camera className="w-6 h-6 text-burgundy" />
             <input
@@ -135,14 +157,29 @@ export function ProfileHeader({
             />
           </label>
         )}
-      </div>
+      </motion.div>
 
-      <div className="text-center space-y-4">
-        <h1 className="text-3xl md:text-4xl font-bold text-burgundy font-cormorant">
+      <motion.div 
+        className="text-center space-y-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <motion.h1 
+          className="text-3xl md:text-4xl font-bold text-burgundy font-cormorant"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           {fullName || 'Anonyme'}
-        </h1>
+        </motion.h1>
 
-        <div className="flex items-center justify-center space-x-4">
+        <motion.div 
+          className="flex items-center justify-center space-x-4"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+        >
           {relationshipType && relationshipType.length > 0 && (
             <RelationshipStatusIcon type={relationshipType[0] as "casual" | "serious" | "libertine" | null} />
           )}
@@ -151,9 +188,13 @@ export function ProfileHeader({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <div className="bg-rose/20 rounded-full p-2">
+                  <motion.div 
+                    className="bg-rose/20 rounded-full p-2 hover:bg-rose/30 transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     <Heart className="w-5 h-5 text-burgundy" />
-                  </div>
+                  </motion.div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{getOrientationLabel(sexualOrientation)}</p>
@@ -170,9 +211,13 @@ export function ProfileHeader({
                   <TooltipProvider key={index}>
                     <Tooltip>
                       <TooltipTrigger>
-                        <div className="bg-rose/20 rounded-full p-2">
+                        <motion.div 
+                          className="bg-rose/20 rounded-full p-2 hover:bg-rose/30 transition-colors"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
                           {icon}
-                        </div>
+                        </motion.div>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>Recherche : {label}</p>
@@ -183,12 +228,19 @@ export function ProfileHeader({
               })}
             </div>
           )}
-        </div>
+        </motion.div>
 
         {bio && (
-          <p className="text-gray-600 max-w-2xl text-lg font-montserrat">{bio}</p>
+          <motion.p 
+            className="text-gray-600 max-w-2xl text-lg font-montserrat"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            {bio}
+          </motion.p>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
