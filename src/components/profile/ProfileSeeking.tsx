@@ -1,6 +1,6 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { User, Users, Camera } from "lucide-react";
+import { User, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProfileSeekingProps {
@@ -60,7 +60,7 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
           { value: "couple_ff", label: "Un couple (femme-femme)", icon: <Users className="w-4 h-4" /> }
         );
       }
-    } else if (["bisexual", "pansexual", "non_binary"].includes(orientation)) {
+    } else if (["bisexual", "pansexual"].includes(orientation)) {
       options.push(
         { value: "single_man", label: "Un homme", icon: <User className="w-4 h-4" /> },
         { value: "single_woman", label: "Une femme", icon: <User className="w-4 h-4" /> },
@@ -69,11 +69,6 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
         { value: "couple_ff", label: "Un couple (femme-femme)", icon: <Users className="w-4 h-4" /> }
       );
     }
-
-    // Ajouter l'option photographe pour tous
-    options.push(
-      { value: "photographer", label: "Un(e) photographe", icon: <Camera className="w-4 h-4" /> }
-    );
 
     return options;
   };

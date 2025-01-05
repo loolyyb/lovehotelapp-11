@@ -26,8 +26,8 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
           />
 
           <ProfileRelationshipType
-            relationshipType={profile?.relationship_type?.[0] || null}
-            onRelationshipTypeChange={(type) => onUpdate({ relationship_type: [type] })}
+            relationshipType={profile?.relationship_type}
+            onRelationshipTypeChange={(types) => onUpdate({ relationship_type: types })}
           />
         </div>
 
