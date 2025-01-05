@@ -38,7 +38,7 @@ function AppContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -50,7 +50,7 @@ function AppContent() {
       className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}
     >
       {session && <Header userProfile={userProfile} />}
-      <div className="flex-grow">
+      <div className="flex-grow pt-[4.5rem]">
         <AppRoutes session={session} />
       </div>
       <Footer />
