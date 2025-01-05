@@ -24,14 +24,18 @@ export default {
       },
       colors: {
         champagne: "#F7E6D0",
+        booking: {
+          primary: "#F64B7A",
+          hover: "#E03A69",
+        },
         rose: {
           50: "#FFF0F5",
           100: "#FFE4ED",
           200: "#FFB8D2",
           300: "#FF8CB7",
           400: "#FF609C",
-          500: "#FF3481",
-          600: "#FF0066",
+          500: "#F64B7A", // Updated to new pink
+          600: "#E03A69", // Darker shade for hover
           700: "#CC0052",
           800: "#99003D",
           900: "#660029",
