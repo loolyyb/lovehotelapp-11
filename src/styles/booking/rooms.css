@@ -1,10 +1,10 @@
 @layer components {
   #lovehotel-booking .price {
-    @apply text-[#F64B7A] font-semibold text-lg;
+    @apply text-[#EDDEE1] font-semibold text-lg;
   }
 
   #lovehotel-booking .room-type {
-    @apply text-[#F64B7A] font-cormorant text-2xl font-semibold mb-2;
+    @apply text-[#EDDEE1] font-cormorant text-2xl font-semibold mb-2;
   }
 
   #lovehotel-booking .room-description {

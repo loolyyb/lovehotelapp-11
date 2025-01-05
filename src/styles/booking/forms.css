@@ -4,11 +4,11 @@
   }
 
   #lovehotel-booking label {
-    @apply text-[#F64B7A] font-medium text-sm;
+    @apply text-[#EDDEE1] font-medium text-sm;
   }
 
   #lovehotel-booking .error-message {
-    @apply text-[#F64B7A] text-sm mt-1;
+    @apply text-[#EDDEE1] text-sm mt-1;
   }
 
   #lovehotel-booking .success-message {

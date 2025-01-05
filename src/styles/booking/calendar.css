@@ -1,18 +1,18 @@
 @layer components {
   #lovehotel-booking .calendar {
-    @apply border-[#F64B7A]/20 rounded-lg shadow-sm p-4 bg-white;
+    @apply border-[#EDDEE1] rounded-lg shadow-sm p-4 bg-white;
   }
 
   #lovehotel-booking .calendar-day {
-    @apply rounded-md hover:bg-[#F64B7A]/10 transition-colors duration-200;
+    @apply rounded-md hover:bg-[#EDDEE1]/10 transition-colors duration-200;
   }
 
   #lovehotel-booking .calendar-day.selected {
-    @apply bg-[#F64B7A] text-white font-medium;
+    @apply bg-[#EDDEE1] text-gray-700 font-medium;
   }
 
   #lovehotel-booking .calendar-day:hover:not(.disabled) {
-    @apply bg-[#F64B7A]/20;
+    @apply bg-[#EDDEE1]/20;
   }
 
   #lovehotel-booking .calendar-day.disabled {
