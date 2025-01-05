@@ -1,13 +1,14 @@
 @layer components {
   #lovehotel-booking input,
   #lovehotel-booking select {
-    @apply border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-lg px-3 py-2 w-full transition-all duration-300;
+    @apply border-rose-200 focus:border-rose-400 focus:ring-rose-400 rounded-lg px-3 py-2 transition-all duration-300;
     font-family: 'Montserrat', sans-serif;
-    width: 100%;
+    width: 100% !important;
   }
 
   #lovehotel-booking .form-group {
-    @apply space-y-2 mb-4 w-full;
+    @apply space-y-2 mb-4;
+    width: 100% !important;
   }
 
   #lovehotel-booking label {
@@ -23,22 +24,29 @@
   }
 
   #lovehotel-booking form {
-    @apply w-full;
+    width: 100% !important;
+    max-width: none !important;
   }
 
   #lovehotel-booking .form-container {
-    @apply w-full;
+    width: 100% !important;
+    max-width: none !important;
   }
 
-  /* Force the booking module to take full width */
   #lovehotel-booking {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: none !important;
+    display: block !important;
   }
 
-  /* Ensure all direct children of the booking module also take full width */
   #lovehotel-booking > * {
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Override any inline styles that might be causing width issues */
+  #lovehotel-booking [style*="width"] {
+    width: 100% !important;
+    max-width: none !important;
   }
 }
