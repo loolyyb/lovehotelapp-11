@@ -7,8 +7,8 @@ interface VersionData {
   available?: string[];
 }
 
-// Type guard to check if a value is a VersionData object
-function isVersionData(value: Json): value is VersionData {
+// Type guard to check if a value matches the VersionData structure
+function isVersionData(value: unknown): value is VersionData {
   if (typeof value === 'object' && value !== null && 'version' in value) {
     return typeof (value as any).version === 'string';
   }
