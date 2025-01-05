@@ -112,25 +112,37 @@
 }
 
 #lovehotel-booking button {
-  @apply bg-burgundy-600 hover:bg-burgundy-700 transition-colors duration-300;
+  @apply bg-rose-600 hover:bg-rose-700 transition-colors duration-300;
 }
 
 #lovehotel-booking input,
 #lovehotel-booking select {
-  @apply border-burgundy-200 focus:border-burgundy-400 focus:ring-burgundy-400;
+  @apply border-rose-200 focus:border-rose-400 focus:ring-rose-400;
   font-family: 'Montserrat', sans-serif;
 }
 
 #lovehotel-booking .calendar {
-  @apply border-burgundy-200;
+  @apply border-rose-200;
 }
 
 #lovehotel-booking .calendar-day.selected {
-  @apply bg-burgundy-600 text-white;
+  @apply bg-rose-600 text-white;
 }
 
 #lovehotel-booking .calendar-day:hover:not(.disabled) {
-  @apply bg-burgundy-100;
+  @apply bg-rose-100;
+}
+
+#lovehotel-booking .price {
+  @apply text-rose-600 font-semibold;
+}
+
+#lovehotel-booking .room-type {
+  @apply text-rose-800 font-cormorant text-xl;
+}
+
+#lovehotel-booking .room-description {
+  @apply text-gray-600 font-montserrat;
 }
 
 /* Animations pour le thème lover */
