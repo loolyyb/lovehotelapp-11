@@ -72,6 +72,36 @@ export type Database = {
         }
         Relationships: []
       }
+      application_logs: {
+        Row: {
+          context: Json | null
+          id: string
+          level: string
+          message: string
+          route: string | null
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          id?: string
+          level: string
+          message: string
+          route?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          id?: string
+          level?: string
+          message?: string
+          route?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       challenge_participations: {
         Row: {
           challenge_id: string | null
