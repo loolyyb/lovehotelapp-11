@@ -5,11 +5,13 @@ import { Header } from "@/components/landing/Header";
 
 const Index = () => {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background flex flex-col">
       <Header />
-      <Hero />
-      <Features />
-      <CTA />
+      <div className="flex-grow">
+        <Hero />
+        <Features />
+        <CTA />
+      </div>
     </main>
   );
 };
