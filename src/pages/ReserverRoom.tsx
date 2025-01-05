@@ -132,6 +132,15 @@ const ReserverRoom = () => {
             animation: shine 3s infinite;
           }
 
+          @keyframes shine {
+            0% {
+              transform: translateX(-100%) rotate(45deg);
+            }
+            100% {
+              transform: translateX(100%) rotate(45deg);
+            }
+          }
+
           /* Style labels and text */
           .booking-module label {
             color: var(--primary);
@@ -144,6 +153,17 @@ const ReserverRoom = () => {
           /* Add subtle animations */
           .booking-module > div {
             animation: fadeIn 0.3s ease-out;
+          }
+
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(5px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
 
           /* Responsive adjustments */
