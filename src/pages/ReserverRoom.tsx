@@ -7,7 +7,7 @@ const ReserverRoom = () => {
     <div className="w-full min-h-screen bg-background">
       <div className="container mx-auto px-4">
         <ReservationHeader />
-        <div className="booking-wrapper mt-4">
+        <div className="booking-wrapper mt-4 w-[96%] mx-auto">
           <BookingModule />
         </div>
 
