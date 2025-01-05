@@ -67,25 +67,25 @@ export async function getCurrentVersion(): Promise<string> {
 
     if (error) throw error;
     
-    // If no version exists yet, create it
+    // If no version exists yet, create it with version 1.0.20
     if (!data) {
-      const defaultVersion = '1.0.0';
+      const initialVersion = '1.0.20';
       const { error: insertError } = await supabase
         .from('admin_settings')
         .insert({
           key: 'app_version',
-          value: { version: defaultVersion } as VersionData,
+          value: { version: initialVersion } as VersionData,
         });
 
       if (insertError) throw insertError;
-      return defaultVersion;
+      return initialVersion;
     }
     
     const versionData = data.value as VersionData;
-    return versionData?.version || '1.0.0';
+    return versionData?.version || '1.0.20';
   } catch (error) {
     console.error('Error getting current version:', error);
-    return '1.0.0';
+    return '1.0.20';
   }
 }
 

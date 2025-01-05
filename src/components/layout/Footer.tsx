@@ -4,7 +4,7 @@ import { getCurrentVersion } from "@/utils/versionControl";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const [version, setVersion] = useState("1.0.0");
+  const [version, setVersion] = useState("1.0.20");
 
   useEffect(() => {
     const fetchVersion = async () => {
