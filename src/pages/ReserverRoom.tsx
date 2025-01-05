@@ -1,7 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BedDouble } from "lucide-react";
 
 const ReserverRoom = () => {
+  useEffect(() => {
+    // Add script dynamically
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://booking.lovehotel.io/assets/index.js';
+    document.body.appendChild(script);
+
+    // Add stylesheet dynamically
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://booking.lovehotel.io/assets/index.css';
+    document.head.appendChild(link);
+
+    // Cleanup function
+    return () => {
+      document.body.removeChild(script);
+      document.head.removeChild(link);
+    };
+  }, []); // Empty dependency array means this runs once on mount
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
@@ -12,11 +32,7 @@ const ReserverRoom = () => {
           </div>
           
           <div className="w-full">
-            <iframe 
-              src="https://lovehotelaparis.fr/reserver-une-chambre/" 
-              className="w-full min-h-[800px] border-0"
-              title="Réservation Love Room"
-            />
+            <div id="lovehotel-booking" className="w-full min-h-[800px]" />
           </div>
         </div>
       </div>
