@@ -1,0 +1,17 @@
+@layer components {
+  #lovehotel-booking .form-group {
+    @apply space-y-2 mb-4;
+  }
+
+  #lovehotel-booking label {
+    @apply text-rose-700 font-medium text-sm;
+  }
+
+  #lovehotel-booking .error-message {
+    @apply text-rose-600 text-sm mt-1;
+  }
+
+  #lovehotel-booking .success-message {
+    @apply text-green-600 bg-green-50 p-4 rounded-lg text-sm;
+  }
+}
