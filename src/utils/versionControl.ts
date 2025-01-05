@@ -1,9 +1,18 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 interface VersionData {
   version: string;
   current?: string;
   available?: string[];
+}
+
+// Type guard to check if a value is a VersionData object
+function isVersionData(value: Json): value is VersionData {
+  if (typeof value === 'object' && value !== null && 'version' in value) {
+    return typeof (value as any).version === 'string';
+  }
+  return false;
 }
 
 export async function getCurrentVersion(): Promise<string> {
@@ -19,8 +28,11 @@ export async function getCurrentVersion(): Promise<string> {
       return '1.0.20';
     }
 
-    const versionData = data?.value as VersionData;
-    return versionData?.version || '1.0.20';
+    if (isVersionData(data?.value)) {
+      return data.value.version;
+    }
+    
+    return '1.0.20';
   } catch (error) {
     console.error('Error getting current version:', error);
     return '1.0.20';
@@ -37,7 +49,11 @@ export async function updateVersion(): Promise<void> {
       .from('admin_settings')
       .upsert({
         key: 'app_version',
-        value: { version: newVersion } as VersionData,
+        value: {
+          version: newVersion,
+          current: newVersion,
+          available: [newVersion]
+        } as Json
       });
 
     if (error) {
