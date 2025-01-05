@@ -43,34 +43,43 @@ const ReserverRoom = () => {
 
       <style>
         {`
-          /* Isolate booking styles to prevent them from affecting the header */
+          /* Reset any global styles that might affect the header */
           .booking-page-container {
             position: relative;
             width: 100%;
+            margin: 0;
+            padding: 0;
+          }
+
+          /* Ensure content starts below the fixed header */
+          .booking-content {
+            position: relative;
+            z-index: 1;
             margin-top: 0;
             padding-top: 0;
           }
 
-          /* Override any padding that might affect the header */
-          .booking-content {
-            position: relative;
-            z-index: 1;
-          }
-
-          /* Ensure the booking module container doesn't affect layout */
+          /* Contain the booking module styles */
           .booking-module-container {
             width: 100%;
             max-width: 100%;
             overflow-x: hidden;
+            position: relative;
+            z-index: 1;
           }
 
-          /* Reset any global styles that might be added by the booking script */
+          /* Reset booking module styles */
           #lovehotel-booking {
             all: revert;
             width: 100% !important;
             max-width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
+          }
+
+          /* Override any styles that might affect the header */
+          #root {
+            padding-top: 0 !important;
           }
         `}
       </style>
