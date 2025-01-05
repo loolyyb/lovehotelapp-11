@@ -27,8 +27,29 @@ const ReserverRoom = () => {
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <BedDouble className="h-6 w-6 text-burgundy" />
-            <h1 className="text-2xl font-cormorant text-burgundy">Réserver une Love Room</h1>
+            <BedDouble className="h-6 w-6 text-booking-primary" />
+            <h1 className="text-2xl font-cormorant text-booking-primary">Réserver une Love Room</h1>
+          </div>
+          
+          <div className="mb-8 text-gray-600 font-montserrat">
+            <p className="mb-4">
+              Découvrez nos Love Rooms, des espaces intimes et élégants répartis entre nos deux établissements parisiens :
+            </p>
+            <ul className="mb-4 space-y-2">
+              <li className="flex items-center gap-2">
+                <span className="text-booking-primary">•</span>
+                <span>18 Love Rooms à Châtelet, au cœur de Paris</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-booking-primary">•</span>
+                <span>7 Love Rooms à Pigalle, quartier mythique de la capitale</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-booking-primary">•</span>
+                <span>2 suites avec jacuzzi privatif pour des moments d'exception</span>
+              </li>
+            </ul>
+            <p>Réservez dès maintenant votre Love Room et vivez une expérience unique dans un cadre raffiné et discret.</p>
           </div>
           
           <div className="w-full">
