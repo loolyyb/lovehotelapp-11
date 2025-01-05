@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useMemo } from "react";
 import { type CustomTheme, ThemeName } from "@/types/theme";
 import { themes } from "@/config/themes.config";
 
@@ -31,7 +31,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme(themes[themeName]);
   };
 
-  const value = React.useMemo(
+  const value = useMemo(
     () => ({
       theme,
       currentThemeName,
