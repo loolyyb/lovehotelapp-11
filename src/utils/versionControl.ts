@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface VersionData {
   version: string;
+  current?: string;
+  available?: string[];
 }
 
 export async function getCurrentVersion(): Promise<string> {
@@ -17,7 +19,8 @@ export async function getCurrentVersion(): Promise<string> {
       return '1.0.20';
     }
 
-    return data?.value?.version || '1.0.20';
+    const versionData = data?.value as VersionData;
+    return versionData?.version || '1.0.20';
   } catch (error) {
     console.error('Error getting current version:', error);
     return '1.0.20';
@@ -34,7 +37,7 @@ export async function updateVersion(): Promise<void> {
       .from('admin_settings')
       .upsert({
         key: 'app_version',
-        value: { version: newVersion },
+        value: { version: newVersion } as VersionData,
       });
 
     if (error) {
