@@ -1,14 +1,8 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { User, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface ProfileSeekingProps {
-  seeking?: string[] | null;
-  status?: string | null;
-  orientation?: string | null;
-  onSeekingChange: (seeking: string[]) => void;
-}
+import { ProfileSeekingProps } from "./types/seeking.types";
+import { getAvailableOptions } from "./utils/seekingOptions";
 
 export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }: ProfileSeekingProps) {
   const { toast } = useToast();
@@ -30,50 +24,7 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
     });
   };
 
-  const getAvailableOptions = () => {
-    if (!status || !orientation) return [];
-
-    const options: Array<{ value: string; label: string; icon: JSX.Element }> = [];
-
-    // Options de base selon l'orientation
-    if (orientation === "hetero") {
-      if (status === "single_man") {
-        options.push(
-          { value: "single_woman", label: "Une femme", icon: <User className="w-4 h-4" /> },
-          { value: "couple_mf", label: "Un couple (homme-femme)", icon: <Users className="w-4 h-4" /> }
-        );
-      } else if (status === "single_woman") {
-        options.push(
-          { value: "single_man", label: "Un homme", icon: <User className="w-4 h-4" /> },
-          { value: "couple_mf", label: "Un couple (homme-femme)", icon: <Users className="w-4 h-4" /> }
-        );
-      }
-    } else if (orientation === "gay") {
-      if (status === "single_man") {
-        options.push(
-          { value: "single_man", label: "Un homme", icon: <User className="w-4 h-4" /> },
-          { value: "couple_mm", label: "Un couple (homme-homme)", icon: <Users className="w-4 h-4" /> }
-        );
-      } else if (status === "single_woman") {
-        options.push(
-          { value: "single_woman", label: "Une femme", icon: <User className="w-4 h-4" /> },
-          { value: "couple_ff", label: "Un couple (femme-femme)", icon: <Users className="w-4 h-4" /> }
-        );
-      }
-    } else if (["bisexual", "pansexual"].includes(orientation)) {
-      options.push(
-        { value: "single_man", label: "Un homme", icon: <User className="w-4 h-4" /> },
-        { value: "single_woman", label: "Une femme", icon: <User className="w-4 h-4" /> },
-        { value: "couple_mf", label: "Un couple (homme-femme)", icon: <Users className="w-4 h-4" /> },
-        { value: "couple_mm", label: "Un couple (homme-homme)", icon: <Users className="w-4 h-4" /> },
-        { value: "couple_ff", label: "Un couple (femme-femme)", icon: <Users className="w-4 h-4" /> }
-      );
-    }
-
-    return options;
-  };
-
-  const options = getAvailableOptions();
+  const options = getAvailableOptions(status, orientation);
 
   if (options.length === 0) {
     return (
