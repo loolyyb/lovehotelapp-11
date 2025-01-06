@@ -15,6 +15,7 @@ import Challenges from "@/pages/Challenges";
 import ReserverRoom from "@/pages/ReserverRoom";
 import RideauxOuverts from "@/pages/RideauxOuverts";
 import Dashboard from "@/pages/Dashboard";
+import Options from "@/pages/Options";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -62,6 +63,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/features"
         element={<Features />}
+      />
+      <Route
+        path="/options"
+        element={<Options />}
       />
       <Route
         path="/lover-coin"
