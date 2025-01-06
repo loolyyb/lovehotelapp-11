@@ -47,6 +47,11 @@ export default function Options() {
           </motion.div>
         ))}
       </div>
+      <div className="mt-12 text-center">
+        <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+          Retrouvez toutes ces options lors de la réservation de votre Love Room pour personnaliser votre expérience et rendre votre séjour encore plus mémorable.
+        </p>
+      </div>
     </div>
   );
 }
