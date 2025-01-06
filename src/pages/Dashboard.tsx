@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { BedDouble, Calendar, Heart, Theater, Utensils, UserRound } from "lucide-react";
 import { DashboardWidget } from "@/components/dashboard/DashboardWidget";
-import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
 
 const Dashboard = () => {
   const widgets = [
@@ -46,12 +45,12 @@ const Dashboard = () => {
       </div>
 
       {/* Content */}
-      <main className="flex-grow container mx-auto px-4 py-8 relative z-10 flex items-center">
+      <main className="flex-grow w-full px-2 sm:px-4 relative z-10 flex items-center pb-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="grid grid-cols-2 gap-6 max-w-5xl mx-auto w-full"
+          className="grid grid-cols-2 gap-2 sm:gap-6 w-full max-w-5xl mx-auto"
         >
           {widgets.map((widget, index) => (
             <motion.div
@@ -66,8 +65,6 @@ const Dashboard = () => {
           ))}
         </motion.div>
       </main>
-
-      <DashboardFooter />
     </div>
   );
 };
