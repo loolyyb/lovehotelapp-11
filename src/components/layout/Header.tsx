@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { MessagesSquare, Percent, Calendar, Trophy } from "lucide-react";
+import { MessagesSquare, Percent, Calendar, Trophy, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -119,6 +119,14 @@ export function Header({ userProfile }: { userProfile?: any }) {
           <SideMenu />
           
           <div className="flex items-center gap-4">
+            <Link 
+              to="/" 
+              className="hover:opacity-80 transition-opacity"
+              title="Accueil"
+            >
+              <Home className="h-5 w-5 text-burgundy stroke-[1.5]" />
+            </Link>
+
             <Link 
               to="/messages" 
               className="relative hover:opacity-80 transition-opacity"
