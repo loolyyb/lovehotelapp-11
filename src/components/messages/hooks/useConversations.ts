@@ -19,21 +19,32 @@ export const useConversations = () => {
         return;
       }
 
-      console.log("Fetching conversations for user:", user.id);
+      // First get the user's profile id
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching user profile:", profileError);
+        throw profileError;
+      }
+
+      if (!userProfile) {
+        console.error("No profile found for user:", user.id);
+        throw new Error("Profile not found");
+      }
+
+      console.log("Fetching conversations for profile:", userProfile.id);
       
       const { data, error } = await supabase
         .from('conversations')
         .select(`
           *,
-          user1:profiles!conversations_user1_profile_fkey(
-            avatar_url,
-            full_name
-          ),
-          user2:profiles!conversations_user2_profile_fkey(
-            avatar_url,
-            full_name
-          ),
-          messages:messages(
+          user1:profiles!conversations_user1_profile_fkey(*),
+          user2:profiles!conversations_user2_profile_fkey(*),
+          messages(
             id,
             content,
             created_at,
@@ -41,16 +52,19 @@ export const useConversations = () => {
             read_at
           )
         `)
-        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
+        .or(`user1_id.eq.${userProfile.id},user2_id.eq.${userProfile.id}`)
         .eq('status', 'active')
         .order('updated_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching conversations:", error);
+        throw error;
+      }
       
       console.log("Fetched conversations:", data);
       setConversations(data || []);
     } catch (error: any) {
-      console.error("Error fetching conversations:", error);
+      console.error("Error in fetchConversations:", error);
       setError("Impossible de charger les conversations");
       toast({
         variant: "destructive",
@@ -65,8 +79,21 @@ export const useConversations = () => {
   useEffect(() => {
     fetchConversations();
     
+    // Subscribe to changes in conversations and messages
     const channel = supabase
-      .channel('messages-changes')
+      .channel('conversations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'conversations'
+        },
+        (payload) => {
+          console.log("Conversation change detected:", payload);
+          fetchConversations();
+        }
+      )
       .on(
         'postgres_changes',
         {
@@ -74,8 +101,8 @@ export const useConversations = () => {
           schema: 'public',
           table: 'messages'
         },
-        () => {
-          console.log("Message change detected, refreshing conversations");
+        (payload) => {
+          console.log("Message change detected:", payload);
           fetchConversations();
         }
       )
