@@ -1,7 +1,7 @@
 {
-  "name": "Love Hotel",
+  "name": "Love Hotel Paris",
   "short_name": "Love Hotel",
-  "description": "Une expérience de dating exclusive",
+  "description": "Votre application de réservation pour Love Hotel Paris",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -17,6 +17,6 @@
   "prefer_related_applications": false,
   "related_applications": [],
   "shortcuts": [],
-  "categories": ["lifestyle", "social"],
+  "categories": ["style de vie", "social"],
   "screenshots": []
 }

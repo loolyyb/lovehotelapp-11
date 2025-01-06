@@ -25,9 +25,7 @@ export const InstallPrompt = () => {
     }
 
     const handler = (e: Event) => {
-      // Prevent Chrome from showing the default install prompt
       e.preventDefault();
-      // Store the event for later use
       setDeferredPrompt(e);
       setShowPrompt(true);
 
@@ -50,23 +48,23 @@ export const InstallPrompt = () => {
   const handleInstall = async () => {
     if (!deferredPrompt) return;
 
-    // Show the install prompt
-    deferredPrompt.prompt();
-    
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
-      toast({
-        title: "Installation en cours",
-        description: "Merci d'avoir installé Love Hotel !",
-      });
-    } else {
-      console.log('User dismissed the install prompt');
+    try {
+      const outcome = await deferredPrompt.prompt();
+      console.log(`Installation prompt outcome: ${outcome}`);
+      
+      if (outcome === 'accepted') {
+        console.log('Utilisateur a accepté l\'installation');
+        toast({
+          title: "Installation en cours",
+          description: "Merci d'avoir installé Love Hotel !",
+        });
+      } else {
+        console.log('Utilisateur a refusé l\'installation');
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'installation:', error);
     }
-    
-    // Clear the deferredPrompt
+
     setDeferredPrompt(null);
     setShowPrompt(false);
   };
@@ -91,12 +89,14 @@ export const InstallPrompt = () => {
           >
             Installer
           </Button>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setShowPrompt(false)}
-            className="p-1 hover:bg-gray-100 rounded-full"
+            className="text-gray-500"
           >
-            <X className="h-5 w-5 text-gray-500" />
-          </button>
+            <X className="h-5 w-5" />
+          </Button>
         </div>
       </div>
     </div>
