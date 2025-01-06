@@ -27,9 +27,18 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
       <Tabs defaultValue="account" className="w-full">
         <div className="mb-6">
           <Select defaultValue="account" onValueChange={(value) => {
-            const tabsElement = document.querySelector(`[data-state="inactive"][value="${value}"]`) as HTMLElement;
-            if (tabsElement) {
-              tabsElement.click();
+            // Trouver l'élément Tabs correspondant et simuler un clic
+            const tabsContent = document.querySelector(`[data-state][value="${value}"]`);
+            if (tabsContent) {
+              // Mettre à jour l'état de tous les contenus d'onglets
+              document.querySelectorAll('[data-state][role="tabpanel"]').forEach((panel) => {
+                panel.setAttribute('data-state', 'inactive');
+                panel.setAttribute('hidden', '');
+              });
+              
+              // Activer le contenu de l'onglet sélectionné
+              tabsContent.setAttribute('data-state', 'active');
+              tabsContent.removeAttribute('hidden');
             }
           }}>
             <SelectTrigger className="w-full">
