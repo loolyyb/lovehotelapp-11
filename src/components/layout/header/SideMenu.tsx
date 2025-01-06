@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Menu, Home, User, Info, BedDouble } from "lucide-react";
+import { Menu, Home, User, Info, BedDouble, Curtains } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
