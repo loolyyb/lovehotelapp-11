@@ -36,7 +36,8 @@ export default function Profiles() {
       console.log("Début du chargement des profils...");
       setLoading(true);
       
-      // Récupération des profils
+      // Récupération des profils avec debug
+      console.log("Envoi de la requête pour récupérer les profils...");
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*");
@@ -46,13 +47,15 @@ export default function Profiles() {
         throw profilesError;
       }
 
+      console.log("Profils bruts reçus:", profilesData);
       console.log("Nombre de profils récupérés:", profilesData?.length);
 
       if (!profilesData) {
         throw new Error("Aucun profil n'a été retourné");
       }
 
-      // Récupération des préférences
+      // Récupération des préférences avec debug
+      console.log("Envoi de la requête pour récupérer les préférences...");
       const { data: preferencesData, error: preferencesError } = await supabase
         .from("preferences")
         .select("*");
@@ -62,15 +65,24 @@ export default function Profiles() {
         throw preferencesError;
       }
 
+      console.log("Préférences brutes reçues:", preferencesData);
       console.log("Nombre de préférences récupérées:", preferencesData?.length);
 
       // Combinaison des profils avec leurs préférences
-      const profilesWithPreferences = profilesData.map(profile => ({
-        profile,
-        preferences: preferencesData?.find(pref => pref.user_id === profile.user_id) || null
-      }));
+      const profilesWithPreferences = profilesData.map(profile => {
+        const preferences = preferencesData?.find(pref => pref.user_id === profile.user_id) || null;
+        console.log(`Association pour le profil ${profile.id}:`, { 
+          profile_user_id: profile.user_id,
+          found_preferences: preferences ? 'oui' : 'non'
+        });
+        return {
+          profile,
+          preferences
+        };
+      });
 
       console.log("Nombre total de profils avec préférences:", profilesWithPreferences.length);
+      console.log("Profils finaux:", profilesWithPreferences);
 
       setProfiles(profilesWithPreferences);
       setFilteredProfiles(profilesWithPreferences);
