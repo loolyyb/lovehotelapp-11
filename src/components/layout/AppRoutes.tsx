@@ -14,6 +14,7 @@ import Events from "@/pages/Events";
 import Challenges from "@/pages/Challenges";
 import ReserverRoom from "@/pages/ReserverRoom";
 import RideauxOuverts from "@/pages/RideauxOuverts";
+import Dashboard from "@/pages/Dashboard";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -24,7 +25,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     <Routes>
       <Route
         path="/"
-        element={session ? <Profiles /> : <Landing />}
+        element={session ? <Dashboard /> : <Landing />}
       />
       <Route
         path="/login"
