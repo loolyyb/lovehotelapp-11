@@ -48,7 +48,7 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
         </TabsContent>
 
         <TabsContent value="fidelity">
-          <FidelityTab profile={profile} />
+          <FidelityTab profile={profile} onUpdate={onUpdate} />
         </TabsContent>
 
         <TabsContent value="reservations">
@@ -78,7 +78,7 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
       </TabsContent>
 
       <TabsContent value="fidelity">
-        <FidelityTab profile={profile} />
+        <FidelityTab profile={profile} onUpdate={onUpdate} />
       </TabsContent>
 
       <TabsContent value="reservations">
