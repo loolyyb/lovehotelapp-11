@@ -1,4 +1,4 @@
-import { CreditCard, Calendar, Heart, Activity } from "lucide-react";
+import { CreditCard, Heart, CalendarCheck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -6,7 +6,6 @@ import { AccountTab } from "./AccountTab";
 import { FidelityTab } from "./FidelityTab";
 import { ReservationsTab } from "./ReservationsTab";
 import { DatingTab } from "./DatingTab";
-import { ActivitiesTab } from "./ActivitiesTab";
 
 interface ProfileTabsProps {
   profile: any;
@@ -19,9 +18,8 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
   const tabs = [
     { id: "account", label: "Mon Compte", icon: CreditCard },
     { id: "fidelity", label: "Fidélité", icon: Heart },
-    { id: "reservations", label: "Mes Réservations", icon: Calendar },
     { id: "dating", label: "Rencontres", icon: Heart },
-    { id: "activities", label: "Mes Activités", icon: Activity },
+    { id: "reservations", label: "Mes Réservations", icon: CalendarCheck },
   ];
 
   if (isMobile) {
@@ -53,16 +51,12 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
           <FidelityTab profile={profile} onUpdate={onUpdate} />
         </TabsContent>
 
-        <TabsContent value="reservations">
-          <ReservationsTab />
-        </TabsContent>
-
         <TabsContent value="dating">
           <DatingTab profile={profile} onUpdate={onUpdate} />
         </TabsContent>
 
-        <TabsContent value="activities">
-          <ActivitiesTab />
+        <TabsContent value="reservations">
+          <ReservationsTab />
         </TabsContent>
       </Tabs>
     );
@@ -70,7 +64,7 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
 
   return (
     <Tabs defaultValue="account" className="w-full">
-      <TabsList className="grid w-full grid-cols-5">
+      <TabsList className="grid w-full grid-cols-4">
         {tabs.map((tab) => (
           <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
             <tab.icon className="h-4 w-4" />
@@ -87,16 +81,12 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
         <FidelityTab profile={profile} onUpdate={onUpdate} />
       </TabsContent>
 
-      <TabsContent value="reservations">
-        <ReservationsTab />
-      </TabsContent>
-
       <TabsContent value="dating">
         <DatingTab profile={profile} onUpdate={onUpdate} />
       </TabsContent>
 
-      <TabsContent value="activities">
-        <ActivitiesTab />
+      <TabsContent value="reservations">
+        <ReservationsTab />
       </TabsContent>
     </Tabs>
   );
