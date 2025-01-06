@@ -23,10 +23,15 @@ export function ProfilePreferences({ preferences, profile }: ProfilePreferencesP
       {preferences?.location && (
         <motion.div 
           whileHover={{ scale: 1.02 }}
-          className="glass-card p-6 rounded-xl space-y-3"
+          className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-all duration-300"
         >
           <div className="flex items-center gap-2 text-burgundy">
-            <MapPin className="w-5 h-5" />
+            <motion.div
+              whileHover={{ rotate: 15 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <MapPin className="w-5 h-5" />
+            </motion.div>
             <h3 className="font-semibold">Localisation</h3>
           </div>
           <p className="text-gray-700">{getLocationLabel(preferences.location)}</p>
@@ -36,10 +41,21 @@ export function ProfilePreferences({ preferences, profile }: ProfilePreferencesP
       {profile.sexual_orientation && (
         <motion.div 
           whileHover={{ scale: 1.02 }}
-          className="glass-card p-6 rounded-xl space-y-3"
+          className="glass-card p-6 rounded-xl space-y-3 hover:shadow-lg transition-all duration-300"
         >
           <div className="flex items-center gap-2 text-burgundy">
-            <Heart className="w-5 h-5" />
+            <motion.div
+              animate={{ 
+                scale: [1, 1.2, 1],
+              }}
+              transition={{ 
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <Heart className="w-5 h-5" />
+            </motion.div>
             <h3 className="font-semibold">Orientation</h3>
           </div>
           <p className="text-gray-700">{profile.sexual_orientation}</p>
