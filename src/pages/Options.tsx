@@ -32,7 +32,7 @@ export default function Options() {
             transition={{ delay: index * 0.2 }}
           >
             <Card className="overflow-hidden bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 h-full">
-              <div className="h-[400px] relative overflow-hidden">
+              <div className="relative overflow-hidden">
                 <img
                   src={option.image}
                   alt={option.title}
