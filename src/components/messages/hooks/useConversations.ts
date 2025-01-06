@@ -61,8 +61,13 @@ export const useConversations = () => {
         throw error;
       }
       
-      console.log("Fetched conversations:", data);
-      setConversations(data || []);
+      // Filter out conversations where user1_id equals user2_id (self-conversations)
+      const filteredData = data?.filter(conversation => 
+        conversation.user1_id !== conversation.user2_id
+      ) || [];
+      
+      console.log("Fetched conversations:", filteredData);
+      setConversations(filteredData);
     } catch (error: any) {
       console.error("Error in fetchConversations:", error);
       setError("Impossible de charger les conversations");
