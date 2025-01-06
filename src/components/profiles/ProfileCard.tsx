@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, Heart, Blinds } from "lucide-react";
+import { MapPin, Heart, Award, Star, Trophy } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import {
   Tooltip,
@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ProfileCardProps {
   profile: Tables<"profiles">;
@@ -17,9 +18,55 @@ interface ProfileCardProps {
 
 export function ProfileCard({ profile, preferences }: ProfileCardProps) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleProfileClick = () => {
     navigate(`/profile/${profile.id}`);
+  };
+
+  const renderMotivationIcons = () => {
+    const icons = [];
+    
+    if (preferences?.libertine_party_interest) {
+      icons.push(
+        <Tooltip key="libertine">
+          <TooltipTrigger>
+            <Star className="w-5 h-5 text-rose-500" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Soirées libertines</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+    
+    if (preferences?.speed_dating_interest) {
+      icons.push(
+        <Tooltip key="speed">
+          <TooltipTrigger>
+            <Trophy className="w-5 h-5 text-rose-500" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Speed dating</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+    
+    if (preferences?.open_curtains_interest) {
+      icons.push(
+        <Tooltip key="curtains">
+          <TooltipTrigger>
+            <Award className="w-5 h-5 text-rose-500" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Rideaux ouverts</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return icons;
   };
 
   return (
@@ -52,50 +99,23 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
               {profile.full_name}
             </h3>
 
-            {preferences?.location && (
+            {preferences?.location && !isMobile && (
               <div className="flex items-center justify-center space-x-2 text-gray-600">
                 <MapPin className="w-4 h-4" />
                 <span>{preferences.location}</span>
               </div>
             )}
 
-            {profile.bio && (
+            {profile.bio && !isMobile && (
               <p className="text-gray-600 line-clamp-2 text-sm">
                 {profile.bio}
               </p>
             )}
 
-            {preferences?.interests && preferences.interests.length > 0 && (
-              <div className="flex flex-wrap gap-2 justify-center mt-3">
-                {preferences.interests.slice(0, 3).map((interest, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-rose/20 text-burgundy rounded-full text-xs"
-                  >
-                    {interest}
-                  </span>
-                ))}
-              </div>
-            )}
-
             <div className="flex items-center justify-center space-x-3 mt-3">
+              {renderMotivationIcons()}
               {profile.is_love_hotel_member && (
-                <Heart className="w-5 h-5 text-rose" />
-              )}
-              {profile.is_loolyb_holder && (
-                <div className="w-5 h-5 rounded-full bg-burgundy" />
-              )}
-              {preferences?.open_curtains && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Blinds className="w-5 h-5 text-burgundy" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Rideaux ouverts</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Heart className="w-5 h-5 text-rose-500" />
               )}
             </div>
           </div>
