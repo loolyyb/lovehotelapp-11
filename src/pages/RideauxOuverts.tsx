@@ -18,14 +18,10 @@ const RideauxOuverts = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        // Using cors-anywhere as a fallback proxy
-        const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-        const targetUrl = "https://lovehotelaparis.fr/wp-json/zlhu_api/v1/rideaux_ouverts";
-        const response = await fetch(proxyUrl + targetUrl, {
-          headers: {
-            'Origin': window.location.origin
-          }
-        });
+        // Using a more reliable CORS proxy
+        const proxyUrl = "https://api.allorigins.win/raw?url=";
+        const targetUrl = encodeURIComponent("https://lovehotelaparis.fr/wp-json/zlhu_api/v1/rideaux_ouverts");
+        const response = await fetch(proxyUrl + targetUrl);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
