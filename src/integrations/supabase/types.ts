@@ -797,7 +797,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_demo_user: {
+        Args: {
+          email: string
+          password: string
+          full_name: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       challenge_type: "quiz" | "puzzle" | "photo" | "activity"
