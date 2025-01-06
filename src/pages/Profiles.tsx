@@ -36,7 +36,7 @@ export default function Profiles() {
       console.log("Fetching profiles...");
       setLoading(true);
       
-      // Fetch all profiles with no limit
+      // Fetch all profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
@@ -47,7 +47,7 @@ export default function Profiles() {
         throw profilesError;
       }
 
-      console.log("Fetched profiles:", profilesData?.length);
+      console.log("Fetched profiles count:", profilesData?.length);
 
       if (!profilesData) {
         throw new Error("No profiles data returned");
@@ -63,14 +63,15 @@ export default function Profiles() {
         throw preferencesError;
       }
 
-      console.log("Fetched preferences:", preferencesData?.length);
+      console.log("Fetched preferences count:", preferencesData?.length);
 
+      // Combine profiles with their preferences
       const profilesWithPreferences = profilesData.map(profile => ({
         profile,
         preferences: preferencesData?.find(pref => pref.user_id === profile.user_id) || null
       }));
 
-      console.log("Combined profiles with preferences:", profilesWithPreferences.length);
+      console.log("Total profiles with preferences:", profilesWithPreferences.length);
 
       setProfiles(profilesWithPreferences);
       setFilteredProfiles(profilesWithPreferences);
