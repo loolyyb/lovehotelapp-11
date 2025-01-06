@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Menu, Home, Users, BedDouble, Utensils } from "lucide-react";
+import { Menu, Home, BedDouble, Utensils, Users, Blinds } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -11,7 +11,7 @@ export function SideMenu() {
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="hover:bg-rose/10">
-          <Menu className="h-5 w-5 text-burgundy" />
+          <Menu className="h-5 w-5 text-primary" />
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-64 bg-white/95 backdrop-blur-sm">
@@ -23,7 +23,7 @@ export function SideMenu() {
         <nav className="flex flex-col gap-4">
           <Link 
             to="/" 
-            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            className="flex items-center gap-3 px-4 py-2 text-primary hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <Home className="h-5 w-5" />
@@ -31,7 +31,7 @@ export function SideMenu() {
           </Link>
           <Link 
             to="/reserver-room" 
-            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            className="flex items-center gap-3 px-4 py-2 text-primary hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <BedDouble className="h-5 w-5" />
@@ -39,15 +39,15 @@ export function SideMenu() {
           </Link>
           <Link 
             to="/rideaux-ouverts" 
-            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            className="flex items-center gap-3 px-4 py-2 text-primary hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >
-            <BedDouble className="h-5 w-5" />
+            <Blinds className="h-5 w-5" />
             <span>Rideaux Ouverts</span>
           </Link>
           <Link 
             to="/restaurant-du-love" 
-            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            className="flex items-center gap-3 px-4 py-2 text-primary hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <Utensils className="h-5 w-5" />
@@ -55,7 +55,7 @@ export function SideMenu() {
           </Link>
           <Link 
             to="/features" 
-            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            className="flex items-center gap-3 px-4 py-2 text-primary hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <Users className="h-5 w-5" />
