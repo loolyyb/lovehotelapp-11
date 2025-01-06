@@ -1,31 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card } from "@/components/ui/card";
 
 const RideauxOuverts = () => {
-  const [iframeHeight, setIframeHeight] = useState('800px');
-
-  const handleIframeLoad = (event: React.SyntheticEvent<HTMLIFrameElement>) => {
-    const iframe = event.currentTarget;
-    try {
-      // Try to get the content height
-      const height = iframe.contentWindow?.document.documentElement.scrollHeight;
-      if (height) {
-        setIframeHeight(`${height}px`);
-      }
-    } catch (error) {
-      console.log('Could not get iframe height, using default');
-    }
-  };
-
   return (
-    <div className="container mx-auto p-4 pt-8">
-      <Card className="w-full overflow-hidden">
+    <div className="container mx-auto p-4 pt-8 min-h-screen">
+      <Card className="w-full h-full overflow-hidden">
         <iframe 
           src="https://lovehotelaparis.fr/wp-json/zlhu_api/v3/rideaux_ouverts/"
-          className="w-full border-0"
-          style={{ height: iframeHeight }}
+          className="w-full min-h-screen border-0"
           title="Rideaux Ouverts"
-          onLoad={handleIframeLoad}
         />
       </Card>
     </div>
