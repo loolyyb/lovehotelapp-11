@@ -22,7 +22,7 @@ export function SideMenu() {
         />
         <nav className="flex flex-col gap-4">
           <Link 
-            to="/" 
+            to="/profiles" 
             className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >

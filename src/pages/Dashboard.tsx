@@ -20,7 +20,7 @@ const Dashboard = () => {
     {
       icon: Heart,
       title: "Rencontre",
-      to: "/profiles"
+      to: "/profiles"  // Modification ici : changement de la route
     },
     {
       icon: Theater,
