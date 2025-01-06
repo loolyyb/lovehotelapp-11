@@ -26,12 +26,7 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
     return (
       <Tabs defaultValue="account" className="w-full">
         <div className="mb-6">
-          <Select defaultValue="account" onValueChange={(value) => {
-            const tabsElement = document.querySelector(`[data-state="active"][data-value="${value}"]`);
-            if (tabsElement) {
-              tabsElement.scrollIntoView({ behavior: "smooth" });
-            }
-          }}>
+          <Select defaultValue="account">
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Sélectionnez une section" />
             </SelectTrigger>
@@ -61,7 +56,7 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
         </TabsContent>
 
         <TabsContent value="dating">
-          <DatingTab />
+          <DatingTab profile={profile} onUpdate={onUpdate} />
         </TabsContent>
       </Tabs>
     );
@@ -91,7 +86,7 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
       </TabsContent>
 
       <TabsContent value="dating">
-        <DatingTab />
+        <DatingTab profile={profile} onUpdate={onUpdate} />
       </TabsContent>
     </Tabs>
   );
