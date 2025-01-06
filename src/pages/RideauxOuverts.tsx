@@ -5,9 +5,7 @@ import { useAlert } from "@/hooks/useAlert";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 
 interface RideauxOuvertsData {
-  content: {
-    rendered: string;
-  };
+  content: string;  // Changed from { rendered: string } to string to match new API format
 }
 
 const RideauxOuverts = () => {
@@ -20,7 +18,6 @@ const RideauxOuverts = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        // Using a different CORS proxy service
         const proxyUrl = "https://corsproxy.io/?";
         const targetUrl = encodeURIComponent("https://lovehotelaparis.fr/wp-json/zlhu_api/v1/rideaux_ouverts");
         const response = await fetch(proxyUrl + targetUrl);
@@ -30,7 +27,7 @@ const RideauxOuverts = () => {
         }
         
         const data: RideauxOuvertsData = await response.json();
-        setContent(data.content.rendered);
+        setContent(data.content); // Updated to use data.content directly instead of data.content.rendered
       } catch (error) {
         logger.error("Failed to fetch Rideaux Ouverts content", { error });
         alert.captureException(error as Error);
