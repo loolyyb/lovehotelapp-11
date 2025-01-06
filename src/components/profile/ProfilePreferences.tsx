@@ -8,6 +8,14 @@ interface ProfilePreferencesProps {
 }
 
 export function ProfilePreferences({ preferences, profile }: ProfilePreferencesProps) {
+  const getLocationLabel = (value: string) => {
+    const locations = {
+      "paris-chatelet": "Paris Châtelet",
+      "paris-pigalle": "Paris Pigalle"
+    };
+    return locations[value as keyof typeof locations] || value;
+  };
+
   if (!preferences && !profile.sexual_orientation) return null;
 
   return (
@@ -21,7 +29,7 @@ export function ProfilePreferences({ preferences, profile }: ProfilePreferencesP
             <MapPin className="w-5 h-5" />
             <h3 className="font-semibold">Localisation</h3>
           </div>
-          <p className="text-gray-700">{preferences.location}</p>
+          <p className="text-gray-700">{getLocationLabel(preferences.location)}</p>
         </motion.div>
       )}
       

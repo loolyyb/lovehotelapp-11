@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ProfileFormProps {
   profile: any;
@@ -84,6 +85,11 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
     }
   };
 
+  const parisLocations = [
+    { value: "paris-chatelet", label: "Paris Châtelet" },
+    { value: "paris-pigalle", label: "Paris Pigalle" }
+  ];
+
   const WidgetContainer = ({ children, title }: { children: React.ReactNode; title: string }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -99,6 +105,27 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-8">
+          <WidgetContainer title="Localisation">
+            <div className="space-y-4">
+              <Label htmlFor="location">Quartier</Label>
+              <Select
+                value={preferences?.location}
+                onValueChange={(value) => handlePreferenceChange({ location: value })}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sélectionnez votre quartier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {parisLocations.map((location) => (
+                    <SelectItem key={location.value} value={location.value}>
+                      {location.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </WidgetContainer>
+
           <WidgetContainer title="À propos de vous">
             <ProfileDescription
               initialDescription={profile?.description}
