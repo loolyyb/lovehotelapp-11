@@ -6,11 +6,17 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/favicon.ico",
       "sizes": "64x64",
       "type": "image/x-icon"
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [],
+  "categories": ["lifestyle", "social"],
+  "screenshots": []
 }
