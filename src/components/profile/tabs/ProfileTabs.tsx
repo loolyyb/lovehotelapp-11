@@ -6,6 +6,7 @@ import { AccountTab } from "./AccountTab";
 import { FidelityTab } from "./FidelityTab";
 import { ReservationsTab } from "./ReservationsTab";
 import { DatingTab } from "./DatingTab";
+import { useState } from "react";
 
 interface ProfileTabsProps {
   profile: any;
@@ -14,6 +15,7 @@ interface ProfileTabsProps {
 
 export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState("account");
 
   const tabs = [
     { id: "account", label: "Mon Compte", icon: CreditCard },
@@ -22,27 +24,19 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
     { id: "reservations", label: "Mes Réservations", icon: CalendarCheck },
   ];
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
   if (isMobile) {
     return (
-      <Tabs defaultValue="account" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="mb-6">
-          <Select defaultValue="account" onValueChange={(value) => {
-            // Trouver l'élément Tabs correspondant et simuler un clic
-            const tabsContent = document.querySelector(`[data-state][value="${value}"]`);
-            if (tabsContent) {
-              // Mettre à jour l'état de tous les contenus d'onglets
-              document.querySelectorAll('[data-state][role="tabpanel"]').forEach((panel) => {
-                panel.setAttribute('data-state', 'inactive');
-                panel.setAttribute('hidden', '');
-              });
-              
-              // Activer le contenu de l'onglet sélectionné
-              tabsContent.setAttribute('data-state', 'active');
-              tabsContent.removeAttribute('hidden');
-            }
-          }}>
+          <Select value={activeTab} onValueChange={handleTabChange}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Sélectionnez une section" />
+              <SelectValue placeholder="Sélectionnez une section">
+                {tabs.find(tab => tab.id === activeTab)?.label}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {tabs.map((tab) => (
