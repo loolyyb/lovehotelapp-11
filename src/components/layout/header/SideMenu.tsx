@@ -30,22 +30,6 @@ export function SideMenu() {
             <span>Accueil</span>
           </Link>
           <Link 
-            to="/features" 
-            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            <Info className="h-5 w-5" />
-            <span>Nos Fonctionnalités</span>
-          </Link>
-          <Link 
-            to="/profile" 
-            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            <User className="h-5 w-5" />
-            <span>Mon Profil</span>
-          </Link>
-          <Link 
             to="/reserver-room" 
             className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
@@ -68,6 +52,14 @@ export function SideMenu() {
           >
             <Utensils className="h-5 w-5" />
             <span>Restaurant du Love</span>
+          </Link>
+          <Link 
+            to="/features" 
+            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            <Info className="h-5 w-5" />
+            <span>Nos Fonctionnalités</span>
           </Link>
         </nav>
       </SheetContent>
