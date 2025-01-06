@@ -20,17 +20,16 @@ const RideauxOuverts = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        // Using a CORS proxy to bypass the CORS restriction
-        const proxyUrl = "https://api.allorigins.win/get?url=";
+        // Using a different CORS proxy service
+        const proxyUrl = "https://corsproxy.io/?";
         const targetUrl = encodeURIComponent("https://lovehotelaparis.fr/wp-json/zlhu_api/v1/rideaux_ouverts");
         const response = await fetch(proxyUrl + targetUrl);
         
         if (!response.ok) {
-          throw new Error("Failed to fetch content");
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const proxyData = await response.json();
-        const data: RideauxOuvertsData = JSON.parse(proxyData.contents);
+        const data: RideauxOuvertsData = await response.json();
         setContent(data.content.rendered);
       } catch (error) {
         logger.error("Failed to fetch Rideaux Ouverts content", { error });
