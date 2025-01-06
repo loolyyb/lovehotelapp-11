@@ -8,12 +8,12 @@ const RestaurantDuLove = () => {
         <div className="space-y-6 animate-fadeIn">
           <div className="space-y-4">
             <img 
-              src="https://lovehotelaparis.fr/wp-content/uploads/2024/01/restaurant-love-hotel-paris.jpg" 
+              src="https://www.dandyhotelparis.com/_novaimg/galleria/1467864.jpg" 
               alt="Restaurant du Love - Interior"
               className="w-full h-64 object-cover rounded-xl shadow-lg"
             />
             <img 
-              src="https://lovehotelaparis.fr/wp-content/uploads/2024/01/restaurant-love-hotel-paris-2.jpg" 
+              src="https://www.dandyhotelparis.com/_novaimg/galleria/1467863.jpg" 
               alt="Restaurant du Love - Ambiance"
               className="w-full h-64 object-cover rounded-xl shadow-lg"
             />
