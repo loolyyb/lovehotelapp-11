@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useConversations } from "./hooks/useConversations";
+import { LoadingState } from "./LoadingState";
+import { EmptyState } from "./EmptyState";
+import { AlertTriangle } from "lucide-react";
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
@@ -11,43 +14,24 @@ interface ConversationListProps {
 }
 
 export function ConversationList({ onSelectConversation, selectedConversationId }: ConversationListProps) {
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
-  const { toast } = useToast();
+  const { conversations, isLoading, error, refetch } = useConversations();
 
   useEffect(() => {
-    getCurrentUser();
-    fetchConversations();
-    subscribeToNewMessages();
+    getCurrentUserProfile();
   }, []);
 
-  useEffect(() => {
-    if (currentUserId) {
-      fetchCurrentUserProfile();
-    }
-  }, [currentUserId]);
-
-  const getCurrentUser = async () => {
+  const getCurrentUserProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-      }
-    } catch (error) {
-      console.error("Error getting current user:", error);
-    }
-  };
+      if (!user) return;
 
-  const fetchCurrentUserProfile = async () => {
-    try {
-      const { data: profile, error } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('id')
-        .eq('user_id', currentUserId)
+        .eq('user_id', user.id)
         .single();
 
-      if (error) throw error;
       if (profile) {
         setCurrentUserProfileId(profile.id);
       }
@@ -56,69 +40,29 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
     }
   };
 
-  const fetchConversations = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  if (isLoading) {
+    return <LoadingState />;
+  }
 
-      const { data, error } = await supabase
-        .from('conversations')
-        .select(`
-          *,
-          user1:profiles!conversations_user1_profile_fkey(
-            avatar_url,
-            full_name
-          ),
-          user2:profiles!conversations_user2_profile_fkey(
-            avatar_url,
-            full_name
-          ),
-          messages:messages(
-            id,
-            content,
-            created_at,
-            sender_id,
-            read_at
-          )
-        `)
-        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-        .eq('status', 'active')
-        .order('updated_at', { ascending: false });
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
+        <AlertTriangle className="w-12 h-12 text-rose" />
+        <h3 className="text-lg font-medium text-burgundy">Erreur de chargement</h3>
+        <p className="text-sm text-gray-500">{error}</p>
+        <button 
+          onClick={() => refetch()}
+          className="px-4 py-2 text-sm font-medium text-white bg-rose rounded-md hover:bg-rose/90 transition-colors"
+        >
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
-      if (error) throw error;
-      console.log("Fetched conversations:", data);
-      setConversations(data || []);
-    } catch (error: any) {
-      console.error("Error fetching conversations:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les conversations",
-      });
-    }
-  };
-
-  const subscribeToNewMessages = () => {
-    console.log("Setting up real-time subscription for messages");
-    const channel = supabase
-      .channel('messages-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages'
-        },
-        () => {
-          fetchConversations();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
+  if (conversations.length === 0) {
+    return <EmptyState />;
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -135,7 +79,7 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
           className="block"
         >
           <img
-            src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7"
+            src="/lovable-uploads/d6c603ea-0b91-468e-88d9-5a3c92ec8436.png"
             alt="Love Hotel Advertisement"
             className="w-full h-32 object-cover rounded-lg mb-2"
           />
