@@ -3,16 +3,23 @@ import { useAuthSession } from "./useAuthSession";
 import { ApiService } from "@/services/ApiService";
 
 interface Booking {
-  id: string;
-  // Nous ajouterons plus de types une fois que nous aurons analysé la structure complète des données
-  [key: string]: any;
+  paid: number;
+  cards?: any[];
+  room?: {
+    name: string;
+  };
+  date: string;
+}
+
+interface BookingResponse {
+  "hydra:member": Booking[];
 }
 
 export function useBookings() {
   const { session } = useAuthSession();
   const userEmail = session?.user?.email;
 
-  const fetchBookings = async (hotelId: number): Promise<Booking[]> => {
+  const fetchBookings = async (hotelId: number): Promise<BookingResponse> => {
     if (!userEmail) throw new Error("User email not found");
     
     const endpoint = `/bookings?email=${encodeURIComponent(userEmail)}&order[created]=null&page=1&perPage=1000&cancelled=false&tmp=false`;
