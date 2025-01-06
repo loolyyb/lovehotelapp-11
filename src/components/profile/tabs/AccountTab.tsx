@@ -2,11 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ProfileHeader } from "../ProfileHeader";
 
 interface AccountTabProps {
   profile: any;
-  onUpdate: (updates: any) => Promise<void>;
+  onUpdate: (updates: any) => void;
 }
 
 export function AccountTab({ profile, onUpdate }: AccountTabProps) {
@@ -22,14 +21,6 @@ export function AccountTab({ profile, onUpdate }: AccountTabProps) {
 
   return (
     <div className="space-y-8">
-      <ProfileHeader
-        avatarUrl={profile?.avatar_url}
-        fullName={profile?.full_name}
-        bio={profile?.bio}
-        canEdit={true}
-        onAvatarChange={(url) => onUpdate({ avatar_url: url })}
-      />
-
       <Card className="p-6">
         <div className="space-y-4">
           <div>
