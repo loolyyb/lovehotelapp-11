@@ -2,6 +2,48 @@ import { Card } from "@/components/ui/card";
 import { useBookings } from "@/hooks/useBookings";
 import { Loader2 } from "lucide-react";
 
+interface Booking {
+  paid: number;
+  cards?: any[];
+  room?: {
+    name: string;
+  };
+  date: string;
+}
+
+interface BookingResponse {
+  "hydra:member": Booking[];
+}
+
+const BookingsList = ({ bookings }: { bookings: BookingResponse | undefined }) => {
+  if (!bookings || !bookings["hydra:member"]) {
+    return <p>Aucune réservation à afficher.</p>;
+  }
+
+  const filteredBookings = bookings["hydra:member"]
+    .filter((booking) => booking.paid > 0 || (booking.cards && booking.cards.length > 0))
+    .map((booking) => ({
+      nom: booking.room?.name || "Nom indisponible",
+      date: booking.date || "Date indisponible",
+    }));
+
+  if (filteredBookings.length === 0) {
+    return <p>Aucune réservation à afficher.</p>;
+  }
+
+  return (
+    <ul className="space-y-2">
+      {filteredBookings.map((booking, index) => (
+        <li key={index} className="flex items-center gap-2">
+          <strong className="text-burgundy">{booking.nom}</strong>
+          <span className="text-gray-600">-</span>
+          <span>{new Date(booking.date).toLocaleDateString("fr-FR")}</span>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
 export function ReservationsTab() {
   const { chateletBookings, pigalleBookings, isLoading, isError, error } = useBookings();
 
@@ -27,16 +69,12 @@ export function ReservationsTab() {
     <div className="space-y-6">
       <Card className="p-4">
         <h3 className="font-semibold text-lg text-burgundy mb-4">Réservations Châtelet</h3>
-        <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto">
-          {JSON.stringify(chateletBookings, null, 2)}
-        </pre>
+        <BookingsList bookings={chateletBookings} />
       </Card>
 
       <Card className="p-4">
         <h3 className="font-semibold text-lg text-burgundy mb-4">Réservations Pigalle</h3>
-        <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto">
-          {JSON.stringify(pigalleBookings, null, 2)}
-        </pre>
+        <BookingsList bookings={pigalleBookings} />
       </Card>
     </div>
   );
