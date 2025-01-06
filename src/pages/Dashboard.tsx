@@ -45,12 +45,12 @@ const Dashboard = () => {
       </div>
 
       {/* Content */}
-      <main className="flex-grow w-full px-2 sm:px-4 relative z-10 flex items-center pb-20">
+      <main className="flex-grow w-full px-2 sm:px-4 relative z-10 flex items-center h-[calc(100vh-4rem)]">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="grid grid-cols-2 gap-2 sm:gap-6 w-full max-w-5xl mx-auto"
+          className="grid grid-cols-2 gap-2 sm:gap-4 w-full max-w-5xl mx-auto h-[80%]"
         >
           {widgets.map((widget, index) => (
             <motion.div
