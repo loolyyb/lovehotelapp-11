@@ -1,8 +1,11 @@
 import { motion } from "framer-motion";
 import { BedDouble, Calendar, Heart, Theater, Utensils, UserRound } from "lucide-react";
 import { DashboardWidget } from "@/components/dashboard/DashboardWidget";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const Dashboard = () => {
+  const { userProfile } = useAuthSession();
+  
   const widgets = [
     {
       icon: BedDouble,
@@ -45,7 +48,16 @@ const Dashboard = () => {
       </div>
 
       {/* Content */}
-      <main className="flex-grow w-full px-2 sm:px-4 relative z-10 flex items-center h-[calc(100vh-4rem)]">
+      <main className="flex-grow w-full px-2 sm:px-4 relative z-10 flex flex-col items-center h-[calc(100vh-4rem)]">
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-2xl sm:text-3xl font-cormorant font-bold text-burgundy mt-4 mb-6"
+        >
+          Bonjour {userProfile?.full_name?.split(' ')[0] || 'Lover'}
+        </motion.h1>
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
