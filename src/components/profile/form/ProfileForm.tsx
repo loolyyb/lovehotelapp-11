@@ -28,14 +28,34 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      let { data: existingPreferences, error: fetchError } = await supabase
         .from('preferences')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
-      setPreferences(data);
+      if (fetchError) throw fetchError;
+
+      // If no preferences exist, create them
+      if (!existingPreferences) {
+        const { data: newPreferences, error: insertError } = await supabase
+          .from('preferences')
+          .insert([{
+            user_id: user.id,
+            open_curtains: false,
+            open_curtains_interest: false,
+            speed_dating_interest: false,
+            libertine_party_interest: false,
+            interests: []
+          }])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        existingPreferences = newPreferences;
+      }
+
+      setPreferences(existingPreferences);
     } catch (error: any) {
       console.error('Error loading preferences:', error);
       toast({
