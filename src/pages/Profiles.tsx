@@ -33,50 +33,49 @@ export default function Profiles() {
 
   const fetchProfiles = async () => {
     try {
-      console.log("Fetching profiles...");
+      console.log("Début du chargement des profils...");
       setLoading(true);
       
-      // Fetch all profiles
+      // Récupération des profils
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("*")
-        .order('created_at', { ascending: false });
+        .select("*");
 
       if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
+        console.error("Erreur lors de la récupération des profils:", profilesError);
         throw profilesError;
       }
 
-      console.log("Fetched profiles count:", profilesData?.length);
+      console.log("Nombre de profils récupérés:", profilesData?.length);
 
       if (!profilesData) {
-        throw new Error("No profiles data returned");
+        throw new Error("Aucun profil n'a été retourné");
       }
 
-      // Fetch all preferences
+      // Récupération des préférences
       const { data: preferencesData, error: preferencesError } = await supabase
         .from("preferences")
         .select("*");
 
       if (preferencesError) {
-        console.error("Error fetching preferences:", preferencesError);
+        console.error("Erreur lors de la récupération des préférences:", preferencesError);
         throw preferencesError;
       }
 
-      console.log("Fetched preferences count:", preferencesData?.length);
+      console.log("Nombre de préférences récupérées:", preferencesData?.length);
 
-      // Combine profiles with their preferences
+      // Combinaison des profils avec leurs préférences
       const profilesWithPreferences = profilesData.map(profile => ({
         profile,
         preferences: preferencesData?.find(pref => pref.user_id === profile.user_id) || null
       }));
 
-      console.log("Total profiles with preferences:", profilesWithPreferences.length);
+      console.log("Nombre total de profils avec préférences:", profilesWithPreferences.length);
 
       setProfiles(profilesWithPreferences);
       setFilteredProfiles(profilesWithPreferences);
     } catch (error: any) {
-      console.error("Error in fetchProfiles:", error);
+      console.error("Erreur complète:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -148,7 +147,7 @@ export default function Profiles() {
   return (
     <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100">
       <div className="container mx-auto px-4 py-4">
-        <h1 className="text-4xl font-playfair text-burgundy text-center mb-8 animate-fadeIn">
+        <h1 className="text-4xl font-cormorant text-burgundy text-center mb-8 animate-fadeIn">
           Découvrez des profils
         </h1>
         
