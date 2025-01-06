@@ -53,6 +53,14 @@ export function SideMenu() {
             <BedDouble className="h-5 w-5" />
             <span>Réserver une Love Room</span>
           </Link>
+          <Link 
+            to="/rideaux-ouverts" 
+            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            <Curtains className="h-5 w-5" />
+            <span>Rideaux Ouverts</span>
+          </Link>
         </nav>
       </SheetContent>
     </Sheet>
