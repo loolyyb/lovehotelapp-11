@@ -1,27 +1,28 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export const InstallPrompt = () => {
-  const [showPrompt, setShowPrompt] = useState(false);
+export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Detect iOS device
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const hasShownPrompt = localStorage.getItem('hasShownInstallPrompt');
+    if (hasShownPrompt) return;
+
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(isIOSDevice);
 
-    // Show installation instructions for iOS devices
-    if (isIOSDevice && !localStorage.getItem('pwaPromptShown')) {
+    if (isIOSDevice) {
       toast({
         title: "Installez l'application",
         description: "Pour installer l'application sur votre iPhone : appuyez sur le bouton 'Partager' puis 'Sur l'écran d'accueil'",
-        duration: 10000,
       });
-      localStorage.setItem('pwaPromptShown', 'true');
+      localStorage.setItem('hasShownInstallPrompt', 'true');
+      return;
     }
 
     const handler = (e: Event) => {
@@ -29,20 +30,18 @@ export const InstallPrompt = () => {
       setDeferredPrompt(e);
       setShowPrompt(true);
 
-      // Show Android-specific toast
-      if (!isIOSDevice && !localStorage.getItem('pwaPromptShown')) {
-        toast({
-          title: "Application disponible",
-          description: "Installez Love Hotel sur votre téléphone pour une meilleure expérience",
-          duration: 8000,
-        });
-        localStorage.setItem('pwaPromptShown', 'true');
-      }
+      toast({
+        title: "Application disponible",
+        description: "Installez Love Hotel sur votre appareil pour une meilleure expérience",
+      });
+      localStorage.setItem('hasShownInstallPrompt', 'true');
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
   }, [toast]);
 
   const handleInstall = async () => {
@@ -72,20 +71,20 @@ export const InstallPrompt = () => {
   if (!showPrompt || isIOS) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg animate-slide-up z-50">
-      <div className="max-w-md mx-auto flex items-center justify-between">
+    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg animate-slide-in-bottom">
+      <div className="container mx-auto flex items-center justify-between">
         <div className="flex-1 mr-4">
-          <p className="text-sm font-medium text-gray-900">
-            Installez l'application Love Hotel
-          </p>
-          <p className="text-sm text-gray-500">
-            Accédez rapidement à Love Hotel depuis votre écran d'accueil
+          <h3 className="text-lg font-semibold text-burgundy">
+            Installer Love Hotel
+          </h3>
+          <p className="text-sm text-gray-600">
+            Installez notre application pour une meilleure expérience
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center space-x-2">
           <Button
             onClick={handleInstall}
-            className="bg-primary hover:bg-primary/90 text-white"
+            className="bg-burgundy hover:bg-burgundy/90 text-white select-none"
           >
             Installer
           </Button>
@@ -93,7 +92,7 @@ export const InstallPrompt = () => {
             variant="ghost"
             size="icon"
             onClick={() => setShowPrompt(false)}
-            className="text-gray-500"
+            className="text-gray-500 select-none"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -101,4 +100,4 @@ export const InstallPrompt = () => {
       </div>
     </div>
   );
-};
+}
