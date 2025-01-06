@@ -7,6 +7,7 @@ import ProfileDetails from "@/pages/ProfileDetails";
 import Landing from "@/pages/Landing";
 import Features from "@/pages/Features";
 import RideauxOuverts from "@/pages/RideauxOuverts";
+import RestaurantDuLove from "@/pages/RestaurantDuLove";
 import Admin from "@/pages/Admin";
 import Messages from "@/pages/Messages";
 import MatchingScores from "@/pages/MatchingScores";
@@ -68,6 +69,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/rideaux-ouverts"
         element={<RideauxOuverts />}
+      />
+      <Route
+        path="/restaurant-du-love"
+        element={<RestaurantDuLove />}
       />
       <Route
         path="/admin"

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Menu, Home, User, Info, BedDouble } from "lucide-react";
+import { Menu, Home, User, Info, BedDouble, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -60,6 +60,14 @@ export function SideMenu() {
           >
             <BedDouble className="h-5 w-5" />
             <span>Rideaux Ouverts</span>
+          </Link>
+          <Link 
+            to="/restaurant-du-love" 
+            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            <Utensils className="h-5 w-5" />
+            <span>Restaurant du Love</span>
           </Link>
         </nav>
       </SheetContent>
