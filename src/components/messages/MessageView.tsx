@@ -15,92 +15,125 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const [newMessage, setNewMessage] = useState("");
   const [otherUser, setOtherUser] = useState<any>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Initialize conversation and fetch current user
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Vous devez être connecté pour accéder aux messages",
+          });
+          return;
+        }
         
         setCurrentUserId(user.id);
-
-        const { data: conversation } = await supabase
-          .from('conversations')
-          .select(`
-            *,
-            user1:profiles!conversations_user1_id_fkey(*),
-            user2:profiles!conversations_user2_id_fkey(*)
-          `)
-          .eq('id', conversationId)
-          .single();
-
-        if (conversation) {
-          const { data: currentUserProfile } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-
-          const otherUserData = conversation.user1.id === currentUserProfile?.id 
-            ? conversation.user2 
-            : conversation.user1;
-            
-          setOtherUser(otherUserData);
-        }
+        await fetchConversationDetails(user.id);
       } catch (error) {
         console.error("Error in getCurrentUser:", error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les informations utilisateur",
+        });
       }
     };
 
     getCurrentUser();
   }, [conversationId]);
 
-  // Fetch messages
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const { data: messages, error } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true });
+  const fetchConversationDetails = async (userId: string) => {
+    try {
+      const { data: conversation, error } = await supabase
+        .from('conversations')
+        .select(`
+          *,
+          user1:profiles!conversations_user1_id_fkey(*),
+          user2:profiles!conversations_user2_id_fkey(*)
+        `)
+        .eq('id', conversationId)
+        .single();
 
-        if (error) throw error;
-        setMessages(messages || []);
-        
-        // Mark messages as read
-        if (currentUserId && messages?.length > 0) {
-          await supabase
-            .from('messages')
-            .update({ read_at: new Date().toISOString() })
-            .eq('conversation_id', conversationId)
-            .neq('sender_id', currentUserId)
-            .is('read_at', null);
-        }
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les messages",
-        });
+      if (error) throw error;
+
+      if (conversation) {
+        const { data: currentUserProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', userId)
+          .single();
+
+        const otherUserData = conversation.user1.id === currentUserProfile?.id 
+          ? conversation.user2 
+          : conversation.user1;
+          
+        setOtherUser(otherUserData);
+        await fetchMessages();
       }
-    };
-
-    if (currentUserId) {
-      fetchMessages();
+    } catch (error) {
+      console.error("Error fetching conversation details:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les détails de la conversation",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }, [conversationId, currentUserId]);
+  };
 
-  // Subscribe to new messages
+  const fetchMessages = async () => {
+    try {
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      
+      setMessages(messages || []);
+      
+      if (messages?.length > 0) {
+        await markMessagesAsRead();
+      }
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les messages",
+      });
+    }
+  };
+
+  const markMessagesAsRead = async () => {
+    if (!currentUserId) return;
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', currentUserId)
+        .is('read_at', null);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  };
+
   useEffect(() => {
     if (!conversationId) return;
 
     const channel = supabase
-      .channel('messages-changes')
+      .channel(`messages:${conversationId}`)
       .on(
         'postgres_changes',
         {
@@ -112,6 +145,9 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         (payload) => {
           console.log("New message received:", payload);
           setMessages(current => [...current, payload.new]);
+          if (payload.new.sender_id !== currentUserId) {
+            markMessagesAsRead();
+          }
         }
       )
       .subscribe();
@@ -119,14 +155,12 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId]);
+  }, [conversationId, currentUserId]);
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Send message handler
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUserId || !newMessage.trim()) return;
@@ -142,8 +176,9 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         });
 
       if (error) throw error;
+      
       setNewMessage("");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error sending message:", error);
       toast({
         variant: "destructive",
@@ -152,6 +187,14 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-cream">
+        <div className="text-burgundy">Chargement...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-cream">
