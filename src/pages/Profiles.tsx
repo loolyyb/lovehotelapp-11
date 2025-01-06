@@ -5,6 +5,7 @@ import { ProfilesFilter, FilterCriteria } from "@/components/profiles/ProfilesFi
 import { Tables } from "@/integrations/supabase/types";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { Loader } from "lucide-react";
 
 type ProfileWithPreferences = {
   profile: Tables<"profiles">;
@@ -32,34 +33,49 @@ export default function Profiles() {
 
   const fetchProfiles = async () => {
     try {
-      // First fetch all profiles
+      console.log("Fetching profiles...");
+      setLoading(true);
+      
+      // Fetch all profiles with no limit
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("*");
+        .select("*")
+        .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
 
-      // Then fetch preferences only for profiles that have a user_id
-      const userIds = profilesData
-        .map(profile => profile.user_id)
-        .filter(id => id !== null);
+      console.log("Fetched profiles:", profilesData?.length);
 
+      if (!profilesData) {
+        throw new Error("No profiles data returned");
+      }
+
+      // Fetch all preferences
       const { data: preferencesData, error: preferencesError } = await supabase
         .from("preferences")
-        .select("*")
-        .in('user_id', userIds);
+        .select("*");
 
-      if (preferencesError) throw preferencesError;
+      if (preferencesError) {
+        console.error("Error fetching preferences:", preferencesError);
+        throw preferencesError;
+      }
+
+      console.log("Fetched preferences:", preferencesData?.length);
 
       const profilesWithPreferences = profilesData.map(profile => ({
         profile,
-        preferences: preferencesData.find(pref => pref.user_id === profile.user_id) || null
+        preferences: preferencesData?.find(pref => pref.user_id === profile.user_id) || null
       }));
+
+      console.log("Combined profiles with preferences:", profilesWithPreferences.length);
 
       setProfiles(profilesWithPreferences);
       setFilteredProfiles(profilesWithPreferences);
     } catch (error: any) {
-      console.error("Error fetching profiles:", error);
+      console.error("Error in fetchProfiles:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -123,7 +139,7 @@ export default function Profiles() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 flex items-center justify-center">
-        <div className="animate-pulse text-burgundy">Chargement...</div>
+        <Loader className="w-8 h-8 animate-spin text-burgundy" />
       </div>
     );
   }
@@ -144,6 +160,12 @@ export default function Profiles() {
             </div>
           ))}
         </div>
+
+        {filteredProfiles.length === 0 && (
+          <div className="text-center py-12 text-burgundy">
+            Aucun profil ne correspond à vos critères de recherche.
+          </div>
+        )}
       </div>
     </main>
   );
