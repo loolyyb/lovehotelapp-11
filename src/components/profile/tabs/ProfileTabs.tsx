@@ -26,7 +26,12 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
     return (
       <Tabs defaultValue="account" className="w-full">
         <div className="mb-6">
-          <Select defaultValue="account">
+          <Select defaultValue="account" onValueChange={(value) => {
+            const tabsElement = document.querySelector(`[data-state="inactive"][value="${value}"]`) as HTMLElement;
+            if (tabsElement) {
+              tabsElement.click();
+            }
+          }}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Sélectionnez une section" />
             </SelectTrigger>
