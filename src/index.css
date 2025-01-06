@@ -65,39 +65,6 @@
   }
 }
 
-/* Rideaux Calendar Styles */
-.rideaux-calendar-container {
-  @apply overflow-x-auto;
-}
-
-.rideaux-calendar-container .calendar_scroll {
-  @apply min-w-[800px];
-}
-
-.rideaux-calendar-container .room_wrapper {
-  @apply grid gap-4;
-}
-
-.rideaux-calendar-container .room {
-  @apply relative bg-white/50 rounded-lg p-4;
-}
-
-.rideaux-calendar-container .room_name {
-  @apply text-burgundy font-cormorant text-xl font-semibold hover:text-rose-600 transition-colors;
-}
-
-.rideaux-calendar-container .slot {
-  @apply text-sm p-2 rounded;
-}
-
-.rideaux-calendar-container .rideaux_ouverts {
-  @apply bg-green-100 text-green-800;
-}
-
-.rideaux-calendar-container .rideaux_fermes {
-  @apply bg-red-100 text-red-800;
-}
-
 @layer base {
   * {
     @apply border-border;
