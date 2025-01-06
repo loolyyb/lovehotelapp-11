@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUserId, getTargetUserId, createOrGetConversation } from "@/utils/conversationUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useProfileActions(profileId: string) {
   const { toast } = useToast();
@@ -44,15 +45,61 @@ export function useProfileActions(profileId: string) {
     });
   };
 
-  const handleCurtainRequest = () => {
+  const handleCurtainRequest = async () => {
     if (isTestProfile) {
       handleTestProfileError();
       return;
     }
-    toast({
-      title: "Demande envoyée !",
-      description: "Votre intérêt pour un moment rideau ouvert a été enregistré.",
-    });
+
+    if (!currentUserId || !targetUserId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la demande.",
+      });
+      return;
+    }
+
+    try {
+      // Récupérer les informations du profil qui fait la demande
+      const { data: senderProfile } = await supabase
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('user_id', currentUserId)
+        .single();
+
+      if (!senderProfile) {
+        throw new Error("Profil de l'expéditeur non trouvé");
+      }
+
+      // Créer la notification
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: targetUserId,
+          type: 'love_room',
+          title: 'Demande de rideau ouvert',
+          content: `${senderProfile.username} souhaite un moment rideau ouvert avec vous`,
+          image_url: senderProfile.avatar_url,
+          link_url: `/profile/${profileId}`
+        });
+
+      if (notificationError) {
+        throw notificationError;
+      }
+
+      toast({
+        title: "Demande envoyée !",
+        description: "Votre intérêt pour un moment rideau ouvert a été enregistré.",
+      });
+    } catch (error) {
+      console.error('Erreur lors de la création de la notification:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'envoyer la demande de rideau ouvert.",
+      });
+    }
   };
 
   const handleMessage = async () => {
