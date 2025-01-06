@@ -59,7 +59,7 @@ export function SideMenu() {
             onClick={() => setIsOpen(false)}
           >
             <Users className="h-5 w-5" />
-            <span>Communauté lover's</span>
+            <span>Nos fonctionnalités</span>
           </Link>
         </nav>
       </SheetContent>
