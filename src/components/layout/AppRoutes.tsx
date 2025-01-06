@@ -13,6 +13,7 @@ import MatchingScores from "@/pages/MatchingScores";
 import Events from "@/pages/Events";
 import Challenges from "@/pages/Challenges";
 import ReserverRoom from "@/pages/ReserverRoom";
+import Rideaux from "@/pages/Rideaux";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -64,6 +65,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/reserver-room"
         element={session ? <ReserverRoom /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/rideaux"
+        element={<Rideaux />}
       />
       <Route
         path="/restaurant-du-love"
