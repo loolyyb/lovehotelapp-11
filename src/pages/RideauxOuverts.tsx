@@ -7,7 +7,7 @@ const RideauxOuverts = () => {
       <Card className="w-full">
         <iframe 
           src="https://lovehotelaparis.fr/wp-json/zlhu_api/v3/rideaux_ouverts/"
-          className="w-full h-[1200px] border-0"
+          className="w-full h-[1600px] border-0"
           title="Rideaux Ouverts"
         />
       </Card>
