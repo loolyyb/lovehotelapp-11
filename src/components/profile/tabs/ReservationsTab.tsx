@@ -1,45 +1,43 @@
-import { CalendarCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useBookings } from "@/hooks/useBookings";
+import { Loader2 } from "lucide-react";
 
 export function ReservationsTab() {
-  const reservations = [
-    {
-      type: "speed_dating",
-      icon: CalendarCheck,
-      title: "Speed Dating",
-      date: "Vendredi 24 janvier 2025",
-      time: "20h00",
-    },
-    {
-      type: "love_room",
-      icon: CalendarCheck,
-      title: "Love Room Secret (Rideaux Ouverts)",
-      date: "Jeudi 23 janvier 2025",
-      time: "16h00 - 17h00",
-    },
-  ];
+  const { chateletBookings, pigalleBookings, isLoading, isError, error } = useBookings();
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-burgundy" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="p-4 bg-red-50">
+        <p className="text-red-600">
+          Une erreur est survenue lors de la récupération de vos réservations: {error?.message}
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4">
-        {reservations.map((reservation, index) => (
-          <Card key={index} className="p-4">
-            <div className="flex items-start gap-4">
-              <div className="rounded-full bg-pink-100 p-2">
-                <reservation.icon className="h-5 w-5 text-burgundy" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg text-burgundy">
-                  {reservation.title}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {reservation.date} • {reservation.time}
-                </p>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <Card className="p-4">
+        <h3 className="font-semibold text-lg text-burgundy mb-4">Réservations Châtelet</h3>
+        <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto">
+          {JSON.stringify(chateletBookings, null, 2)}
+        </pre>
+      </Card>
+
+      <Card className="p-4">
+        <h3 className="font-semibold text-lg text-burgundy mb-4">Réservations Pigalle</h3>
+        <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto">
+          {JSON.stringify(pigalleBookings, null, 2)}
+        </pre>
+      </Card>
     </div>
   );
 }

@@ -4,9 +4,10 @@ import { AlertService } from './AlertService';
 class ApiService {
   private static readonly API_URL = 'https://api.lovehotel.io';
 
-  private static async getHeaders(): Promise<Headers> {
+  private static async getHeaders(customHeaders?: Record<string, string>): Promise<Headers> {
     const headers = new Headers({
       'Content-Type': 'application/json',
+      ...customHeaders,
     });
 
     const token = AuthService.getToken();
@@ -17,9 +18,9 @@ class ApiService {
     return headers;
   }
 
-  static async get<T>(endpoint: string): Promise<T> {
+  static async get<T>(endpoint: string, customHeaders?: Record<string, string>): Promise<T> {
     try {
-      const headers = await this.getHeaders();
+      const headers = await this.getHeaders(customHeaders);
       const response = await fetch(`${this.API_URL}${endpoint}`, {
         method: 'GET',
         headers,
@@ -31,7 +32,7 @@ class ApiService {
           AuthService.removeToken();
           await AuthService.login();
           // Réessayer la requête
-          return this.get(endpoint);
+          return this.get(endpoint, customHeaders);
         }
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
@@ -46,9 +47,9 @@ class ApiService {
     }
   }
 
-  static async post<T>(endpoint: string, data: any): Promise<T> {
+  static async post<T>(endpoint: string, data: any, customHeaders?: Record<string, string>): Promise<T> {
     try {
-      const headers = await this.getHeaders();
+      const headers = await this.getHeaders(customHeaders);
       const response = await fetch(`${this.API_URL}${endpoint}`, {
         method: 'POST',
         headers,
@@ -59,7 +60,7 @@ class ApiService {
         if (response.status === 401) {
           AuthService.removeToken();
           await AuthService.login();
-          return this.post(endpoint, data);
+          return this.post(endpoint, data, customHeaders);
         }
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
