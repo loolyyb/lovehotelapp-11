@@ -7,7 +7,7 @@ export interface LogEntry {
   message: string;
   context?: Record<string, any>;
   timestamp: string;
-  user_id?: string;  // Changed from userId to user_id to match DB schema
+  user_id?: string;
   route?: string;
 }
 
@@ -50,14 +50,14 @@ class LogService {
     context?: Record<string, any>
   ): Promise<LogEntry> {
     const { data: { user } } = await supabase.auth.getUser();
-    const user_id = user?.id;  // Changed from userId to user_id
+    const user_id = user?.id;
 
     return {
       level,
       message,
       context,
       timestamp: new Date().toISOString(),
-      user_id,  // Changed from userId to user_id
+      user_id,
       route: window.location.pathname,
     };
   }

@@ -18,21 +18,21 @@ const RideauxOuverts = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const proxyUrl = "https://api.allorigins.win/get?url=";
-        const targetUrl = encodeURIComponent("https://lovehotelaparis.fr/wp-json/zlhu_api/v1/rideaux_ouverts");
-        const response = await fetch(proxyUrl + targetUrl);
+        // Using cors-anywhere as a fallback proxy
+        const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+        const targetUrl = "https://lovehotelaparis.fr/wp-json/zlhu_api/v1/rideaux_ouverts";
+        const response = await fetch(proxyUrl + targetUrl, {
+          headers: {
+            'Origin': window.location.origin
+          }
+        });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const result = await response.json();
-        if (result.contents) {
-          const data = JSON.parse(result.contents);
-          setContent(data.content);
-        } else {
-          throw new Error("Invalid response format");
-        }
+        const data: RideauxOuvertsData = await response.json();
+        setContent(data.content);
       } catch (error) {
         logger.error("Failed to fetch Rideaux Ouverts content", { error });
         alert.captureException(error as Error);
