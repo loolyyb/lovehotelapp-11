@@ -24,7 +24,7 @@ export default function Options() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-12 text-center">
         <p className="text-base md:text-lg text-gray-700 max-w-2xl mx-auto">
-          Retrouvez toutes ces options lors de la réservation de votre Love Room pour personnaliser votre expérience et rendre votre séjour encore plus mémorable.
+          Retrouvez ces options et bien d'autres lors de la réservation de votre Love Room.
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
