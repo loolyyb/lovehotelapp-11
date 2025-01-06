@@ -36,6 +36,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
         element={session ? <Profile /> : <Navigate to="/login" replace />}
       />
       <Route
+        path="/profiles"
+        element={session ? <Profiles /> : <Navigate to="/login" replace />}
+      />
+      <Route
         path="/profile/:id"
         element={session ? <ProfileDetails /> : <Navigate to="/login" replace />}
       />
