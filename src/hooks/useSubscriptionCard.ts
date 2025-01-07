@@ -2,6 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthSession } from "./useAuthSession";
 import { useApiAuth } from "./useApiAuth";
 
+interface ResponseDetails {
+  status: number;
+  statusText: string;
+  ok: boolean;
+  headers: Record<string, string>;
+}
+
 export function useSubscriptionCard() {
   const { session, userProfile } = useAuthSession();
   const { isAuthenticated, isLoading: isAuthLoading } = useApiAuth();
@@ -76,7 +83,14 @@ export function useSubscriptionCard() {
         throw new Error("Réponse API invalide");
       }
 
-      return data;
+      const responseDetails: ResponseDetails = {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      };
+
+      return { data, responseDetails };
     },
     enabled: !!session?.access_token && !!userProfile?.email && isAuthenticated && !isAuthLoading,
     retry: 2,
