@@ -23,6 +23,17 @@ export function Header({ userProfile }: { userProfile?: any }) {
   useEffect(() => {
     if (!userProfile?.user_id) return;
 
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error('Session check error:', error);
+        handleLogout();
+        return;
+      }
+    };
+
+    checkSession();
+
     // Subscribe to new messages
     const channel = supabase
       .channel('schema-db-changes')
@@ -97,6 +108,8 @@ export function Header({ userProfile }: { userProfile?: any }) {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
+      // Clear any stored tokens
+      localStorage.removeItem('supabase.auth.token');
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",

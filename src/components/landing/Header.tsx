@@ -13,15 +13,29 @@ export const Header = () => {
 
   useEffect(() => {
     // Check initial auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-    });
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuthenticated(!!session);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'TOKEN_REFRESHED') {
+        setIsAuthenticated(!!session);
+      } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        setIsAuthenticated(false);
+      } else {
+        setIsAuthenticated(!!session);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -30,6 +44,8 @@ export const Header = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
+      // Clear any stored tokens
+      localStorage.removeItem('supabase.auth.token');
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
