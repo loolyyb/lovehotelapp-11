@@ -11,36 +11,27 @@ export function useSubscriptionCard() {
         throw new Error("Authentification requise");
       }
 
-      console.log("Récupération des données de la carte pour:", userProfile.email);
+      console.log("Appel API pour:", userProfile.email);
 
-      try {
-        const response = await fetch(
-          `https://api.lovehotel.io/cards?email=${encodeURIComponent(userProfile.email)}`,
-          {
-            headers: {
-              "Content-Type": "application/ld+json",
-              "Accept": "application/ld+json",
-              "x-hotel": "1",
-              "Authorization": `Bearer ${session.access_token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Erreur API: ${response.status}`);
+      const response = await fetch(
+        `https://api.lovehotel.io/cards?email=${encodeURIComponent(userProfile.email)}`,
+        {
+          headers: {
+            "Content-Type": "application/ld+json",
+            "Accept": "application/ld+json",
+            "x-hotel": "1",
+            "Authorization": `Bearer ${session.access_token}`,
+          },
         }
+      );
 
-        const data = await response.json();
-        console.log("Données reçues:", {
-          status: response.status,
-          dataLength: data?.["hydra:member"]?.length
-        });
-        
-        return data;
-      } catch (error) {
-        console.error("Erreur lors de la récupération des données:", error);
-        throw error;
+      if (!response.ok) {
+        throw new Error(`Erreur API: ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log("Données reçues:", data);
+      return data;
     },
     enabled: !!session?.access_token && !!userProfile?.email,
   });
