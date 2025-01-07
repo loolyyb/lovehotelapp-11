@@ -16,6 +16,7 @@ import ReserverRoom from "@/pages/ReserverRoom";
 import RideauxOuverts from "@/pages/RideauxOuverts";
 import Dashboard from "@/pages/Dashboard";
 import Options from "@/pages/Options";
+import LoverCoin from "@/pages/LoverCoin";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -70,7 +71,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       />
       <Route
         path="/lover-coin"
-        element={<div className="p-8 text-center">Page LoverCoin en construction</div>}
+        element={<LoverCoin />}
       />
       <Route
         path="/reserver-room"
