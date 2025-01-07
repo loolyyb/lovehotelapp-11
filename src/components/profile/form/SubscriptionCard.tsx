@@ -22,7 +22,8 @@ export function SubscriptionCard({ membershipType, memberSince }: SubscriptionCa
     hasData: !!data,
     isAuthenticated,
     hasSession: !!session,
-    hasUserProfile: !!userProfile
+    hasUserProfile: !!userProfile,
+    responseDetails: data?.responseDetails
   });
 
   if (isLoading || isAuthLoading) {
