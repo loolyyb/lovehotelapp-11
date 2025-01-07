@@ -1,6 +1,6 @@
 import { TokensSection } from "../form/TokensSection";
 import { LoyaltyPointsSection } from "../form/LoyaltyPointsSection";
-import { SubscriptionCard } from "../form/subscription/SubscriptionCard";
+import { SubscriptionCard } from "../form/SubscriptionCard";
 
 interface FidelityTabProps {
   profile: any;
