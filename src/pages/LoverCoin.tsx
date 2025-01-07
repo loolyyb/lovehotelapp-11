@@ -26,6 +26,10 @@ const features = [
 ];
 
 const LoverCoin = () => {
+  const handleBuyClick = () => {
+    window.open('https://loolyyb-exchange-platform.lovable.app/', '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-burgundy-50 to-rose-50">
       {/* Hero Section */}
@@ -58,6 +62,7 @@ const LoverCoin = () => {
               <Button
                 size="lg"
                 className="bg-burgundy hover:bg-burgundy/90 text-white font-semibold px-8 py-6 text-lg"
+                onClick={handleBuyClick}
               >
                 <Coins className="mr-2 h-5 w-5" />
                 Acheter des LooLyyb
@@ -66,6 +71,7 @@ const LoverCoin = () => {
                 size="lg"
                 variant="outline"
                 className="border-burgundy text-burgundy hover:bg-burgundy/10 font-semibold px-8 py-6 text-lg"
+                onClick={handleBuyClick}
               >
                 <Heart className="mr-2 h-5 w-5" />
                 Acheter des LooLyyb
@@ -118,6 +124,7 @@ const LoverCoin = () => {
             <Button
               size="lg"
               className="bg-white text-burgundy hover:bg-white/90 font-semibold px-8 py-6 text-lg"
+              onClick={handleBuyClick}
             >
               <Coins className="mr-2 h-5 w-5" />
               Acheter des LooLyyb
