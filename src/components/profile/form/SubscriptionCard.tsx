@@ -44,7 +44,6 @@ export function SubscriptionCard({
             <p className="font-mono text-lg tracking-wider">{cardNumber}</p>
           </div>
 
-          {/* Affichage temporaire des données brutes de l'API */}
           {isLoading && (
             <div className="mt-4 text-sm">
               Chargement des données de la carte...
