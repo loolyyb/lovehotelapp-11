@@ -2,7 +2,12 @@ import { WidgetContainer } from "./WidgetContainer";
 import { useSubscriptionCard } from "@/hooks/useSubscriptionCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export function SubscriptionCard() {
+interface SubscriptionCardProps {
+  membershipType: string;
+  memberSince: string;
+}
+
+export function SubscriptionCard({ membershipType, memberSince }: SubscriptionCardProps) {
   const { data, isLoading, error } = useSubscriptionCard();
 
   if (isLoading) {
