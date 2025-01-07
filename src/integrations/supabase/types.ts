@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action_type: string
+          admin_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          admin_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       admin_settings: {
         Row: {
           created_at: string
@@ -712,6 +742,7 @@ export type Database = {
           loyalty_points: number | null
           photo_urls: string[] | null
           relationship_type: string[] | null
+          role: Database["public"]["Enums"]["user_role"]
           seeking: string[] | null
           sexual_orientation: string | null
           status: string | null
@@ -734,6 +765,7 @@ export type Database = {
           loyalty_points?: number | null
           photo_urls?: string[] | null
           relationship_type?: string[] | null
+          role?: Database["public"]["Enums"]["user_role"]
           seeking?: string[] | null
           sexual_orientation?: string | null
           status?: string | null
@@ -756,6 +788,7 @@ export type Database = {
           loyalty_points?: number | null
           photo_urls?: string[] | null
           relationship_type?: string[] | null
+          role?: Database["public"]["Enums"]["user_role"]
           seeking?: string[] | null
           sexual_orientation?: string | null
           status?: string | null
@@ -822,6 +855,7 @@ export type Database = {
         | "libertinage"
         | "art"
       stream_type: "video" | "audio"
+      user_role: "user" | "moderator" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
