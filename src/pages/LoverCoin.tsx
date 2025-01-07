@@ -65,7 +65,7 @@ const LoverCoin = () => {
                 onClick={handleBuyClick}
               >
                 <Coins className="mr-2 h-5 w-5" />
-                Acheter des LooLyyb
+                En savoir plus
               </Button>
               <Button
                 size="lg"
@@ -74,11 +74,24 @@ const LoverCoin = () => {
                 onClick={handleBuyClick}
               >
                 <Heart className="mr-2 h-5 w-5" />
-                Acheter des LooLyyb
+                En savoir plus
               </Button>
             </div>
           </div>
         </motion.div>
+      </section>
+
+      {/* PancakeSwap iframe Section */}
+      <section className="py-10 bg-white/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4">
+          <iframe
+            src="https://pancakeswap.finance/swap?outputCurrency=0x76DBa34F24E6915F9b5BE61f66f1B9b437C47777"
+            width="100%"
+            height="600"
+            style={{ border: 'none' }}
+            title="PancakeSwap Exchange"
+          />
+        </div>
       </section>
 
       {/* Features Section */}
@@ -127,7 +140,7 @@ const LoverCoin = () => {
               onClick={handleBuyClick}
             >
               <Coins className="mr-2 h-5 w-5" />
-              Acheter des LooLyyb
+              En savoir plus
             </Button>
           </motion.div>
         </div>
