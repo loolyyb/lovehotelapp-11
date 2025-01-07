@@ -31,7 +31,7 @@ export const Header = () => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'TOKEN_REFRESHED') {
         setIsAuthenticated(!!session);
-      } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+      } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
       } else {
         setIsAuthenticated(!!session);
