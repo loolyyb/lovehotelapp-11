@@ -14,44 +14,65 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export function AdminDashboard() {
   const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
-  const { session } = useAuthSession();
+  const { session, loading } = useAuthSession();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = React.useState(false);
   const [isAdmin, setIsAdmin] = React.useState(false);
+  const [isChecking, setIsChecking] = React.useState(true);
 
   React.useEffect(() => {
-    if (!session) {
-      navigate('/login');
-      toast({
-        title: "Accès refusé",
-        description: "Vous devez être connecté pour accéder au tableau de bord administrateur.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const checkAdminStatus = async () => {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .single();
+      try {
+        if (!session?.user?.id) {
+          navigate('/login');
+          toast({
+            title: "Accès refusé",
+            description: "Vous devez être connecté pour accéder au tableau de bord administrateur.",
+            variant: "destructive",
+          });
+          return;
+        }
 
-      if (profile?.role !== 'admin') {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error('Error checking admin status:', error);
+          navigate('/');
+          toast({
+            title: "Erreur",
+            description: "Une erreur est survenue lors de la vérification de vos droits.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (profile?.role !== 'admin') {
+          navigate('/');
+          toast({
+            title: "Accès refusé",
+            description: "Vous devez être administrateur pour accéder à cette page.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setIsAdmin(true);
+      } catch (error) {
+        console.error('Error in admin check:', error);
         navigate('/');
-        toast({
-          title: "Accès refusé",
-          description: "Vous devez être administrateur pour accéder à cette page.",
-          variant: "destructive",
-        });
-        return;
+      } finally {
+        setIsChecking(false);
       }
-
-      setIsAdmin(true);
     };
 
-    checkAdminStatus();
-  }, [session, navigate, toast]);
+    if (!loading) {
+      checkAdminStatus();
+    }
+  }, [session, navigate, toast, loading]);
 
   const handleThemeChange = async (themeName: ThemeName) => {
     if (!session) {
@@ -92,6 +113,14 @@ export function AdminDashboard() {
       setIsLoading(false);
     }
   };
+
+  if (loading || isChecking) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader className="w-6 h-6 animate-spin" />
+      </div>
+    );
+  }
 
   if (!session || !isAdmin) {
     return null;
