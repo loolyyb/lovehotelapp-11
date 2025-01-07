@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthSession } from "./useAuthSession";
 import { ApiService } from "@/services/ApiService";
+import { useToast } from "@/hooks/use-toast";
 
 interface Booking {
   paid: number;
@@ -17,6 +18,7 @@ interface BookingResponse {
 
 export function useBookings() {
   const { session } = useAuthSession();
+  const { toast } = useToast();
   const userEmail = session?.user?.email;
 
   const fetchBookings = async (hotelId: number): Promise<BookingResponse> => {
@@ -29,19 +31,31 @@ export function useBookings() {
       "x-hotel": hotelId.toString(),
     };
 
-    return ApiService.get(endpoint, headers);
+    try {
+      return await ApiService.get(endpoint, headers);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur de chargement",
+        description: "Impossible de charger vos réservations. Veuillez réessayer.",
+      });
+      throw error;
+    }
   };
 
   const chateletQuery = useQuery({
     queryKey: ["bookings", "chatelet", userEmail],
     queryFn: () => fetchBookings(1),
     enabled: !!userEmail,
+    retry: 1,
   });
 
   const pigalleQuery = useQuery({
     queryKey: ["bookings", "pigalle", userEmail],
     queryFn: () => fetchBookings(2),
     enabled: !!userEmail,
+    retry: 1,
   });
 
   return {

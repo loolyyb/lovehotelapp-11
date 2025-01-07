@@ -10,12 +10,28 @@ class ApiService {
       ...customHeaders,
     });
 
-    const token = AuthService.getToken();
-    if (token) {
-      headers.append('Authorization', `Bearer ${token}`);
+    let token = AuthService.getToken();
+    
+    // If no token or token is expired, try to get a new one
+    if (!token || ApiService.isTokenExpired(token)) {
+      token = await AuthService.login();
+      if (!token) {
+        throw new Error('Unable to authenticate with the API');
+      }
     }
 
+    headers.append('Authorization', `Bearer ${token}`);
     return headers;
+  }
+
+  private static isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // Check if token is expired with 5 minutes buffer
+      return payload.exp * 1000 < Date.now() + (5 * 60 * 1000);
+    } catch {
+      return true;
+    }
   }
 
   static async get<T>(endpoint: string, customHeaders?: Record<string, string>): Promise<T> {
@@ -28,13 +44,14 @@ class ApiService {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Token expiré ou invalide
+          // Force token refresh and retry
           AuthService.removeToken();
-          await AuthService.login();
-          // Réessayer la requête
-          return this.get(endpoint, customHeaders);
+          const newToken = await AuthService.login();
+          if (newToken) {
+            return this.get(endpoint, customHeaders);
+          }
         }
-        throw new Error(`Erreur HTTP: ${response.status}`);
+        throw new Error(`HTTP Error: ${response.status}`);
       }
 
       return response.json();
@@ -59,10 +76,12 @@ class ApiService {
       if (!response.ok) {
         if (response.status === 401) {
           AuthService.removeToken();
-          await AuthService.login();
-          return this.post(endpoint, data, customHeaders);
+          const newToken = await AuthService.login();
+          if (newToken) {
+            return this.post(endpoint, data, customHeaders);
+          }
         }
-        throw new Error(`Erreur HTTP: ${response.status}`);
+        throw new Error(`HTTP Error: ${response.status}`);
       }
 
       return response.json();
