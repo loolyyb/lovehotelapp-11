@@ -11,7 +11,7 @@ interface SubscriptionCardProps {
 }
 
 export function SubscriptionCard({ 
-  membershipType = "Love Hotel Member", 
+  membershipType = "Standard", 
   memberSince = "2024", 
   cardNumber = "****-****-****-1234" 
 }: SubscriptionCardProps) {
