@@ -2,6 +2,8 @@ import { WidgetContainer } from "./WidgetContainer";
 import { useSubscriptionCard } from "@/hooks/useSubscriptionCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useApiAuth } from "@/hooks/useApiAuth";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 interface SubscriptionCardProps {
   membershipType: string;
@@ -10,8 +12,20 @@ interface SubscriptionCardProps {
 
 export function SubscriptionCard({ membershipType, memberSince }: SubscriptionCardProps) {
   const { data, isLoading, error } = useSubscriptionCard();
+  const { isAuthenticated, isLoading: isAuthLoading } = useApiAuth();
+  const { session, userProfile } = useAuthSession();
 
-  if (isLoading) {
+  console.log("SubscriptionCard Component State:", {
+    isLoading,
+    isAuthLoading,
+    hasError: !!error,
+    hasData: !!data,
+    isAuthenticated,
+    hasSession: !!session,
+    hasUserProfile: !!userProfile
+  });
+
+  if (isLoading || isAuthLoading) {
     return (
       <WidgetContainer title="Carte Abonnement">
         <div className="space-y-4">
@@ -30,6 +44,17 @@ export function SubscriptionCard({ membershipType, memberSince }: SubscriptionCa
             {error instanceof Error ? error.message : "Erreur inconnue"}
           </AlertDescription>
         </Alert>
+        <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
+          <p>État de la connexion:</p>
+          <pre className="whitespace-pre-wrap">
+            {JSON.stringify({
+              authenticated: isAuthenticated,
+              hasSession: !!session,
+              hasProfile: !!userProfile,
+              userEmail: userProfile?.email
+            }, null, 2)}
+          </pre>
+        </div>
       </WidgetContainer>
     );
   }
@@ -44,6 +69,16 @@ export function SubscriptionCard({ membershipType, memberSince }: SubscriptionCa
           </div>
           
           <div className="space-y-2">
+            <p className="text-sm font-light mb-2">État de la connexion:</p>
+            <pre className="text-xs overflow-auto max-h-60 bg-gray-100 p-4 rounded">
+              {JSON.stringify({
+                authenticated: isAuthenticated,
+                hasSession: !!session,
+                hasProfile: !!userProfile,
+                userEmail: userProfile?.email
+              }, null, 2)}
+            </pre>
+            
             <p className="text-sm font-light mb-2">Données de l'API :</p>
             {data ? (
               <pre className="text-xs overflow-auto max-h-60 bg-gray-100 p-4 rounded">
