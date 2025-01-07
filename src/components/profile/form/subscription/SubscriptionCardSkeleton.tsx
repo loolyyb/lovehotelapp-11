@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton";
 import { WidgetContainer } from "../WidgetContainer";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function SubscriptionCardSkeleton() {
   return (

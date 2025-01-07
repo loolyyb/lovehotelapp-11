@@ -1,5 +1,5 @@
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { WidgetContainer } from "../WidgetContainer";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SubscriptionCardErrorProps {
   error: Error;
