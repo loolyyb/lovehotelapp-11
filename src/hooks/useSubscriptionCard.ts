@@ -36,7 +36,7 @@ export function useSubscriptionCard() {
         throw new Error("API non authentifiée");
       }
 
-      const apiUrl = `https://api.lovehotel.io/cards?email=${encodeURIComponent(userProfile.email)}`;
+      const apiUrl = `https://api.lovehotel.io/cards?email=${encodeURIComponent(userProfile.email)}&order[id]=DESC`;
       console.log("Calling API:", apiUrl);
 
       const response = await fetch(apiUrl, {
