@@ -24,16 +24,17 @@ export const useConversations = () => {
         .from('profiles')
         .select('id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError) {
+      if (profileError && profileError.code !== 'PGRST116') {
         console.error("Error fetching user profile:", profileError);
         throw profileError;
       }
 
       if (!userProfile) {
-        console.error("No profile found for user:", user.id);
-        throw new Error("Profile not found");
+        console.log("No profile found, waiting for profile creation...");
+        setConversations([]);
+        return;
       }
 
       console.log("Fetching conversations for profile:", userProfile.id);

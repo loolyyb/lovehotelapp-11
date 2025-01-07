@@ -1,11 +1,79 @@
 import { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "./use-toast";
 
 export const useAuthSession = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const { toast } = useToast();
+
+  const createProfile = async (userId: string) => {
+    try {
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            user_id: userId,
+            full_name: session?.user?.email?.split('@')[0] || 'New User',
+            role: 'user',
+            visibility: 'public',
+            allowed_viewers: [],
+            loolyb_tokens: 0,
+            loyalty_points: 0,
+            is_love_hotel_member: false,
+            is_loolyb_holder: false,
+            photo_urls: [],
+            relationship_type: [],
+            seeking: []
+          }
+        ])
+        .select()
+        .maybeSingle();
+
+      if (createError) throw createError;
+      return newProfile;
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de créer votre profil.",
+      });
+      return null;
+    }
+  };
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (!profile) {
+        // Create profile if it doesn't exist
+        const newProfile = await createProfile(userId);
+        setUserProfile(newProfile);
+        return;
+      }
+      
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger votre profil.",
+      });
+    }
+  };
 
   useEffect(() => {
     // Get initial session
@@ -31,20 +99,6 @@ export const useAuthSession = () => {
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-      
-      setUserProfile(profile);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    }
-  };
 
   return { session, loading, userProfile };
 };
