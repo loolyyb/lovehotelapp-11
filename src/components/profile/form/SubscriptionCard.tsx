@@ -11,7 +11,7 @@ interface SubscriptionCardProps {
 }
 
 export function SubscriptionCard({ membershipType, memberSince }: SubscriptionCardProps) {
-  const { data, isLoading, error, responseDetails } = useSubscriptionCard();
+  const { data, isLoading, error } = useSubscriptionCard();
   const { isAuthenticated, isLoading: isAuthLoading } = useApiAuth();
   const { session, userProfile } = useAuthSession();
 
@@ -72,10 +72,10 @@ export function SubscriptionCard({ membershipType, memberSince }: SubscriptionCa
             <p className="text-sm font-light mb-2">Détails de la réponse HTTP:</p>
             <pre className="text-xs overflow-auto max-h-60 bg-gray-100 p-4 rounded">
               {JSON.stringify({
-                status: responseDetails?.status,
-                statusText: responseDetails?.statusText,
-                ok: responseDetails?.ok,
-                headers: responseDetails?.headers
+                status: data?.responseDetails?.status,
+                statusText: data?.responseDetails?.statusText,
+                ok: data?.responseDetails?.ok,
+                headers: data?.responseDetails?.headers
               }, null, 2)}
             </pre>
 
@@ -91,7 +91,7 @@ export function SubscriptionCard({ membershipType, memberSince }: SubscriptionCa
             
             <p className="text-sm font-light mb-2">Réponse brute de l'API :</p>
             <pre className="text-xs overflow-auto max-h-60 bg-gray-100 p-4 rounded">
-              {JSON.stringify(data, null, 2)}
+              {JSON.stringify(data?.data, null, 2)}
             </pre>
           </div>
         </div>
