@@ -8,7 +8,8 @@ import { ThemeName } from "@/types/theme";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useNavigate } from "react-router-dom";
 import { AdvertisementManager } from "./AdvertisementManager";
-import { Loader, Users, MessageSquare, ScrollText } from "lucide-react";
+import { LogsManager } from "./LogsManager";
+import { Loader, Users, MessageSquare } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function AdminDashboard() {
@@ -199,15 +200,7 @@ export function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="logs">
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <ScrollText className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Logs d'audit</h2>
-            </div>
-            <p className="text-muted-foreground">
-              Cette section sera bientôt disponible pour consulter les logs d'audit.
-            </p>
-          </Card>
+          <LogsManager />
         </TabsContent>
       </Tabs>
     </div>
