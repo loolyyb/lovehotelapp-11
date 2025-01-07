@@ -9,6 +9,11 @@ interface ResponseDetails {
   headers: Record<string, string>;
 }
 
+interface SubscriptionCardResponse {
+  data: any;
+  responseDetails: ResponseDetails;
+}
+
 export function useSubscriptionCard() {
   const { session, userProfile } = useAuthSession();
   const { isAuthenticated, isLoading: isAuthLoading } = useApiAuth();
@@ -21,7 +26,7 @@ export function useSubscriptionCard() {
     isAuthLoading
   });
 
-  return useQuery({
+  return useQuery<SubscriptionCardResponse, Error>({
     queryKey: ["subscription-card", userProfile?.email],
     queryFn: async () => {
       console.log("Starting API call with:", {
