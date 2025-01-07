@@ -79,14 +79,10 @@ export function SubscriptionCard({ membershipType, memberSince }: SubscriptionCa
               }, null, 2)}
             </pre>
             
-            <p className="text-sm font-light mb-2">Données de l'API :</p>
-            {data ? (
-              <pre className="text-xs overflow-auto max-h-60 bg-gray-100 p-4 rounded">
-                {JSON.stringify(data, null, 2)}
-              </pre>
-            ) : (
-              <p className="text-sm text-gray-500">Aucune donnée disponible</p>
-            )}
+            <p className="text-sm font-light mb-2">Réponse brute de l'API :</p>
+            <pre className="text-xs overflow-auto max-h-60 bg-gray-100 p-4 rounded">
+              {JSON.stringify(data, null, 2)}
+            </pre>
           </div>
         </div>
       </div>

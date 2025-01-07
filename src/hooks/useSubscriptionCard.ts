@@ -50,18 +50,27 @@ export function useSubscriptionCard() {
 
       console.log("API Response status:", response.status);
 
+      const responseText = await response.text();
+      console.log("Raw API Response:", responseText);
+
       if (!response.ok) {
-        const errorText = await response.text();
         console.error("API Error:", {
           status: response.status,
           statusText: response.statusText,
-          body: errorText
+          body: responseText
         });
-        throw new Error(`Erreur API: ${response.status} - ${errorText}`);
+        throw new Error(`Erreur API: ${response.status} - ${responseText}`);
       }
 
-      const data = await response.json();
-      console.log("API Response data:", data);
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log("Parsed API Response data:", data);
+      } catch (error) {
+        console.error("Failed to parse API response:", error);
+        throw new Error("Réponse API invalide");
+      }
+
       return data;
     },
     enabled: !!session?.access_token && !!userProfile?.email && isAuthenticated && !isAuthLoading,
