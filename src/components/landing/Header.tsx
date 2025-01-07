@@ -15,7 +15,12 @@ export const Header = () => {
     // Check initial auth state
     const checkAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session check error:', error);
+          setIsAuthenticated(false);
+          return;
+        }
         setIsAuthenticated(!!session);
       } catch (error) {
         console.error('Auth check error:', error);
@@ -29,27 +34,46 @@ export const Header = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event);
+      
       if (event === 'TOKEN_REFRESHED') {
         setIsAuthenticated(!!session);
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
+      } else if (event === 'SIGNED_IN') {
+        setIsAuthenticated(true);
       } else {
         setIsAuthenticated(!!session);
       }
+
+      // Handle authentication errors
+      if (event === 'USER_UPDATED' && !session) {
+        toast({
+          variant: "destructive",
+          title: "Erreur d'authentification",
+          description: "Vos identifiants sont invalides. Veuillez réessayer.",
+        });
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
       // Clear any stored tokens
       localStorage.removeItem('supabase.auth.token');
+      
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
       });
+      
       navigate("/");
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
