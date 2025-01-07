@@ -48,7 +48,12 @@ export function useSubscriptionCard() {
         },
       });
 
-      console.log("API Response status:", response.status);
+      console.log("API Response details:", {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
 
       const responseText = await response.text();
       console.log("Raw API Response:", responseText);
