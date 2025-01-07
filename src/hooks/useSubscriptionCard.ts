@@ -1,46 +1,46 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthSession } from "./useAuthSession";
-import { supabase } from "@/integrations/supabase/client";
-
-interface SubscriptionCardResponse {
-  "@context": string;
-  "@id": string;
-  "@type": string;
-  "hydra:member": any[];
-}
 
 export function useSubscriptionCard() {
   const { session, userProfile } = useAuthSession();
 
   return useQuery({
     queryKey: ["subscription-card", userProfile?.email],
-    queryFn: async (): Promise<SubscriptionCardResponse> => {
+    queryFn: async () => {
       if (!session?.access_token || !userProfile?.email) {
-        throw new Error("User not authenticated or email not available");
+        throw new Error("Authentification requise");
       }
 
-      console.log("Fetching subscription card data for:", userProfile.email);
+      console.log("Récupération des données de la carte pour:", userProfile.email);
 
-      const response = await fetch(
-        `https://api.lovehotel.io/cards?email=${encodeURIComponent(userProfile.email)}&order[id]=null&page=1&perPage=1000&tmp=false`,
-        {
-          headers: {
-            "Content-Type": "application/ld+json",
-            "Accept": "application/ld+json",
-            "x-hotel": "1",
-            "Authorization": `Bearer ${session.access_token}`,
-          },
+      try {
+        const response = await fetch(
+          `https://api.lovehotel.io/cards?email=${encodeURIComponent(userProfile.email)}`,
+          {
+            headers: {
+              "Content-Type": "application/ld+json",
+              "Accept": "application/ld+json",
+              "x-hotel": "1",
+              "Authorization": `Bearer ${session.access_token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Erreur API: ${response.status}`);
         }
-      );
 
-      if (!response.ok) {
-        console.error("API Error:", response.status, response.statusText);
-        throw new Error("Failed to fetch subscription card data");
+        const data = await response.json();
+        console.log("Données reçues:", {
+          status: response.status,
+          dataLength: data?.["hydra:member"]?.length
+        });
+        
+        return data;
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données:", error);
+        throw error;
       }
-
-      const data = await response.json();
-      console.log("API Response:", data);
-      return data;
     },
     enabled: !!session?.access_token && !!userProfile?.email,
   });
