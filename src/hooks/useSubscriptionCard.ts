@@ -19,6 +19,8 @@ export function useSubscriptionCard() {
         throw new Error("User not authenticated or email not available");
       }
 
+      console.log("Fetching subscription card data for:", userProfile.email);
+
       const response = await fetch(
         `https://api.lovehotel.io/cards?email=${encodeURIComponent(userProfile.email)}&order[id]=null&page=1&perPage=1000&tmp=false`,
         {
@@ -32,10 +34,13 @@ export function useSubscriptionCard() {
       );
 
       if (!response.ok) {
+        console.error("API Error:", response.status, response.statusText);
         throw new Error("Failed to fetch subscription card data");
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log("API Response:", data);
+      return data;
     },
     enabled: !!session?.access_token && !!userProfile?.email,
   });
