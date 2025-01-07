@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdvertisementManager } from "./AdvertisementManager";
 import { LogsManager } from "./LogsManager";
 import { Session } from "@supabase/supabase-js";
+import { useQuery } from "@tanstack/react-query";
 
 interface AdminDashboardContentProps {
   session: Session;
@@ -19,6 +20,39 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
   const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+
+  // Fetch users data
+  const { data: users } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch conversations data
+  const { data: conversations } = useQuery({
+    queryKey: ["admin-conversations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("conversations")
+        .select(`
+          *,
+          user1:profiles!conversations_user1_profile_fkey(username, full_name),
+          user2:profiles!conversations_user2_profile_fkey(username, full_name),
+          messages(count)
+        `)
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleThemeChange = async (themeName: ThemeName) => {
     setIsLoading(true);
@@ -101,9 +135,30 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
               <Users className="h-5 w-5" />
               <h2 className="text-xl font-semibold">Gestion des utilisateurs</h2>
             </div>
-            <p className="text-muted-foreground">
-              Cette section sera bientôt disponible pour gérer les utilisateurs.
-            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th className="text-left p-2">Nom</th>
+                    <th className="text-left p-2">Email</th>
+                    <th className="text-left p-2">Rôle</th>
+                    <th className="text-left p-2">Date d'inscription</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users?.map((user) => (
+                    <tr key={user.id} className="border-t">
+                      <td className="p-2">{user.full_name || user.username}</td>
+                      <td className="p-2">{user.user_id}</td>
+                      <td className="p-2">{user.role}</td>
+                      <td className="p-2">
+                        {new Date(user.created_at).toLocaleDateString('fr-FR')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </TabsContent>
 
@@ -113,9 +168,32 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
               <MessageSquare className="h-5 w-5" />
               <h2 className="text-xl font-semibold">Modération des conversations</h2>
             </div>
-            <p className="text-muted-foreground">
-              Cette section sera bientôt disponible pour modérer les conversations.
-            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th className="text-left p-2">Utilisateur 1</th>
+                    <th className="text-left p-2">Utilisateur 2</th>
+                    <th className="text-left p-2">Messages</th>
+                    <th className="text-left p-2">Statut</th>
+                    <th className="text-left p-2">Dernière activité</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {conversations?.map((conv) => (
+                    <tr key={conv.id} className="border-t">
+                      <td className="p-2">{conv.user1?.username || conv.user1?.full_name}</td>
+                      <td className="p-2">{conv.user2?.username || conv.user2?.full_name}</td>
+                      <td className="p-2">{conv.messages?.[0]?.count || 0}</td>
+                      <td className="p-2">{conv.status}</td>
+                      <td className="p-2">
+                        {new Date(conv.updated_at).toLocaleDateString('fr-FR')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </TabsContent>
 

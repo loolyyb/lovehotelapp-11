@@ -88,5 +88,5 @@ export function AdminDashboard() {
     return null;
   }
 
-  return <AdminDashboardContent />;
+  return <AdminDashboardContent session={session} />;
 }
