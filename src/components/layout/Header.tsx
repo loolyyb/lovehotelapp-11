@@ -30,6 +30,41 @@ export function Header({ userProfile }: { userProfile?: any }) {
         handleLogout();
         return;
       }
+
+      // Vérifier si le profil existe, sinon le créer
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Profile check error:', profileError);
+        return;
+      }
+
+      if (!profile) {
+        // Créer un nouveau profil
+        const { error: createError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              user_id: session.user.id,
+              full_name: session.user.email?.split('@')[0] || 'New User',
+              role: 'user'
+            }
+          ]);
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de créer votre profil.",
+          });
+          return;
+        }
+      }
     };
 
     checkSession();
