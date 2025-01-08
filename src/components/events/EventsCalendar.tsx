@@ -46,7 +46,7 @@ export const EventsCalendar = () => {
           Calendrier des Événements
         </h2>
         <p className="text-gray-600 font-montserrat">
-          Découvrez nos soirées thématiques exclusives
+          Découvrez nos évènements thématiques exclusives
         </p>
       </motion.div>
 
