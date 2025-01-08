@@ -14,8 +14,8 @@ export function FidelityTab({ profile, onUpdate }: FidelityTabProps) {
         membershipType={profile?.is_love_hotel_member ? "Love Hotel Member" : "Standard"}
         memberSince={new Date(profile?.created_at).getFullYear().toString()}
       />
-      <TokensSection tokens={profile?.loolyb_tokens} onUpdate={onUpdate} />
       <LoyaltyPointsSection points={profile?.loyalty_points || 0} />
+      <TokensSection tokens={profile?.loolyb_tokens} onUpdate={onUpdate} />
     </div>
   );
 }
