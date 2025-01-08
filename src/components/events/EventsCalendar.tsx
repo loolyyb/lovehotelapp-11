@@ -54,6 +54,7 @@ export const EventsCalendar = () => {
               selected={selectedDate}
               onSelect={setSelectedDate}
               className="rounded-md border shadow"
+              defaultMonth={new Date(2024, 0)} // Set default month to January 2024
             />
           </CardContent>
         </Card>

@@ -18,7 +18,7 @@ export const sampleEvents: Event[] = [
     date: new Date(2024, 0, 24), // January 24, 2024
     type: "speed_dating",
     description: "Une soirée de rencontres rapides dans une ambiance chaleureuse et décontractée.",
-    imageUrl: "/speed-dating.jpg",
+    imageUrl: "/lovable-uploads/7166d2b9-9fbe-4515-a474-a2934c999786.png",
     startTime: "19:00",
     endTime: "23:00"
   },
