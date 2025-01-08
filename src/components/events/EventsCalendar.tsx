@@ -8,15 +8,24 @@ import { sampleEvents } from "@/types/events";
 
 export const EventsCalendar = () => {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
-    new Date()
+    new Date(2024, 0, 24) // Set initial date to January 24, 2024
   );
   const { toast } = useToast();
 
-  const eventsForSelectedDate = sampleEvents.filter(
-    (event) =>
-      selectedDate &&
-      event.date.toDateString() === selectedDate.toDateString()
-  );
+  const eventsForSelectedDate = React.useMemo(() => {
+    if (!selectedDate) return [];
+    
+    return sampleEvents.filter((event) => {
+      const eventDate = new Date(event.date);
+      const selected = new Date(selectedDate);
+      
+      return (
+        eventDate.getFullYear() === selected.getFullYear() &&
+        eventDate.getMonth() === selected.getMonth() &&
+        eventDate.getDate() === selected.getDate()
+      );
+    });
+  }, [selectedDate]);
 
   const handleParticipate = (eventId: string) => {
     toast({
@@ -54,7 +63,7 @@ export const EventsCalendar = () => {
               selected={selectedDate}
               onSelect={setSelectedDate}
               className="rounded-md border shadow"
-              defaultMonth={new Date(2024, 0)} // Set default month to January 2024
+              defaultMonth={new Date(2024, 0)}
             />
           </CardContent>
         </Card>
