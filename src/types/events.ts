@@ -18,7 +18,7 @@ export const sampleEvents: Event[] = [
     date: new Date(2024, 0, 24), // January 24, 2024
     type: "speed_dating",
     description: "Une soirée de rencontres rapides dans une ambiance chaleureuse et décontractée.",
-    imageUrl: "/lovable-uploads/7166d2b9-9fbe-4515-a474-a2934c999786.png",
+    imageUrl: "https://media.istockphoto.com/id/1317810289/fr/vectoriel/jeune-homme-et-femme-sasseyant-%C3%A0-la-table-et-parlant.jpg?s=612x612&w=0&k=20&c=-UzHEeczHYiQIoFirPugh1ockhVz-CY5ontY6vCCOzg=",
     startTime: "19:00",
     endTime: "23:00"
   },
