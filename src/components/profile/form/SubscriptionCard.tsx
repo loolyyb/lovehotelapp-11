@@ -42,7 +42,7 @@ export function SubscriptionCard({
     const fetchCardData = async () => {
       if (isAuthenticated && userEmail) {
         try {
-          const url = `cards?email=${encodeURIComponent(userEmail)}&order[id]=&page=1&perPage=1000&temp=false`;
+          const url = `/cards?email=${encodeURIComponent(userEmail)}&order[id]=&page=1&perPage=1000&temp=false`;
           const data = await ApiService.get(url);
           setCardData(data);
         } catch (error) {
