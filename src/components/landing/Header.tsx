@@ -1,64 +1,60 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AuthError } from "@supabase/supabase-js";
+import { Link, useNavigate } from "react-router-dom";
 
 export function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN") {
+        setIsAuthenticated(true);
+      } else if (event === "SIGNED_OUT") {
+        setIsAuthenticated(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      setIsAuthenticated(false);
-      toast({
-        title: "Déconnexion réussie",
-        description: "À bientôt !",
-      });
+      navigate("/login");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Error signing out:", error);
       if (error instanceof AuthError) {
         toast({
           variant: "destructive",
-          title: "Erreur de déconnexion",
-          description: error.message,
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la déconnexion.",
         });
       }
     }
   };
 
-  useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-    });
-
-    // Subscribe to auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <div className="flex items-center space-x-4">
-          <Link to="/dashboard" className="text-burgundy hover:text-rose-600">
-            Dashboard
+        <div className="flex flex-1 items-center justify-between">
+          <Link to="/" className="flex items-center space-x-2">
+            <span className="font-bold">Love Hotel</span>
           </Link>
-        </div>
 
-        <div className="flex flex-1 items-center justify-end space-x-4">
           {isAuthenticated ? (
             <Button variant="outline" onClick={handleLogout}>
               Déconnexion
