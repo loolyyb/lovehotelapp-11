@@ -1,71 +1,115 @@
-import { useState, useEffect } from "react";
+import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { AuthError } from "@supabase/supabase-js";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-export function Header() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    // Check initial auth state
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session check error:', error);
+          setIsAuthenticated(false);
+          return;
+        }
+        setIsAuthenticated(!!session);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setIsAuthenticated(false);
+      }
     };
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN") {
-        setIsAuthenticated(true);
-      } else if (event === "SIGNED_OUT") {
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event);
+      
+      if (event === 'TOKEN_REFRESHED') {
+        setIsAuthenticated(!!session);
+      } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
+      } else if (event === 'SIGNED_IN') {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(!!session);
+      }
+
+      // Handle authentication errors
+      if (event === 'USER_UPDATED' && !session) {
+        toast({
+          variant: "destructive",
+          title: "Erreur d'authentification",
+          description: "Vos identifiants sont invalides. Veuillez réessayer.",
+        });
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
 
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+
+      // Clear any stored tokens
+      localStorage.removeItem('supabase.auth.token');
       
-      navigate("/login");
+      toast({
+        title: "Déconnexion réussie",
+        description: "À bientôt !",
+      });
+      
+      navigate("/");
     } catch (error) {
-      console.error("Error signing out:", error);
-      if (error instanceof AuthError) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Une erreur est survenue lors de la déconnexion.",
-        });
-      }
+      console.error("Erreur lors de la déconnexion:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion.",
+      });
     }
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="flex flex-1 items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="font-bold">Love Hotel</span>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b">
+      <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="w-full flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 text-burgundy">
+            <Heart className="w-8 h-8 fill-current" />
+            <span className="text-xl font-playfair font-bold">LoveH</span>
           </Link>
-
           {isAuthenticated ? (
-            <Button variant="outline" onClick={handleLogout}>
-              Déconnexion
+            <Button 
+              variant="outline" 
+              className="border-burgundy text-burgundy hover:bg-burgundy/5"
+              onClick={handleLogout}
+            >
+              Se déconnecter
             </Button>
           ) : (
             <Link to="/login">
-              <Button variant="default">Connexion</Button>
+              <Button variant="outline" className="border-burgundy text-burgundy hover:bg-burgundy/5">
+                Se connecter
+              </Button>
             </Link>
           )}
         </div>
       </div>
     </header>
   );
-}
+};
