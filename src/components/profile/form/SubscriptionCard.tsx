@@ -57,7 +57,7 @@ export function SubscriptionCard({
   }, [isAuthenticated, userEmail]);
 
   return (
-    <WidgetContainer title="Carte Abonnement">
+    <WidgetContainer title="Abonnement">
       <div className="p-4 bg-white/10 rounded-lg">
         <pre className="text-xs font-mono break-all whitespace-pre-wrap">
           {cardData ? JSON.stringify(cardData, null, 2) : 'Chargement des données...'}
