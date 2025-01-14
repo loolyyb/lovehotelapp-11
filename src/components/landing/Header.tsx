@@ -45,12 +45,6 @@ export const Header = () => {
       } else {
         setIsAuthenticated(!!session);
       }
-
-      // Handle token refresh errors
-      if (event === 'TOKEN_REFRESH_FAILED') {
-        console.error('Token refresh failed');
-        await handleLogout();
-      }
     });
 
     return () => {

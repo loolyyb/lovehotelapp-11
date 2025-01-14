@@ -73,7 +73,7 @@ export function Header({ userProfile }: { userProfile?: any }) {
     const {
       data: { subscription: authSubscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'TOKEN_REFRESH_FAILED') {
+      if (event === 'TOKEN_REFRESHED' && !session) {
         console.error('Token refresh failed');
         await handleLogout();
         return;
