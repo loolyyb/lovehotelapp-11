@@ -1,6 +1,5 @@
 import { TokensSection } from "../form/TokensSection";
 import { LoyaltyPointsSection } from "../form/LoyaltyPointsSection";
-import { SubscriptionCard } from "../form/SubscriptionCard";
 
 interface FidelityTabProps {
   profile: any;
@@ -10,10 +9,6 @@ interface FidelityTabProps {
 export function FidelityTab({ profile, onUpdate }: FidelityTabProps) {
   return (
     <div className="space-y-6 p-6">
-      <SubscriptionCard 
-        membershipType={profile?.is_love_hotel_member ? "Love Hotel Member" : "Standard"}
-        memberSince={new Date(profile?.created_at).getFullYear().toString()}
-      />
       <LoyaltyPointsSection points={profile?.loyalty_points || 0} />
       <TokensSection tokens={profile?.loolyb_tokens} onUpdate={onUpdate} />
     </div>
