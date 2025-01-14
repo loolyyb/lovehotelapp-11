@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { AuthError, Session } from "@supabase/supabase-js";
+import { AuthError } from "@supabase/supabase-js";
 
 export function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -65,7 +65,7 @@ export function Header() {
             </Button>
           ) : (
             <Link to="/login">
-              <Button variant="primary">Connexion</Button>
+              <Button variant="default">Connexion</Button>
             </Link>
           )}
         </div>

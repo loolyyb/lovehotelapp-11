@@ -8,7 +8,11 @@ import { UserMenu } from "./header/UserMenu";
 import { SideMenu } from "./header/SideMenu";
 import { Home } from "lucide-react";
 
-export function Header() {
+interface HeaderProps {
+  userProfile?: any;  // Add this interface to accept userProfile prop
+}
+
+export function Header({ userProfile }: HeaderProps) {
   const [profile, setProfile] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -75,7 +79,10 @@ export function Header() {
     };
   }, [navigate]);
 
-  if (!profile) {
+  // Use the passed userProfile if available, otherwise use the fetched profile
+  const displayProfile = userProfile || profile;
+
+  if (!displayProfile) {
     return null;
   }
 
@@ -92,8 +99,8 @@ export function Header() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           <NotificationsMenu />
           <UserMenu
-            avatarUrl={profile.avatar_url}
-            fullName={profile.full_name}
+            avatarUrl={displayProfile.avatar_url}
+            fullName={displayProfile.full_name}
             onLogout={handleLogout}
           />
         </div>
