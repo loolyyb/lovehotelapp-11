@@ -46,28 +46,27 @@ export const Header = () => {
         setIsAuthenticated(!!session);
       }
 
-      // Handle authentication errors
-      if (event === 'USER_UPDATED' && !session) {
-        toast({
-          variant: "destructive",
-          title: "Erreur d'authentification",
-          description: "Vos identifiants sont invalides. Veuillez réessayer.",
-        });
+      // Handle token refresh errors
+      if (event === 'TOKEN_REFRESH_FAILED') {
+        console.error('Token refresh failed');
+        await handleLogout();
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, []);
 
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
-      // Clear any stored tokens
+      // Clear ALL auth related data
       localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('supabase.auth.expires_at');
+      localStorage.removeItem('supabase.auth.refresh_token');
       
       toast({
         title: "Déconnexion réussie",

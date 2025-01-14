@@ -69,6 +69,17 @@ export function Header({ userProfile }: { userProfile?: any }) {
 
     checkSession();
 
+    // Subscribe to auth state changes
+    const {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'TOKEN_REFRESH_FAILED') {
+        console.error('Token refresh failed');
+        await handleLogout();
+        return;
+      }
+    });
+
     // Subscribe to new messages
     const channel = supabase
       .channel('schema-db-changes')
@@ -89,6 +100,7 @@ export function Header({ userProfile }: { userProfile?: any }) {
     fetchUnreadMessages();
 
     return () => {
+      authSubscription.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, [userProfile]);
@@ -143,8 +155,11 @@ export function Header({ userProfile }: { userProfile?: any }) {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      // Clear any stored tokens
+      // Clear ALL auth related data
       localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('supabase.auth.expires_at');
+      localStorage.removeItem('supabase.auth.refresh_token');
+      
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt !",
