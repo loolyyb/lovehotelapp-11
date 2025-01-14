@@ -3,12 +3,13 @@ import { useAuthSession } from "./useAuthSession";
 import { ApiService } from "@/services/ApiService";
 import { useToast } from "@/hooks/use-toast";
 
-interface SubscriptionCard {
+export interface SubscriptionCard {
   id: number;
-  name: string;
-  status: string;
-  expiration_date?: string;
-  remaining_entries?: number;
+  email: string;
+  secret: string;
+  total: number;
+  usageCount: number;
+  created: string;
 }
 
 interface CardsResponse {
