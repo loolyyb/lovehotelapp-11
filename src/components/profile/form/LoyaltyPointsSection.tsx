@@ -8,8 +8,14 @@ interface LoyaltyPointsSectionProps {
 export function LoyaltyPointsSection({ points }: LoyaltyPointsSectionProps) {
   const { chateletBookings, pigalleBookings } = useBookings();
 
-  const totalBookings = (chateletBookings?.["hydra:member"]?.length || 0) + 
-                       (pigalleBookings?.["hydra:member"]?.length || 0);
+  const filterValidBookings = (bookings: any) => {
+    if (!bookings || !bookings["hydra:member"]) return 0;
+    return bookings["hydra:member"].filter(
+      (booking: any) => booking.paid > 0 || (booking.cards && booking.cards.length > 0)
+    ).length;
+  };
+
+  const totalBookings = filterValidBookings(chateletBookings) + filterValidBookings(pigalleBookings);
   
   const bookingsUntilBonus = Math.max(0, 10 - totalBookings);
 
