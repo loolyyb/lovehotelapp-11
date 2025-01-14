@@ -41,18 +41,9 @@ export function SubscriptionSection() {
       <div className="space-y-4">
         {cards["hydra:member"].map((card) => (
           <Card key={card.id} className="p-4">
-            <div className="space-y-2">
-              <h3 className="font-semibold text-burgundy">{card.name}</h3>
-              <div className="text-sm text-gray-600">
-                <p>Statut: {card.status}</p>
-                {card.expiration_date && (
-                  <p>Date d'expiration: {new Date(card.expiration_date).toLocaleDateString('fr-FR')}</p>
-                )}
-                {card.remaining_entries !== undefined && (
-                  <p>Entrées restantes: {card.remaining_entries}</p>
-                )}
-              </div>
-            </div>
+            <pre className="whitespace-pre-wrap text-sm font-mono bg-gray-50 p-2 rounded">
+              {JSON.stringify(card, null, 2)}
+            </pre>
           </Card>
         ))}
       </div>
