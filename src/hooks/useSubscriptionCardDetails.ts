@@ -13,8 +13,9 @@ export function useSubscriptionCardDetails(cardId: string | null) {
       };
 
       try {
-        const baseUrl = "https://api.lovehotel.io";
-        return await ApiService.get(`${baseUrl}${cardId}`, headers);
+        // Remove the base URL from cardId if it's already included
+        const cleanCardId = cardId.replace('https://api.lovehotel.io', '');
+        return await ApiService.get(cleanCardId, headers);
       } catch (error) {
         console.error('Error fetching subscription card details:', error);
         throw error;
