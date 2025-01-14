@@ -3,6 +3,10 @@ import { motion } from "framer-motion";
 import { CreditCard, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useApiAuth } from "@/hooks/useApiAuth";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { ApiService } from "@/services/ApiService";
 
 interface SubscriptionCardProps {
   membershipType?: string;
@@ -20,6 +24,40 @@ export function SubscriptionCard({
   remainingHours = 10
 }: SubscriptionCardProps) {
   const { toast } = useToast();
+  const { isAuthenticated, isLoading } = useApiAuth();
+  const [cardData, setCardData] = useState<any>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUserEmail = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    getUserEmail();
+  }, []);
+
+  useEffect(() => {
+    const fetchCardData = async () => {
+      if (isAuthenticated && userEmail) {
+        try {
+          const url = `cards?email=${encodeURIComponent(userEmail)}&order[id]=&page=1&perPage=1000&temp=false`;
+          const data = await ApiService.get(url);
+          setCardData(data);
+        } catch (error) {
+          console.error('Error fetching card data:', error);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de récupérer les données de la carte.",
+          });
+        }
+      }
+    };
+
+    fetchCardData();
+  }, [isAuthenticated, userEmail]);
 
   const handleRenewal = () => {
     toast({
@@ -60,6 +98,14 @@ export function SubscriptionCard({
             <p className="text-sm font-light opacity-80">Numéro de carte</p>
             <p className="font-mono text-lg tracking-wider">{cardNumber}</p>
           </div>
+
+          {cardData && (
+            <div className="mt-4 p-2 bg-white/10 rounded-lg">
+              <p className="text-xs font-mono break-all">
+                {JSON.stringify(cardData, null, 2)}
+              </p>
+            </div>
+          )}
 
           <Button 
             onClick={handleRenewal}
