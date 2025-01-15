@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
-import type { AuthError, Session, AuthChangeEvent } from "@supabase/supabase-js";
+import type { AuthError, Session } from "@supabase/supabase-js";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -83,30 +83,21 @@ export default function Login() {
   useEffect(() => {
     logger.info('Login component mounted');
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       logger.info('Auth state changed:', { event, userId: session?.user?.id });
 
-      if (event === 'SIGNED_IN' && session) {
+      if (session) {
         try {
           await createProfileIfNeeded(session.user.id);
-          toast({
-            title: "Connexion réussie",
-            description: "Bienvenue !",
-          });
+          if (event === 'SIGNED_IN') {
+            toast({
+              title: "Connexion réussie",
+              description: "Bienvenue !",
+            });
+          }
           navigate("/");
         } catch (error) {
           logger.error('Error during sign in:', error);
-        }
-      } else if (event === 'SIGNED_UP' && session) {
-        try {
-          await createProfileIfNeeded(session.user.id);
-          toast({
-            title: "Inscription réussie",
-            description: "Bienvenue !",
-          });
-          navigate("/");
-        } catch (error) {
-          logger.error('Error during sign up:', error);
         }
       }
     });
