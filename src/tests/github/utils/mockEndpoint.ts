@@ -7,8 +7,12 @@ export interface MockEndpointOptions {
   baseUrl?: string;
 }
 
-export function createMockEndpoint({ method, url, baseUrl = 'https://api.github.com' }: MockEndpointOptions): EndpointInterface<RequestParameters> {
-  const endpoint = vi.fn() as unknown as EndpointInterface<RequestParameters>;
+interface EndpointDefaults extends RequestParameters {
+  url: string;
+}
+
+export function createMockEndpoint({ method, url, baseUrl = 'https://api.github.com' }: MockEndpointOptions): EndpointInterface<EndpointDefaults> {
+  const endpoint = vi.fn() as unknown as EndpointInterface<EndpointDefaults>;
   
   endpoint.DEFAULTS = {
     baseUrl,
@@ -29,8 +33,11 @@ export function createMockEndpoint({ method, url, baseUrl = 'https://api.github.
 }
 
 export function createOctokitMock(mockResponse: any) {
-  const mockFn = vi.fn().mockReturnValue({
-    data: mockResponse
+  const mockFn = vi.fn().mockImplementation(() => {
+    if (mockResponse instanceof Promise) {
+      return mockResponse.then(data => ({ data }));
+    }
+    return { data: mockResponse };
   });
 
   return Object.assign(mockFn, {
