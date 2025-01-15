@@ -10,6 +10,7 @@ type InterestType = "all" | "casual" | "serious" | "libertine" | "bdsm" | "exhib
 
 interface Profile {
   id: string;
+  user_id: string;
   full_name: string;
   avatar_url: string;
   bio: string;
@@ -99,7 +100,9 @@ export default function MatchingScores() {
         .from("preferences")
         .select("*")
         .eq("user_id", session.user.id)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (preferencesError) throw preferencesError;
 
@@ -108,6 +111,7 @@ export default function MatchingScores() {
         .from("profiles")
         .select(`
           id,
+          user_id,
           full_name,
           avatar_url,
           bio,
@@ -122,14 +126,18 @@ export default function MatchingScores() {
       // Récupérer les préférences des autres profils
       const { data: otherPreferences, error: otherPreferencesError } = await supabase
         .from("preferences")
-        .select("*");
+        .select("*")
+        .order('created_at', { ascending: false });
 
       if (otherPreferencesError) throw otherPreferencesError;
 
-      // Créer une map des préférences par user_id
-      const preferencesMap = new Map(
-        otherPreferences.map((pref) => [pref.user_id, pref])
-      );
+      // Créer une map des préférences par user_id en ne gardant que la plus récente
+      const preferencesMap = new Map();
+      otherPreferences.forEach((pref) => {
+        if (!preferencesMap.has(pref.user_id)) {
+          preferencesMap.set(pref.user_id, pref);
+        }
+      });
 
       // Calculer les scores de compatibilité
       let compatibleProfiles = otherProfiles.map((profile: Profile) => {
