@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { QualificationJourney } from "@/components/qualification/QualificationJourney";
 
 interface AccountTabProps {
   profile: any;
@@ -9,6 +12,7 @@ interface AccountTabProps {
 }
 
 export function AccountTab({ profile, onUpdate }: AccountTabProps) {
+  const [showQualification, setShowQualification] = useState(false);
   const { toast } = useToast();
 
   const handleFullNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,6 +22,10 @@ export function AccountTab({ profile, onUpdate }: AccountTabProps) {
       description: "Votre nom a été modifié avec succès.",
     });
   };
+
+  if (showQualification) {
+    return <QualificationJourney isEditing onComplete={() => setShowQualification(false)} />;
+  }
 
   return (
     <div className="space-y-8">
@@ -42,6 +50,16 @@ export function AccountTab({ profile, onUpdate }: AccountTabProps) {
               disabled
               className="bg-gray-100"
             />
+          </div>
+
+          <div className="pt-4">
+            <Button
+              onClick={() => setShowQualification(true)}
+              variant="outline"
+              className="w-full"
+            >
+              Modifier mes réponses de qualification
+            </Button>
           </div>
         </div>
       </Card>

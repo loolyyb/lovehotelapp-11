@@ -16,6 +16,11 @@ interface QualificationStep {
   }[];
 }
 
+interface QualificationJourneyProps {
+  onComplete?: () => void;
+  isEditing?: boolean;
+}
+
 const QUALIFICATION_STEPS: QualificationStep[] = [
   {
     title: "Vos motivations",
@@ -42,7 +47,7 @@ const QUALIFICATION_STEPS: QualificationStep[] = [
   }
 ];
 
-export function QualificationJourney() {
+export function QualificationJourney({ onComplete, isEditing = false }: QualificationJourneyProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
@@ -107,6 +112,7 @@ export function QualificationJourney() {
           title: "Qualification terminée",
           description: "Merci d'avoir complété votre profil !",
         });
+        onComplete?.();
       } else {
         setCurrentStep(nextStep);
       }
@@ -175,10 +181,19 @@ export function QualificationJourney() {
           ))}
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-between">
+          {isEditing && (
+            <Button 
+              variant="outline"
+              onClick={onComplete}
+            >
+              Retour au profil
+            </Button>
+          )}
           <Button 
             onClick={handleNext}
             disabled={loading}
+            className="ml-auto"
           >
             {currentStep === QUALIFICATION_STEPS.length - 1 ? "Terminer" : "Suivant"}
           </Button>

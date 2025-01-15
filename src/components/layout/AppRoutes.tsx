@@ -17,12 +17,39 @@ import RideauxOuverts from "@/pages/RideauxOuverts";
 import Dashboard from "@/pages/Dashboard";
 import Options from "@/pages/Options";
 import LoverCoin from "@/pages/LoverCoin";
+import { QualificationJourney } from "@/components/qualification/QualificationJourney";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AppRoutesProps {
   session: Session | null;
 }
 
 export const AppRoutes = ({ session }: AppRoutesProps) => {
+  const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (session?.user) {
+      checkQualificationStatus();
+    }
+  }, [session]);
+
+  const checkQualificationStatus = async () => {
+    if (!session?.user) return;
+
+    const { data: preferences } = await supabase
+      .from('preferences')
+      .select('qualification_completed')
+      .eq('user_id', session.user.id)
+      .single();
+
+    setNeedsQualification(!preferences?.qualification_completed);
+  };
+
+  if (session && needsQualification) {
+    return <QualificationJourney onComplete={() => setNeedsQualification(false)} />;
+  }
+
   return (
     <Routes>
       <Route
