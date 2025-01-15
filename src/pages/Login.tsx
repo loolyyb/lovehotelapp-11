@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
+import { AuthError, AuthChangeEvent } from "@supabase/supabase-js";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ export default function Login() {
   useEffect(() => {
     logger.info('Login component mounted');
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       logger.info('Auth state changed:', { event, userId: session?.user?.id });
 
       if (event === 'SIGNED_IN' && session) {
@@ -93,13 +94,6 @@ export default function Login() {
           navigate("/");
         } catch (error) {
           logger.error('Error during sign up:', error);
-        }
-      } else if (event === 'USER_UPDATED' && session) {
-        try {
-          await createProfileIfNeeded(session.user.id);
-          navigate("/");
-        } catch (error) {
-          logger.error('Error during user update:', error);
         }
       }
     });
