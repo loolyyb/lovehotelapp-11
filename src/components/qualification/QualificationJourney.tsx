@@ -142,6 +142,13 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
     }
   };
 
+  const handleAnswer = (questionId: string, answer: any) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
+  };
+
   const currentStepData = QUALIFICATION_STEPS[currentStep];
   if (!currentStepData) return null;
 
