@@ -1,5 +1,3 @@
-import React from 'react';
-import { QuestionType } from './types';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -8,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Heart, User, Users } from "lucide-react";
 
 interface QualificationQuestionProps {
-  question: QuestionType;
+  question: any;
   value: any;
   onChange: (value: any) => void;
 }
@@ -171,8 +169,7 @@ export function QualificationQuestion({ question, value, onChange }: Qualificati
 
   return (
     <div className="space-y-4">
-      <Label className="text-lg font-semibold">{question.question}</Label>
-      <div className="mt-2">
+      <div className="space-y-2">
         {question.type === "text" && (
           <Textarea
             value={value || ""}
@@ -188,9 +185,20 @@ export function QualificationQuestion({ question, value, onChange }: Qualificati
         {question.type === "choice" && renderChoice()}
       </div>
       {question.type === "choice" && question.id === "libertine_party_interest" && (
-        <p className="text-sm text-gray-600 mt-4">
-          Une fois votre qualification terminée, vous pourrez compléter votre profil avec des photos et des informations supplémentaires.
-        </p>
+        <div className="space-y-4 mt-4 p-4 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-600">
+            Une fois votre qualification terminée, vous pourrez compléter votre profil avec des photos et des informations supplémentaires.
+          </p>
+          <p className="text-sm text-gray-600">
+            Pour modifier votre profil ultérieurement :
+          </p>
+          <ol className="text-sm text-gray-600 list-decimal pl-5 space-y-2">
+            <li>Cliquez sur votre avatar en haut à droite</li>
+            <li>Sélectionnez "Mon Profil"</li>
+            <li>Dans l'onglet "Mon Compte", vous pourrez activer ou désactiver votre profil de rencontre</li>
+            <li>L'option "Rideaux ouverts" nécessite un profil de rencontre actif</li>
+          </ol>
+        </div>
       )}
     </div>
   );
