@@ -30,7 +30,8 @@ export function useProfileData() {
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
       console.log("Fetch result:", { existingProfile, fetchError });
 
