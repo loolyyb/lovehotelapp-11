@@ -40,14 +40,23 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     if (!session?.user) return;
 
     try {
+      // On récupère la dernière préférence créée pour l'utilisateur
       const { data: preferences, error } = await supabase
         .from('preferences')
-        .select('qualification_completed')
+        .select('qualification_completed, created_at')
         .eq('user_id', session.user.id)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
 
       if (error) {
         console.error('Error checking qualification status:', error);
+        // Si l'erreur est qu'aucune préférence n'existe, on considère que l'utilisateur doit faire la qualification
+        if (error.code === 'PGRST116') {
+          setNeedsQualification(true);
+          return;
+        }
+        
         toast({
           variant: "destructive",
           title: "Erreur",
