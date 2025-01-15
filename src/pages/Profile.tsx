@@ -18,25 +18,35 @@ export default function Profile() {
 
   const getProfile = async () => {
     try {
+      console.log("Fetching user data...");
       const { data: { user } } = await supabase.auth.getUser();
+      console.log("User data:", user);
 
       if (!user) {
+        console.log("No user found, redirecting to login");
         navigate('/login');
         return;
       }
 
-      const { data: existingProfile, error: fetchError } = await supabase
+      console.log("Fetching profile for user:", user.id);
+      let { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
 
-      if (fetchError) throw fetchError;
+      console.log("Fetch result:", { existingProfile, fetchError });
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error("Error fetching profile:", fetchError);
+        throw fetchError;
+      }
 
       if (!existingProfile) {
+        console.log("Creating new profile for user");
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
-          .insert([{ 
+          .upsert([{ 
             user_id: user.id,
             full_name: user.email?.split('@')[0] || 'New User',
             is_love_hotel_member: false,
@@ -45,14 +55,20 @@ export default function Profile() {
             seeking: [],
             photo_urls: [],
             visibility: 'public',
-            allowed_viewers: []
+            allowed_viewers: [],
+            role: 'user'
           }])
           .select()
           .single();
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error("Error creating profile:", insertError);
+          throw insertError;
+        }
+        console.log("New profile created:", newProfile);
         setProfile(newProfile);
       } else {
+        console.log("Using existing profile:", existingProfile);
         setProfile(existingProfile);
       }
     } catch (error: any) {
@@ -69,6 +85,7 @@ export default function Profile() {
 
   const updateProfile = async (updates: any) => {
     try {
+      console.log("Updating profile with:", updates);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user');
 
@@ -88,6 +105,7 @@ export default function Profile() {
       if (error) throw error;
 
       setProfile((prev: any) => ({ ...prev, ...updates }));
+      console.log("Profile updated successfully");
       toast({
         title: "Profil mis à jour",
         description: "Vos modifications ont été enregistrées avec succès.",
