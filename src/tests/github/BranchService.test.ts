@@ -4,7 +4,6 @@ import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
 import { RequestMethod } from '@octokit/types';
 
-// Mock the Octokit class
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     git: {
@@ -29,7 +28,10 @@ vi.mock('@octokit/rest', () => ({
               method: 'GET' as RequestMethod,
               url: '/repos/{owner}/{repo}/git/ref/{ref}'
             },
-            defaults: {},
+            defaults: vi.fn((newDefaults) => ({
+              ...mockEndpoint,
+              DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
+            })),
             merge: vi.fn(),
             parse: vi.fn()
           }
@@ -54,7 +56,10 @@ vi.mock('@octokit/rest', () => ({
               method: 'POST' as RequestMethod,
               url: '/repos/{owner}/{repo}/git/refs'
             },
-            defaults: {},
+            defaults: vi.fn((newDefaults) => ({
+              ...mockEndpoint,
+              DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
+            })),
             merge: vi.fn(),
             parse: vi.fn()
           }
@@ -70,6 +75,25 @@ vi.mock('@/services/LogService', () => ({
     info: vi.fn()
   }
 }));
+
+const mockEndpoint = {
+  DEFAULTS: {
+    baseUrl: 'https://api.github.com',
+    headers: {
+      accept: 'application/vnd.github.v3+json',
+      'user-agent': 'octokit/rest.js'
+    },
+    mediaType: { format: '' },
+    method: 'GET' as RequestMethod,
+    url: '/repos/{owner}/{repo}/git/ref/{ref}'
+  },
+  defaults: vi.fn((newDefaults) => ({
+    ...mockEndpoint,
+    DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
+  })),
+  merge: vi.fn(),
+  parse: vi.fn()
+};
 
 describe('BranchService', () => {
   let branchService: BranchService;

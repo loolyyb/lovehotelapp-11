@@ -26,7 +26,10 @@ vi.mock('@octokit/rest', () => ({
               method: 'POST' as RequestMethod,
               url: '/repos/{owner}/{repo}/pulls'
             },
-            defaults: {},
+            defaults: vi.fn((newDefaults) => ({
+              ...mockEndpoint,
+              DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
+            })),
             merge: vi.fn(),
             parse: vi.fn()
           }
@@ -42,6 +45,25 @@ vi.mock('@/services/LogService', () => ({
     info: vi.fn()
   }
 }));
+
+const mockEndpoint = {
+  DEFAULTS: {
+    baseUrl: 'https://api.github.com',
+    headers: {
+      accept: 'application/vnd.github.v3+json',
+      'user-agent': 'octokit/rest.js'
+    },
+    mediaType: { format: '' },
+    method: 'POST' as RequestMethod,
+    url: '/repos/{owner}/{repo}/pulls'
+  },
+  defaults: vi.fn((newDefaults) => ({
+    ...mockEndpoint,
+    DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
+  })),
+  merge: vi.fn(),
+  parse: vi.fn()
+};
 
 describe('PullRequestService', () => {
   let prService: PullRequestService;
@@ -85,7 +107,10 @@ describe('PullRequestService', () => {
             method: 'POST' as RequestMethod,
             url: '/repos/{owner}/{repo}/pulls'
           },
-          defaults: {},
+          defaults: vi.fn((newDefaults) => ({
+            ...mockEndpoint,
+            DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
+          })),
           merge: vi.fn(),
           parse: vi.fn()
         }

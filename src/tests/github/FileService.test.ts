@@ -26,7 +26,10 @@ vi.mock('@octokit/rest', () => ({
               method: 'GET' as RequestMethod,
               url: '/repos/{owner}/{repo}/contents/{path}'
             },
-            defaults: {},
+            defaults: vi.fn((newDefaults) => ({
+              ...mockEndpoint,
+              DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
+            })),
             merge: vi.fn(),
             parse: vi.fn()
           }
@@ -53,7 +56,10 @@ vi.mock('@octokit/rest', () => ({
               method: 'PUT' as RequestMethod,
               url: '/repos/{owner}/{repo}/contents/{path}'
             },
-            defaults: {},
+            defaults: vi.fn((newDefaults) => ({
+              ...mockEndpoint,
+              DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
+            })),
             merge: vi.fn(),
             parse: vi.fn()
           }
@@ -69,6 +75,25 @@ vi.mock('@/services/LogService', () => ({
     info: vi.fn()
   }
 }));
+
+const mockEndpoint = {
+  DEFAULTS: {
+    baseUrl: 'https://api.github.com',
+    headers: {
+      accept: 'application/vnd.github.v3+json',
+      'user-agent': 'octokit/rest.js'
+    },
+    mediaType: { format: '' },
+    method: 'GET' as RequestMethod,
+    url: '/repos/{owner}/{repo}/contents/{path}'
+  },
+  defaults: vi.fn((newDefaults) => ({
+    ...mockEndpoint,
+    DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
+  })),
+  merge: vi.fn(),
+  parse: vi.fn()
+};
 
 describe('FileService', () => {
   let fileService: FileService;
