@@ -65,7 +65,9 @@ export function QualificationJourney() {
 
       if (preferences) {
         setCurrentStep(preferences.qualification_step || 0);
-        setAnswers(preferences.qualification_data || {});
+        if (preferences.qualification_data) {
+          setAnswers(preferences.qualification_data as Record<string, any>);
+        }
       }
     } catch (error) {
       console.error('Error loading qualification state:', error);
@@ -155,9 +157,9 @@ export function QualificationJourney() {
                     <label key={option} className="flex items-center space-x-2">
                       <input
                         type="checkbox"
-                        checked={answers[q.id]?.includes(option)}
+                        checked={Array.isArray(answers[q.id]) && answers[q.id]?.includes(option)}
                         onChange={(e) => {
-                          const current = answers[q.id] || [];
+                          const current = Array.isArray(answers[q.id]) ? answers[q.id] : [];
                           const updated = e.target.checked
                             ? [...current, option]
                             : current.filter((o: string) => o !== option);
