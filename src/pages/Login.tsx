@@ -5,29 +5,50 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { useLogger } from "@/hooks/useLogger";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const navigate = useNavigate();
   const logger = useLogger('Login');
+  const { toast } = useToast();
 
   useEffect(() => {
     logger.debug('Composant Login monté');
     
-    const handleAuthChange = (event: string, session: any) => {
+    const handleAuthChange = async (event: string, session: any) => {
       logger.info('Changement d\'état d\'authentification', { event, hasSession: !!session });
       
-      if (session) {
+      if (event === 'SIGNED_UP' && session) {
+        toast({
+          title: "Inscription réussie",
+          description: "Votre compte a été créé avec succès.",
+        });
+      } else if (event === 'SIGNED_IN' && session) {
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue !",
+        });
         navigate("/");
+      } else if (event === 'USER_UPDATED' && !session) {
+        const { error } = await supabase.auth.getSession();
+        if (error?.message.includes('user_already_exists')) {
+          toast({
+            variant: "destructive",
+            title: "Erreur d'inscription",
+            description: "Un compte existe déjà avec cette adresse email. Veuillez vous connecter.",
+          });
+        }
       }
     };
 
     // Check if user is already logged in
-    supabase.auth.onAuthStateChange(handleAuthChange);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
     return () => {
       logger.debug('Composant Login démonté');
+      subscription.unsubscribe();
     };
-  }, [navigate, logger]);
+  }, [navigate, logger, toast]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center bg-gradient-to-r from-pink-50 to-rose-100 pt-12">
