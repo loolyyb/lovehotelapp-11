@@ -14,7 +14,7 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "$Reussite888!") {
+    if (password === "Reussite888!") {
       onPasswordValid();
     } else {
       toast({
