@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PullRequestService } from '@/services/github/PullRequestService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
-import { RequestMethod, EndpointInterface } from '@octokit/types';
+import { RequestMethod, EndpointInterface, RequestParameters } from '@octokit/types';
 
-const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterface => ({
+const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, url: string): EndpointInterface<T> => ({
   DEFAULTS: {
     baseUrl: 'https://api.github.com',
     headers: {
@@ -15,7 +15,7 @@ const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterfa
     method,
     url
   },
-  defaults: vi.fn((newDefaults) => createMockEndpoint(method, url)),
+  defaults: vi.fn((newDefaults: T) => createMockEndpoint<T>(method, url)),
   merge: vi.fn(),
   parse: vi.fn()
 });
@@ -30,7 +30,8 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          endpoint: createMockEndpoint('POST' as RequestMethod, '/repos/{owner}/{repo}/pulls')
+          endpoint: createMockEndpoint<RequestParameters>('POST' as RequestMethod, '/repos/{owner}/{repo}/pulls'),
+          defaults: vi.fn()
         }
       )
     }
