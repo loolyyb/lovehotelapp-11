@@ -4,9 +4,16 @@ import { Session } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
 import { logger } from '@/services/LogService';
 
-export function useAuthSession() {
+interface AuthSessionReturn {
+  session: Session | null;
+  loading: boolean;
+  userProfile: any | null;
+}
+
+export function useAuthSession(): AuthSessionReturn {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const { toast } = useToast();
 
   const createProfile = async (userId: string) => {
@@ -45,7 +52,8 @@ export function useAuthSession() {
           throw insertError;
         }
 
-        logger.info('New profile created successfully:', newProfile);
+        logger.info('New profile created successfully:', { newProfile });
+        setUserProfile(newProfile);
       }
     } catch (error: any) {
       logger.error('Error creating profile:', {
@@ -66,7 +74,7 @@ export function useAuthSession() {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      logger.info('Fetching profile for user:', userId);
+      logger.info('Fetching profile for user:', { userId });
       
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -80,6 +88,8 @@ export function useAuthSession() {
 
       if (!profile) {
         await createProfile(userId);
+      } else {
+        setUserProfile(profile);
       }
     } catch (error: any) {
       logger.error('Error fetching profile:', error);
@@ -97,8 +107,8 @@ export function useAuthSession() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      logger.info('Auth state change:', event, session?.user?.id);
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      logger.info('Auth state change:', { event: _event, userId: session?.user?.id });
       setSession(session);
       setLoading(false);
 
@@ -110,5 +120,5 @@ export function useAuthSession() {
     return () => subscription.unsubscribe();
   }, []);
 
-  return { session, loading };
+  return { session, loading, userProfile };
 }
