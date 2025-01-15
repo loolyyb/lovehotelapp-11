@@ -70,7 +70,7 @@ export default function Login() {
   useEffect(() => {
     logger.info('Login component mounted');
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: 'INITIAL' | 'SIGNED_IN' | 'SIGNED_OUT' | 'USER_UPDATED' | 'USER_DELETED' | 'PASSWORD_RECOVERY' | 'TOKEN_REFRESHED' | 'SIGNED_UP', session) => {
       logger.info('Auth state changed:', { event, userId: session?.user?.id });
 
       if (event === 'SIGNED_IN' && session) {
