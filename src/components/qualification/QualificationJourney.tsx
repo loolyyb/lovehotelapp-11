@@ -64,6 +64,44 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
     }));
   };
 
+  const updateProfile = async (answers: Record<string, any>) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const profileUpdates = {
+        description: answers.description,
+        sexual_orientation: answers.sexual_orientation,
+        status: answers.status,
+        relationship_type: answers.relationship_type,
+      };
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update(profileUpdates)
+        .eq('user_id', session.user.id);
+
+      if (profileError) throw profileError;
+
+      const preferencesUpdates = {
+        open_curtains_interest: answers.open_curtains_interest === 'true',
+        speed_dating_interest: answers.speed_dating_interest === 'true',
+        libertine_party_interest: answers.libertine_party_interest === 'true',
+      };
+
+      const { error: preferencesError } = await supabase
+        .from('preferences')
+        .update(preferencesUpdates)
+        .eq('user_id', session.user.id);
+
+      if (preferencesError) throw preferencesError;
+
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+  };
+
   const handleNext = async () => {
     try {
       setLoading(true);
@@ -73,6 +111,7 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
       const nextStep = currentStep + 1;
       const isComplete = nextStep >= QUALIFICATION_STEPS.length;
 
+      // Mettre à jour les préférences
       const { error } = await supabase
         .from('preferences')
         .upsert({
@@ -85,10 +124,12 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
 
       if (error) throw error;
 
+      // Si c'est la dernière étape, mettre à jour le profil
       if (isComplete) {
+        await updateProfile(answers);
         toast({
           title: "Qualification terminée",
-          description: "Merci d'avoir complété votre profil !",
+          description: "Votre profil a été mis à jour avec succès !",
         });
         onComplete?.();
       } else {
