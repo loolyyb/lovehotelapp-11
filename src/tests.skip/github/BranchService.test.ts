@@ -2,23 +2,26 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BranchService } from '@/services/github/BranchService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
-import { RequestMethod, EndpointInterface, RequestParameters } from '@octokit/types';
+import { RequestMethod, EndpointInterface, RequestParameters, RequestInterface } from '@octokit/types';
 
-const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, url: string): EndpointInterface<T> => ({
-  DEFAULTS: {
-    baseUrl: 'https://api.github.com',
-    headers: {
-      accept: 'application/vnd.github.v3+json',
-      'user-agent': 'octokit/rest.js'
+const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, url: string): EndpointInterface<T> => {
+  const endpoint: EndpointInterface<T> = {
+    DEFAULTS: {
+      baseUrl: 'https://api.github.com',
+      headers: {
+        accept: 'application/vnd.github.v3+json',
+        'user-agent': 'octokit/rest.js'
+      },
+      mediaType: { format: '' },
+      method,
+      url
     },
-    mediaType: { format: '' },
-    method,
-    url
-  },
-  defaults: vi.fn((newDefaults: T) => createMockEndpoint<T>(method, url)),
-  merge: vi.fn(),
-  parse: vi.fn()
-});
+    defaults: vi.fn((newDefaults: RequestParameters) => endpoint) as EndpointInterface<T>['defaults'],
+    merge: vi.fn(),
+    parse: vi.fn()
+  };
+  return endpoint;
+};
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
@@ -89,7 +92,8 @@ describe('BranchService', () => {
     branchService['octokit'].git.getRef = Object.assign(
       vi.fn().mockRejectedValue(error),
       {
-        endpoint: createMockEndpoint('GET' as RequestMethod, '/repos/{owner}/{repo}/git/ref/{ref}')
+        endpoint: createMockEndpoint<RequestParameters>('GET' as RequestMethod, '/repos/{owner}/{repo}/git/ref/{ref}'),
+        defaults: vi.fn()
       }
     );
 
