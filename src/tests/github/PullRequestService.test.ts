@@ -2,7 +2,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PullRequestService } from '@/services/github/PullRequestService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
-import { RequestMethod } from '@octokit/types';
+import { RequestMethod, EndpointInterface } from '@octokit/types';
+
+const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterface => ({
+  DEFAULTS: {
+    baseUrl: 'https://api.github.com',
+    headers: {
+      accept: 'application/vnd.github.v3+json',
+      'user-agent': 'octokit/rest.js'
+    },
+    mediaType: { format: '' },
+    method,
+    url
+  },
+  defaults: vi.fn((newDefaults) => createMockEndpoint(method, url)),
+  merge: vi.fn(),
+  parse: vi.fn()
+});
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
@@ -14,25 +30,7 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          defaults: vi.fn(),
-          endpoint: {
-            DEFAULTS: {
-              baseUrl: 'https://api.github.com',
-              headers: {
-                accept: 'application/vnd.github.v3+json',
-                'user-agent': 'octokit/rest.js'
-              },
-              mediaType: { format: '' },
-              method: 'POST' as RequestMethod,
-              url: '/repos/{owner}/{repo}/pulls'
-            },
-            defaults: vi.fn((newDefaults) => ({
-              ...mockEndpoint,
-              DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
-            })),
-            merge: vi.fn(),
-            parse: vi.fn()
-          }
+          endpoint: createMockEndpoint('POST' as RequestMethod, '/repos/{owner}/{repo}/pulls')
         }
       )
     }
@@ -45,25 +43,6 @@ vi.mock('@/services/LogService', () => ({
     info: vi.fn()
   }
 }));
-
-const mockEndpoint = {
-  DEFAULTS: {
-    baseUrl: 'https://api.github.com',
-    headers: {
-      accept: 'application/vnd.github.v3+json',
-      'user-agent': 'octokit/rest.js'
-    },
-    mediaType: { format: '' },
-    method: 'POST' as RequestMethod,
-    url: '/repos/{owner}/{repo}/pulls'
-  },
-  defaults: vi.fn((newDefaults) => ({
-    ...mockEndpoint,
-    DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
-  })),
-  merge: vi.fn(),
-  parse: vi.fn()
-};
 
 describe('PullRequestService', () => {
   let prService: PullRequestService;
@@ -95,25 +74,7 @@ describe('PullRequestService', () => {
     prService['octokit'].pulls.create = Object.assign(
       vi.fn().mockRejectedValue(error),
       {
-        defaults: vi.fn(),
-        endpoint: {
-          DEFAULTS: {
-            baseUrl: 'https://api.github.com',
-            headers: {
-              accept: 'application/vnd.github.v3+json',
-              'user-agent': 'octokit/rest.js'
-            },
-            mediaType: { format: '' },
-            method: 'POST' as RequestMethod,
-            url: '/repos/{owner}/{repo}/pulls'
-          },
-          defaults: vi.fn((newDefaults) => ({
-            ...mockEndpoint,
-            DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
-          })),
-          merge: vi.fn(),
-          parse: vi.fn()
-        }
+        endpoint: createMockEndpoint('POST' as RequestMethod, '/repos/{owner}/{repo}/pulls')
       }
     );
 

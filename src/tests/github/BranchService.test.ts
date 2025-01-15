@@ -2,7 +2,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BranchService } from '@/services/github/BranchService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
-import { RequestMethod } from '@octokit/types';
+import { RequestMethod, EndpointInterface } from '@octokit/types';
+
+const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterface => ({
+  DEFAULTS: {
+    baseUrl: 'https://api.github.com',
+    headers: {
+      accept: 'application/vnd.github.v3+json',
+      'user-agent': 'octokit/rest.js'
+    },
+    mediaType: { format: '' },
+    method,
+    url
+  },
+  defaults: vi.fn((newDefaults) => createMockEndpoint(method, url)),
+  merge: vi.fn(),
+  parse: vi.fn()
+});
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
@@ -16,25 +32,7 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          defaults: vi.fn(),
-          endpoint: {
-            DEFAULTS: {
-              baseUrl: 'https://api.github.com',
-              headers: {
-                accept: 'application/vnd.github.v3+json',
-                'user-agent': 'octokit/rest.js'
-              },
-              mediaType: { format: '' },
-              method: 'GET' as RequestMethod,
-              url: '/repos/{owner}/{repo}/git/ref/{ref}'
-            },
-            defaults: vi.fn((newDefaults) => ({
-              ...mockEndpoint,
-              DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
-            })),
-            merge: vi.fn(),
-            parse: vi.fn()
-          }
+          endpoint: createMockEndpoint('GET' as RequestMethod, '/repos/{owner}/{repo}/git/ref/{ref}')
         }
       ),
       createRef: Object.assign(
@@ -44,25 +42,7 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          defaults: vi.fn(),
-          endpoint: {
-            DEFAULTS: {
-              baseUrl: 'https://api.github.com',
-              headers: {
-                accept: 'application/vnd.github.v3+json',
-                'user-agent': 'octokit/rest.js'
-              },
-              mediaType: { format: '' },
-              method: 'POST' as RequestMethod,
-              url: '/repos/{owner}/{repo}/git/refs'
-            },
-            defaults: vi.fn((newDefaults) => ({
-              ...mockEndpoint,
-              DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
-            })),
-            merge: vi.fn(),
-            parse: vi.fn()
-          }
+          endpoint: createMockEndpoint('POST' as RequestMethod, '/repos/{owner}/{repo}/git/refs')
         }
       )
     }
@@ -75,25 +55,6 @@ vi.mock('@/services/LogService', () => ({
     info: vi.fn()
   }
 }));
-
-const mockEndpoint = {
-  DEFAULTS: {
-    baseUrl: 'https://api.github.com',
-    headers: {
-      accept: 'application/vnd.github.v3+json',
-      'user-agent': 'octokit/rest.js'
-    },
-    mediaType: { format: '' },
-    method: 'GET' as RequestMethod,
-    url: '/repos/{owner}/{repo}/git/ref/{ref}'
-  },
-  defaults: vi.fn((newDefaults) => ({
-    ...mockEndpoint,
-    DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
-  })),
-  merge: vi.fn(),
-  parse: vi.fn()
-};
 
 describe('BranchService', () => {
   let branchService: BranchService;
@@ -126,22 +87,7 @@ describe('BranchService', () => {
     branchService['octokit'].git.getRef = Object.assign(
       vi.fn().mockRejectedValue(error),
       {
-        defaults: vi.fn(),
-        endpoint: {
-          DEFAULTS: {
-            baseUrl: 'https://api.github.com',
-            headers: {
-              accept: 'application/vnd.github.v3+json',
-              'user-agent': 'octokit/rest.js'
-            },
-            mediaType: { format: '' },
-            method: 'GET' as RequestMethod,
-            url: '/repos/{owner}/{repo}/git/ref/{ref}'
-          },
-          defaults: {},
-          merge: vi.fn(),
-          parse: vi.fn()
-        }
+        endpoint: createMockEndpoint('GET' as RequestMethod, '/repos/{owner}/{repo}/git/ref/{ref}')
       }
     );
 

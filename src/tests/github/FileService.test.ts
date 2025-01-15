@@ -2,7 +2,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FileService } from '@/services/github/FileService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
-import { RequestMethod } from '@octokit/types';
+import { RequestMethod, EndpointInterface } from '@octokit/types';
+
+const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterface => ({
+  DEFAULTS: {
+    baseUrl: 'https://api.github.com',
+    headers: {
+      accept: 'application/vnd.github.v3+json',
+      'user-agent': 'octokit/rest.js'
+    },
+    mediaType: { format: '' },
+    method,
+    url
+  },
+  defaults: vi.fn((newDefaults) => createMockEndpoint(method, url)),
+  merge: vi.fn(),
+  parse: vi.fn()
+});
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
@@ -14,25 +30,7 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          defaults: vi.fn(),
-          endpoint: {
-            DEFAULTS: {
-              baseUrl: 'https://api.github.com',
-              headers: {
-                accept: 'application/vnd.github.v3+json',
-                'user-agent': 'octokit/rest.js'
-              },
-              mediaType: { format: '' },
-              method: 'GET' as RequestMethod,
-              url: '/repos/{owner}/{repo}/contents/{path}'
-            },
-            defaults: vi.fn((newDefaults) => ({
-              ...mockEndpoint,
-              DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
-            })),
-            merge: vi.fn(),
-            parse: vi.fn()
-          }
+          endpoint: createMockEndpoint('GET' as RequestMethod, '/repos/{owner}/{repo}/contents/{path}')
         }
       ),
       createOrUpdateFileContents: Object.assign(
@@ -44,25 +42,7 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          defaults: vi.fn(),
-          endpoint: {
-            DEFAULTS: {
-              baseUrl: 'https://api.github.com',
-              headers: {
-                accept: 'application/vnd.github.v3+json',
-                'user-agent': 'octokit/rest.js'
-              },
-              mediaType: { format: '' },
-              method: 'PUT' as RequestMethod,
-              url: '/repos/{owner}/{repo}/contents/{path}'
-            },
-            defaults: vi.fn((newDefaults) => ({
-              ...mockEndpoint,
-              DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
-            })),
-            merge: vi.fn(),
-            parse: vi.fn()
-          }
+          endpoint: createMockEndpoint('PUT' as RequestMethod, '/repos/{owner}/{repo}/contents/{path}')
         }
       )
     }
@@ -75,25 +55,6 @@ vi.mock('@/services/LogService', () => ({
     info: vi.fn()
   }
 }));
-
-const mockEndpoint = {
-  DEFAULTS: {
-    baseUrl: 'https://api.github.com',
-    headers: {
-      accept: 'application/vnd.github.v3+json',
-      'user-agent': 'octokit/rest.js'
-    },
-    mediaType: { format: '' },
-    method: 'GET' as RequestMethod,
-    url: '/repos/{owner}/{repo}/contents/{path}'
-  },
-  defaults: vi.fn((newDefaults) => ({
-    ...mockEndpoint,
-    DEFAULTS: { ...mockEndpoint.DEFAULTS, ...newDefaults }
-  })),
-  merge: vi.fn(),
-  parse: vi.fn()
-};
 
 describe('FileService', () => {
   let fileService: FileService;
@@ -127,22 +88,7 @@ describe('FileService', () => {
     fileService['octokit'].repos.getContent = Object.assign(
       vi.fn().mockRejectedValue(error),
       {
-        defaults: vi.fn(),
-        endpoint: {
-          DEFAULTS: {
-            baseUrl: 'https://api.github.com',
-            headers: {
-              accept: 'application/vnd.github.v3+json',
-              'user-agent': 'octokit/rest.js'
-            },
-            mediaType: { format: '' },
-            method: 'GET' as RequestMethod,
-            url: '/repos/{owner}/{repo}/contents/{path}'
-          },
-          defaults: {},
-          merge: vi.fn(),
-          parse: vi.fn()
-        }
+        endpoint: createMockEndpoint('GET' as RequestMethod, '/repos/{owner}/{repo}/contents/{path}')
       }
     );
 
