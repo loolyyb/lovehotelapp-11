@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
 
 interface WidgetContainerProps {
-  children: ReactNode;
+  children: React.ReactNode;
   title: string;
 }
 

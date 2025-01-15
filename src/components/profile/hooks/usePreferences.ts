@@ -6,14 +6,14 @@ export function usePreferences() {
   const [preferences, setPreferences] = useState<any>(null);
   const { toast } = useToast();
 
+  useEffect(() => {
+    getPreferences();
+  }, []);
+
   const getPreferences = async () => {
     try {
-      console.log("Fetching preferences...");
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.log("No user found");
-        return;
-      }
+      if (!user) return;
 
       const { data, error } = await supabase
         .from('preferences')
@@ -23,36 +23,7 @@ export function usePreferences() {
         .limit(1)
         .single();
 
-      if (error) {
-        console.error('Error loading preferences:', error);
-        if (error.code === 'PGRST116') {
-          const { data: newPreferences, error: createError } = await supabase
-            .from('preferences')
-            .insert([{
-              user_id: user.id,
-              open_curtains: false,
-              open_curtains_interest: false,
-              speed_dating_interest: false,
-              libertine_party_interest: false,
-              interests: []
-            }])
-            .select()
-            .single();
-
-          if (createError) throw createError;
-          setPreferences(newPreferences);
-          return;
-        }
-
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger vos préférences.",
-        });
-        return;
-      }
-
-      console.log("Preferences loaded:", data);
+      if (error) throw error;
       setPreferences(data);
     } catch (error: any) {
       console.error('Error loading preferences:', error);
@@ -69,7 +40,6 @@ export function usePreferences() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      console.log("Updating preferences with:", updates);
       const { error } = await supabase
         .from('preferences')
         .upsert({
@@ -89,10 +59,6 @@ export function usePreferences() {
       });
     }
   };
-
-  useEffect(() => {
-    getPreferences();
-  }, []);
 
   return { preferences, handlePreferenceChange };
 }
