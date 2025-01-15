@@ -15,7 +15,16 @@ vi.mock('@octokit/rest', () => ({
         {
           defaults: vi.fn(),
           endpoint: {
-            DEFAULTS: {},
+            DEFAULTS: {
+              baseUrl: 'https://api.github.com',
+              headers: {
+                accept: 'application/vnd.github.v3+json',
+                'user-agent': 'octokit/rest.js'
+              },
+              mediaType: { format: '' },
+              method: 'GET',
+              url: '/repos/{owner}/{repo}/contents/{path}'
+            },
             defaults: {},
             merge: vi.fn(),
             parse: vi.fn()
@@ -33,7 +42,16 @@ vi.mock('@octokit/rest', () => ({
         {
           defaults: vi.fn(),
           endpoint: {
-            DEFAULTS: {},
+            DEFAULTS: {
+              baseUrl: 'https://api.github.com',
+              headers: {
+                accept: 'application/vnd.github.v3+json',
+                'user-agent': 'octokit/rest.js'
+              },
+              mediaType: { format: '' },
+              method: 'PUT',
+              url: '/repos/{owner}/{repo}/contents/{path}'
+            },
             defaults: {},
             merge: vi.fn(),
             parse: vi.fn()
@@ -85,7 +103,16 @@ describe('FileService', () => {
       {
         defaults: vi.fn(),
         endpoint: {
-          DEFAULTS: {},
+          DEFAULTS: {
+            baseUrl: 'https://api.github.com',
+            headers: {
+              accept: 'application/vnd.github.v3+json',
+              'user-agent': 'octokit/rest.js'
+            },
+            mediaType: { format: '' },
+            method: 'GET',
+            url: '/repos/{owner}/{repo}/contents/{path}'
+          },
           defaults: {},
           merge: vi.fn(),
           parse: vi.fn()

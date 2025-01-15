@@ -15,7 +15,16 @@ vi.mock('@octokit/rest', () => ({
         {
           defaults: vi.fn(),
           endpoint: {
-            DEFAULTS: {},
+            DEFAULTS: {
+              baseUrl: 'https://api.github.com',
+              headers: {
+                accept: 'application/vnd.github.v3+json',
+                'user-agent': 'octokit/rest.js'
+              },
+              mediaType: { format: '' },
+              method: 'POST',
+              url: '/repos/{owner}/{repo}/pulls'
+            },
             defaults: {},
             merge: vi.fn(),
             parse: vi.fn()
@@ -65,7 +74,16 @@ describe('PullRequestService', () => {
       {
         defaults: vi.fn(),
         endpoint: {
-          DEFAULTS: {},
+          DEFAULTS: {
+            baseUrl: 'https://api.github.com',
+            headers: {
+              accept: 'application/vnd.github.v3+json',
+              'user-agent': 'octokit/rest.js'
+            },
+            mediaType: { format: '' },
+            method: 'POST',
+            url: '/repos/{owner}/{repo}/pulls'
+          },
           defaults: {},
           merge: vi.fn(),
           parse: vi.fn()

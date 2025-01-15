@@ -18,7 +18,16 @@ vi.mock('@octokit/rest', () => ({
         {
           defaults: vi.fn(),
           endpoint: {
-            DEFAULTS: {},
+            DEFAULTS: {
+              baseUrl: 'https://api.github.com',
+              headers: {
+                accept: 'application/vnd.github.v3+json',
+                'user-agent': 'octokit/rest.js'
+              },
+              mediaType: { format: '' },
+              method: 'GET',
+              url: '/repos/{owner}/{repo}/git/ref/{ref}'
+            },
             defaults: {},
             merge: vi.fn(),
             parse: vi.fn()
@@ -34,7 +43,16 @@ vi.mock('@octokit/rest', () => ({
         {
           defaults: vi.fn(),
           endpoint: {
-            DEFAULTS: {},
+            DEFAULTS: {
+              baseUrl: 'https://api.github.com',
+              headers: {
+                accept: 'application/vnd.github.v3+json',
+                'user-agent': 'octokit/rest.js'
+              },
+              mediaType: { format: '' },
+              method: 'POST',
+              url: '/repos/{owner}/{repo}/git/refs'
+            },
             defaults: {},
             merge: vi.fn(),
             parse: vi.fn()
@@ -85,7 +103,16 @@ describe('BranchService', () => {
       {
         defaults: vi.fn(),
         endpoint: {
-          DEFAULTS: {},
+          DEFAULTS: {
+            baseUrl: 'https://api.github.com',
+            headers: {
+              accept: 'application/vnd.github.v3+json',
+              'user-agent': 'octokit/rest.js'
+            },
+            mediaType: { format: '' },
+            method: 'GET',
+            url: '/repos/{owner}/{repo}/git/ref/{ref}'
+          },
           defaults: {},
           merge: vi.fn(),
           parse: vi.fn()
