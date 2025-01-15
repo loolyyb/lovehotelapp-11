@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PullRequestService } from '@/services/github/PullRequestService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
+import { RequestMethod } from '@octokit/types';
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
@@ -22,7 +23,7 @@ vi.mock('@octokit/rest', () => ({
                 'user-agent': 'octokit/rest.js'
               },
               mediaType: { format: '' },
-              method: 'POST',
+              method: 'POST' as RequestMethod,
               url: '/repos/{owner}/{repo}/pulls'
             },
             defaults: {},
@@ -81,7 +82,7 @@ describe('PullRequestService', () => {
               'user-agent': 'octokit/rest.js'
             },
             mediaType: { format: '' },
-            method: 'POST',
+            method: 'POST' as RequestMethod,
             url: '/repos/{owner}/{repo}/pulls'
           },
           defaults: {},

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FileService } from '@/services/github/FileService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
+import { RequestMethod } from '@octokit/types';
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
@@ -22,7 +23,7 @@ vi.mock('@octokit/rest', () => ({
                 'user-agent': 'octokit/rest.js'
               },
               mediaType: { format: '' },
-              method: 'GET',
+              method: 'GET' as RequestMethod,
               url: '/repos/{owner}/{repo}/contents/{path}'
             },
             defaults: {},
@@ -49,7 +50,7 @@ vi.mock('@octokit/rest', () => ({
                 'user-agent': 'octokit/rest.js'
               },
               mediaType: { format: '' },
-              method: 'PUT',
+              method: 'PUT' as RequestMethod,
               url: '/repos/{owner}/{repo}/contents/{path}'
             },
             defaults: {},
@@ -110,7 +111,7 @@ describe('FileService', () => {
               'user-agent': 'octokit/rest.js'
             },
             mediaType: { format: '' },
-            method: 'GET',
+            method: 'GET' as RequestMethod,
             url: '/repos/{owner}/{repo}/contents/{path}'
           },
           defaults: {},

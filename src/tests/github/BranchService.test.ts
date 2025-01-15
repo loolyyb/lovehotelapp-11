@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BranchService } from '@/services/github/BranchService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
+import { RequestMethod } from '@octokit/types';
 
 // Mock the Octokit class
 vi.mock('@octokit/rest', () => ({
@@ -25,7 +26,7 @@ vi.mock('@octokit/rest', () => ({
                 'user-agent': 'octokit/rest.js'
               },
               mediaType: { format: '' },
-              method: 'GET',
+              method: 'GET' as RequestMethod,
               url: '/repos/{owner}/{repo}/git/ref/{ref}'
             },
             defaults: {},
@@ -50,7 +51,7 @@ vi.mock('@octokit/rest', () => ({
                 'user-agent': 'octokit/rest.js'
               },
               mediaType: { format: '' },
-              method: 'POST',
+              method: 'POST' as RequestMethod,
               url: '/repos/{owner}/{repo}/git/refs'
             },
             defaults: {},
@@ -110,7 +111,7 @@ describe('BranchService', () => {
               'user-agent': 'octokit/rest.js'
             },
             mediaType: { format: '' },
-            method: 'GET',
+            method: 'GET' as RequestMethod,
             url: '/repos/{owner}/{repo}/git/ref/{ref}'
           },
           defaults: {},
