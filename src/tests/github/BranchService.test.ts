@@ -17,7 +17,12 @@ vi.mock('@octokit/rest', () => ({
         }),
         {
           defaults: vi.fn(),
-          endpoint: vi.fn()
+          endpoint: {
+            DEFAULTS: {},
+            defaults: {},
+            merge: vi.fn(),
+            parse: vi.fn()
+          }
         }
       ),
       createRef: Object.assign(
@@ -28,7 +33,12 @@ vi.mock('@octokit/rest', () => ({
         }),
         {
           defaults: vi.fn(),
-          endpoint: vi.fn()
+          endpoint: {
+            DEFAULTS: {},
+            defaults: {},
+            merge: vi.fn(),
+            parse: vi.fn()
+          }
         }
       )
     }
@@ -74,7 +84,12 @@ describe('BranchService', () => {
       vi.fn().mockRejectedValue(error),
       {
         defaults: vi.fn(),
-        endpoint: vi.fn()
+        endpoint: {
+          DEFAULTS: {},
+          defaults: {},
+          merge: vi.fn(),
+          parse: vi.fn()
+        }
       }
     );
 
