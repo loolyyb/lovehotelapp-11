@@ -25,37 +25,54 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
 
   const getPreferences = async () => {
     try {
+      console.log("Fetching preferences...");
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.log("No user found");
+        return;
+      }
 
-      let { data: existingPreferences, error: fetchError } = await supabase
+      // Get the most recent preferences
+      const { data, error } = await supabase
         .from('preferences')
         .select('*')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
 
-      if (fetchError) throw fetchError;
+      if (error) {
+        console.error('Error loading preferences:', error);
+        // If no preferences exist, we'll create a new one
+        if (error.code === 'PGRST116') {
+          const { data: newPreferences, error: createError } = await supabase
+            .from('preferences')
+            .insert([{
+              user_id: user.id,
+              open_curtains: false,
+              open_curtains_interest: false,
+              speed_dating_interest: false,
+              libertine_party_interest: false,
+              interests: []
+            }])
+            .select()
+            .single();
 
-      // If no preferences exist, create them
-      if (!existingPreferences) {
-        const { data: newPreferences, error: insertError } = await supabase
-          .from('preferences')
-          .insert([{
-            user_id: user.id,
-            open_curtains: false,
-            open_curtains_interest: false,
-            speed_dating_interest: false,
-            libertine_party_interest: false,
-            interests: []
-          }])
-          .select()
-          .single();
+          if (createError) throw createError;
+          setPreferences(newPreferences);
+          return;
+        }
 
-        if (insertError) throw insertError;
-        existingPreferences = newPreferences;
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger vos préférences.",
+        });
+        return;
       }
 
-      setPreferences(existingPreferences);
+      console.log("Preferences loaded:", data);
+      setPreferences(data);
     } catch (error: any) {
       console.error('Error loading preferences:', error);
       toast({
@@ -71,6 +88,7 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      console.log("Updating preferences with:", updates);
       const { error } = await supabase
         .from('preferences')
         .upsert({
