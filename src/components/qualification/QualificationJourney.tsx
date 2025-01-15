@@ -1,51 +1,14 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { motion } from "framer-motion";
-
-interface QualificationStep {
-  title: string;
-  description: string;
-  questions: {
-    id: string;
-    question: string;
-    type: "text" | "choice";
-    options?: string[];
-  }[];
-}
+import { QualificationStep } from "./QualificationStep";
+import { QualificationNavigation } from "./QualificationNavigation";
+import { QUALIFICATION_STEPS } from "./types";
 
 interface QualificationJourneyProps {
   onComplete?: () => void;
   isEditing?: boolean;
 }
-
-const QUALIFICATION_STEPS: QualificationStep[] = [
-  {
-    title: "Vos motivations",
-    description: "Parlez-nous de vos attentes",
-    questions: [
-      {
-        id: "motivation",
-        question: "Qu'est-ce qui vous amène sur notre plateforme ?",
-        type: "text"
-      }
-    ]
-  },
-  {
-    title: "Vos préférences",
-    description: "Aidez-nous à mieux vous connaître",
-    questions: [
-      {
-        id: "interests",
-        question: "Quels types d'événements vous intéressent ?",
-        type: "choice",
-        options: ["Soirées libertines", "Speed dating", "Rideaux ouverts"]
-      }
-    ]
-  }
-];
 
 export function QualificationJourney({ onComplete, isEditing = false }: QualificationJourneyProps) {
   const [currentStep, setCurrentStep] = useState(0);
@@ -132,73 +95,20 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
   if (!currentStepData) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto p-4"
-    >
-      <Card className="p-6 space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-burgundy">
-            {currentStepData.title}
-          </h2>
-          <p className="text-gray-600">{currentStepData.description}</p>
-        </div>
-
-        <div className="space-y-6">
-          {currentStepData.questions.map((q) => (
-            <div key={q.id} className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                {q.question}
-              </label>
-              {q.type === "text" ? (
-                <textarea
-                  className="w-full p-2 border rounded-md"
-                  value={answers[q.id] || ""}
-                  onChange={(e) => handleAnswer(q.id, e.target.value)}
-                />
-              ) : (
-                <div className="space-y-2">
-                  {q.options?.map((option) => (
-                    <label key={option} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={Array.isArray(answers[q.id]) && answers[q.id]?.includes(option)}
-                        onChange={(e) => {
-                          const current = Array.isArray(answers[q.id]) ? answers[q.id] : [];
-                          const updated = e.target.checked
-                            ? [...current, option]
-                            : current.filter((o: string) => o !== option);
-                          handleAnswer(q.id, updated);
-                        }}
-                      />
-                      <span>{option}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex justify-between">
-          {isEditing && (
-            <Button 
-              variant="outline"
-              onClick={onComplete}
-            >
-              Retour au profil
-            </Button>
-          )}
-          <Button 
-            onClick={handleNext}
-            disabled={loading}
-            className="ml-auto"
-          >
-            {currentStep === QUALIFICATION_STEPS.length - 1 ? "Terminer" : "Suivant"}
-          </Button>
-        </div>
-      </Card>
-    </motion.div>
+    <div className="space-y-6">
+      <QualificationStep
+        step={currentStepData}
+        answers={answers}
+        onAnswer={handleAnswer}
+      />
+      <QualificationNavigation
+        currentStep={currentStep}
+        totalSteps={QUALIFICATION_STEPS.length}
+        isLoading={loading}
+        onNext={handleNext}
+        onComplete={onComplete}
+        isEditing={isEditing}
+      />
+    </div>
   );
 }
