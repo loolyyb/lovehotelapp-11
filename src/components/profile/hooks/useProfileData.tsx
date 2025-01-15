@@ -35,7 +35,7 @@ export function useProfileData() {
 
       console.log("Fetch result:", { existingProfile, fetchError });
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
+      if (fetchError) {
         console.error("Error fetching profile:", fetchError);
         throw fetchError;
       }
