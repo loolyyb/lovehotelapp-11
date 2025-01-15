@@ -1,7 +1,7 @@
 export interface QuestionType {
   id: string;
   question: string;
-  type: "text" | "choice" | "orientation" | "status" | "relationship" | "seeking";
+  type: "text" | "choice" | "orientation" | "status" | "relationship" | "seeking" | "username";
   options?: string[];
 }
 
@@ -13,13 +13,13 @@ export interface QualificationStepType {
 
 export const QUALIFICATION_STEPS: QualificationStepType[] = [
   {
-    title: "À propos de vous",
-    description: "Parlez-nous un peu de vous",
+    title: "Votre pseudo",
+    description: "Choisissez un pseudo qui vous représente",
     questions: [
       {
-        id: "description",
-        question: "Décrivez-vous en quelques mots...",
-        type: "text"
+        id: "username",
+        question: "Votre pseudo",
+        type: "username"
       }
     ]
   },

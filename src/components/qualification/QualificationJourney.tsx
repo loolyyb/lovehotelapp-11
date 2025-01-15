@@ -57,23 +57,18 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
     }
   };
 
-  const handleAnswer = (questionId: string, answer: any) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
-  };
-
   const updateProfile = async (answers: Record<string, any>) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session) throw new Error('No session');
 
       const profileUpdates = {
+        username: answers.username,
         description: answers.description,
         sexual_orientation: answers.sexual_orientation,
         status: answers.status,
         relationship_type: answers.relationship_type,
+        full_name: answers.username // Use username as full_name if not provided
       };
 
       const { error: profileError } = await supabase
@@ -111,7 +106,7 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
       const nextStep = currentStep + 1;
       const isComplete = nextStep >= QUALIFICATION_STEPS.length;
 
-      // Mettre à jour les préférences
+      // Update preferences with current progress
       const { error } = await supabase
         .from('preferences')
         .upsert({
@@ -124,7 +119,7 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
 
       if (error) throw error;
 
-      // Si c'est la dernière étape, mettre à jour le profil
+      // If it's the last step, update profile
       if (isComplete) {
         await updateProfile(answers);
         toast({
@@ -151,20 +146,22 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
   if (!currentStepData) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-3xl mx-auto px-4 py-8">
       <QualificationStep
         step={currentStepData}
         answers={answers}
         onAnswer={handleAnswer}
       />
-      <QualificationNavigation
-        currentStep={currentStep}
-        totalSteps={QUALIFICATION_STEPS.length}
-        isLoading={loading}
-        onNext={handleNext}
-        onComplete={onComplete}
-        isEditing={isEditing}
-      />
+      <div className="mt-6 flex justify-end px-4">
+        <QualificationNavigation
+          currentStep={currentStep}
+          totalSteps={QUALIFICATION_STEPS.length}
+          isLoading={loading}
+          onNext={handleNext}
+          onComplete={onComplete}
+          isEditing={isEditing}
+        />
+      </div>
     </div>
   );
 }

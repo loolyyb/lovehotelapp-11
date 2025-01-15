@@ -21,11 +21,12 @@ export function QualificationNavigation({
   const isLastStep = currentStep === totalSteps - 1;
 
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-between w-full max-w-2xl mx-auto mt-4">
       {isEditing && (
         <Button 
           variant="outline"
           onClick={onComplete}
+          className="mr-2"
         >
           Retour au profil
         </Button>
@@ -33,7 +34,7 @@ export function QualificationNavigation({
       <Button 
         onClick={onNext}
         disabled={isLoading}
-        className="ml-auto"
+        className="ml-auto bg-rose-500 hover:bg-rose-600 text-white"
       >
         {isLastStep ? "Terminer" : "Suivant"}
       </Button>
