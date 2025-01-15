@@ -6,8 +6,18 @@ import { logger } from '@/services/LogService';
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     repos: {
-      getContent: vi.fn(),
-      createOrUpdateFileContents: vi.fn()
+      getContent: vi.fn().mockReturnValue({
+        data: {
+          sha: 'test-sha'
+        }
+      }),
+      createOrUpdateFileContents: vi.fn().mockReturnValue({
+        data: {
+          content: {
+            sha: 'new-sha'
+          }
+        }
+      })
     }
   }))
 }));
@@ -33,23 +43,6 @@ describe('FileService', () => {
   });
 
   it('should successfully update a file', async () => {
-    const mockGetContent = vi.fn().mockResolvedValue({
-      data: {
-        sha: 'test-sha'
-      }
-    });
-
-    const mockCreateOrUpdate = vi.fn().mockResolvedValue({
-      data: {
-        content: {
-          sha: 'new-sha'
-        }
-      }
-    });
-
-    fileService['octokit'].repos.getContent = mockGetContent;
-    fileService['octokit'].repos.createOrUpdateFileContents = mockCreateOrUpdate;
-
     const result = await fileService.updateFile(
       'test-branch',
       'test.ts',
@@ -58,8 +51,8 @@ describe('FileService', () => {
     );
 
     expect(result.success).toBe(true);
-    expect(mockGetContent).toHaveBeenCalled();
-    expect(mockCreateOrUpdate).toHaveBeenCalled();
+    expect(fileService['octokit'].repos.getContent).toHaveBeenCalled();
+    expect(fileService['octokit'].repos.createOrUpdateFileContents).toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalled();
   });
 

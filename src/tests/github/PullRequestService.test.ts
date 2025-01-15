@@ -6,7 +6,11 @@ import { logger } from '@/services/LogService';
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     pulls: {
-      create: vi.fn()
+      create: vi.fn().mockReturnValue({
+        data: {
+          html_url: 'https://github.com/test/pr/1'
+        }
+      })
     }
   }))
 }));
@@ -32,14 +36,6 @@ describe('PullRequestService', () => {
   });
 
   it('should successfully create a pull request', async () => {
-    const mockCreate = vi.fn().mockResolvedValue({
-      data: {
-        html_url: 'https://github.com/test/pr/1'
-      }
-    });
-
-    prService['octokit'].pulls.create = mockCreate;
-
     const result = await prService.createPullRequest(
       'test-branch',
       'Test PR',
@@ -47,7 +43,7 @@ describe('PullRequestService', () => {
     );
 
     expect(result.url).toBe('https://github.com/test/pr/1');
-    expect(mockCreate).toHaveBeenCalled();
+    expect(prService['octokit'].pulls.create).toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalled();
   });
 

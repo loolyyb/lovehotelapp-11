@@ -3,11 +3,22 @@ import { BranchService } from '@/services/github/BranchService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
 
+// Mock the Octokit class
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     git: {
-      getRef: vi.fn(),
-      createRef: vi.fn()
+      getRef: vi.fn().mockReturnValue({
+        data: {
+          object: {
+            sha: 'test-sha'
+          }
+        }
+      }),
+      createRef: vi.fn().mockReturnValue({
+        data: {
+          ref: 'refs/heads/test-branch'
+        }
+      })
     }
   }))
 }));
@@ -33,32 +44,15 @@ describe('BranchService', () => {
   });
 
   it('should successfully create a branch', async () => {
-    const mockGetRef = vi.fn().mockResolvedValue({
-      data: {
-        object: {
-          sha: 'test-sha'
-        }
-      }
-    });
-
-    const mockCreateRef = vi.fn().mockResolvedValue({
-      data: {
-        ref: 'refs/heads/test-branch'
-      }
-    });
-
-    branchService['octokit'].git.getRef = mockGetRef;
-    branchService['octokit'].git.createRef = mockCreateRef;
-
     const result = await branchService.createBranch('test-branch');
 
     expect(result.success).toBe(true);
-    expect(mockGetRef).toHaveBeenCalledWith({
+    expect(branchService['octokit'].git.getRef).toHaveBeenCalledWith({
       owner: config.owner,
       repo: config.repo,
       ref: 'heads/main'
     });
-    expect(mockCreateRef).toHaveBeenCalled();
+    expect(branchService['octokit'].git.createRef).toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalled();
   });
 
