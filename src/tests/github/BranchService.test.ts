@@ -2,49 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BranchService } from '@/services/github/BranchService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
-import { RequestMethod, EndpointInterface, RequestParameters } from '@octokit/types';
-
-const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterface<RequestParameters> => ({
-  DEFAULTS: {
-    baseUrl: 'https://api.github.com',
-    headers: {
-      accept: 'application/vnd.github.v3+json',
-      'user-agent': 'octokit/rest.js'
-    },
-    mediaType: { format: '' },
-    method,
-    url
-  },
-  defaults: vi.fn().mockImplementation((newDefaults) => createMockEndpoint(method, url)),
-  merge: vi.fn(),
-  parse: vi.fn()
-});
+import { createMockEndpoint, createOctokitMock } from './utils/mockEndpoint';
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     git: {
       getRef: Object.assign(
-        vi.fn().mockReturnValue({
-          data: {
-            object: {
-              sha: 'test-sha'
-            }
-          }
-        }),
+        createOctokitMock({ object: { sha: 'test-sha' } }),
         {
-          endpoint: createMockEndpoint('GET', '/repos/{owner}/{repo}/git/ref/{ref}'),
-          defaults: vi.fn()
+          endpoint: createMockEndpoint({ method: 'GET', url: '/repos/{owner}/{repo}/git/ref/{ref}' })
         }
       ),
       createRef: Object.assign(
-        vi.fn().mockReturnValue({
-          data: {
-            ref: 'refs/heads/test-branch'
-          }
-        }),
+        createOctokitMock({ ref: 'refs/heads/test-branch' }),
         {
-          endpoint: createMockEndpoint('POST', '/repos/{owner}/{repo}/git/refs'),
-          defaults: vi.fn()
+          endpoint: createMockEndpoint({ method: 'POST', url: '/repos/{owner}/{repo}/git/refs' })
         }
       )
     }
@@ -89,8 +61,7 @@ describe('BranchService', () => {
     branchService['octokit'].git.getRef = Object.assign(
       vi.fn().mockRejectedValue(error),
       {
-        endpoint: createMockEndpoint('GET', '/repos/{owner}/{repo}/git/ref/{ref}'),
-        defaults: vi.fn()
+        endpoint: createMockEndpoint({ method: 'GET', url: '/repos/{owner}/{repo}/git/ref/{ref}' })
       }
     );
 

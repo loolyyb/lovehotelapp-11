@@ -2,49 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FileService } from '@/services/github/FileService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
-import { RequestMethod, EndpointInterface, RequestParameters } from '@octokit/types';
-
-const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterface<RequestParameters> => ({
-  DEFAULTS: {
-    baseUrl: 'https://api.github.com',
-    headers: {
-      accept: 'application/vnd.github.v3+json',
-      'user-agent': 'octokit/rest.js'
-    },
-    mediaType: { format: '' },
-    method,
-    url
-  },
-  defaults: vi.fn().mockImplementation((newDefaults) => createMockEndpoint(method, url)),
-  merge: vi.fn(),
-  parse: vi.fn()
-});
+import { createMockEndpoint, createOctokitMock } from './utils/mockEndpoint';
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     repos: {
       getContent: Object.assign(
-        vi.fn().mockReturnValue({
-          data: {
-            sha: 'test-sha'
-          }
-        }),
+        createOctokitMock({ sha: 'test-sha' }),
         {
-          endpoint: createMockEndpoint('GET', '/repos/{owner}/{repo}/contents/{path}'),
-          defaults: vi.fn()
+          endpoint: createMockEndpoint({ method: 'GET', url: '/repos/{owner}/{repo}/contents/{path}' })
         }
       ),
       createOrUpdateFileContents: Object.assign(
-        vi.fn().mockReturnValue({
-          data: {
-            content: {
-              sha: 'new-sha'
-            }
-          }
-        }),
+        createOctokitMock({ content: { sha: 'new-sha' } }),
         {
-          endpoint: createMockEndpoint('PUT', '/repos/{owner}/{repo}/contents/{path}'),
-          defaults: vi.fn()
+          endpoint: createMockEndpoint({ method: 'PUT', url: '/repos/{owner}/{repo}/contents/{path}' })
         }
       )
     }
@@ -90,8 +62,7 @@ describe('FileService', () => {
     fileService['octokit'].repos.getContent = Object.assign(
       vi.fn().mockRejectedValue(error),
       {
-        endpoint: createMockEndpoint('GET', '/repos/{owner}/{repo}/contents/{path}'),
-        defaults: vi.fn()
+        endpoint: createMockEndpoint({ method: 'GET', url: '/repos/{owner}/{repo}/contents/{path}' })
       }
     );
 

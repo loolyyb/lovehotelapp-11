@@ -2,36 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PullRequestService } from '@/services/github/PullRequestService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
-import { RequestMethod, EndpointInterface, RequestParameters } from '@octokit/types';
-
-const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterface<RequestParameters> => ({
-  DEFAULTS: {
-    baseUrl: 'https://api.github.com',
-    headers: {
-      accept: 'application/vnd.github.v3+json',
-      'user-agent': 'octokit/rest.js'
-    },
-    mediaType: { format: '' },
-    method,
-    url
-  },
-  defaults: vi.fn().mockImplementation((newDefaults) => createMockEndpoint(method, url)),
-  merge: vi.fn(),
-  parse: vi.fn()
-});
+import { createMockEndpoint, createOctokitMock } from './utils/mockEndpoint';
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     pulls: {
       create: Object.assign(
-        vi.fn().mockReturnValue({
-          data: {
-            html_url: 'https://github.com/test/pr/1'
-          }
-        }),
+        createOctokitMock({ html_url: 'https://github.com/test/pr/1' }),
         {
-          endpoint: createMockEndpoint('POST', '/repos/{owner}/{repo}/pulls'),
-          defaults: vi.fn()
+          endpoint: createMockEndpoint({ method: 'POST', url: '/repos/{owner}/{repo}/pulls' })
         }
       )
     }
@@ -75,8 +54,7 @@ describe('PullRequestService', () => {
     prService['octokit'].pulls.create = Object.assign(
       vi.fn().mockRejectedValue(error),
       {
-        endpoint: createMockEndpoint('POST', '/repos/{owner}/{repo}/pulls'),
-        defaults: vi.fn()
+        endpoint: createMockEndpoint({ method: 'POST', url: '/repos/{owner}/{repo}/pulls' })
       }
     );
 
