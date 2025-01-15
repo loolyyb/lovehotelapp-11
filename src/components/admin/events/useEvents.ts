@@ -34,11 +34,10 @@ export function useEvents() {
 
   const createEvent = async (eventData: Partial<Event>) => {
     try {
-      // Map our frontend type to the database schema
       const dbEventData = {
         title: eventData.title,
         description: eventData.description || "",
-        event_type: eventData.type || "other",
+        event_type: eventData.type,
         event_date: eventData.date?.toISOString(),
         location: eventData.location,
         max_participants: eventData.max_participants,

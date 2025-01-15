@@ -856,7 +856,7 @@ export type Database = {
     }
     Enums: {
       challenge_type: "quiz" | "puzzle" | "photo" | "activity"
-      event_type: "bdsm" | "jacuzzi" | "gastronomy" | "other"
+      event_type: "bdsm" | "jacuzzi" | "gastronomy" | "other" | "speed_dating"
       group_type: "bdsm" | "libertins" | "rideaux_ouverts" | "other"
       interest_type:
         | "bdsm"
