@@ -9,32 +9,70 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Database } from "@/integrations/supabase/types/database.types";
+import { useToast } from "@/hooks/use-toast";
 
 type Notification = Database['public']['Tables']['notifications']['Row'];
 
 export function NotificationsMenu() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        fetchNotifications();
+      } else if (event === 'SIGNED_OUT') {
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    });
+
     fetchNotifications();
     subscribeToNotifications();
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, []);
 
   const fetchNotifications = async () => {
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) {
+        setLoading(false);
+        return;
+      }
 
-    if (error) {
-      console.error('Error fetching notifications:', error);
-      return;
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les notifications.",
+        });
+        return;
+      }
+
+      setNotifications(data || []);
+      setUnreadCount((data || []).filter(n => !n.is_read).length);
+    } catch (error) {
+      console.error('Error in fetchNotifications:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors du chargement des notifications.",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setNotifications(data);
-    setUnreadCount(data.filter(n => !n.is_read).length);
   };
 
   const subscribeToNotifications = () => {
@@ -59,13 +97,22 @@ export function NotificationsMenu() {
   };
 
   const markAsRead = async (notificationId: string) => {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('id', notificationId);
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
 
-    if (error) {
-      console.error('Error marking notification as read:', error);
+      if (error) {
+        console.error('Error marking notification as read:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de marquer la notification comme lue.",
+        });
+      }
+    } catch (error) {
+      console.error('Error in markAsRead:', error);
     }
   };
 
@@ -100,7 +147,11 @@ export function NotificationsMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <div className="max-h-[70vh] overflow-y-auto">
-          {notifications.length === 0 ? (
+          {loading ? (
+            <div className="p-4 text-center text-gray-500">
+              Chargement...
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
               Aucune notification
             </div>
