@@ -7,18 +7,8 @@ import { createMockEndpoint, createOctokitMock } from './utils/mockEndpoint';
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     git: {
-      getRef: Object.assign(
-        createOctokitMock({ object: { sha: 'test-sha' } }),
-        {
-          endpoint: createMockEndpoint({ method: 'GET', url: '/repos/{owner}/{repo}/git/ref/{ref}' })
-        }
-      ),
-      createRef: Object.assign(
-        createOctokitMock({ ref: 'refs/heads/test-branch' }),
-        {
-          endpoint: createMockEndpoint({ method: 'POST', url: '/repos/{owner}/{repo}/git/refs' })
-        }
-      )
+      getRef: createOctokitMock({ object: { sha: 'test-sha' } }),
+      createRef: createOctokitMock({ ref: 'refs/heads/test-branch' })
     }
   }))
 }));
@@ -58,12 +48,7 @@ describe('BranchService', () => {
 
   it('should handle errors when creating a branch', async () => {
     const error = new Error('API Error');
-    branchService['octokit'].git.getRef = Object.assign(
-      vi.fn().mockRejectedValue(error),
-      {
-        endpoint: createMockEndpoint({ method: 'GET', url: '/repos/{owner}/{repo}/git/ref/{ref}' })
-      }
-    );
+    branchService['octokit'].git.getRef = createOctokitMock(Promise.reject(error));
 
     const result = await branchService.createBranch('test-branch');
 

@@ -7,12 +7,7 @@ import { createMockEndpoint, createOctokitMock } from './utils/mockEndpoint';
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     pulls: {
-      create: Object.assign(
-        createOctokitMock({ html_url: 'https://github.com/test/pr/1' }),
-        {
-          endpoint: createMockEndpoint({ method: 'POST', url: '/repos/{owner}/{repo}/pulls' })
-        }
-      )
+      create: createOctokitMock({ html_url: 'https://github.com/test/pr/1' })
     }
   }))
 }));
@@ -51,12 +46,7 @@ describe('PullRequestService', () => {
 
   it('should handle errors when creating a pull request', async () => {
     const error = new Error('Branch not found');
-    prService['octokit'].pulls.create = Object.assign(
-      vi.fn().mockRejectedValue(error),
-      {
-        endpoint: createMockEndpoint({ method: 'POST', url: '/repos/{owner}/{repo}/pulls' })
-      }
-    );
+    prService['octokit'].pulls.create = createOctokitMock(Promise.reject(error));
 
     const result = await prService.createPullRequest(
       'test-branch',

@@ -1,4 +1,4 @@
-import { EndpointInterface, RequestMethod, RequestParameters } from '@octokit/types';
+import { EndpointInterface, RequestMethod, RequestParameters, RequestInterface } from '@octokit/types';
 import { vi } from 'vitest';
 
 export interface MockEndpointOptions {
@@ -29,7 +29,15 @@ export function createMockEndpoint({ method, url, baseUrl = 'https://api.github.
 }
 
 export function createOctokitMock(mockResponse: any) {
-  return vi.fn().mockReturnValue({
+  const mockFn = vi.fn().mockReturnValue({
     data: mockResponse
+  });
+
+  return Object.assign(mockFn, {
+    defaults: vi.fn().mockReturnValue(mockFn),
+    endpoint: createMockEndpoint({ 
+      method: 'GET', 
+      url: '/mock' 
+    })
   });
 }

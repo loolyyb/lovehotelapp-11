@@ -7,18 +7,8 @@ import { createMockEndpoint, createOctokitMock } from './utils/mockEndpoint';
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     repos: {
-      getContent: Object.assign(
-        createOctokitMock({ sha: 'test-sha' }),
-        {
-          endpoint: createMockEndpoint({ method: 'GET', url: '/repos/{owner}/{repo}/contents/{path}' })
-        }
-      ),
-      createOrUpdateFileContents: Object.assign(
-        createOctokitMock({ content: { sha: 'new-sha' } }),
-        {
-          endpoint: createMockEndpoint({ method: 'PUT', url: '/repos/{owner}/{repo}/contents/{path}' })
-        }
-      )
+      getContent: createOctokitMock({ sha: 'test-sha' }),
+      createOrUpdateFileContents: createOctokitMock({ content: { sha: 'new-sha' } })
     }
   }))
 }));
@@ -59,12 +49,7 @@ describe('FileService', () => {
 
   it('should handle errors when updating a file', async () => {
     const error = new Error('File not found');
-    fileService['octokit'].repos.getContent = Object.assign(
-      vi.fn().mockRejectedValue(error),
-      {
-        endpoint: createMockEndpoint({ method: 'GET', url: '/repos/{owner}/{repo}/contents/{path}' })
-      }
-    );
+    fileService['octokit'].repos.getContent = createOctokitMock(Promise.reject(error));
 
     const result = await fileService.updateFile(
       'test-branch',
