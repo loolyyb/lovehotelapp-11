@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Heart, Users, Blinds } from "lucide-react";
+import { MapPin, Heart, Users, Blinds, Search } from "lucide-react";
 
 type InterestType = "all" | "casual" | "serious" | "libertine" | "bdsm" | "exhibitionist" | "open_curtains" | "speed_dating";
 
@@ -57,6 +57,7 @@ export function MatchingFilter({
     <div className="space-y-4 p-4 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-burgundy flex items-center gap-2">
+          <Search className="w-5 h-5" />
           Filtrer les profils
         </h2>
       </div>
@@ -64,7 +65,7 @@ export function MatchingFilter({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="space-y-2">
           <Input
-            placeholder="Rechercher..."
+            placeholder="Rechercher un profil..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full"
@@ -158,10 +159,10 @@ export function MatchingFilter({
       <div className="w-full">
         <Select value={selectedInterest} onValueChange={onInterestChange}>
           <SelectTrigger className="w-full bg-white/80 backdrop-blur-sm">
-            <SelectValue placeholder="Filtrer par intérêt" />
+            <SelectValue placeholder="Type de relation recherchée" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous les intérêts</SelectItem>
+            <SelectItem value="all">Tous les types</SelectItem>
             <SelectItem value="casual">D'un soir</SelectItem>
             <SelectItem value="serious">Relations sérieuses</SelectItem>
             <SelectItem value="libertine">Libertine</SelectItem>
