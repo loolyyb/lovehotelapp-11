@@ -70,7 +70,13 @@ describe('FileService', () => {
 
   it('should handle errors when updating a file', async () => {
     const error = new Error('File not found');
-    fileService['octokit'].repos.getContent = vi.fn().mockRejectedValue(error);
+    fileService['octokit'].repos.getContent = Object.assign(
+      vi.fn().mockRejectedValue(error),
+      {
+        defaults: vi.fn(),
+        endpoint: vi.fn()
+      }
+    );
 
     const result = await fileService.updateFile(
       'test-branch',

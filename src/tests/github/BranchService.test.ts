@@ -70,7 +70,13 @@ describe('BranchService', () => {
 
   it('should handle errors when creating a branch', async () => {
     const error = new Error('API Error');
-    branchService['octokit'].git.getRef = vi.fn().mockRejectedValue(error);
+    branchService['octokit'].git.getRef = Object.assign(
+      vi.fn().mockRejectedValue(error),
+      {
+        defaults: vi.fn(),
+        endpoint: vi.fn()
+      }
+    );
 
     const result = await branchService.createBranch('test-branch');
 

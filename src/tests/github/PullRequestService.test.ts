@@ -55,7 +55,13 @@ describe('PullRequestService', () => {
 
   it('should handle errors when creating a pull request', async () => {
     const error = new Error('Branch not found');
-    prService['octokit'].pulls.create = vi.fn().mockRejectedValue(error);
+    prService['octokit'].pulls.create = Object.assign(
+      vi.fn().mockRejectedValue(error),
+      {
+        defaults: vi.fn(),
+        endpoint: vi.fn()
+      }
+    );
 
     const result = await prService.createPullRequest(
       'test-branch',
