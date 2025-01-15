@@ -2,12 +2,38 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PullRequestService } from '@/services/github/PullRequestService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
-import { createMockEndpoint, createOctokitMock } from './utils/mockEndpoint';
+import { RequestMethod, EndpointInterface, RequestParameters } from '@octokit/types';
+
+const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, url: string): EndpointInterface<T> => ({
+  DEFAULTS: {
+    baseUrl: 'https://api.github.com',
+    headers: {
+      accept: 'application/vnd.github.v3+json',
+      'user-agent': 'octokit/rest.js'
+    },
+    mediaType: { format: '' },
+    method,
+    url
+  },
+  defaults: vi.fn((newDefaults: T) => createMockEndpoint<T>(method, url)),
+  merge: vi.fn(),
+  parse: vi.fn()
+});
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     pulls: {
-      create: createOctokitMock({ html_url: 'https://github.com/test/pr/1' })
+      create: Object.assign(
+        vi.fn().mockReturnValue({
+          data: {
+            html_url: 'https://github.com/test/pr/1'
+          }
+        }),
+        {
+          endpoint: createMockEndpoint<RequestParameters>('POST' as RequestMethod, '/repos/{owner}/{repo}/pulls'),
+          defaults: vi.fn()
+        }
+      )
     }
   }))
 }));
@@ -46,7 +72,12 @@ describe('PullRequestService', () => {
 
   it('should handle errors when creating a pull request', async () => {
     const error = new Error('Branch not found');
-    prService['octokit'].pulls.create = createOctokitMock(Promise.reject(error));
+    prService['octokit'].pulls.create = Object.assign(
+      vi.fn().mockRejectedValue(error),
+      {
+        endpoint: createMockEndpoint('POST' as RequestMethod, '/repos/{owner}/{repo}/pulls')
+      }
+    );
 
     const result = await prService.createPullRequest(
       'test-branch',

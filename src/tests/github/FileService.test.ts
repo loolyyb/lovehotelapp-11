@@ -2,13 +2,51 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FileService } from '@/services/github/FileService';
 import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
-import { createMockEndpoint, createOctokitMock } from './utils/mockEndpoint';
+import { RequestMethod, EndpointInterface, RequestParameters } from '@octokit/types';
+
+const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, url: string): EndpointInterface<T> => ({
+  DEFAULTS: {
+    baseUrl: 'https://api.github.com',
+    headers: {
+      accept: 'application/vnd.github.v3+json',
+      'user-agent': 'octokit/rest.js'
+    },
+    mediaType: { format: '' },
+    method,
+    url
+  },
+  defaults: vi.fn((newDefaults: T) => createMockEndpoint<T>(method, url)),
+  merge: vi.fn(),
+  parse: vi.fn()
+});
 
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     repos: {
-      getContent: createOctokitMock({ sha: 'test-sha' }),
-      createOrUpdateFileContents: createOctokitMock({ content: { sha: 'new-sha' } })
+      getContent: Object.assign(
+        vi.fn().mockReturnValue({
+          data: {
+            sha: 'test-sha'
+          }
+        }),
+        {
+          endpoint: createMockEndpoint<RequestParameters>('GET' as RequestMethod, '/repos/{owner}/{repo}/contents/{path}'),
+          defaults: vi.fn()
+        }
+      ),
+      createOrUpdateFileContents: Object.assign(
+        vi.fn().mockReturnValue({
+          data: {
+            content: {
+              sha: 'new-sha'
+            }
+          }
+        }),
+        {
+          endpoint: createMockEndpoint<RequestParameters>('PUT' as RequestMethod, '/repos/{owner}/{repo}/contents/{path}'),
+          defaults: vi.fn()
+        }
+      )
     }
   }))
 }));
@@ -49,7 +87,12 @@ describe('FileService', () => {
 
   it('should handle errors when updating a file', async () => {
     const error = new Error('File not found');
-    fileService['octokit'].repos.getContent = createOctokitMock(Promise.reject(error));
+    fileService['octokit'].repos.getContent = Object.assign(
+      vi.fn().mockRejectedValue(error),
+      {
+        endpoint: createMockEndpoint('GET' as RequestMethod, '/repos/{owner}/{repo}/contents/{path}')
+      }
+    );
 
     const result = await fileService.updateFile(
       'test-branch',
