@@ -63,16 +63,19 @@ export function MatchingFilter({
           membershipTypes={membershipTypes} 
           onMembershipTypesChange={onMembershipTypesChange} 
         />
-        <CurtainsFilter 
-          openCurtains={openCurtains} 
-          onOpenCurtainsChange={onOpenCurtainsChange} 
-        />
+        <div className="flex items-center gap-4 flex-grow">
+          <CurtainsFilter 
+            openCurtains={openCurtains} 
+            onOpenCurtainsChange={onOpenCurtainsChange} 
+          />
+          <div className="w-40">
+            <InterestFilter 
+              selectedInterest={selectedInterest} 
+              onInterestChange={onInterestChange} 
+            />
+          </div>
+        </div>
       </div>
-
-      <InterestFilter 
-        selectedInterest={selectedInterest} 
-        onInterestChange={onInterestChange} 
-      />
     </div>
   );
 }
