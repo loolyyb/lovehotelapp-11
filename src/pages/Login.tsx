@@ -6,12 +6,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
-import type { AuthError, Session } from "@supabase/supabase-js";
+import type { AuthError, Session, AuthChangeEvent } from "@supabase/supabase-js";
 
 export default function Login() {
   const navigate = useNavigate();
   const logger = useLogger('Login');
   const { toast } = useToast();
+
+  const getErrorMessage = (error: AuthError) => {
+    switch (error.message) {
+      case 'Invalid login credentials':
+        return 'Email ou mot de passe incorrect.';
+      case 'Email not confirmed':
+        return 'Veuillez vérifier votre email pour confirmer votre compte.';
+      case 'User not found':
+        return 'Aucun utilisateur trouvé avec ces identifiants.';
+      default:
+        return error.message;
+    }
+  };
 
   const createProfileIfNeeded = async (userId: string) => {
     try {
@@ -70,7 +83,7 @@ export default function Login() {
   useEffect(() => {
     logger.info('Login component mounted');
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       logger.info('Auth state changed:', { event, userId: session?.user?.id });
 
       if (event === 'SIGNED_IN' && session) {
