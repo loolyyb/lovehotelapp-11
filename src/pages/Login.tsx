@@ -77,6 +77,7 @@ export default function Login() {
           title: "Inscription réussie",
           description: "Votre compte a été créé avec succès.",
         });
+        navigate("/");
       } else if (event === 'SIGNED_IN' && session) {
         await createProfileIfNeeded(session.user.id);
         toast({
@@ -84,15 +85,6 @@ export default function Login() {
           description: "Bienvenue !",
         });
         navigate("/");
-      } else if (event === 'USER_UPDATED' && !session) {
-        const { error } = await supabase.auth.getSession();
-        if (error?.message.includes('user_already_exists')) {
-          toast({
-            variant: "destructive",
-            title: "Erreur d'inscription",
-            description: "Un compte existe déjà avec cette adresse email. Veuillez vous connecter.",
-          });
-        }
       }
     };
 
