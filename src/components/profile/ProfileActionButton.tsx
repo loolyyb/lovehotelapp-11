@@ -26,15 +26,15 @@ export function ProfileActionButton({
   disabledTooltipText,
 }: ProfileActionButtonProps) {
   const buttonClassName = variant === "default" 
-    ? "bg-burgundy hover:bg-burgundy/90" 
-    : "border-burgundy text-burgundy hover:bg-burgundy/10";
+    ? "bg-rose-500 hover:bg-rose-600 text-white shadow-md" 
+    : "border-rose-500 text-rose-500 hover:bg-rose-50 shadow-md";
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
           onClick={onClick}
-          className={buttonClassName}
+          className={`${buttonClassName} font-medium px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105`}
           variant={variant}
           disabled={disabled}
         >
