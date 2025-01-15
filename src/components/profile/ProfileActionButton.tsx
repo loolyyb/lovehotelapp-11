@@ -3,6 +3,7 @@ import { LucideIcon } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
@@ -30,21 +31,23 @@ export function ProfileActionButton({
     : "border-rose-500 text-rose-500 hover:bg-rose-50 shadow-md";
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          onClick={onClick}
-          className={`${buttonClassName} font-medium px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105`}
-          variant={variant}
-          disabled={disabled}
-        >
-          <Icon className="mr-2 h-5 w-5" />
-          {label}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p>{disabled ? disabledTooltipText : tooltipText}</p>
-      </TooltipContent>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={onClick}
+            className={`${buttonClassName} font-medium px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105`}
+            variant={variant}
+            disabled={disabled}
+          >
+            <Icon className="mr-2 h-5 w-5" />
+            {label}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{disabled ? disabledTooltipText : tooltipText}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

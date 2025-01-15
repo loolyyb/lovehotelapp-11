@@ -29,40 +29,46 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
     
     if (preferences?.libertine_party_interest) {
       icons.push(
-        <Tooltip key="libertine">
-          <TooltipTrigger>
-            <Star className="w-5 h-5 text-rose-500" />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Soirées libertines</p>
-          </TooltipContent>
-        </Tooltip>
+        <TooltipProvider key="libertine">
+          <Tooltip>
+            <TooltipTrigger>
+              <Star className="w-5 h-5 text-rose-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Soirées libertines</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     }
     
     if (preferences?.speed_dating_interest) {
       icons.push(
-        <Tooltip key="speed">
-          <TooltipTrigger>
-            <Trophy className="w-5 h-5 text-rose-500" />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Speed dating</p>
-          </TooltipContent>
-        </Tooltip>
+        <TooltipProvider key="speed">
+          <Tooltip>
+            <TooltipTrigger>
+              <Trophy className="w-5 h-5 text-rose-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Speed dating</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     }
     
     if (preferences?.open_curtains_interest) {
       icons.push(
-        <Tooltip key="curtains">
-          <TooltipTrigger>
-            <Award className="w-5 h-5 text-rose-500" />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Rideaux ouverts</p>
-          </TooltipContent>
-        </Tooltip>
+        <TooltipProvider key="curtains">
+          <Tooltip>
+            <TooltipTrigger>
+              <Award className="w-5 h-5 text-rose-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Rideaux ouverts</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     }
 
