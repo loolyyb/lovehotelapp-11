@@ -3,7 +3,7 @@ export type EventType = "bdsm" | "jacuzzi" | "gastronomy" | "speed_dating" | "ot
 export interface Event {
   id: string;
   title: string;
-  description: string;  // Made required to match EventCard requirements
+  description: string;
   type: EventType;
   date: Date;
   location?: string;

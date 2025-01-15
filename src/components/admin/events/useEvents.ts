@@ -34,16 +34,21 @@ export function useEvents() {
 
   const createEvent = async (eventData: Partial<Event>) => {
     try {
-      const { error } = await supabase.from("events").insert([{
+      // Map our frontend type to the database schema
+      const dbEventData = {
         title: eventData.title,
-        description: eventData.description || "",  // Ensure description is never null
-        event_type: eventData.type,
+        description: eventData.description || "",
+        event_type: eventData.type || "other",
         event_date: eventData.date?.toISOString(),
         location: eventData.location,
         max_participants: eventData.max_participants,
         price: eventData.price,
         created_by: (await supabase.auth.getUser()).data.user?.id,
-      }]);
+      };
+
+      const { error } = await supabase
+        .from("events")
+        .insert([dbEventData]);
 
       if (error) throw error;
 
@@ -66,7 +71,10 @@ export function useEvents() {
 
   const deleteEvent = async (eventId: string) => {
     try {
-      const { error } = await supabase.from("events").delete().eq("id", eventId);
+      const { error } = await supabase
+        .from("events")
+        .delete()
+        .eq("id", eventId);
 
       if (error) throw error;
 
