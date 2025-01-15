@@ -218,22 +218,24 @@ export default function MatchingScores() {
           Scores de Compatibilité
         </h1>
 
-        <MatchingFilter 
-          selectedInterest={selectedInterest}
-          onInterestChange={setSelectedInterest}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          location={location}
-          onLocationChange={setLocation}
-          status={status}
-          onStatusChange={setStatus}
-          orientation={orientation}
-          onOrientationChange={setOrientation}
-          membershipTypes={membershipTypes}
-          onMembershipTypesChange={setMembershipTypes}
-          openCurtains={openCurtains}
-          onOpenCurtainsChange={setOpenCurtains}
-        />
+        <div className="mb-12"> {/* Added more margin bottom here */}
+          <MatchingFilter 
+            selectedInterest={selectedInterest}
+            onInterestChange={setSelectedInterest}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            location={location}
+            onLocationChange={setLocation}
+            status={status}
+            onStatusChange={setStatus}
+            orientation={orientation}
+            onOrientationChange={setOrientation}
+            membershipTypes={membershipTypes}
+            onMembershipTypesChange={setMembershipTypes}
+            openCurtains={openCurtains}
+            onOpenCurtainsChange={setOpenCurtains}
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {profiles.map((profile, index) => (
