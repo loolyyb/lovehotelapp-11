@@ -4,6 +4,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Heart, User, Users } from "lucide-react";
 
 interface QualificationQuestionProps {
@@ -13,6 +14,18 @@ interface QualificationQuestionProps {
 }
 
 export function QualificationQuestion({ question, value, onChange }: QualificationQuestionProps) {
+  const renderUsername = () => (
+    <div className="space-y-2">
+      <Input
+        type="text"
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Entrez votre pseudo"
+        className="max-w-md"
+      />
+    </div>
+  );
+
   const renderOrientation = () => (
     <RadioGroup
       value={value ?? undefined}
@@ -168,11 +181,17 @@ export function QualificationQuestion({ question, value, onChange }: Qualificati
             placeholder="Votre réponse..."
           />
         )}
+        {question.type === "username" && renderUsername()}
         {question.type === "orientation" && renderOrientation()}
         {question.type === "status" && renderStatus()}
         {question.type === "relationship" && renderRelationshipType()}
         {question.type === "choice" && renderChoice()}
       </div>
+      {question.type === "choice" && question.id === "libertine_party_interest" && (
+        <p className="text-sm text-gray-600 mt-4">
+          Une fois votre qualification terminée, vous pourrez compléter votre profil avec des photos et des informations supplémentaires.
+        </p>
+      )}
     </div>
   );
 }
