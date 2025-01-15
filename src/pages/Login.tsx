@@ -22,7 +22,7 @@ export default function Login() {
         .single();
 
       if (!existingProfile) {
-        logger.info('Creating missing profile for user:', userId);
+        logger.info('Creating missing profile for user', { userId });
         
         // Create new profile
         const { error: profileError } = await supabase
@@ -53,10 +53,10 @@ export default function Login() {
 
         if (prefError) throw prefError;
 
-        logger.info('Successfully created missing profile and preferences');
+        logger.info('Successfully created missing profile and preferences', { userId });
       }
     } catch (error) {
-      logger.error('Error creating profile:', error);
+      logger.error('Error creating profile:', { error, userId });
       toast({
         variant: "destructive",
         title: "Erreur",
