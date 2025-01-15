@@ -19,8 +19,8 @@ export function useEvents() {
       return data.map((event: any) => ({
         id: event.id,
         title: event.title,
-        description: event.description,
-        type: event.event_type,
+        description: event.description || "",  // Ensure description is never null
+        type: event.event_type as EventType,
         date: new Date(event.event_date),
         location: event.location,
         max_participants: event.max_participants,
@@ -36,7 +36,7 @@ export function useEvents() {
     try {
       const { error } = await supabase.from("events").insert([{
         title: eventData.title,
-        description: eventData.description,
+        description: eventData.description || "",  // Ensure description is never null
         event_type: eventData.type,
         event_date: eventData.date?.toISOString(),
         location: eventData.location,
