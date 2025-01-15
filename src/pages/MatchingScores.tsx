@@ -29,6 +29,12 @@ export default function MatchingScores() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedInterest, setSelectedInterest] = useState<InterestType>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [location, setLocation] = useState("");
+  const [status, setStatus] = useState("");
+  const [orientation, setOrientation] = useState("");
+  const [membershipTypes, setMembershipTypes] = useState<string[]>([]);
+  const [openCurtains, setOpenCurtains] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -215,6 +221,18 @@ export default function MatchingScores() {
         <MatchingFilter 
           selectedInterest={selectedInterest}
           onInterestChange={setSelectedInterest}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          location={location}
+          onLocationChange={setLocation}
+          status={status}
+          onStatusChange={setStatus}
+          orientation={orientation}
+          onOrientationChange={setOrientation}
+          membershipTypes={membershipTypes}
+          onMembershipTypesChange={setMembershipTypes}
+          openCurtains={openCurtains}
+          onOpenCurtainsChange={setOpenCurtains}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
