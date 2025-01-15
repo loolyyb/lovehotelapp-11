@@ -18,54 +18,48 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
   const { preferences, handlePreferenceChange } = usePreferences();
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-8">
-          <LocationSection 
-            preferences={preferences}
-            onPreferenceChange={handlePreferenceChange}
-          />
-          
-          <AboutSection 
-            description={profile?.description}
-            onUpdate={onUpdate}
-          />
-          
-          <StatusSection
-            status={profile?.status}
-            onUpdate={onUpdate}
-          />
+    <div className="space-y-8 w-full">
+      <LocationSection 
+        preferences={preferences}
+        onPreferenceChange={handlePreferenceChange}
+      />
+      
+      <AboutSection 
+        description={profile?.description}
+        onUpdate={onUpdate}
+      />
+      
+      <StatusSection
+        status={profile?.status}
+        onUpdate={onUpdate}
+      />
 
-          <RelationshipSection
-            relationshipType={profile?.relationship_type}
-            onUpdate={onUpdate}
-          />
+      <OrientationSection
+        orientation={profile?.sexual_orientation}
+        onUpdate={onUpdate}
+      />
 
-          <TokensSection
-            tokens={profile?.loolyb_tokens}
-            onUpdate={onUpdate}
-          />
-        </div>
+      <SeekingSection
+        seeking={profile?.seeking}
+        status={profile?.status}
+        orientation={profile?.sexual_orientation}
+        onUpdate={onUpdate}
+      />
 
-        <div className="space-y-8">
-          <OrientationSection
-            orientation={profile?.sexual_orientation}
-            onUpdate={onUpdate}
-          />
+      <RelationshipSection
+        relationshipType={profile?.relationship_type}
+        onUpdate={onUpdate}
+      />
 
-          <SeekingSection
-            seeking={profile?.seeking}
-            status={profile?.status}
-            orientation={profile?.sexual_orientation}
-            onUpdate={onUpdate}
-          />
+      <PreferencesSection
+        preferences={preferences}
+        onPreferenceChange={handlePreferenceChange}
+      />
 
-          <PreferencesSection
-            preferences={preferences}
-            onPreferenceChange={handlePreferenceChange}
-          />
-        </div>
-      </div>
+      <TokensSection
+        tokens={profile?.loolyb_tokens}
+        onUpdate={onUpdate}
+      />
 
       <GallerySection
         photos={profile?.photo_urls}

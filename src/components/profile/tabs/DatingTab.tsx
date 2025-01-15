@@ -16,7 +16,7 @@ export function DatingTab({ profile, onUpdate }: DatingTabProps) {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 w-full">
       <div className="mb-8">
         <Button
           onClick={() => setShowQualification(true)}
@@ -26,7 +26,7 @@ export function DatingTab({ profile, onUpdate }: DatingTabProps) {
         </Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="w-full">
         <ProfileForm profile={profile} onUpdate={onUpdate} />
       </div>
     </div>
