@@ -3,7 +3,7 @@ import { BedDouble, Calendar, Heart, Theater, Utensils, UserRound } from "lucide
 import { DashboardWidget } from "@/components/dashboard/DashboardWidget";
 import { useAuthSession } from "@/hooks/useAuthSession";
 
-const Dashboard = () => {
+export default function Dashboard() {
   const { userProfile } = useAuthSession();
   
   const widgets = [
@@ -20,7 +20,7 @@ const Dashboard = () => {
     {
       icon: Heart,
       title: "Rencontre",
-      to: "/profiles"  // Modification ici : changement de la route
+      to: "/profiles"
     },
     {
       icon: Theater,
@@ -79,6 +79,4 @@ const Dashboard = () => {
       </main>
     </div>
   );
-};
-
-export default Dashboard;
+}
