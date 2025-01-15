@@ -8,7 +8,7 @@ import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
 import type { AuthError, Session } from "@supabase/supabase-js";
 
-type AuthChangeEvent = 'SIGNED_IN' | 'SIGNED_OUT' | 'SIGNED_UP' | 'TOKEN_REFRESH';
+type AuthChangeEvent = 'INITIAL_SESSION' | 'SIGNED_IN' | 'SIGNED_OUT' | 'USER_UPDATED' | 'USER_DELETED' | 'PASSWORD_RECOVERY' | 'TOKEN_REFRESHED' | 'SIGNED_UP';
 
 export default function Login() {
   const navigate = useNavigate();
