@@ -36,11 +36,12 @@ export default function Profiles() {
       console.log("Début du chargement des profils...");
       setLoading(true);
       
-      // Récupération des profils avec debug
+      // Récupération des profils avec debug - uniquement les vrais profils (user_id not null)
       console.log("Envoi de la requête pour récupérer les profils...");
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("*");
+        .select("*")
+        .not('user_id', 'is', null); // Only get real user profiles
 
       if (profilesError) {
         console.error("Erreur lors de la récupération des profils:", profilesError);
@@ -58,7 +59,8 @@ export default function Profiles() {
       console.log("Envoi de la requête pour récupérer les préférences...");
       const { data: preferencesData, error: preferencesError } = await supabase
         .from("preferences")
-        .select("*");
+        .select("*")
+        .not('user_id', 'is', null); // Only get preferences for real users
 
       if (preferencesError) {
         console.error("Erreur lors de la récupération des préférences:", preferencesError);
