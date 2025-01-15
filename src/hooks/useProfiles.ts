@@ -25,8 +25,7 @@ export function useProfiles() {
       console.log("Envoi de la requête pour récupérer les profils...");
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("*")
-        .not('user_id', 'is', null);
+        .select("*");
 
       if (profilesError) {
         console.error("Erreur lors de la récupération des profils:", profilesError);
@@ -40,11 +39,15 @@ export function useProfiles() {
         throw new Error("Aucun profil n'a été retourné");
       }
 
+      // Log each profile's visibility for debugging
+      profilesData.forEach(profile => {
+        console.log(`Profile ${profile.id} - visibility: ${profile.visibility}, user_id: ${profile.user_id}`);
+      });
+
       console.log("Envoi de la requête pour récupérer les préférences...");
       const { data: preferencesData, error: preferencesError } = await supabase
         .from("preferences")
-        .select("*")
-        .not('user_id', 'is', null);
+        .select("*");
 
       if (preferencesError) {
         console.error("Erreur lors de la récupération des préférences:", preferencesError);
@@ -58,7 +61,8 @@ export function useProfiles() {
         const preferences = preferencesData?.find(pref => pref.user_id === profile.user_id) || null;
         console.log(`Association pour le profil ${profile.id}:`, { 
           profile_user_id: profile.user_id,
-          found_preferences: preferences ? 'oui' : 'non'
+          found_preferences: preferences ? 'oui' : 'non',
+          visibility: profile.visibility
         });
         return {
           profile,
