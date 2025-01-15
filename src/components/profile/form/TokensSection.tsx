@@ -1,31 +1,41 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { WidgetContainer } from "./WidgetContainer";
 
 interface TokensSectionProps {
-  tokens?: number;
+  tokens: number;
   onUpdate: (updates: any) => Promise<void>;
 }
 
-export function TokensSection({ tokens = 0, onUpdate }: TokensSectionProps) {
-  const handleAddTokens = async () => {
-    await onUpdate({ loolyb_tokens: tokens + 1 });
+export function TokensSection({ tokens, onUpdate }: TokensSectionProps) {
+  const { toast } = useToast();
+
+  const handleLooLyybTokensChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const tokens = parseInt(event.target.value) || 0;
+    if (tokens >= 0) {
+      onUpdate({ loolyb_tokens: tokens });
+      toast({
+        title: "Tokens mis à jour",
+        description: "Le nombre de tokens LooLyyb a été mis à jour avec succès.",
+      });
+    }
   };
 
   return (
-    <WidgetContainer title="LooLyyb Tokens">
-      <Card className="relative overflow-hidden p-6 bg-gradient-to-r from-rose-100 to-burgundy-100">
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="text-4xl font-bold text-burgundy-800">{tokens}</div>
-          <div className="text-sm text-burgundy-600">Tokens disponibles</div>
-          <Button 
-            onClick={handleAddTokens}
-            className="bg-burgundy-600 hover:bg-burgundy-700 text-white"
-          >
-            Ajouter des tokens
-          </Button>
-        </div>
-      </Card>
+    <WidgetContainer title="Tokens LooLyyb">
+      <div className="space-y-4">
+        <Label htmlFor="loolyb-tokens">Nombre de tokens en votre possession</Label>
+        <Input
+          id="loolyb-tokens"
+          type="number"
+          min="0"
+          value={tokens || 0}
+          onChange={handleLooLyybTokensChange}
+          className="w-full"
+          placeholder="Entrez le nombre de tokens LooLyyb"
+        />
+      </div>
     </WidgetContainer>
   );
 }
