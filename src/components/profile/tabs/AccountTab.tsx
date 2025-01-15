@@ -55,8 +55,7 @@ export function AccountTab({ profile, onUpdate }: AccountTabProps) {
           <div className="pt-4">
             <Button
               onClick={() => setShowQualification(true)}
-              variant="outline"
-              className="w-full"
+              className="w-full bg-rose-500 hover:bg-rose-600 text-white"
             >
               Modifier mes réponses de qualification
             </Button>
