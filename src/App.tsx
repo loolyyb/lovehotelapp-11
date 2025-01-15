@@ -51,7 +51,7 @@ function AppContent() {
     >
       {session && <Header userProfile={userProfile} />}
       <div className="flex-grow pt-[4.5rem]">
-        <AppRoutes />
+        <AppRoutes session={session} />
       </div>
       <Footer />
       {appConfig.features.enablePWA && <MobileNavBar />}

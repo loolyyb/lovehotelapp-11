@@ -28,7 +28,7 @@ export function MatchingFilter({ selectedInterest, onInterestChange }: MatchingF
           <SelectItem value="rideaux_ouverts">Rideaux ouverts</SelectItem>
           <SelectItem value="speed_dating">Speed dating</SelectItem>
           <SelectItem value="libertinage">Libertinage</SelectItem>
-          <SelectItem value="art">Rencontres</SelectItem>
+          <SelectItem value="art">Art</SelectItem>
         </SelectContent>
       </Select>
     </div>
