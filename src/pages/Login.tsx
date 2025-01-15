@@ -73,7 +73,7 @@ export default function Login() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       logger.info('Auth state changed:', { event, userId: session?.user?.id });
 
-      if (event === 'SIGNED_IN' && session) {
+      if (event === AuthChangeEvent.SIGNED_IN && session) {
         try {
           await createProfileIfNeeded(session.user.id);
           toast({
@@ -84,7 +84,7 @@ export default function Login() {
         } catch (error) {
           logger.error('Error during sign in:', error);
         }
-      } else if (event === 'SIGNED_UP' && session) {
+      } else if (event === AuthChangeEvent.SIGNED_UP && session) {
         try {
           await createProfileIfNeeded(session.user.id);
           toast({
