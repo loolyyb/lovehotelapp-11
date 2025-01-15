@@ -25,11 +25,21 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { data: preferences } = await supabase
+      const { data: preferences, error } = await supabase
         .from('preferences')
         .select('qualification_step, qualification_data')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error loading qualification state:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger vos réponses de qualification.",
+        });
+        return;
+      }
 
       if (preferences) {
         setCurrentStep(preferences.qualification_step || 0);
@@ -38,7 +48,12 @@ export function QualificationJourney({ onComplete, isEditing = false }: Qualific
         }
       }
     } catch (error) {
-      console.error('Error loading qualification state:', error);
+      console.error('Error:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors du chargement de vos réponses.",
+      });
     }
   };
 

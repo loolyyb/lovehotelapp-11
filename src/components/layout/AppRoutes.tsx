@@ -20,6 +20,7 @@ import LoverCoin from "@/pages/LoverCoin";
 import { QualificationJourney } from "@/components/qualification/QualificationJourney";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -27,6 +28,7 @@ interface AppRoutesProps {
 
 export const AppRoutes = ({ session }: AppRoutesProps) => {
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (session?.user) {
@@ -37,13 +39,32 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
   const checkQualificationStatus = async () => {
     if (!session?.user) return;
 
-    const { data: preferences } = await supabase
-      .from('preferences')
-      .select('qualification_completed')
-      .eq('user_id', session.user.id)
-      .single();
+    try {
+      const { data: preferences, error } = await supabase
+        .from('preferences')
+        .select('qualification_completed')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
 
-    setNeedsQualification(!preferences?.qualification_completed);
+      if (error) {
+        console.error('Error checking qualification status:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de vérifier votre statut de qualification.",
+        });
+        return;
+      }
+
+      setNeedsQualification(!preferences?.qualification_completed);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la vérification de votre statut.",
+      });
+    }
   };
 
   if (session && needsQualification) {
@@ -118,4 +139,4 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       />
     </Routes>
   );
-}
+};
