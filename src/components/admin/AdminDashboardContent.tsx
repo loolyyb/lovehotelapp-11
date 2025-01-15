@@ -9,14 +9,9 @@ import { Loader, Users, MessageSquare } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdvertisementManager } from "./AdvertisementManager";
 import { LogsManager } from "./LogsManager";
-import { Session } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 
-interface AdminDashboardContentProps {
-  session: Session;
-}
-
-export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
+export function AdminDashboardContent() {
   const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -198,7 +193,7 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
         </TabsContent>
 
         <TabsContent value="ads">
-          <AdvertisementManager session={session} />
+          <AdvertisementManager />
         </TabsContent>
 
         <TabsContent value="logs">
