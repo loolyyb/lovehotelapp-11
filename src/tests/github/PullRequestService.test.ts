@@ -4,7 +4,7 @@ import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
 import { RequestMethod, EndpointInterface, RequestParameters } from '@octokit/types';
 
-const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, url: string): EndpointInterface<T> => ({
+const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterface<RequestParameters> => ({
   DEFAULTS: {
     baseUrl: 'https://api.github.com',
     headers: {
@@ -15,7 +15,7 @@ const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, 
     method,
     url
   },
-  defaults: vi.fn((newDefaults: T) => createMockEndpoint<T>(method, url)),
+  defaults: vi.fn().mockImplementation((newDefaults) => createMockEndpoint(method, url)),
   merge: vi.fn(),
   parse: vi.fn()
 });
@@ -30,7 +30,7 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          endpoint: createMockEndpoint<RequestParameters>('POST' as RequestMethod, '/repos/{owner}/{repo}/pulls'),
+          endpoint: createMockEndpoint('POST', '/repos/{owner}/{repo}/pulls'),
           defaults: vi.fn()
         }
       )
@@ -75,7 +75,8 @@ describe('PullRequestService', () => {
     prService['octokit'].pulls.create = Object.assign(
       vi.fn().mockRejectedValue(error),
       {
-        endpoint: createMockEndpoint('POST' as RequestMethod, '/repos/{owner}/{repo}/pulls')
+        endpoint: createMockEndpoint('POST', '/repos/{owner}/{repo}/pulls'),
+        defaults: vi.fn()
       }
     );
 

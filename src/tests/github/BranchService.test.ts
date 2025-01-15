@@ -4,7 +4,7 @@ import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
 import { RequestMethod, EndpointInterface, RequestParameters } from '@octokit/types';
 
-const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, url: string): EndpointInterface<T> => ({
+const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterface<RequestParameters> => ({
   DEFAULTS: {
     baseUrl: 'https://api.github.com',
     headers: {
@@ -15,7 +15,7 @@ const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, 
     method,
     url
   },
-  defaults: vi.fn((newDefaults: T) => createMockEndpoint<T>(method, url)),
+  defaults: vi.fn().mockImplementation((newDefaults) => createMockEndpoint(method, url)),
   merge: vi.fn(),
   parse: vi.fn()
 });
@@ -32,7 +32,7 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          endpoint: createMockEndpoint<RequestParameters>('GET' as RequestMethod, '/repos/{owner}/{repo}/git/ref/{ref}'),
+          endpoint: createMockEndpoint('GET', '/repos/{owner}/{repo}/git/ref/{ref}'),
           defaults: vi.fn()
         }
       ),
@@ -43,7 +43,7 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          endpoint: createMockEndpoint<RequestParameters>('POST' as RequestMethod, '/repos/{owner}/{repo}/git/refs'),
+          endpoint: createMockEndpoint('POST', '/repos/{owner}/{repo}/git/refs'),
           defaults: vi.fn()
         }
       )
@@ -89,7 +89,8 @@ describe('BranchService', () => {
     branchService['octokit'].git.getRef = Object.assign(
       vi.fn().mockRejectedValue(error),
       {
-        endpoint: createMockEndpoint('GET' as RequestMethod, '/repos/{owner}/{repo}/git/ref/{ref}')
+        endpoint: createMockEndpoint('GET', '/repos/{owner}/{repo}/git/ref/{ref}'),
+        defaults: vi.fn()
       }
     );
 

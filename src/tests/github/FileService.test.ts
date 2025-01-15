@@ -4,7 +4,7 @@ import { GitHubConfig } from '@/services/github/types';
 import { logger } from '@/services/LogService';
 import { RequestMethod, EndpointInterface, RequestParameters } from '@octokit/types';
 
-const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, url: string): EndpointInterface<T> => ({
+const createMockEndpoint = (method: RequestMethod, url: string): EndpointInterface<RequestParameters> => ({
   DEFAULTS: {
     baseUrl: 'https://api.github.com',
     headers: {
@@ -15,7 +15,7 @@ const createMockEndpoint = <T extends RequestParameters>(method: RequestMethod, 
     method,
     url
   },
-  defaults: vi.fn((newDefaults: T) => createMockEndpoint<T>(method, url)),
+  defaults: vi.fn().mockImplementation((newDefaults) => createMockEndpoint(method, url)),
   merge: vi.fn(),
   parse: vi.fn()
 });
@@ -30,7 +30,7 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          endpoint: createMockEndpoint<RequestParameters>('GET' as RequestMethod, '/repos/{owner}/{repo}/contents/{path}'),
+          endpoint: createMockEndpoint('GET', '/repos/{owner}/{repo}/contents/{path}'),
           defaults: vi.fn()
         }
       ),
@@ -43,7 +43,7 @@ vi.mock('@octokit/rest', () => ({
           }
         }),
         {
-          endpoint: createMockEndpoint<RequestParameters>('PUT' as RequestMethod, '/repos/{owner}/{repo}/contents/{path}'),
+          endpoint: createMockEndpoint('PUT', '/repos/{owner}/{repo}/contents/{path}'),
           defaults: vi.fn()
         }
       )
@@ -90,7 +90,8 @@ describe('FileService', () => {
     fileService['octokit'].repos.getContent = Object.assign(
       vi.fn().mockRejectedValue(error),
       {
-        endpoint: createMockEndpoint('GET' as RequestMethod, '/repos/{owner}/{repo}/contents/{path}')
+        endpoint: createMockEndpoint('GET', '/repos/{owner}/{repo}/contents/{path}'),
+        defaults: vi.fn()
       }
     );
 
