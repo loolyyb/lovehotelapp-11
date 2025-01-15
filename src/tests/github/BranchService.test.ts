@@ -7,18 +7,30 @@ import { logger } from '@/services/LogService';
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     git: {
-      getRef: vi.fn().mockReturnValue({
-        data: {
-          object: {
-            sha: 'test-sha'
+      getRef: Object.assign(
+        vi.fn().mockReturnValue({
+          data: {
+            object: {
+              sha: 'test-sha'
+            }
           }
+        }),
+        {
+          defaults: vi.fn(),
+          endpoint: vi.fn()
         }
-      }),
-      createRef: vi.fn().mockReturnValue({
-        data: {
-          ref: 'refs/heads/test-branch'
+      ),
+      createRef: Object.assign(
+        vi.fn().mockReturnValue({
+          data: {
+            ref: 'refs/heads/test-branch'
+          }
+        }),
+        {
+          defaults: vi.fn(),
+          endpoint: vi.fn()
         }
-      })
+      )
     }
   }))
 }));

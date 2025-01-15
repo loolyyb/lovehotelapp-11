@@ -6,11 +6,17 @@ import { logger } from '@/services/LogService';
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     pulls: {
-      create: vi.fn().mockReturnValue({
-        data: {
-          html_url: 'https://github.com/test/pr/1'
+      create: Object.assign(
+        vi.fn().mockReturnValue({
+          data: {
+            html_url: 'https://github.com/test/pr/1'
+          }
+        }),
+        {
+          defaults: vi.fn(),
+          endpoint: vi.fn()
         }
-      })
+      )
     }
   }))
 }));

@@ -6,18 +6,30 @@ import { logger } from '@/services/LogService';
 vi.mock('@octokit/rest', () => ({
   Octokit: vi.fn(() => ({
     repos: {
-      getContent: vi.fn().mockReturnValue({
-        data: {
-          sha: 'test-sha'
-        }
-      }),
-      createOrUpdateFileContents: vi.fn().mockReturnValue({
-        data: {
-          content: {
-            sha: 'new-sha'
+      getContent: Object.assign(
+        vi.fn().mockReturnValue({
+          data: {
+            sha: 'test-sha'
           }
+        }),
+        {
+          defaults: vi.fn(),
+          endpoint: vi.fn()
         }
-      })
+      ),
+      createOrUpdateFileContents: Object.assign(
+        vi.fn().mockReturnValue({
+          data: {
+            content: {
+              sha: 'new-sha'
+            }
+          }
+        }),
+        {
+          defaults: vi.fn(),
+          endpoint: vi.fn()
+        }
+      )
     }
   }))
 }));
