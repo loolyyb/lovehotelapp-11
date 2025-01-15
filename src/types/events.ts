@@ -3,12 +3,15 @@ export type EventType = "bdsm" | "jacuzzi" | "gastronomy" | "speed_dating" | "ot
 export interface Event {
   id: string;
   title: string;
-  date: Date;
+  description?: string;
   type: EventType;
-  description: string;
-  imageUrl?: string;
-  startTime?: string;
-  endTime?: string;
+  date: Date;
+  location?: string;
+  max_participants?: number | null;
+  price?: number | null;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const sampleEvents: Event[] = [

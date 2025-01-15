@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Event } from "@/types/events";
+import { Event, EventType } from "@/types/events";
 
 export function useEvents() {
   const { toast } = useToast();
@@ -15,18 +15,35 @@ export function useEvents() {
         .order("event_date", { ascending: true });
 
       if (error) throw error;
-      return data as Event[];
+      
+      return data.map((event: any) => ({
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        type: event.event_type,
+        date: new Date(event.event_date),
+        location: event.location,
+        max_participants: event.max_participants,
+        price: event.price,
+        created_by: event.created_by,
+        created_at: event.created_at,
+        updated_at: event.updated_at
+      })) as Event[];
     },
   });
 
   const createEvent = async (eventData: Partial<Event>) => {
     try {
-      const { error } = await supabase.from("events").insert([
-        {
-          ...eventData,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-        },
-      ]);
+      const { error } = await supabase.from("events").insert([{
+        title: eventData.title,
+        description: eventData.description,
+        event_type: eventData.type,
+        event_date: eventData.date?.toISOString(),
+        location: eventData.location,
+        max_participants: eventData.max_participants,
+        price: eventData.price,
+        created_by: (await supabase.auth.getUser()).data.user?.id,
+      }]);
 
       if (error) throw error;
 
