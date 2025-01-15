@@ -1,16 +1,9 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Session } from '@supabase/supabase-js';
-import { useToast } from './use-toast';
-import { logger } from '@/services/LogService';
+import { useState, useEffect } from "react";
+import { Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "./use-toast";
 
-interface AuthSessionReturn {
-  session: Session | null;
-  loading: boolean;
-  userProfile: any | null;
-}
-
-export function useAuthSession(): AuthSessionReturn {
+export const useAuthSession = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -18,102 +11,105 @@ export function useAuthSession(): AuthSessionReturn {
 
   const createProfile = async (userId: string) => {
     try {
-      logger.info('Creating new profile for user:', { userId });
-      
-      const { data: existingProfile, error: fetchError } = await supabase
+      console.log("Creating new profile for user:", userId);
+      const { data: newProfile, error: createError } = await supabase
         .from('profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
-      }
-
-      if (!existingProfile) {
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .upsert([{
+        .insert([
+          {
             user_id: userId,
-            full_name: 'New User',
-            is_love_hotel_member: false,
-            is_loolyb_holder: false,
-            relationship_type: [],
-            seeking: [],
-            photo_urls: [],
+            full_name: session?.user?.email?.split('@')[0] || 'New User',
+            role: 'user',
             visibility: 'public',
             allowed_viewers: [],
-            role: 'user'
-          }])
-          .select()
-          .single();
+            loolyb_tokens: 0,
+            loyalty_points: 0,
+            is_love_hotel_member: false,
+            is_loolyb_holder: false,
+            photo_urls: [],
+            relationship_type: [],
+            seeking: []
+          }
+        ])
+        .select()
+        .single();
 
-        if (insertError) {
-          throw insertError;
-        }
+      if (createError) throw createError;
 
-        logger.info('New profile created successfully:', { newProfile });
-        setUserProfile(newProfile);
-      }
-    } catch (error: any) {
-      logger.error('Error creating profile:', {
-        error: {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        }
-      });
+      // Create initial preferences for qualification
+      const { error: prefError } = await supabase
+        .from('preferences')
+        .insert([{
+          user_id: userId,
+          qualification_completed: false,
+          qualification_step: 0
+        }]);
+
+      if (prefError) throw prefError;
+
+      console.log("New profile created successfully:", newProfile);
+      return newProfile;
+    } catch (error) {
+      console.error('Error creating profile:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de créer votre profil. Veuillez réessayer.",
+        description: "Impossible de créer votre profil.",
       });
+      return null;
     }
   };
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      logger.info('Fetching profile for user:', { userId });
-      
+      console.log("Fetching profile for user:", userId);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
-
+      
       if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
       if (!profile) {
-        await createProfile(userId);
-      } else {
-        setUserProfile(profile);
+        // Create profile if it doesn't exist
+        const newProfile = await createProfile(userId);
+        setUserProfile(newProfile);
+        return;
       }
-    } catch (error: any) {
-      logger.error('Error fetching profile:', error);
+      
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger votre profil.",
+      });
     }
   };
 
   useEffect(() => {
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setLoading(false);
-      if (session?.user) {
+      if (session) {
         fetchUserProfile(session.user.id);
       }
+      setLoading(false);
     });
 
+    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      logger.info('Auth state change:', { event: _event, userId: session?.user?.id });
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
       setSession(session);
-      setLoading(false);
-
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
+      if (session) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setUserProfile(null);
       }
     });
 
@@ -121,4 +117,4 @@ export function useAuthSession(): AuthSessionReturn {
   }, []);
 
   return { session, loading, userProfile };
-}
+};

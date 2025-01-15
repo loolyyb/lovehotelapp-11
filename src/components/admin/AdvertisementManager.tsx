@@ -17,16 +17,24 @@ interface Advertisement {
   active: boolean;
 }
 
-export function AdvertisementManager() {
+interface AdvertisementManagerProps {
+  session: any;
+}
+
+export function AdvertisementManager({ session }: AdvertisementManagerProps) {
   const { toast } = useToast();
   const [advertisements, setAdvertisements] = React.useState<Advertisement[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    fetchAdvertisements();
-  }, []);
+    if (session) {
+      fetchAdvertisements();
+    }
+  }, [session]);
 
   const fetchAdvertisements = async () => {
+    if (!session) return;
+    
     try {
       const { data, error } = await supabase
         .from('advertisements')
@@ -48,6 +56,8 @@ export function AdvertisementManager() {
   };
 
   const toggleAdvertisementStatus = async (id: string, currentStatus: boolean) => {
+    if (!session) return;
+
     try {
       const { error } = await supabase
         .from('advertisements')
@@ -72,6 +82,8 @@ export function AdvertisementManager() {
   };
 
   const updateAdvertisement = async (id: string, updates: Partial<Advertisement>) => {
+    if (!session) return;
+
     try {
       const { error } = await supabase
         .from('advertisements')

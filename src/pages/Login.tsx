@@ -6,44 +6,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
-import type { AuthError, Session } from "@supabase/supabase-js";
 
 export default function Login() {
   const navigate = useNavigate();
   const logger = useLogger('Login');
   const { toast } = useToast();
 
-  const getErrorMessage = (error: AuthError) => {
-    switch (error.message) {
-      case 'Invalid login credentials':
-        return 'Email ou mot de passe incorrect.';
-      case 'Email not confirmed':
-        return 'Veuillez vérifier votre email pour confirmer votre compte.';
-      case 'User not found':
-        return 'Aucun utilisateur trouvé avec ces identifiants.';
-      default:
-        return error.message;
-    }
-  };
-
   const createProfileIfNeeded = async (userId: string) => {
     try {
-      logger.info('Checking if profile exists for user:', { userId });
-      
-      const { data: existingProfile, error: fetchError } = await supabase
+      // Check if profile exists
+      const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
         .eq('user_id', userId)
         .single();
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        throw fetchError;
-      }
-
       if (!existingProfile) {
-        logger.info('Creating new profile for user:', { userId });
+        logger.info('Creating missing profile for user', { userId });
         
-        const { data: newProfile, error: insertError } = await supabase
+        // Create new profile
+        const { error: profileError } = await supabase
           .from('profiles')
           .insert([{
             user_id: userId,
@@ -56,72 +38,72 @@ export default function Login() {
             visibility: 'public',
             allowed_viewers: [],
             role: 'user'
-          }])
-          .select()
-          .single();
+          }]);
 
-        if (insertError) {
-          throw insertError;
-        }
+        if (profileError) throw profileError;
 
-        logger.info('Profile created successfully:', { newProfile });
-        return newProfile;
+        // Create initial preferences
+        const { error: prefError } = await supabase
+          .from('preferences')
+          .insert([{
+            user_id: userId,
+            qualification_completed: false,
+            qualification_step: 0
+          }]);
+
+        if (prefError) throw prefError;
+
+        logger.info('Successfully created missing profile and preferences', { userId });
       }
-
-      return existingProfile;
-    } catch (error: any) {
-      logger.error('Error in profile creation:', error);
+    } catch (error) {
+      logger.error('Error creating profile:', { error, userId });
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de créer votre profil. Veuillez réessayer.",
       });
-      throw error;
     }
   };
 
   useEffect(() => {
-    logger.info('Login component mounted');
+    logger.debug('Composant Login monté');
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      logger.info('Auth state changed:', { event, userId: session?.user?.id });
-
-      if (session) {
-        try {
-          await createProfileIfNeeded(session.user.id);
-          if (event === 'SIGNED_IN') {
-            toast({
-              title: "Connexion réussie",
-              description: "Bienvenue !",
-            });
-          }
-          navigate("/");
-        } catch (error) {
-          logger.error('Error during sign in:', error);
+    const handleAuthChange = async (event: string, session: any) => {
+      logger.info('Changement d\'état d\'authentification', { event, hasSession: !!session });
+      
+      if (event === 'SIGNED_UP' && session) {
+        await createProfileIfNeeded(session.user.id);
+        toast({
+          title: "Inscription réussie",
+          description: "Votre compte a été créé avec succès.",
+        });
+      } else if (event === 'SIGNED_IN' && session) {
+        await createProfileIfNeeded(session.user.id);
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue !",
+        });
+        navigate("/");
+      } else if (event === 'USER_UPDATED' && !session) {
+        const { error } = await supabase.auth.getSession();
+        if (error?.message.includes('user_already_exists')) {
+          toast({
+            variant: "destructive",
+            title: "Erreur d'inscription",
+            description: "Un compte existe déjà avec cette adresse email. Veuillez vous connecter.",
+          });
         }
       }
-    });
+    };
 
     // Check if user is already logged in
-    const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        logger.error('Error checking session:', error);
-        return;
-      }
-      if (session) {
-        logger.info('User already logged in, redirecting');
-        navigate("/");
-      }
-    };
-
-    checkSession();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
     return () => {
-      logger.info('Login component unmounted');
+      logger.debug('Composant Login démonté');
       subscription.unsubscribe();
     };
-  }, [navigate, toast, logger]);
+  }, [navigate, logger, toast]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center bg-gradient-to-r from-pink-50 to-rose-100 pt-12">

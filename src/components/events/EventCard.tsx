@@ -9,6 +9,7 @@ interface EventCardProps {
   title: string;
   type: EventType;
   description: string;
+  imageUrl?: string;
   startTime?: string;
   endTime?: string;
   onParticipate: (eventId: string) => void;
@@ -34,6 +35,7 @@ export const EventCard = ({
   title,
   type,
   description,
+  imageUrl,
   startTime,
   endTime,
   onParticipate,
@@ -44,6 +46,15 @@ export const EventCard = ({
       animate={{ opacity: 1, x: 0 }}
       className="p-4 rounded-lg bg-white shadow-md"
     >
+      {imageUrl && (
+        <div className="mb-4 rounded-lg overflow-hidden">
+          <img 
+            src={imageUrl} 
+            alt={title}
+            className="w-full h-48 object-cover"
+          />
+        </div>
+      )}
       <div className="flex items-start justify-between mb-2">
         <div>
           <h3 className="text-xl font-cormorant font-semibold">
