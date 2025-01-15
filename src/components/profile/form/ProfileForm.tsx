@@ -1,11 +1,11 @@
 import { usePreferences } from "../hooks/usePreferences";
 import { AboutSection } from "./AboutSection";
 import { StatusSection } from "./StatusSection";
-import { RelationshipSection } from "./RelationshipSection";
-import { TokensSection } from "./TokensSection";
 import { OrientationSection } from "./OrientationSection";
 import { SeekingSection } from "./SeekingSection";
+import { RelationshipSection } from "./RelationshipSection";
 import { PreferencesSection } from "./PreferencesSection";
+import { TokensSection } from "./TokensSection";
 import { GallerySection } from "./GallerySection";
 import { LocationSection } from "./LocationSection";
 
@@ -19,47 +19,53 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
 
   return (
     <div className="space-y-8 w-full">
-      <LocationSection 
-        preferences={preferences}
-        onPreferenceChange={handlePreferenceChange}
-      />
-      
-      <AboutSection 
-        description={profile?.description}
-        onUpdate={onUpdate}
-      />
-      
-      <StatusSection
-        status={profile?.status}
-        onUpdate={onUpdate}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-8">
+          <LocationSection 
+            preferences={preferences}
+            onPreferenceChange={handlePreferenceChange}
+          />
+          
+          <AboutSection 
+            description={profile?.description}
+            onUpdate={onUpdate}
+          />
+          
+          <StatusSection
+            status={profile?.status}
+            onUpdate={onUpdate}
+          />
 
-      <OrientationSection
-        orientation={profile?.sexual_orientation}
-        onUpdate={onUpdate}
-      />
+          <OrientationSection
+            orientation={profile?.sexual_orientation}
+            onUpdate={onUpdate}
+          />
 
-      <SeekingSection
-        seeking={profile?.seeking}
-        status={profile?.status}
-        orientation={profile?.sexual_orientation}
-        onUpdate={onUpdate}
-      />
+          <TokensSection
+            tokens={profile?.loolyb_tokens}
+            onUpdate={onUpdate}
+          />
+        </div>
 
-      <RelationshipSection
-        relationshipType={profile?.relationship_type}
-        onUpdate={onUpdate}
-      />
+        <div className="space-y-8">
+          <SeekingSection
+            seeking={profile?.seeking}
+            status={profile?.status}
+            orientation={profile?.sexual_orientation}
+            onUpdate={onUpdate}
+          />
 
-      <PreferencesSection
-        preferences={preferences}
-        onPreferenceChange={handlePreferenceChange}
-      />
+          <RelationshipSection
+            relationshipType={profile?.relationship_type}
+            onUpdate={onUpdate}
+          />
 
-      <TokensSection
-        tokens={profile?.loolyb_tokens}
-        onUpdate={onUpdate}
-      />
+          <PreferencesSection
+            preferences={preferences}
+            onPreferenceChange={handlePreferenceChange}
+          />
+        </div>
+      </div>
 
       <GallerySection
         photos={profile?.photo_urls}
