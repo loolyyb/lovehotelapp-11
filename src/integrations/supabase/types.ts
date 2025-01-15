@@ -687,12 +687,16 @@ export type Database = {
           created_at: string
           id: string
           interests: Database["public"]["Enums"]["interest_type"][] | null
+          last_qualification_update: string | null
           libertine_party_interest: boolean | null
           location: string | null
           max_age: number | null
           min_age: number | null
           open_curtains: boolean | null
           open_curtains_interest: boolean | null
+          qualification_completed: boolean | null
+          qualification_data: Json | null
+          qualification_step: number | null
           speed_dating_interest: boolean | null
           updated_at: string
           user_id: string | null
@@ -701,12 +705,16 @@ export type Database = {
           created_at?: string
           id?: string
           interests?: Database["public"]["Enums"]["interest_type"][] | null
+          last_qualification_update?: string | null
           libertine_party_interest?: boolean | null
           location?: string | null
           max_age?: number | null
           min_age?: number | null
           open_curtains?: boolean | null
           open_curtains_interest?: boolean | null
+          qualification_completed?: boolean | null
+          qualification_data?: Json | null
+          qualification_step?: number | null
           speed_dating_interest?: boolean | null
           updated_at?: string
           user_id?: string | null
@@ -715,12 +723,16 @@ export type Database = {
           created_at?: string
           id?: string
           interests?: Database["public"]["Enums"]["interest_type"][] | null
+          last_qualification_update?: string | null
           libertine_party_interest?: boolean | null
           location?: string | null
           max_age?: number | null
           min_age?: number | null
           open_curtains?: boolean | null
           open_curtains_interest?: boolean | null
+          qualification_completed?: boolean | null
+          qualification_data?: Json | null
+          qualification_step?: number | null
           speed_dating_interest?: boolean | null
           updated_at?: string
           user_id?: string | null
