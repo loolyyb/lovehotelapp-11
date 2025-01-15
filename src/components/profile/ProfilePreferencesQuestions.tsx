@@ -57,7 +57,7 @@ export function ProfilePreferencesQuestions({
 
         <div className="flex items-center justify-between">
           <Label htmlFor="libertine-party" className="flex-1">
-            Intéressé(e) de participer à nos soirées libertines ?
+            Intéressé(e) de participer à des évènements libertins ?
           </Label>
           <Switch
             id="libertine-party"
