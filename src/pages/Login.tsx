@@ -85,6 +85,26 @@ export default function Login() {
           description: "Bienvenue !",
         });
         navigate("/");
+      } else if (event === 'USER_UPDATED') {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          if (error.message.includes('user_already_exists')) {
+            toast({
+              variant: "destructive",
+              title: "Erreur d'inscription",
+              description: "Un compte existe déjà avec cette adresse email. Veuillez vous connecter.",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Erreur",
+              description: error.message,
+            });
+          }
+        } else if (session) {
+          await createProfileIfNeeded(session.user.id);
+          navigate("/");
+        }
       }
     };
 
