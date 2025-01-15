@@ -12,6 +12,59 @@ export default function Login() {
   const logger = useLogger('Login');
   const { toast } = useToast();
 
+  const createProfileIfNeeded = async (userId: string) => {
+    try {
+      // Check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!existingProfile) {
+        logger.info('Creating missing profile for user:', userId);
+        
+        // Create new profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{
+            user_id: userId,
+            full_name: 'Nouveau membre',
+            is_love_hotel_member: false,
+            is_loolyb_holder: false,
+            relationship_type: [],
+            seeking: [],
+            photo_urls: [],
+            visibility: 'public',
+            allowed_viewers: [],
+            role: 'user'
+          }]);
+
+        if (profileError) throw profileError;
+
+        // Create initial preferences
+        const { error: prefError } = await supabase
+          .from('preferences')
+          .insert([{
+            user_id: userId,
+            qualification_completed: false,
+            qualification_step: 0
+          }]);
+
+        if (prefError) throw prefError;
+
+        logger.info('Successfully created missing profile and preferences');
+      }
+    } catch (error) {
+      logger.error('Error creating profile:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de créer votre profil. Veuillez réessayer.",
+      });
+    }
+  };
+
   useEffect(() => {
     logger.debug('Composant Login monté');
     
@@ -19,11 +72,13 @@ export default function Login() {
       logger.info('Changement d\'état d\'authentification', { event, hasSession: !!session });
       
       if (event === 'SIGNED_UP' && session) {
+        await createProfileIfNeeded(session.user.id);
         toast({
           title: "Inscription réussie",
           description: "Votre compte a été créé avec succès.",
         });
       } else if (event === 'SIGNED_IN' && session) {
+        await createProfileIfNeeded(session.user.id);
         toast({
           title: "Connexion réussie",
           description: "Bienvenue !",
