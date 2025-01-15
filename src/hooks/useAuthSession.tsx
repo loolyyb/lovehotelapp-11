@@ -11,6 +11,7 @@ export const useAuthSession = () => {
 
   const createProfile = async (userId: string) => {
     try {
+      console.log("Creating new profile for user:", userId);
       const { data: newProfile, error: createError } = await supabase
         .from('profiles')
         .insert([
@@ -30,9 +31,22 @@ export const useAuthSession = () => {
           }
         ])
         .select()
-        .maybeSingle();
+        .single();
 
       if (createError) throw createError;
+
+      // Create initial preferences for qualification
+      const { error: prefError } = await supabase
+        .from('preferences')
+        .insert([{
+          user_id: userId,
+          qualification_completed: false,
+          qualification_step: 0
+        }]);
+
+      if (prefError) throw prefError;
+
+      console.log("New profile created successfully:", newProfile);
       return newProfile;
     } catch (error) {
       console.error('Error creating profile:', error);
@@ -47,6 +61,7 @@ export const useAuthSession = () => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user:", userId);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -88,7 +103,8 @@ export const useAuthSession = () => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
       setSession(session);
       if (session) {
         fetchUserProfile(session.user.id);
