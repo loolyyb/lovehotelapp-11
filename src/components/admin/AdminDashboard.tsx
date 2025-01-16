@@ -30,14 +30,18 @@ export function AdminDashboard() {
   return (
     <div id="admin-panel" className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
+        <div className="admin-header">
           <h1 className="text-2xl font-semibold">Dashboard Administrateur</h1>
-          <Button variant="outline" onClick={handleLogout}>
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            className="admin-button"
+          >
             Déconnexion Admin
           </Button>
         </div>
 
-        <Tabs defaultValue="users" className="space-y-4">
+        <Tabs defaultValue="users" className="admin-tabs">
           <TabsList className="bg-admin-card">
             <TabsTrigger value="users">Utilisateurs</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>

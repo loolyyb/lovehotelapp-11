@@ -33,7 +33,7 @@ export function UsersTab() {
   });
 
   return (
-    <Card className="p-6">
+    <Card className="data-table">
       <Table>
         <TableHeader>
           <TableRow>
