@@ -1,3 +1,10 @@
+/**
+ * UsersTab Component
+ * 
+ * Displays a list of all users in the system and provides administrative
+ * functions to manage user accounts. Includes features for viewing user details,
+ * managing roles, and monitoring user activity.
+ */
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";

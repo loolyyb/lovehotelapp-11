@@ -1,3 +1,9 @@
+/**
+ * StatsTab Component
+ * 
+ * Displays key statistics and metrics about the platform, including user counts,
+ * message activity, and other important analytics data for administrators.
+ */
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";

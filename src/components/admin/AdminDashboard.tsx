@@ -1,3 +1,10 @@
+/**
+ * AdminDashboard Component
+ * 
+ * Main dashboard interface for administrators to manage users, view conversations,
+ * and monitor site statistics. Provides a tabbed interface for easy navigation
+ * between different administrative functions.
+ */
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuthStore } from "@/stores/adminAuthStore";
