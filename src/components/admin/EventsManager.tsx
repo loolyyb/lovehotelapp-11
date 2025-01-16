@@ -40,6 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Shield, Globe } from "lucide-react";
 
 const eventSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
@@ -89,10 +90,16 @@ export function EventsManager() {
 
   const onSubmit = async (values: EventFormValues) => {
     try {
-      const { error } = await supabase.from('events').insert([{
-        ...values,
+      const { error } = await supabase.from('events').insert({
+        title: values.title,
+        description: values.description,
+        event_date: values.event_date,
+        event_type: values.event_type,
         created_by: (await supabase.auth.getUser()).data.user?.id,
-      }]);
+        is_private: values.is_private,
+        price: values.free_for_members ? null : values.price,
+        free_for_members: values.free_for_members,
+      });
 
       if (error) throw error;
 
@@ -307,7 +314,14 @@ export function EventsManager() {
         <TableBody>
           {events?.map((event) => (
             <TableRow key={event.id}>
-              <TableCell>{event.title}</TableCell>
+              <TableCell className="flex items-center gap-2">
+                {event.is_private ? (
+                  <Shield className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <Globe className="h-4 w-4 text-gray-500" />
+                )}
+                {event.title}
+              </TableCell>
               <TableCell>
                 {new Date(event.event_date).toLocaleDateString('fr-FR')}
               </TableCell>
