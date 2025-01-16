@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 
 const SimpleQuiz = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -31,9 +32,58 @@ const SimpleQuiz = () => {
     },
   ];
 
-  const handleAnswer = (index: number) => {
+  const updatePoints = async (earnedPoints: number) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté pour gagner des points",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get current points
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('loyalty_points')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      const currentPoints = profile?.loyalty_points || 0;
+      
+      // Update points
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          loyalty_points: currentPoints + earnedPoints 
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Points mis à jour !",
+        description: `Vous avez gagné ${earnedPoints} points de fidélité !`,
+      });
+    } catch (error: any) {
+      console.error('Error updating points:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour vos points",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAnswer = async (index: number) => {
     if (index === questions[currentQuestion].answer) {
-      setScore(score + 10);
+      const earnedPoints = 10;
+      setScore(score + earnedPoints);
+      await updatePoints(earnedPoints);
       toast({
         title: "Bonne réponse !",
         description: "Vous gagnez 10 points !",
