@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminAuthStore } from "@/stores/adminAuthStore";
 
 interface AdminPasswordCheckProps {
   onPasswordValid: () => void;
@@ -11,10 +12,12 @@ interface AdminPasswordCheckProps {
 export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps) {
   const [password, setPassword] = useState("");
   const { toast } = useToast();
+  const setAdminAuthenticated = useAdminAuthStore((state) => state.setAdminAuthenticated);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (password === "Reussite888!") {
+      setAdminAuthenticated(true);
       onPasswordValid();
     } else {
       toast({
