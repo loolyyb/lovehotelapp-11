@@ -1,12 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { EventCard } from '@/components/events/EventCard';
+import { EventType } from '@/types/events';
 import { vi } from 'vitest';
 
 describe('EventCard', () => {
   const mockEvent = {
     id: '1',
     title: 'Test Event',
-    type: 'bdsm',
+    type: 'bdsm' as EventType,
     description: 'Test Description',
     imageUrl: 'https://example.com/image.jpg',
     startTime: '19:00',
