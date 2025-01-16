@@ -38,6 +38,12 @@ type ProfileWithPreferences = {
     | { error: boolean };
 };
 
+type ValidPreferences = {
+  open_curtains_interest: boolean;
+  speed_dating_interest: boolean;
+  libertine_party_interest: boolean;
+};
+
 export function StatsTab() {
   // Fetch users and their preferences
   const { data: rawData } = useQuery({
@@ -89,12 +95,17 @@ export function StatsTab() {
     }
   });
 
+  // Helper function to check if preferences are valid
+  const isValidPreferences = (prefs: ProfileWithPreferences['preferences']): prefs is ValidPreferences => {
+    return !('error' in prefs);
+  };
+
   // Calculate statistics
   const stats = {
     totalUsers: usersWithPreferences?.length || 0,
-    openCurtainsInterested: usersWithPreferences?.filter(u => u.preferences?.open_curtains_interest)?.length || 0,
-    speedDatingInterested: usersWithPreferences?.filter(u => u.preferences?.speed_dating_interest)?.length || 0,
-    libertinePartyInterested: usersWithPreferences?.filter(u => u.preferences?.libertine_party_interest)?.length || 0,
+    openCurtainsInterested: usersWithPreferences?.filter(u => isValidPreferences(u.preferences) && u.preferences.open_curtains_interest)?.length || 0,
+    speedDatingInterested: usersWithPreferences?.filter(u => isValidPreferences(u.preferences) && u.preferences.speed_dating_interest)?.length || 0,
+    libertinePartyInterested: usersWithPreferences?.filter(u => isValidPreferences(u.preferences) && u.preferences.libertine_party_interest)?.length || 0,
     totalEvents: eventsData?.length || 0,
     totalParticipations: eventsData?.reduce((acc, event) => acc + (event.event_participants?.length || 0), 0) || 0,
   };
