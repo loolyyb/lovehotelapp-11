@@ -15,12 +15,23 @@ export interface Event {
   };
 }
 
+export interface EventCardProps {
+  id: string;
+  title: string;
+  type: EventType;
+  description: string;
+  imageUrl?: string;
+  startTime?: string;
+  endTime?: string;
+  onParticipate: (eventId: string) => void;
+}
+
 export const sampleEvents: Event[] = [
   {
     id: "1",
     title: "Speed Dating",
-    start: new Date(2024, 0, 24, 19, 0), // January 24, 2024, 19:00
-    end: new Date(2024, 0, 24, 23, 0),   // January 24, 2024, 23:00
+    start: new Date(2024, 0, 24, 19, 0),
+    end: new Date(2024, 0, 24, 23, 0),
     extendedProps: {
       description: "Une soirée de rencontres rapides dans une ambiance chaleureuse et décontractée.",
       type: "speed_dating",

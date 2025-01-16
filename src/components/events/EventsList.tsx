@@ -21,7 +21,13 @@ export const EventsList = ({ events, onParticipate }: EventsListProps) => {
       {events.map((event) => (
         <EventCard
           key={event.id}
-          {...event}
+          id={event.id}
+          title={event.title}
+          type={event.extendedProps.type}
+          description={event.extendedProps.description}
+          imageUrl={event.extendedProps.imageUrl}
+          startTime={event.start.toLocaleTimeString()}
+          endTime={event.end.toLocaleTimeString()}
           onParticipate={onParticipate}
         />
       ))}

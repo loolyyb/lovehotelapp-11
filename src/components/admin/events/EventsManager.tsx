@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export function EventsManager() {
   const { toast } = useToast();
-  const { isOpen, setIsOpen, handleSubmit, isLoading } = useEventManagement();
+  const { handleSubmit, isLoading, isOpen, setIsOpen } = useEventManagement();
   const [editingEvent, setEditingEvent] = React.useState<any>(null);
 
   const { data: events, refetch } = useQuery({
@@ -89,7 +89,7 @@ export function EventsManager() {
       </div>
 
       <EventFormDialog
-        open={isOpen}
+        isOpen={isOpen}
         onOpenChange={setIsOpen}
         event={editingEvent}
       >
