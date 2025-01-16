@@ -9,11 +9,12 @@ import { Loader2 } from "lucide-react";
 
 interface EventFormProps {
   onSubmit: (values: EventFormValues) => Promise<void>;
+  onSuccess?: () => void;
   isLoading?: boolean;
   initialData?: Partial<EventFormValues>;
 }
 
-export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) {
+export function EventForm({ onSubmit, onSuccess, isLoading, initialData }: EventFormProps) {
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
@@ -30,6 +31,11 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
     },
   });
 
+  const handleSubmit = async (values: EventFormValues) => {
+    await onSubmit(values);
+    onSuccess?.();
+  };
+
   return (
     <DialogContent className="sm:max-w-[600px]">
       <DialogHeader>
@@ -38,7 +44,7 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
         </DialogTitle>
       </DialogHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <EventFormFields form={form} />
           <Button 
             type="submit" 

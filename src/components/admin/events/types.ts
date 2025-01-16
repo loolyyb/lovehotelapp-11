@@ -28,16 +28,14 @@ export type EventFormValues = z.infer<typeof eventSchema>;
 export interface Event {
   id: string;
   title: string;
-  description: string | null;
-  event_date: string;
-  event_type: "bdsm" | "jacuzzi" | "gastronomy" | "speed_dating" | "other";
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  location: string | null;
-  max_participants: number | null;
-  price: number | null;
-  is_private: boolean;
-  free_for_members: boolean;
-  image_url: string | null;
+  start: Date;
+  end: Date;
+  extendedProps: {
+    description: string;
+    type: "bdsm" | "jacuzzi" | "gastronomy" | "speed_dating" | "other";
+    isPrivate: boolean;
+    price: number | null;
+    freeForMembers: boolean;
+    imageUrl?: string;
+  };
 }
