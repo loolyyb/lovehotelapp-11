@@ -1,5 +1,5 @@
 import { colors } from './colors';
-import { keyframes, animation } from './animations';
+import { animations } from './animations';
 
 export const theme = {
   container: {
@@ -10,15 +10,14 @@ export const theme = {
     },
   },
   extend: {
+    colors,
+    animations,
     fontFamily: {
       montserrat: ['Montserrat', 'sans-serif'],
       cormorant: ['Cormorant Garamond', 'serif'],
     },
-    colors,
     boxShadow: {
       'admin-shadow': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
     },
-    keyframes,
-    animation,
   },
 };
