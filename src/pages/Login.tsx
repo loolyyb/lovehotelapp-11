@@ -1,20 +1,21 @@
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Login() {
   const navigate = useNavigate();
   const logger = useLogger('Login');
   const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   const createProfileIfNeeded = async (userId: string) => {
     try {
-      // Check if profile exists
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
@@ -24,7 +25,6 @@ export default function Login() {
       if (!existingProfile) {
         logger.info('Creating missing profile for user', { userId });
         
-        // Create new profile
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([{
@@ -42,7 +42,6 @@ export default function Login() {
 
         if (profileError) throw profileError;
 
-        // Create initial preferences
         const { error: prefError } = await supabase
           .from('preferences')
           .insert([{
@@ -55,7 +54,7 @@ export default function Login() {
 
         logger.info('Successfully created missing profile and preferences', { userId });
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Error creating profile:', { error, userId });
       toast({
         variant: "destructive",
@@ -68,6 +67,19 @@ export default function Login() {
   useEffect(() => {
     logger.debug('Composant Login monté');
     
+    const checkSession = async () => {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/");
+      }
+      if (sessionError) {
+        logger.error('Session error:', sessionError);
+        setError("Une erreur est survenue lors de la vérification de votre session. Veuillez réessayer.");
+      }
+    };
+
+    checkSession();
+
     const handleAuthChange = async (event: string, session: any) => {
       logger.info('Changement d\'état d\'authentification', { event, hasSession: !!session });
       
@@ -84,24 +96,41 @@ export default function Login() {
           description: "Bienvenue !",
         });
         navigate("/");
-      } else if (event === 'USER_UPDATED' && !session) {
-        const { error } = await supabase.auth.getSession();
-        if (error?.message.includes('user_already_exists')) {
-          toast({
-            variant: "destructive",
-            title: "Erreur d'inscription",
-            description: "Un compte existe déjà avec cette adresse email. Veuillez vous connecter.",
-          });
-        }
+      } else if (event === 'TOKEN_REFRESHED') {
+        logger.info('Token refreshed successfully');
+      } else if (event === 'SIGNED_OUT') {
+        setError(null);
       }
     };
 
-    // Check if user is already logged in
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+
+    const setupRefreshToken = () => {
+      let timeoutId: NodeJS.Timeout;
+
+      const refreshSession = async () => {
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          logger.error('Error refreshing session:', error);
+          if (error.message.includes('refresh_token_not_found')) {
+            setError("Votre session a expiré. Veuillez vous reconnecter.");
+            await supabase.auth.signOut();
+          }
+        }
+      };
+
+      // Refresh token every 30 minutes
+      timeoutId = setInterval(refreshSession, 30 * 60 * 1000);
+
+      return () => clearInterval(timeoutId);
+    };
+
+    const cleanup = setupRefreshToken();
 
     return () => {
       logger.debug('Composant Login démonté');
       subscription.unsubscribe();
+      cleanup();
     };
   }, [navigate, logger, toast]);
 
@@ -110,6 +139,11 @@ export default function Login() {
       <div className="w-full max-w-md px-4">
         <Card className="p-8 space-y-4">
           <h1 className="text-3xl font-playfair text-center mb-6">Se Connecter</h1>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <Auth
             supabaseClient={supabase}
             appearance={{
