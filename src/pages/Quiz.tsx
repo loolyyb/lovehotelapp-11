@@ -55,18 +55,24 @@ export default function Quiz() {
       setScore(newScore);
       
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('No user found');
+
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('loolyb_tokens')
-          .single();
+          .eq('user_id', user.id)
+          .maybeSingle();
 
         if (profileError) throw profileError;
 
+        const currentTokens = profile?.loolyb_tokens || 0;
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ 
-            loolyb_tokens: (profile?.loolyb_tokens || 0) + quizQuestions[currentQuestion].points 
-          });
+            loolyb_tokens: currentTokens + quizQuestions[currentQuestion].points 
+          })
+          .eq('user_id', user.id);
 
         if (updateError) throw updateError;
 
@@ -74,7 +80,7 @@ export default function Quiz() {
           title: "Bonne réponse !",
           description: `Vous gagnez ${quizQuestions[currentQuestion].points} LooLyyb tokens !`,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error updating tokens:', error);
         toast({
           title: "Erreur",
