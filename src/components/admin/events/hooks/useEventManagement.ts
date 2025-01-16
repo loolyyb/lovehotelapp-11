@@ -1,29 +1,13 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useLogger } from "@/hooks/useLogger";
 import { supabase } from "@/integrations/supabase/client";
-import { EventFormValues, Event } from "../types";
-import { uploadEventImage, createEvent } from "../utils/eventUtils";
+import { EventFormValues } from "../types";
+import { uploadEventImage } from "../utils/eventUtils";
 
 export function useEventManagement() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const logger = useLogger('EventManagement');
-
-  const { data: events, refetch } = useQuery({
-    queryKey: ['admin-events'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('event_date', { ascending: true });
-      
-      if (error) throw error;
-      return data as Event[];
-    }
-  });
 
   const handleSubmit = async (values: EventFormValues) => {
     try {
@@ -34,20 +18,35 @@ export function useEventManagement() {
         imageUrl = await uploadEventImage(values.image);
       }
 
+      const eventDateTime = new Date(values.event_date);
+      const [hours, minutes] = values.start_time.split(':');
+      eventDateTime.setHours(parseInt(hours), parseInt(minutes));
+
       const userId = (await supabase.auth.getUser()).data.user?.id;
       if (!userId) throw new Error('User not authenticated');
 
-      const { error } = await createEvent(values, userId, imageUrl);
+      const { error } = await supabase.from('events').insert({
+        title: values.title,
+        description: values.description,
+        event_date: eventDateTime.toISOString(),
+        event_type: values.event_type,
+        created_by: userId,
+        is_private: values.is_private,
+        price: values.free_for_members ? null : values.price,
+        free_for_members: values.free_for_members,
+        image_url: imageUrl,
+      });
 
-      if (error) {
-        logger.error('Error creating event:', { error, values });
-        throw error;
-      }
+      if (error) throw error;
+
+      toast({
+        title: "Événement créé",
+        description: "L'événement a été créé avec succès",
+      });
 
       setIsOpen(false);
-      refetch();
     } catch (error) {
-      logger.error('Error in handleSubmit:', { error });
+      console.error('Error creating event:', error);
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de l'événement",
@@ -59,7 +58,6 @@ export function useEventManagement() {
   };
 
   return {
-    events,
     isOpen,
     setIsOpen,
     handleSubmit,
