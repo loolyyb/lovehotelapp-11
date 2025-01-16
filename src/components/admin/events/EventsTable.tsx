@@ -1,3 +1,5 @@
+import React from "react";
+import { Shield, Globe } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -6,11 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Shield, Globe } from "lucide-react";
 import { Event } from "./types";
 
 interface EventsTableProps {
-  events: Event[] | null;
+  events?: Event[];
 }
 
 export function EventsTable({ events }: EventsTableProps) {

@@ -23,6 +23,7 @@ export function EventForm({ onSubmit }: EventFormProps) {
       is_private: false,
       price: null,
       free_for_members: true,
+      image: undefined,
     },
   });
 
