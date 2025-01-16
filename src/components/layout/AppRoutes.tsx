@@ -1,20 +1,16 @@
 import { Routes, Route } from "react-router-dom";
-import Home from "@/pages/Home";
-import Profile from "@/pages/Profile";
-import Dashboard from "@/pages/Dashboard";
-import Challenges from "@/pages/Challenges";
-import ProfileDetails from "@/pages/ProfileDetails";
-import Quiz from "@/pages/Quiz";
+import { Session } from "@supabase/supabase-js";
+import { LoveQuiz } from "@/components/quiz/Quiz";
 
-export function AppRoutes() {
+interface AppRoutesProps {
+  session: Session | null;
+}
+
+export function AppRoutes({ session }: AppRoutesProps) {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/challenges" element={<Challenges />} />
-      <Route path="/profile/:id" element={<ProfileDetails />} />
-      <Route path="/quiz" element={<Quiz />} />
+      <Route path="/" element={<div className="p-8">Welcome to Love Hotel App</div>} />
+      <Route path="/quiz" element={<LoveQuiz />} />
     </Routes>
   );
 }
