@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Event } from '@/types/events';
+import { Event } from './types';
 import { EventParticipationButton } from './components/EventParticipationButton';
 
 interface EventModalProps {

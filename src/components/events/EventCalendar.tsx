@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Event } from '@/types/events';
+import { Event } from './types';
 import { EventModal } from './EventModal';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
