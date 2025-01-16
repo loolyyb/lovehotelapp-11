@@ -9,6 +9,7 @@ import { uploadEventImage, createEvent } from "../utils/eventUtils";
 export function useEventManagement() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const logger = useLogger('EventManagement');
 
   const { data: events, refetch } = useQuery({
@@ -26,6 +27,7 @@ export function useEventManagement() {
 
   const handleSubmit = async (values: EventFormValues) => {
     try {
+      setIsLoading(true);
       let imageUrl = null;
       
       if (values.image) {
@@ -51,6 +53,8 @@ export function useEventManagement() {
         description: "Une erreur est survenue lors de la création de l'événement",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,5 +63,6 @@ export function useEventManagement() {
     isOpen,
     setIsOpen,
     handleSubmit,
+    isLoading,
   };
 }

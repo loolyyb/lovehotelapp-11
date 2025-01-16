@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FormField,
   FormItem,
@@ -18,6 +18,20 @@ interface BasicInfoFieldsProps {
 }
 
 export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, onChange: (file: File) => void) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onChange(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <>
       <FormField
@@ -64,17 +78,21 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
               <div className="space-y-4">
                 <Input
                   type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      onChange(file);
-                    }
-                  }}
+                  accept="image/jpeg,image/png"
+                  onChange={(e) => handleImageChange(e, onChange)}
                   className="border-2 border-gray-200 focus:border-primary hover:border-gray-300 transition-colors"
                   {...field}
                 />
-                {value && (
+                {previewUrl && (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden">
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                {!previewUrl && value && (
                   <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
                     <ImageIcon className="h-4 w-4 text-gray-500" />
                     <span className="text-sm text-gray-600">{value.name}</span>

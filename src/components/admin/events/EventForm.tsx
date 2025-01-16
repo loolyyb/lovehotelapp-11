@@ -5,12 +5,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { EventFormFields } from "./EventFormFields";
 import { EventFormValues, eventSchema } from "./types";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 
 interface EventFormProps {
   onSubmit: (values: EventFormValues) => Promise<void>;
+  isLoading?: boolean;
 }
 
-export function EventForm({ onSubmit }: EventFormProps) {
+export function EventForm({ onSubmit, isLoading }: EventFormProps) {
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
@@ -35,8 +37,19 @@ export function EventForm({ onSubmit }: EventFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <EventFormFields form={form} />
-          <Button type="submit" className="w-full">
-            Créer l'événement
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Création en cours...
+              </>
+            ) : (
+              "Créer l'événement"
+            )}
           </Button>
         </form>
       </Form>
