@@ -4,16 +4,16 @@
 }
 
 #admin-panel .card {
-  @apply bg-admin-card shadow-lg rounded-lg;
+  @apply bg-admin-card shadow-lg rounded-lg transition-all duration-300 ease-in-out hover:shadow-xl;
 }
 
 /* Admin Panel Components */
 #admin-panel .stats-card {
-  @apply bg-admin-card p-6 rounded-lg shadow-md;
+  @apply bg-admin-card p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg;
 }
 
 #admin-panel .data-table {
-  @apply w-full bg-admin-card rounded-lg overflow-hidden;
+  @apply w-full bg-admin-card rounded-lg overflow-hidden transition-all duration-300;
 }
 
 #admin-panel .admin-header {
@@ -22,6 +22,11 @@
 
 #admin-panel .admin-tabs {
   @apply space-y-6;
+}
+
+/* Admin Button Styles */
+#admin-panel .admin-button {
+  @apply transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-md;
 }
 
 /* Table Styles */
@@ -45,12 +50,42 @@
   @apply px-6 py-4 text-admin-text;
 }
 
-/* Card Styles */
-#admin-panel .stat-card {
-  @apply bg-admin-card p-4 rounded-lg shadow-sm;
+#admin-panel tr {
+  @apply transition-colors duration-200 hover:bg-admin-bg/50;
 }
 
-/* Button Styles */
-#admin-panel .admin-button {
-  @apply bg-admin-primary text-white px-4 py-2 rounded-lg hover:bg-admin-secondary transition-colors;
+/* Card Styles */
+#admin-panel .stat-card {
+  @apply bg-admin-card p-4 rounded-lg shadow-sm transition-all duration-300 hover:shadow-lg;
+}
+
+/* Animation Classes */
+#admin-panel .fade-in {
+  @apply animate-fadeIn;
+}
+
+#admin-panel .slide-in {
+  @apply animate-slideIn;
+}
+
+/* Tab Transitions */
+#admin-panel .admin-tabs [data-state="active"] {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+#admin-panel .admin-tabs [data-state="inactive"] {
+  @apply transition-opacity duration-300 ease-in-out opacity-50;
+}
+
+/* Interactive Elements */
+#admin-panel button:not([disabled]),
+#admin-panel a:not([disabled]) {
+  @apply transition-all duration-300 ease-in-out hover:scale-105;
+}
+
+/* Form Controls */
+#admin-panel input,
+#admin-panel select,
+#admin-panel textarea {
+  @apply transition-all duration-200 ease-in-out focus:ring-2 focus:ring-admin-primary/50;
 }

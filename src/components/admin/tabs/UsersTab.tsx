@@ -33,7 +33,7 @@ export function UsersTab() {
   });
 
   return (
-    <Card className="data-table">
+    <Card className="data-table fade-in">
       <Table>
         <TableHeader>
           <TableRow>

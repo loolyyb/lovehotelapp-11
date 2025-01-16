@@ -29,8 +29,8 @@ export function AdminDashboard() {
 
   return (
     <div id="admin-panel" className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        <div className="admin-header">
+      <div className="container mx-auto px-4 py-8 fade-in">
+        <div className="admin-header slide-in">
           <h1 className="text-2xl font-semibold">Dashboard Administrateur</h1>
           <Button 
             variant="outline" 
@@ -49,19 +49,19 @@ export function AdminDashboard() {
             <TabsTrigger value="ads">Publicités</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="users">
+          <TabsContent value="users" className="fade-in">
             <UsersTab />
           </TabsContent>
 
-          <TabsContent value="messages">
+          <TabsContent value="messages" className="fade-in">
             <ConversationsTab />
           </TabsContent>
 
-          <TabsContent value="stats">
+          <TabsContent value="stats" className="fade-in">
             <StatsTab />
           </TabsContent>
 
-          <TabsContent value="ads">
+          <TabsContent value="ads" className="fade-in">
             <AdvertisementManager />
           </TabsContent>
         </Tabs>
