@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UsersTab } from "./tabs/UsersTab";
 import { ConversationsTab } from "./tabs/ConversationsTab";
 import { StatsTab } from "./tabs/StatsTab";
+import { AdvertisementManager } from "./AdvertisementManager";
 
 export function AdminDashboard() {
   const setAdminAuthenticated = useAdminAuthStore((state) => state.setAdminAuthenticated);
@@ -40,6 +41,7 @@ export function AdminDashboard() {
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="stats">Statistiques</TabsTrigger>
+          <TabsTrigger value="ads">Publicités</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
@@ -52,6 +54,10 @@ export function AdminDashboard() {
 
         <TabsContent value="stats">
           <StatsTab />
+        </TabsContent>
+
+        <TabsContent value="ads">
+          <AdvertisementManager />
         </TabsContent>
       </Tabs>
     </div>
