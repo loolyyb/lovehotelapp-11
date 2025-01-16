@@ -27,7 +27,10 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
           <FormItem>
             <FormLabel>Titre</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input 
+                {...field} 
+                className="border-2 border-gray-200 focus:border-primary hover:border-gray-300 transition-colors"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -41,7 +44,10 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <Textarea {...field} />
+              <Textarea 
+                {...field} 
+                className="min-h-[100px] border-2 border-gray-200 focus:border-primary hover:border-gray-300 transition-colors"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -55,7 +61,7 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
           <FormItem>
             <FormLabel>Image de l'événement</FormLabel>
             <FormControl>
-              <div className="flex items-center gap-4">
+              <div className="space-y-4">
                 <Input
                   type="file"
                   accept="image/*"
@@ -65,12 +71,13 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
                       onChange(file);
                     }
                   }}
+                  className="border-2 border-gray-200 focus:border-primary hover:border-gray-300 transition-colors"
                   {...field}
                 />
                 {value && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <ImageIcon className="h-4 w-4" />
-                    {value.name}
+                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+                    <ImageIcon className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">{value.name}</span>
                   </div>
                 )}
               </div>

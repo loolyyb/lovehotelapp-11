@@ -42,15 +42,10 @@ export function useEventManagement() {
         throw error;
       }
 
-      toast({
-        title: "Événement créé",
-        description: "L'événement a été créé avec succès",
-      });
-
       setIsOpen(false);
       refetch();
     } catch (error) {
-      logger.error('Error creating event:', { error });
+      logger.error('Error in handleSubmit:', { error });
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de l'événement",
