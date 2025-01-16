@@ -41,10 +41,7 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
           <FormItem>
             <FormLabel>Titre</FormLabel>
             <FormControl>
-              <Input 
-                {...field} 
-                className="border-2 border-gray-200 focus:border-primary hover:border-gray-300 transition-colors"
-              />
+              <Input {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -58,10 +55,7 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <Textarea 
-                {...field} 
-                className="min-h-[100px] border-2 border-gray-200 focus:border-primary hover:border-gray-300 transition-colors"
-              />
+              <Textarea {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
