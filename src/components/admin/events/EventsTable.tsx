@@ -6,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Shield, Globe } from "lucide-react";
 import { Event } from "./types";
 
 interface EventsTableProps {
@@ -27,7 +28,14 @@ export function EventsTable({ events }: EventsTableProps) {
       <TableBody>
         {events?.map((event) => (
           <TableRow key={event.id}>
-            <TableCell>{event.title}</TableCell>
+            <TableCell className="flex items-center gap-2">
+              {event.is_private ? (
+                <Shield className="h-4 w-4 text-gray-500" />
+              ) : (
+                <Globe className="h-4 w-4 text-gray-500" />
+              )}
+              {event.title}
+            </TableCell>
             <TableCell>
               {new Date(event.event_date).toLocaleDateString('fr-FR')}
             </TableCell>
