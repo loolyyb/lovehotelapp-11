@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Menu, Crown, BedDouble, Utensils, Users, Gift } from "lucide-react";
+import { Menu, Crown, BedDouble, Utensils, Users, Gift, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -68,6 +68,14 @@ export function SideMenu() {
           >
             <Gift className="h-5 w-5" />
             <span>Nos Options</span>
+          </Link>
+          <Link 
+            to="/quiz" 
+            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            <Brain className="h-5 w-5" />
+            <span>Quiz Love Hotel</span>
           </Link>
         </nav>
       </SheetContent>
