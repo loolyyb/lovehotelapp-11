@@ -16,7 +16,7 @@ export const EventsCalendar = () => {
     if (!selectedDate) return [];
     
     return sampleEvents.filter((event) => {
-      const eventDate = new Date(event.date);
+      const eventDate = event.start; // Changed from event.date to event.start
       const selected = new Date(selectedDate);
       
       return (
