@@ -1,5 +1,14 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import { vi, expect, afterEach, beforeEach, describe, it } from 'vitest';
+import { cleanup } from '@testing-library/react';
+
+// Make Vitest's Jest-compatible globals available
+globalThis.expect = expect;
+globalThis.afterEach = afterEach;
+globalThis.beforeEach = beforeEach;
+globalThis.describe = describe;
+globalThis.it = it;
+globalThis.vi = vi;
 
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -22,3 +31,8 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
   disconnect() {}
 };
+
+// Cleanup after each test
+afterEach(() => {
+  cleanup();
+});
