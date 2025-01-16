@@ -8,10 +8,12 @@ import { useToast } from "@/hooks/use-toast";
 import { EventForm } from "./EventForm";
 import { EventsTable } from "./EventsTable";
 import { Event, EventFormValues } from "./types";
+import { useLogger } from "@/hooks/useLogger";
 
 export function EventsManager() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = React.useState(false);
+  const logger = useLogger('EventsManager');
 
   const { data: events, refetch } = useQuery({
     queryKey: ['admin-events'],
@@ -47,10 +49,15 @@ export function EventsManager() {
         imageUrl = publicUrl;
       }
 
+      // Combine date and time for event_date
+      const eventDateTime = new Date(values.event_date);
+      const [hours, minutes] = values.start_time.split(':');
+      eventDateTime.setHours(parseInt(hours), parseInt(minutes));
+
       const { error } = await supabase.from('events').insert({
         title: values.title,
         description: values.description,
-        event_date: values.event_date,
+        event_date: eventDateTime.toISOString(),
         event_type: values.event_type,
         created_by: (await supabase.auth.getUser()).data.user?.id,
         is_private: values.is_private,
@@ -59,7 +66,10 @@ export function EventsManager() {
         image_url: imageUrl,
       });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('Error creating event:', { error, values });
+        throw error;
+      }
 
       toast({
         title: "Événement créé",
@@ -69,7 +79,7 @@ export function EventsManager() {
       setIsOpen(false);
       refetch();
     } catch (error) {
-      console.error('Error creating event:', error);
+      logger.error('Error creating event:', { error });
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création de l'événement",
