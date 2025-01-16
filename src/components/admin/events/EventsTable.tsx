@@ -30,7 +30,7 @@ export function EventsTable({ events }: EventsTableProps) {
         {events?.map((event) => (
           <TableRow key={event.id}>
             <TableCell className="flex items-center gap-2">
-              {event.is_private ? (
+              {event.extendedProps.isPrivate ? (
                 <Shield className="h-4 w-4 text-gray-500" />
               ) : (
                 <Globe className="h-4 w-4 text-gray-500" />
@@ -38,16 +38,16 @@ export function EventsTable({ events }: EventsTableProps) {
               {event.title}
             </TableCell>
             <TableCell>
-              {new Date(event.event_date).toLocaleDateString('fr-FR')}
+              {event.start.toLocaleDateString('fr-FR')}
             </TableCell>
-            <TableCell>{event.event_type}</TableCell>
+            <TableCell>{event.extendedProps.type}</TableCell>
             <TableCell>
-              {event.is_private ? "Privé" : "Public"}
+              {event.extendedProps.isPrivate ? "Privé" : "Public"}
             </TableCell>
             <TableCell>
-              {event.free_for_members 
+              {event.extendedProps.freeForMembers 
                 ? "Gratuit pour les membres" 
-                : `${event.price || 0}€`}
+                : `${event.extendedProps.price || 0}€`}
             </TableCell>
           </TableRow>
         ))}
