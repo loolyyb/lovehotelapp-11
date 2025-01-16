@@ -10,6 +10,7 @@ export const eventSchema = z.object({
   is_private: z.boolean().default(false),
   price: z.number().min(0).nullable(),
   free_for_members: z.boolean().default(true),
+  image: z.instanceof(File).optional(),
 });
 
 export type EventFormValues = z.infer<typeof eventSchema>;
@@ -28,4 +29,5 @@ export interface Event {
   price: number | null;
   is_private: boolean;
   free_for_members: boolean;
+  image_url: string | null;
 }

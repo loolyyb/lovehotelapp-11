@@ -28,6 +28,25 @@ export function EventsManager() {
 
   const onSubmit = async (values: EventFormValues) => {
     try {
+      let imageUrl = null;
+
+      if (values.image) {
+        const fileExt = values.image.name.split('.').pop();
+        const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('event_images')
+          .upload(filePath, values.image);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('event_images')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+      }
+
       const { error } = await supabase.from('events').insert({
         title: values.title,
         description: values.description,
@@ -37,6 +56,7 @@ export function EventsManager() {
         is_private: values.is_private,
         price: values.free_for_members ? null : values.price,
         free_for_members: values.free_for_members,
+        image_url: imageUrl,
       });
 
       if (error) throw error;

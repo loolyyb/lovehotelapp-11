@@ -315,6 +315,7 @@ export type Database = {
           event_type: Database["public"]["Enums"]["event_type"]
           free_for_members: boolean | null
           id: string
+          image_url: string | null
           is_private: boolean | null
           location: string | null
           max_participants: number | null
@@ -330,6 +331,7 @@ export type Database = {
           event_type: Database["public"]["Enums"]["event_type"]
           free_for_members?: boolean | null
           id?: string
+          image_url?: string | null
           is_private?: boolean | null
           location?: string | null
           max_participants?: number | null
@@ -345,6 +347,7 @@ export type Database = {
           event_type?: Database["public"]["Enums"]["event_type"]
           free_for_members?: boolean | null
           id?: string
+          image_url?: string | null
           is_private?: boolean | null
           location?: string | null
           max_participants?: number | null
