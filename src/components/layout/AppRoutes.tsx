@@ -17,7 +17,8 @@ import RideauxOuverts from "@/pages/RideauxOuverts";
 import Dashboard from "@/pages/Dashboard";
 import Options from "@/pages/Options";
 import LoverCoin from "@/pages/LoverCoin";
-import { QualificationJourney } from "@/components/qualification/QualificationJourney";
+import Quiz from "@/pages/Quiz";
+import { QualificationJourney } from '@/components/qualification/QualificationJourney';
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -129,6 +130,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/lover-coin"
         element={<LoverCoin />}
+      />
+      <Route
+        path="/quiz"
+        element={session ? <Quiz /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/reserver-room"
