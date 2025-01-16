@@ -77,14 +77,14 @@ export function StatsTab() {
       : profile.preferences;
 
     // Log preferences state for debugging
-    if (!preferences?.error) {
-      console.log('Valid preferences found:', {
-        open_curtains_interest: preferences?.open_curtains_interest,
-        speed_dating_interest: preferences?.speed_dating_interest,
-        libertine_party_interest: preferences?.libertine_party_interest
-      });
-    } else {
+    if ('error' in preferences) {
       console.warn("Erreur : les préférences sont indisponibles pour l'utilisateur", profile.id);
+    } else {
+      console.log('Valid preferences found:', {
+        open_curtains_interest: preferences.open_curtains_interest,
+        speed_dating_interest: preferences.speed_dating_interest,
+        libertine_party_interest: preferences.libertine_party_interest
+      });
     }
 
     return {
