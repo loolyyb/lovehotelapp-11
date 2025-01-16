@@ -25,6 +25,11 @@ export default {
       },
       colors: {
         ...adminTheme.colors,
+        admin: {
+          ...adminTheme.colors.admin,
+          border: '#4A5568',
+          focus: '#667EEA',
+        },
         champagne: "#F7E6D0",
         rose: {
           50: "#FFF0F5",
@@ -84,6 +89,9 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+      },
+      boxShadow: {
+        'admin-shadow': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
       },
       keyframes: {
         "accordion-down": {
