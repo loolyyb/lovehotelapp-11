@@ -34,8 +34,8 @@ const SimpleQuiz = () => {
 
   const updatePoints = async (earnedPoints: number) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         toast({
           title: "Erreur",
           description: "Vous devez être connecté pour gagner des points",
@@ -44,27 +44,24 @@ const SimpleQuiz = () => {
         return;
       }
 
-      // Get current points
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('loyalty_points')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const response = await fetch(
+        'https://cmxmnsgbmhgpgxopmtua.functions.supabase.co/update-points',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ points: earnedPoints }),
+        }
+      );
 
-      if (profileError) throw profileError;
+      if (!response.ok) {
+        throw new Error('Failed to update points');
+      }
 
-      const currentPoints = profile?.loyalty_points || 0;
+      const data = await response.json();
       
-      // Update points
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          loyalty_points: currentPoints + earnedPoints 
-        })
-        .eq('user_id', user.id);
-
-      if (updateError) throw updateError;
-
       toast({
         title: "Points mis à jour !",
         description: `Vous avez gagné ${earnedPoints} points de fidélité !`,
