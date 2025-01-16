@@ -2,14 +2,14 @@ import '@testing-library/jest-dom';
 import { expect, afterEach, beforeEach, describe, it, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
-// Make Vitest's expect, afterEach, etc. available globally
+// Make Vitest's functions available globally without self-referential type annotations
 declare global {
-  var describe: typeof describe;
-  var it: typeof it;
-  var expect: typeof expect;
-  var beforeEach: typeof beforeEach;
-  var afterEach: typeof afterEach;
-  var vi: typeof vi;
+  var describe: typeof import('vitest')['describe'];
+  var it: typeof import('vitest')['it'];
+  var expect: typeof import('vitest')['expect'];
+  var beforeEach: typeof import('vitest')['beforeEach'];
+  var afterEach: typeof import('vitest')['afterEach'];
+  var vi: typeof import('vitest')['vi'];
 }
 
 globalThis.expect = expect;

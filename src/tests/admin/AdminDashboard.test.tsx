@@ -4,11 +4,13 @@ import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { vi } from 'vitest';
 
 // Mock the store
-vi.mock('@/stores/adminAuthStore');
+vi.mock('@/stores/adminAuthStore', () => ({
+  useAdminAuthStore: vi.fn()
+}));
 
 describe('AdminDashboard', () => {
   beforeEach(() => {
-    (useAdminAuthStore as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useAdminAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       setAdminAuthenticated: vi.fn(),
     });
   });
@@ -20,7 +22,7 @@ describe('AdminDashboard', () => {
 
   it('handles logout correctly', () => {
     const mockSetAdminAuthenticated = vi.fn();
-    (useAdminAuthStore as ReturnType<typeof vi.fn>).mockReturnValue({
+    (useAdminAuthStore as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
       setAdminAuthenticated: mockSetAdminAuthenticated,
     });
 
