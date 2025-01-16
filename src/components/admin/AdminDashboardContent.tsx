@@ -44,7 +44,7 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
         </TabsContent>
 
         <TabsContent value="ads">
-          <AdvertisementManager session={session} />
+          <AdvertisementManager />
         </TabsContent>
 
         <TabsContent value="logs">
