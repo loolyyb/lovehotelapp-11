@@ -4,6 +4,8 @@ import { EventType } from '@/types/events';
 import { vi } from 'vitest';
 
 describe('EventCard', () => {
+  const mockOnParticipate = vi.fn();
+
   const mockEvent = {
     id: '1',
     title: 'Test Event',
@@ -13,8 +15,6 @@ describe('EventCard', () => {
     startTime: '19:00',
     endTime: '23:00',
   };
-
-  const mockOnParticipate = vi.fn();
 
   beforeEach(() => {
     mockOnParticipate.mockClear();
@@ -101,7 +101,7 @@ describe('EventCard', () => {
     eventTypes.forEach(type => {
       const eventWithType = {
         ...mockEvent,
-        type,
+        type: type as EventType,
       };
 
       const { rerender } = render(
