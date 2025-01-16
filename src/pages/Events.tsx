@@ -1,10 +1,10 @@
 import React from "react";
-import { EventsCalendar } from "@/components/events/EventsCalendar";
+import { EventCalendar } from "@/components/events/EventCalendar";
 
 const Events = () => {
   return (
     <div className="container mx-auto p-4">
-      <EventsCalendar />
+      <EventCalendar />
     </div>
   );
 };
