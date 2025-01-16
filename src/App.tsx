@@ -11,6 +11,7 @@ import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
 import { appConfig } from "./config/app.config";
 import { useToast } from "./hooks/use-toast";
 import { Loader } from "lucide-react";
+import { supabase } from "./integrations/supabase/client";
 
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
@@ -35,6 +36,31 @@ function AppContent() {
 
     initTheme();
   }, [session, switchTheme, toast]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event);
+      
+      if (event === 'TOKEN_REFRESHED') {
+        if (!session) {
+          console.error("Token refresh failed - no session");
+          toast({
+            title: "Erreur de session",
+            description: "Votre session a expiré. Veuillez vous reconnecter.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // Clear any stored tokens
+        localStorage.removeItem('supabase.auth.token');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
 
   if (loading) {
     return (
