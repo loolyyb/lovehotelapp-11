@@ -1,14 +1,15 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
+import { vi } from 'vitest';
 
 // Mock the store
-jest.mock('@/stores/adminAuthStore');
+vi.mock('@/stores/adminAuthStore');
 
 describe('AdminDashboard', () => {
   beforeEach(() => {
-    (useAdminAuthStore as jest.Mock).mockReturnValue({
-      setAdminAuthenticated: jest.fn(),
+    (useAdminAuthStore as ReturnType<typeof vi.fn>).mockReturnValue({
+      setAdminAuthenticated: vi.fn(),
     });
   });
 
@@ -18,8 +19,8 @@ describe('AdminDashboard', () => {
   });
 
   it('handles logout correctly', () => {
-    const mockSetAdminAuthenticated = jest.fn();
-    (useAdminAuthStore as jest.Mock).mockReturnValue({
+    const mockSetAdminAuthenticated = vi.fn();
+    (useAdminAuthStore as ReturnType<typeof vi.fn>).mockReturnValue({
       setAdminAuthenticated: mockSetAdminAuthenticated,
     });
 

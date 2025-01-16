@@ -1,9 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { ConversationsTab } from '@/components/admin/tabs/ConversationsTab';
 import { useQuery } from '@tanstack/react-query';
+import { vi } from 'vitest';
 
 // Mock the query hook
-jest.mock('@tanstack/react-query');
+vi.mock('@tanstack/react-query');
 
 describe('ConversationsTab', () => {
   const mockMessages = [
@@ -16,7 +17,7 @@ describe('ConversationsTab', () => {
   ];
 
   beforeEach(() => {
-    (useQuery as jest.Mock).mockReturnValue({
+    (useQuery as ReturnType<typeof vi.fn>).mockReturnValue({
       data: mockMessages,
       isLoading: false,
     });
