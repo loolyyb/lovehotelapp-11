@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
+@import './styles/admin.css';
 
 @tailwind base;
 @tailwind components;
@@ -85,15 +86,6 @@
 
 .font-montserrat {
   font-family: 'Montserrat', sans-serif;
-}
-
-/* Admin Panel Styles */
-#admin-panel {
-  @apply bg-admin-bg text-admin-text;
-}
-
-#admin-panel .card {
-  @apply bg-admin-card shadow-lg rounded-lg;
 }
 
 /* Effets visuels pour le thème lover */

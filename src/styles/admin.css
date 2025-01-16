@@ -1,0 +1,25 @@
+/* Admin Panel Base Styles */
+#admin-panel {
+  @apply bg-admin-bg text-admin-text;
+}
+
+#admin-panel .card {
+  @apply bg-admin-card shadow-lg rounded-lg;
+}
+
+/* Admin Panel Components */
+#admin-panel .stats-card {
+  @apply bg-admin-card p-6 rounded-lg shadow-md;
+}
+
+#admin-panel .data-table {
+  @apply w-full bg-admin-card rounded-lg overflow-hidden;
+}
+
+#admin-panel .admin-header {
+  @apply mb-6 flex justify-between items-center;
+}
+
+#admin-panel .admin-tabs {
+  @apply space-y-6;
+}
