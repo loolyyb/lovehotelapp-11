@@ -3,6 +3,15 @@ import { expect, afterEach, beforeEach, describe, it, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
 // Make Vitest's expect, afterEach, etc. available globally
+declare global {
+  var describe: typeof describe;
+  var it: typeof it;
+  var expect: typeof expect;
+  var beforeEach: typeof beforeEach;
+  var afterEach: typeof afterEach;
+  var vi: typeof vi;
+}
+
 globalThis.expect = expect;
 globalThis.afterEach = afterEach;
 globalThis.beforeEach = beforeEach;
