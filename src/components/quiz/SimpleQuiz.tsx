@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 
+const prompts = {
+  intro: "Un écran interactif avec un design moderne, montrant un bouton 'Commencer le quiz'. Ajoutez des éléments subtils rappelant les Love Hôtels, comme des roses rouges, des lumières tamisées et un fond en velours.",
+  question: "Un écran élégant avec une question au centre, entouré d'éléments visuels représentant la thématique du Love Hôtel : miroirs au plafond, pétales de rose, lumière douce, et un design raffiné. Le texte de la question est écrit en police élégante.",
+  correct: "Une animation lumineuse de couleur or ou verte pour indiquer une réponse correcte, avec des confettis et un compteur de 100 tokens gagnés affiché en bas. Le tout dans une ambiance romantique et raffinée.",
+  incorrect: "Une animation subtile en rouge ou gris indiquant une réponse incorrecte, avec un texte doux pour encourager à réessayer. Le fond reste élégant et dans le style des Love Hôtels.",
+  results: "Un écran montrant le score final avec des tokens gagnés, sur un fond glamour. Ajoutez une option pour rejouer ou explorer les offres spéciales des Love Hôtels. Style luxueux avec des roses et une lumière tamisée."
+};
+
 const SimpleQuiz = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const [images, setImages] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   const questions = [
@@ -31,6 +40,39 @@ const SimpleQuiz = () => {
       answer: 0,
     },
   ];
+
+  useEffect(() => {
+    const generateImages = async () => {
+      try {
+        const imagePromises = Object.entries(prompts).map(async ([key, prompt]) => {
+          const response = await fetch(
+            'https://cmxmnsgbmhgpgxopmtua.functions.supabase.co/generate-quiz-image',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ prompt }),
+            }
+          );
+          const data = await response.json();
+          return [key, data.imageUrl];
+        });
+
+        const generatedImages = Object.fromEntries(await Promise.all(imagePromises));
+        setImages(generatedImages);
+      } catch (error) {
+        console.error('Error generating images:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de générer les images du quiz",
+          variant: "destructive",
+        });
+      }
+    };
+
+    generateImages();
+  }, []);
 
   const updatePoints = async (earnedPoints: number) => {
     try {
@@ -103,15 +145,23 @@ const SimpleQuiz = () => {
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4">
-      <Card className="p-6 shadow-lg">
+      <Card className="p-6 shadow-lg relative overflow-hidden">
+        {images[showResult ? 'results' : 'question'] && (
+          <img
+            src={images[showResult ? 'results' : 'question']}
+            alt="Quiz background"
+            className="absolute inset-0 w-full h-full object-cover opacity-25"
+          />
+        )}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          className="relative z-10"
         >
           {!showResult ? (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold mb-4">
+              <h2 className="text-2xl font-semibold mb-4 text-center font-cormorant">
                 {questions[currentQuestion].question}
               </h2>
               <div className="space-y-4">
@@ -123,7 +173,7 @@ const SimpleQuiz = () => {
                   >
                     <Button
                       variant="outline"
-                      className="w-full text-left py-4 px-6"
+                      className="w-full text-left py-4 px-6 font-montserrat"
                       onClick={() => handleAnswer(index)}
                     >
                       {option}
@@ -131,14 +181,14 @@ const SimpleQuiz = () => {
                   </motion.div>
                 ))}
               </div>
-              <div className="mt-4 text-sm text-gray-500">
+              <div className="mt-4 text-sm text-gray-500 text-center">
                 Question {currentQuestion + 1} sur {questions.length}
               </div>
             </div>
           ) : (
             <div className="text-center">
-              <h2 className="text-2xl font-semibold mb-4">Quiz Terminé !</h2>
-              <p className="text-lg mb-6">
+              <h2 className="text-2xl font-semibold mb-4 font-cormorant">Quiz Terminé !</h2>
+              <p className="text-lg mb-6 font-montserrat">
                 Score : {score} points
               </p>
               <Button
@@ -147,6 +197,7 @@ const SimpleQuiz = () => {
                   setScore(0);
                   setShowResult(false);
                 }}
+                className="font-montserrat"
               >
                 Recommencer le quiz
               </Button>
