@@ -38,7 +38,7 @@ interface ProfileWithPreferences {
 
 export function StatsTab() {
   // Fetch users and their preferences
-  const { data: usersWithPreferences } = useQuery({
+  const { data: rawData } = useQuery({
     queryKey: ['admin-users-preferences'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -54,9 +54,22 @@ export function StatsTab() {
         `);
       
       if (error) throw error;
-      return data as ProfileWithPreferences[];
+      return data;
     }
   });
+
+  // Transform data with fallback for missing preferences
+  const usersWithPreferences: ProfileWithPreferences[] = (rawData || []).map(profile => ({
+    id: profile.id,
+    relationship_type: profile.relationship_type,
+    preferences: profile.preferences?.error 
+      ? {
+          open_curtains_interest: false,
+          speed_dating_interest: false,
+          libertine_party_interest: false
+        }
+      : profile.preferences
+  }));
 
   // Fetch events and participations
   const { data: eventsData } = useQuery({
