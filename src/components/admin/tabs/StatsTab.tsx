@@ -44,8 +44,9 @@ export function StatsTab() {
       const { data, error } = await supabase
         .from('profiles')
         .select(`
-          *,
-          preferences:preferences(
+          id,
+          relationship_type,
+          preferences!profiles_preferences_fkey (
             open_curtains_interest,
             speed_dating_interest,
             libertine_party_interest
