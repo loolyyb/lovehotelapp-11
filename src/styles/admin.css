@@ -1,6 +1,6 @@
 /* Admin Panel Base Styles */
 #admin-panel {
-  @apply bg-admin-bg text-admin-text;
+  @apply bg-admin-bg text-admin-text min-h-screen;
 }
 
 #admin-panel .card {
@@ -22,4 +22,35 @@
 
 #admin-panel .admin-tabs {
   @apply space-y-6;
+}
+
+/* Table Styles */
+#admin-panel table {
+  @apply min-w-full divide-y divide-gray-200;
+}
+
+#admin-panel thead {
+  @apply bg-admin-bg;
+}
+
+#admin-panel th {
+  @apply px-6 py-3 text-left text-xs font-medium text-admin-text uppercase tracking-wider;
+}
+
+#admin-panel tbody {
+  @apply bg-admin-card divide-y divide-gray-200;
+}
+
+#admin-panel td {
+  @apply px-6 py-4 text-admin-text;
+}
+
+/* Card Styles */
+#admin-panel .stat-card {
+  @apply bg-admin-card p-4 rounded-lg shadow-sm;
+}
+
+/* Button Styles */
+#admin-panel .admin-button {
+  @apply bg-admin-primary text-white px-4 py-2 rounded-lg hover:bg-admin-secondary transition-colors;
 }

@@ -28,38 +28,40 @@ export function AdminDashboard() {
   };
 
   return (
-    <div id="admin-panel" className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Dashboard Administrateur</h1>
-        <Button variant="outline" onClick={handleLogout}>
-          Déconnexion Admin
-        </Button>
+    <div id="admin-panel" className="min-h-screen">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold">Dashboard Administrateur</h1>
+          <Button variant="outline" onClick={handleLogout}>
+            Déconnexion Admin
+          </Button>
+        </div>
+
+        <Tabs defaultValue="users" className="space-y-4">
+          <TabsList className="bg-admin-card">
+            <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="stats">Statistiques</TabsTrigger>
+            <TabsTrigger value="ads">Publicités</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users">
+            <UsersTab />
+          </TabsContent>
+
+          <TabsContent value="messages">
+            <ConversationsTab />
+          </TabsContent>
+
+          <TabsContent value="stats">
+            <StatsTab />
+          </TabsContent>
+
+          <TabsContent value="ads">
+            <AdvertisementManager />
+          </TabsContent>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="users" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-          <TabsTrigger value="messages">Messages</TabsTrigger>
-          <TabsTrigger value="stats">Statistiques</TabsTrigger>
-          <TabsTrigger value="ads">Publicités</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="users">
-          <UsersTab />
-        </TabsContent>
-
-        <TabsContent value="messages">
-          <ConversationsTab />
-        </TabsContent>
-
-        <TabsContent value="stats">
-          <StatsTab />
-        </TabsContent>
-
-        <TabsContent value="ads">
-          <AdvertisementManager />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

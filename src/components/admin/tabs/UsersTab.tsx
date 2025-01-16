@@ -37,21 +37,21 @@ export function UsersTab() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Nom</TableHead>
-            <TableHead>User ID</TableHead>
-            <TableHead>Rôle</TableHead>
-            <TableHead>Créé le</TableHead>
+            <TableHead className="text-xs font-medium text-admin-text uppercase tracking-wider">ID</TableHead>
+            <TableHead className="text-xs font-medium text-admin-text uppercase tracking-wider">Nom</TableHead>
+            <TableHead className="text-xs font-medium text-admin-text uppercase tracking-wider">User ID</TableHead>
+            <TableHead className="text-xs font-medium text-admin-text uppercase tracking-wider">Rôle</TableHead>
+            <TableHead className="text-xs font-medium text-admin-text uppercase tracking-wider">Créé le</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {users?.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.id}</TableCell>
-              <TableCell>{user.full_name}</TableCell>
-              <TableCell>{user.user_id}</TableCell>
-              <TableCell>{user.role}</TableCell>
-              <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+            <TableRow key={user.id} className="bg-admin-card hover:bg-admin-bg/50">
+              <TableCell className="whitespace-nowrap">{user.id}</TableCell>
+              <TableCell className="whitespace-nowrap">{user.full_name}</TableCell>
+              <TableCell className="whitespace-nowrap">{user.user_id}</TableCell>
+              <TableCell className="whitespace-nowrap">{user.role}</TableCell>
+              <TableCell className="whitespace-nowrap">{new Date(user.created_at).toLocaleDateString()}</TableCell>
             </TableRow>
           ))}
         </TableBody>
