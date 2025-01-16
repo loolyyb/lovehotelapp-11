@@ -26,15 +26,17 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-interface ProfileWithPreferences {
+type ProfileWithPreferences = {
   id: string;
-  preferences?: {
-    open_curtains_interest: boolean;
-    speed_dating_interest: boolean;
-    libertine_party_interest: boolean;
-  } | null;
-  relationship_type: string[] | null;
-}
+  relationship_type: string[];
+  preferences: 
+    | {
+        open_curtains_interest: boolean;
+        speed_dating_interest: boolean;
+        libertine_party_interest: boolean;
+      }
+    | { error: boolean };
+};
 
 export function StatsTab() {
   // Fetch users and their preferences
