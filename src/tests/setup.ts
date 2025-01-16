@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom';
-import { vi, expect, afterEach, beforeEach, describe, it } from 'vitest';
+import { expect, afterEach, beforeEach, describe, it, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
-// Make Vitest's Jest-compatible globals available
+// Make Vitest's expect, afterEach, etc. available globally
 globalThis.expect = expect;
 globalThis.afterEach = afterEach;
 globalThis.beforeEach = beforeEach;
