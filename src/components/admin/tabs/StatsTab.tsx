@@ -30,6 +30,10 @@ type ValidPreferences = {
   libertine_party_interest: boolean;
 };
 
+type RelationshipTypeCount = {
+  [key: string]: number;
+};
+
 export function StatsTab() {
   // Fetch users and their preferences
   const { data: rawData } = useQuery({
@@ -111,8 +115,8 @@ export function StatsTab() {
     totalParticipations: eventsData?.reduce((acc, event) => acc + (event.event_participants?.length || 0), 0) || 0,
   };
 
-  // Calculate relationship type distribution
-  const relationshipTypes = usersWithPreferences?.reduce((acc: any, user) => {
+  // Calculate relationship type distribution with explicit typing
+  const relationshipTypes = usersWithPreferences?.reduce((acc: RelationshipTypeCount, user) => {
     if (user.relationship_type) {
       user.relationship_type.forEach((type: string) => {
         acc[type] = (acc[type] || 0) + 1;
@@ -121,14 +125,14 @@ export function StatsTab() {
     return acc;
   }, {});
 
-  // Prepare data for the chart
+  // Prepare data for the chart with explicit number typing
   const chartData = relationshipTypes ? Object.entries(relationshipTypes).map(([name, value]) => ({
     name,
-    value
+    value: value as number
   })) : [];
 
   // Sort chart data by value for top 10
-  chartData.sort((a: any, b: any) => b.value - a.value);
+  chartData.sort((a, b) => b.value - a.value);
   const top10Motivations = chartData.slice(0, 10);
 
   return (
