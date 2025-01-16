@@ -87,6 +87,15 @@
   font-family: 'Montserrat', sans-serif;
 }
 
+/* Admin Panel Styles */
+#admin-panel {
+  @apply bg-admin-bg text-admin-text;
+}
+
+#admin-panel .card {
+  @apply bg-admin-card shadow-lg rounded-lg;
+}
+
 /* Effets visuels pour le thème lover */
 [data-theme="lover"] .glass-card {
   @apply bg-white/70 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300;
