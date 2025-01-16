@@ -59,7 +59,7 @@ export function StatsTab() {
   });
 
   // Transform data with fallback for missing preferences
-  const usersWithPreferences: ProfileWithPreferences[] = (rawData || []).map(profile => ({
+  const usersWithPreferences = (rawData || []).map(profile => ({
     id: profile.id,
     relationship_type: profile.relationship_type,
     preferences: profile.preferences?.error 
@@ -69,7 +69,7 @@ export function StatsTab() {
           libertine_party_interest: false
         }
       : profile.preferences
-  }));
+  })) as ProfileWithPreferences[];
 
   // Fetch events and participations
   const { data: eventsData } = useQuery({
