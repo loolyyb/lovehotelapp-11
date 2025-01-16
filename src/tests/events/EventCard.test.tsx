@@ -94,4 +94,25 @@ describe('EventCard', () => {
 
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
+
+  it('renders different event types correctly', () => {
+    const eventTypes: EventType[] = ['jacuzzi', 'gastronomy', 'speed_dating', 'other'];
+
+    eventTypes.forEach(type => {
+      const eventWithType = {
+        ...mockEvent,
+        type,
+      };
+
+      const { rerender } = render(
+        <EventCard
+          {...eventWithType}
+          onParticipate={mockOnParticipate}
+        />
+      );
+
+      expect(screen.getByText(type.replace('_', ' '))).toBeInTheDocument();
+      rerender(<></>);
+    });
+  });
 });
