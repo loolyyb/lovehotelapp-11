@@ -67,17 +67,32 @@ export function StatsTab() {
   });
 
   // Transform data with fallback for missing preferences
-  const usersWithPreferences = (rawData || []).map(profile => ({
-    id: profile.id,
-    relationship_type: profile.relationship_type,
-    preferences: profile.preferences?.error 
+  const usersWithPreferences = (rawData || []).map(profile => {
+    const preferences = profile.preferences?.error 
       ? {
           open_curtains_interest: false,
           speed_dating_interest: false,
           libertine_party_interest: false
         }
-      : profile.preferences
-  })) as ProfileWithPreferences[];
+      : profile.preferences;
+
+    // Log preferences state for debugging
+    if (!preferences?.error) {
+      console.log('Valid preferences found:', {
+        open_curtains_interest: preferences?.open_curtains_interest,
+        speed_dating_interest: preferences?.speed_dating_interest,
+        libertine_party_interest: preferences?.libertine_party_interest
+      });
+    } else {
+      console.warn("Erreur : les préférences sont indisponibles pour l'utilisateur", profile.id);
+    }
+
+    return {
+      id: profile.id,
+      relationship_type: profile.relationship_type,
+      preferences
+    };
+  }) as ProfileWithPreferences[];
 
   // Fetch events and participations
   const { data: eventsData } = useQuery({
