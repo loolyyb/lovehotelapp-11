@@ -29,7 +29,7 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div id="admin-panel" className="container mx-auto px-4 py-8">
       <Card className="max-w-md mx-auto p-6">
         <h1 className="text-2xl font-semibold mb-6">Accès Administrateur</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
