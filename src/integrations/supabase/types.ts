@@ -313,7 +313,9 @@ export type Database = {
           description: string | null
           event_date: string
           event_type: Database["public"]["Enums"]["event_type"]
+          free_for_members: boolean | null
           id: string
+          is_private: boolean | null
           location: string | null
           max_participants: number | null
           price: number | null
@@ -326,7 +328,9 @@ export type Database = {
           description?: string | null
           event_date: string
           event_type: Database["public"]["Enums"]["event_type"]
+          free_for_members?: boolean | null
           id?: string
+          is_private?: boolean | null
           location?: string | null
           max_participants?: number | null
           price?: number | null
@@ -339,7 +343,9 @@ export type Database = {
           description?: string | null
           event_date?: string
           event_type?: Database["public"]["Enums"]["event_type"]
+          free_for_members?: boolean | null
           id?: string
+          is_private?: boolean | null
           location?: string | null
           max_participants?: number | null
           price?: number | null

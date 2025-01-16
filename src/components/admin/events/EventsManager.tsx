@@ -28,7 +28,7 @@ export function EventsManager() {
 
   const onSubmit = async (values: EventFormValues) => {
     try {
-      const { error } = await supabase.from('events').insert([{
+      const { error } = await supabase.from('events').insert({
         title: values.title,
         description: values.description,
         event_date: values.event_date,
@@ -37,7 +37,7 @@ export function EventsManager() {
         is_private: values.is_private,
         price: values.free_for_members ? null : values.price,
         free_for_members: values.free_for_members,
-      }]);
+      });
 
       if (error) throw error;
 
