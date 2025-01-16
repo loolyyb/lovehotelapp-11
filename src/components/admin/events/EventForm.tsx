@@ -10,21 +10,22 @@ import { Loader2 } from "lucide-react";
 interface EventFormProps {
   onSubmit: (values: EventFormValues) => Promise<void>;
   isLoading?: boolean;
+  initialData?: Partial<EventFormValues>;
 }
 
-export function EventForm({ onSubmit, isLoading }: EventFormProps) {
+export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) {
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      event_date: "",
-      start_time: "",
-      end_time: "",
-      event_type: "other",
-      is_private: false,
-      price: null,
-      free_for_members: true,
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      event_date: initialData?.event_date || "",
+      start_time: initialData?.start_time || "",
+      end_time: initialData?.end_time || "",
+      event_type: initialData?.event_type || "other",
+      is_private: initialData?.is_private || false,
+      price: initialData?.price || null,
+      free_for_members: initialData?.free_for_members || true,
       image: undefined,
     },
   });
@@ -32,7 +33,9 @@ export function EventForm({ onSubmit, isLoading }: EventFormProps) {
   return (
     <DialogContent className="sm:max-w-[600px]">
       <DialogHeader>
-        <DialogTitle>Créer un nouvel événement</DialogTitle>
+        <DialogTitle>
+          {initialData ? "Modifier l'événement" : "Créer un nouvel événement"}
+        </DialogTitle>
       </DialogHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -45,10 +48,10 @@ export function EventForm({ onSubmit, isLoading }: EventFormProps) {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Création en cours...
+                {initialData ? "Modification en cours..." : "Création en cours..."}
               </>
             ) : (
-              "Créer l'événement"
+              initialData ? "Modifier l'événement" : "Créer l'événement"
             )}
           </Button>
         </form>

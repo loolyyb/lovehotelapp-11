@@ -1,22 +1,19 @@
 import React from "react";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { EventForm } from "../EventForm";
+import { Dialog } from "@/components/ui/dialog";
 import { EventFormValues } from "../types";
 
-interface EventFormDialogProps {
+export interface EventFormDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: EventFormValues) => Promise<void>;
+  event?: any;
+  children: React.ReactNode;
 }
 
-export function EventFormDialog({ isOpen, onOpenChange, onSubmit }: EventFormDialogProps) {
+export function EventFormDialog({ isOpen, onOpenChange, children }: EventFormDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button>Nouvel événement</Button>
-      </DialogTrigger>
-      <EventForm onSubmit={onSubmit} />
+      {children}
     </Dialog>
   );
 }
