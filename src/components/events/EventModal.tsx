@@ -6,35 +6,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { Event } from '@/types/events';
+import { EventParticipationButton } from './components/EventParticipationButton';
 
 interface EventModalProps {
   event: Event;
   onClose: () => void;
+  onParticipationSuccess?: () => void;
 }
 
-export function EventModal({ event, onClose }: EventModalProps) {
-  const { toast } = useToast();
+export function EventModal({ event, onClose, onParticipationSuccess }: EventModalProps) {
   const [isOpen, setIsOpen] = React.useState(true);
-
-  const handleParticipate = async () => {
-    try {
-      // Implement participation logic here
-      toast({
-        title: "Succès",
-        description: "Votre participation a été enregistrée",
-      });
-      setIsOpen(false);
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleClose = () => {
     setIsOpen(false);
@@ -91,14 +73,10 @@ export function EventModal({ event, onClose }: EventModalProps) {
             </p>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleClose}>
-              Fermer
-            </Button>
-            <Button onClick={handleParticipate}>
-              Participer
-            </Button>
-          </div>
+          <EventParticipationButton 
+            eventId={event.id} 
+            onSuccess={onParticipationSuccess}
+          />
         </div>
       </DialogContent>
     </Dialog>

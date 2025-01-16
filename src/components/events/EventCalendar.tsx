@@ -8,6 +8,7 @@ import { Event } from '@/types/events';
 import { EventModal } from './EventModal';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
+import { EventHeader } from './components/EventHeader';
 
 export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
@@ -51,48 +52,53 @@ export function EventCalendar() {
     setSelectedEvent(info.event);
   };
 
-  return (
-    <Card className="p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold">Calendrier des événements</h2>
-      </div>
-      
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin]}
-        initialView="dayGridMonth"
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        }}
-        events={events}
-        eventClick={handleEventClick}
-        height="auto"
-        locale="fr"
-        buttonText={{
-          today: "Aujourd'hui",
-          month: 'Mois',
-          week: 'Semaine',
-          day: 'Jour',
-        }}
-        eventTimeFormat={{
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        }}
-        slotLabelFormat={{
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        }}
-      />
+  const handleParticipationSuccess = () => {
+    setSelectedEvent(null);
+  };
 
-      {selectedEvent && (
-        <EventModal
-          event={selectedEvent}
-          onClose={() => setSelectedEvent(null)}
+  return (
+    <div className="container mx-auto p-4">
+      <Card className="p-6">
+        <EventHeader />
+        
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin]}
+          initialView="dayGridMonth"
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          }}
+          events={events}
+          eventClick={handleEventClick}
+          height="auto"
+          locale="fr"
+          buttonText={{
+            today: "Aujourd'hui",
+            month: 'Mois',
+            week: 'Semaine',
+            day: 'Jour',
+          }}
+          eventTimeFormat={{
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }}
+          slotLabelFormat={{
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }}
         />
-      )}
-    </Card>
+
+        {selectedEvent && (
+          <EventModal
+            event={selectedEvent}
+            onClose={() => setSelectedEvent(null)}
+            onParticipationSuccess={handleParticipationSuccess}
+          />
+        )}
+      </Card>
+    </div>
   );
 }
