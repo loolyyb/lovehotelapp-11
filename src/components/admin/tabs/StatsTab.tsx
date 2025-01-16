@@ -26,6 +26,16 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
+interface ProfileWithPreferences {
+  id: string;
+  preferences?: {
+    open_curtains_interest: boolean;
+    speed_dating_interest: boolean;
+    libertine_party_interest: boolean;
+  } | null;
+  relationship_type: string[] | null;
+}
+
 export function StatsTab() {
   // Fetch users and their preferences
   const { data: usersWithPreferences } = useQuery({
@@ -35,11 +45,15 @@ export function StatsTab() {
         .from('profiles')
         .select(`
           *,
-          preferences (*)
+          preferences:preferences(
+            open_curtains_interest,
+            speed_dating_interest,
+            libertine_party_interest
+          )
         `);
       
       if (error) throw error;
-      return data;
+      return data as ProfileWithPreferences[];
     }
   });
 
