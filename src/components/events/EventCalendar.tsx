@@ -108,7 +108,9 @@ export function EventCalendar() {
                 titleFormat: { year: 'numeric', month: 'long' }
               }
             }}
-            className="fc-theme-custom"
+            classNames={{
+              view: 'fc-theme-custom'
+            }}
           />
         </div>
 
