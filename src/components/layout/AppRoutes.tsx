@@ -18,6 +18,7 @@ import Dashboard from "@/pages/Dashboard";
 import Options from "@/pages/Options";
 import LoverCoin from "@/pages/LoverCoin";
 import Quiz from "@/pages/Quiz";
+import SwipePage from "@/pages/SwipePage";
 import { QualificationJourney } from '@/components/qualification/QualificationJourney';
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +42,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     if (!session?.user) return;
 
     try {
-      // On récupère la dernière préférence créée pour l'utilisateur
       const { data: preferences, error } = await supabase
         .from('preferences')
         .select('qualification_completed, created_at')
@@ -52,7 +52,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
 
       if (error) {
         console.error('Error checking qualification status:', error);
-        // Si l'erreur est qu'aucune préférence n'existe, on considère que l'utilisateur doit faire la qualification
         if (error.code === 'PGRST116') {
           setNeedsQualification(true);
           return;
@@ -98,6 +97,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/profiles"
         element={session ? <Profiles /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/swipe"
+        element={session ? <SwipePage /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/profile/:id"
