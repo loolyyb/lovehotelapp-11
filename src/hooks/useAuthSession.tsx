@@ -138,7 +138,7 @@ export const useAuthSession = () => {
         
         if (!mounted) return;
 
-        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        if (event === 'SIGNED_OUT') {
           setSession(null);
           setUserProfile(null);
           navigate('/login');
