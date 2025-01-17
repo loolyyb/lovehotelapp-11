@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { createNewProfile, fetchExistingProfile, handleSessionError } from "./useProfileUtils";
 
 export function useProfileData() {
   const [loading, setLoading] = useState(true);
@@ -20,8 +21,8 @@ export function useProfileData() {
       
       if (sessionError) {
         console.error("Session error:", sessionError);
-        if (sessionError.message?.includes('refresh_token_not_found')) {
-          await supabase.auth.signOut();
+        const shouldRedirect = await handleSessionError(sessionError);
+        if (shouldRedirect) {
           navigate('/login');
           return;
         }
@@ -45,39 +46,11 @@ export function useProfileData() {
       }
 
       console.log("Fetching profile for user:", user.id);
-      let { data: existingProfile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .limit(1)
-        .maybeSingle();
-
-      console.log("Fetch result:", { existingProfile, fetchError });
+      const { profile: existingProfile, error: fetchError } = await fetchExistingProfile(user.id);
 
       if (fetchError) {
-        console.error("Error fetching profile:", fetchError);
         if (fetchError.code === 'PGRST116') {
-          // Create new profile instead of using setNeedsProfile
-          const defaultAvatarUrl = "/placeholder-couple.jpg";
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert([{
-              user_id: user.id,
-              full_name: user.email?.split('@')[0] || 'New User',
-              is_love_hotel_member: false,
-              is_loolyb_holder: false,
-              relationship_type: [],
-              seeking: [],
-              photo_urls: [],
-              visibility: 'public',
-              allowed_viewers: [],
-              role: 'user',
-              avatar_url: defaultAvatarUrl
-            }])
-            .select()
-            .single();
-
-          if (createError) throw createError;
+          const newProfile = await createNewProfile(user.id, user.email);
           setProfile(newProfile);
           return;
         }
@@ -85,40 +58,14 @@ export function useProfileData() {
       }
 
       if (!existingProfile) {
-        console.log("Creating new profile for user");
-        const defaultAvatarUrl = "/placeholder-couple.jpg";
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .upsert([{ 
-            user_id: user.id,
-            full_name: user.email?.split('@')[0] || 'New User',
-            is_love_hotel_member: false,
-            is_loolyb_holder: false,
-            relationship_type: [],
-            seeking: [],
-            photo_urls: [],
-            visibility: 'public',
-            allowed_viewers: [],
-            role: 'user',
-            avatar_url: defaultAvatarUrl
-          }])
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error("Error creating profile:", insertError);
-          throw insertError;
-        }
-        console.log("New profile created:", newProfile);
+        const newProfile = await createNewProfile(user.id, user.email);
         setProfile(newProfile);
       } else {
-        console.log("Using existing profile:", existingProfile);
         setProfile(existingProfile);
       }
     } catch (error: any) {
       console.error('Error loading profile:', error);
       
-      // Check if it's a session error
       if (error.message?.includes('session_not_found') || error.message?.includes('JWT')) {
         console.log("Session error detected, signing out...");
         await supabase.auth.signOut();
