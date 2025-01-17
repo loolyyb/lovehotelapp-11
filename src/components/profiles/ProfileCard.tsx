@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, Star, Award } from "lucide-react";
+import { Heart, Star, Award, Blinds } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import {
   Tooltip,
@@ -25,6 +25,21 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
   const renderInterestIcons = () => {
     const icons = [];
     
+    if (preferences?.open_curtains) {
+      icons.push(
+        <TooltipProvider key="curtains">
+          <Tooltip>
+            <TooltipTrigger>
+              <Blinds className="w-5 h-5 text-rose-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Rideaux ouverts</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
     if (preferences?.libertine_party_interest) {
       icons.push(
         <TooltipProvider key="libertine">
