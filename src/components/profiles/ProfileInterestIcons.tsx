@@ -13,9 +13,14 @@ interface ProfileInterestIconsProps {
 }
 
 export function ProfileInterestIcons({ profile, preferences }: ProfileInterestIconsProps) {
+  // Add console logs to help debug the preferences data
+  console.log("Profile:", profile.full_name, "Preferences:", preferences);
+  console.log("Open curtains value:", preferences?.open_curtains);
+  console.log("Open curtains interest value:", preferences?.open_curtains_interest);
+
   return (
     <div className="flex items-center justify-center space-x-3">
-      {preferences?.open_curtains && (
+      {(preferences?.open_curtains || preferences?.open_curtains_interest) && (
         <TooltipProvider key="curtains">
           <Tooltip>
             <TooltipTrigger>
