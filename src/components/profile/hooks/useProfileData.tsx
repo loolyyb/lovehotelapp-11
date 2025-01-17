@@ -20,6 +20,11 @@ export function useProfileData() {
       
       if (sessionError) {
         console.error("Session error:", sessionError);
+        if (sessionError.message?.includes('refresh_token_not_found')) {
+          await supabase.auth.signOut();
+          navigate('/login');
+          return;
+        }
         throw sessionError;
       }
 
@@ -52,7 +57,28 @@ export function useProfileData() {
       if (fetchError) {
         console.error("Error fetching profile:", fetchError);
         if (fetchError.code === 'PGRST116') {
-          setNeedsProfile(true);
+          // Create new profile instead of using setNeedsProfile
+          const defaultAvatarUrl = "/placeholder-couple.jpg";
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert([{
+              user_id: user.id,
+              full_name: user.email?.split('@')[0] || 'New User',
+              is_love_hotel_member: false,
+              is_loolyb_holder: false,
+              relationship_type: [],
+              seeking: [],
+              photo_urls: [],
+              visibility: 'public',
+              allowed_viewers: [],
+              role: 'user',
+              avatar_url: defaultAvatarUrl
+            }])
+            .select()
+            .single();
+
+          if (createError) throw createError;
+          setProfile(newProfile);
           return;
         }
         throw fetchError;
@@ -60,7 +86,7 @@ export function useProfileData() {
 
       if (!existingProfile) {
         console.log("Creating new profile for user");
-        const defaultAvatarUrl = "/placeholder-couple.jpg"; // Default couple image
+        const defaultAvatarUrl = "/placeholder-couple.jpg";
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .upsert([{ 
