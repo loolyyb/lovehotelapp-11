@@ -22,10 +22,10 @@ export function AdminDashboard() {
   };
 
   return (
-    <div id="admin-panel" className="min-h-screen">
+    <div className="admin-panel">
       <div className="container mx-auto px-4 py-8">
         {/* Header Section */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="admin-header">
           <div>
             <h1 className="text-2xl font-bold mb-2">Bienvenue, Admin</h1>
             <p className="text-admin-muted">Gérez et suivez les activités de votre plateforme</p>
@@ -40,18 +40,18 @@ export function AdminDashboard() {
         </div>
 
         {/* Search Bar */}
-        <div className="search-bar flex items-center gap-3 mb-8">
+        <div className="admin-search flex items-center gap-3 mb-8">
           <Search className="text-admin-muted" size={20} />
           <input 
             type="text" 
             placeholder="Rechercher..." 
-            className="bg-transparent border-none w-full focus:outline-none"
+            className="admin-input w-full"
           />
           <Menu className="text-admin-muted cursor-pointer hover:text-admin-text" size={20} />
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="stats" className="space-y-8">
+        <Tabs defaultValue="stats" className="admin-tabs">
           <TabsList className="bg-admin-card/50 p-1 rounded-lg border border-admin-border">
             <TabsTrigger 
               value="stats"
@@ -79,19 +79,19 @@ export function AdminDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="stats" className="animate-fadeIn">
+          <TabsContent value="stats" className="admin-fade-in">
             <StatsTab />
           </TabsContent>
 
-          <TabsContent value="users" className="animate-fadeIn">
+          <TabsContent value="users" className="admin-fade-in">
             <UsersTab />
           </TabsContent>
 
-          <TabsContent value="messages" className="animate-fadeIn">
+          <TabsContent value="messages" className="admin-fade-in">
             <ConversationsTab />
           </TabsContent>
 
-          <TabsContent value="ads" className="animate-fadeIn">
+          <TabsContent value="ads" className="admin-fade-in">
             <AdvertisementManager />
           </TabsContent>
         </Tabs>

@@ -1,0 +1,26 @@
+@layer components {
+  .admin-stat-card {
+    @apply bg-admin-card p-6 rounded-xl border border-admin-border
+           shadow-sm transition-all duration-300 hover:shadow-lg;
+  }
+
+  .admin-stat-value {
+    @apply text-3xl font-bold text-admin-text mb-1;
+  }
+
+  .admin-stat-label {
+    @apply text-sm text-admin-muted;
+  }
+
+  .admin-stat-change {
+    @apply text-sm font-medium;
+  }
+
+  .admin-stat-change-positive {
+    @apply text-admin-success;
+  }
+
+  .admin-stat-change-negative {
+    @apply text-admin-error;
+  }
+}

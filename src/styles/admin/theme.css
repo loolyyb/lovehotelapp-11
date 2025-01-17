@@ -1,0 +1,47 @@
+@layer components {
+  .admin-panel {
+    @apply bg-admin-bg text-admin-text min-h-screen transition-colors duration-300;
+  }
+
+  .admin-card {
+    @apply bg-admin-card rounded-xl border border-admin-border shadow-lg backdrop-blur-sm 
+           transition-all duration-300 hover:shadow-xl hover:border-admin-hover;
+  }
+
+  .admin-stats-card {
+    @apply bg-admin-card p-6 rounded-xl border border-admin-border shadow-md 
+           transition-all duration-300 hover:shadow-lg;
+  }
+
+  .admin-data-table {
+    @apply w-full bg-admin-card rounded-xl overflow-hidden transition-all duration-300;
+  }
+
+  .admin-header {
+    @apply mb-6 flex justify-between items-center;
+  }
+
+  .admin-tabs {
+    @apply space-y-6;
+  }
+
+  .admin-button {
+    @apply bg-admin-primary text-white px-4 py-2 rounded-lg
+           transition-all duration-300 hover:bg-admin-secondary
+           focus:ring-2 focus:ring-admin-accent/50 outline-none;
+  }
+
+  .admin-search {
+    @apply bg-admin-card/50 border border-admin-border rounded-lg px-4 py-2
+           focus-within:border-admin-accent transition-colors duration-200;
+  }
+
+  .admin-nav-item {
+    @apply flex items-center gap-3 px-4 py-2 rounded-lg text-admin-muted
+           transition-colors duration-200 hover:bg-admin-hover hover:text-admin-text;
+  }
+
+  .admin-nav-item.active {
+    @apply bg-admin-primary/10 text-admin-primary;
+  }
+}
