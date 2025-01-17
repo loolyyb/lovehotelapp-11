@@ -1,4 +1,3 @@
-import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,9 +88,12 @@ export const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b">
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="w-full flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-burgundy">
-            <Heart className="w-8 h-8 fill-current" />
-            <span className="text-xl font-playfair font-bold">LoveH</span>
+          <Link to="/" className="flex items-center gap-2">
+            <img 
+              src="https://dev.lovehotelaparis.com/wp-content/uploads/2020/04/logo-header-lovehotel.png" 
+              alt="Love Hotel Logo" 
+              className="h-8 w-auto"
+            />
           </Link>
           {isAuthenticated ? (
             <Button 
