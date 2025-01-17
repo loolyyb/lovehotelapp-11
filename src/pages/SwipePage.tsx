@@ -3,10 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SwipeCard } from '@/components/swipe/SwipeCard';
 import { Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Navigate } from 'react-router-dom';
 import type { Tables } from '@/integrations/supabase/types';
-import './SwipePage.css';
 
 type Profile = Tables<"profiles">;
 
@@ -14,7 +11,6 @@ export default function SwipePage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchProfiles();
@@ -50,11 +46,6 @@ export default function SwipePage() {
     console.log(`Profile ${profileId} left the screen to ${direction}`);
   };
 
-  // Redirect to home if not on mobile
-  if (!isMobile) {
-    return <Navigate to="/" replace />;
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -64,15 +55,15 @@ export default function SwipePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100" id="swipe-page">
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-cormorant text-burgundy text-center pt-2">
+    <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-cormorant text-burgundy text-center mb-8">
           Slider les profils
         </h1>
         
-        <div className="relative w-full max-w-md mx-auto swipe-container">
+        <div className="relative h-[70vh] w-full max-w-md mx-auto">
           {profiles.map((profile) => (
-            <div key={profile.id} className="absolute w-full h-full swipe-card">
+            <div key={profile.id} className="absolute w-full h-full">
               <SwipeCard
                 onSwipe={(direction) => handleSwipe(direction, profile.id)}
                 onCardLeftScreen={(direction) => handleCardLeftScreen(direction, profile.id)}

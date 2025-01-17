@@ -23,7 +23,6 @@ import { QualificationJourney } from '@/components/qualification/QualificationJo
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -32,7 +31,6 @@ interface AppRoutesProps {
 export const AppRoutes = ({ session }: AppRoutesProps) => {
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (session?.user) {
@@ -102,17 +100,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       />
       <Route
         path="/swipe"
-        element={
-          session ? (
-            isMobile ? (
-              <SwipePage />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={session ? <SwipePage /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/profile/:id"
