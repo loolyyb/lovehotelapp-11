@@ -102,6 +102,7 @@ export const useAuthSession = () => {
 
   useEffect(() => {
     let mounted = true;
+    let authListener: any;
 
     const initSession = async () => {
       try {
@@ -120,48 +121,47 @@ export const useAuthSession = () => {
           if (currentSession?.user?.id) {
             await fetchUserProfile(currentSession.user.id);
           }
+          setLoading(false);
         }
       } catch (error) {
         console.error("Session initialization error:", error);
         if (mounted) {
           await handleSessionError();
-        }
-      } finally {
-        if (mounted) {
           setLoading(false);
         }
       }
     };
 
-    initSession();
+    const setupAuthListener = () => {
+      authListener = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+        console.log("Auth state changed:", event, currentSession?.user?.id);
+        
+        if (!mounted) return;
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log("Auth state changed:", event, currentSession?.user?.id);
-      
-      if (event === 'SIGNED_OUT') {
-        if (mounted) {
+        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
           setSession(null);
           setUserProfile(null);
           navigate('/login');
+          return;
         }
-        return;
-      }
 
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && currentSession) {
-        if (mounted) {
+        if (currentSession) {
           setSession(currentSession);
-          if (currentSession?.user?.id) {
+          if (currentSession.user?.id) {
             await fetchUserProfile(currentSession.user.id);
           }
         }
-      }
-    });
+      });
+    };
+
+    initSession();
+    setupAuthListener();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (authListener) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, []);
 
