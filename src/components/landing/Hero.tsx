@@ -20,7 +20,7 @@ export const Hero = () => {
               transition={{ duration: 0.6 }}
               className="text-5xl md:text-7xl font-cormorant font-bold leading-tight mb-6"
             >
-              L'Amour en Mode Premium
+              L'application Love Hôtel 2025
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -28,7 +28,7 @@ export const Hero = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-lg md:text-xl max-w-2xl mx-auto mb-8"
             >
-              Découvrez une nouvelle façon de rencontrer l'amour avec des expériences exclusives
+              Découvrez une nouvelle façon unique de faire des rencontres et mettre du piment dans votre intimité
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -38,14 +38,14 @@ export const Hero = () => {
             >
               <Button
                 size="lg"
-                className="bg-white text-burgundy hover:bg-white/90 text-lg"
+                className="bg-white text-gray-800 hover:bg-white/90 text-lg font-semibold"
               >
                 Rejoindre l'Aventure
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white/10 text-lg"
+                className="border-white bg-white/80 text-gray-800 hover:bg-white text-lg font-semibold"
               >
                 En Savoir Plus
               </Button>
