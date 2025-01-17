@@ -49,14 +49,14 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center bg-cream">
+      <div className="h-[calc(100vh-8rem)] flex items-center justify-center bg-cream">
         <div className="text-burgundy">Chargement...</div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-cream">
+    <div className="h-[calc(100vh-8rem)] flex flex-col bg-cream fixed top-16 left-0 right-0 bottom-16">
       <MessageHeader 
         otherUser={otherUser} 
         onBack={onBack} 
