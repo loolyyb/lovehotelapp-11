@@ -4,6 +4,7 @@ import { SwipeCard } from '@/components/swipe/SwipeCard';
 import { Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
+import './SwipePage.css';
 
 type Profile = Tables<"profiles">;
 
@@ -55,15 +56,15 @@ export default function SwipePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100">
+    <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100" id="swipe-page">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-cormorant text-burgundy text-center mb-8">
           Slider les profils
         </h1>
         
-        <div className="relative h-[70vh] w-full max-w-md mx-auto">
+        <div className="relative h-[70vh] w-full max-w-md mx-auto swipe-container">
           {profiles.map((profile) => (
-            <div key={profile.id} className="absolute w-full h-full">
+            <div key={profile.id} className="absolute w-full h-full swipe-card">
               <SwipeCard
                 onSwipe={(direction) => handleSwipe(direction, profile.id)}
                 onCardLeftScreen={(direction) => handleCardLeftScreen(direction, profile.id)}
