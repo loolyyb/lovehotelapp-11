@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Coins, Hotel, Utensils, Calendar, Users, Heart } from "lucide-react";
+import { Coins, Hotel, Utensils, Calendar, Users, Heart, Crown, Gift, Star } from "lucide-react";
 
 export const Hero = () => {
   return (
@@ -93,27 +93,27 @@ export const Hero = () => {
             whileHover={{ scale: 1.05 }}
             className="p-6 bg-white/80 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center"
           >
+            <Crown className="w-12 h-12 text-burgundy mb-3" />
+            <h3 className="font-cormorant text-xl font-semibold">Conciergerie Lovers</h3>
+            <p className="text-sm text-gray-600 mt-2">Un service sur mesure pour vos demandes spéciales</p>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="p-6 bg-white/80 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center"
+          >
             <Calendar className="w-12 h-12 text-burgundy mb-3" />
-            <h3 className="font-cormorant text-xl font-semibold">Events Exclusifs</h3>
-            <p className="text-sm text-gray-600 mt-2">Speed dating et soirées thématiques</p>
+            <h3 className="font-cormorant text-xl font-semibold">Events VIP</h3>
+            <p className="text-sm text-gray-600 mt-2">Invitations exclusives pour nos membres</p>
           </motion.div>
 
           <motion.div
             whileHover={{ scale: 1.05 }}
             className="p-6 bg-white/80 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center"
           >
-            <Users className="w-12 h-12 text-burgundy mb-3" />
-            <h3 className="font-cormorant text-xl font-semibold">Communauté Select</h3>
-            <p className="text-sm text-gray-600 mt-2">Des célibataires raffinés et authentiques</p>
-          </motion.div>
-
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="p-6 bg-white/80 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center"
-          >
-            <Heart className="w-12 h-12 text-burgundy mb-3" />
-            <h3 className="font-cormorant text-xl font-semibold">Matching Intelligent</h3>
-            <p className="text-sm text-gray-600 mt-2">Un algorithme sophistiqué pour des rencontres de qualité</p>
+            <Gift className="w-12 h-12 text-burgundy mb-3" />
+            <h3 className="font-cormorant text-xl font-semibold">Récompenses Crypto</h3>
+            <p className="text-sm text-gray-600 mt-2">Gagnez des récompenses en cryptomonnaie</p>
           </motion.div>
         </motion.div>
       </div>
