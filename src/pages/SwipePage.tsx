@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import TinderCard from 'react-tinder-card';
+import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
-import { motion } from 'framer-motion';
 
 const SwipePage = () => {
   const [profiles, setProfiles] = useState<Tables<"profiles">[]>([]);
