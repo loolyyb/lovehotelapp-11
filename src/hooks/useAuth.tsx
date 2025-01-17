@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
 import { useLogger } from "./useLogger";
+import { AuthError } from "@supabase/supabase-js";
 
 export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const logger = useLogger();
+  const logger = useLogger('AuthHook');
 
   const createProfileIfNeeded = async (userId: string) => {
     try {
@@ -26,13 +27,13 @@ export const useAuth = () => {
         if (profileError) throw profileError;
       }
     } catch (error) {
-      logger.error('Error creating profile:', error);
+      logger.error('Error creating profile:', { error });
       throw error;
     }
   };
 
   const handleAuthChange = async (event: string, session: any) => {
-    logger.debug('Auth state changed:', event);
+    logger.debug('Auth state changed:', { event });
 
     try {
       if (event === 'SIGNED_UP' && session) {
@@ -53,7 +54,7 @@ export const useAuth = () => {
         navigate("/login");
       }
     } catch (error) {
-      logger.error('Auth change error:', error);
+      logger.error('Auth change error:', { error });
       setError("Une erreur est survenue. Veuillez réessayer.");
     }
   };
@@ -63,7 +64,7 @@ export const useAuth = () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
-        logger.error('Session error:', sessionError);
+        logger.error('Session error:', { error: sessionError });
         if (sessionError.message.includes('refresh_token_not_found')) {
           await supabase.auth.signOut();
           setError("Votre session a expiré. Veuillez vous reconnecter.");
@@ -77,7 +78,7 @@ export const useAuth = () => {
         navigate("/");
       }
     } catch (error) {
-      logger.error('Session check error:', error);
+      logger.error('Session check error:', { error });
       setError("Une erreur inattendue s'est produite. Veuillez réessayer.");
     }
   };
