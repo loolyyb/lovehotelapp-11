@@ -2,12 +2,24 @@ import { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
+import { useNavigate } from "react-router-dom";
 
 export const useAuthSession = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleSessionError = async () => {
+    console.log("Session error detected, cleaning up...");
+    setSession(null);
+    setUserProfile(null);
+    // Clear any stored session data
+    localStorage.removeItem('supabase.auth.token');
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
 
   const createProfile = async (userId: string) => {
     try {
@@ -27,7 +39,8 @@ export const useAuthSession = () => {
             is_loolyb_holder: false,
             photo_urls: [],
             relationship_type: [],
-            seeking: []
+            seeking: [],
+            avatar_url: '/couple-default.jpg'
           }
         ])
         .select()
@@ -92,28 +105,54 @@ export const useAuthSession = () => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        fetchUserProfile(session.user.id);
+    const initSession = async () => {
+      try {
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session error:", error);
+          await handleSessionError();
+          return;
+        }
+
+        setSession(currentSession);
+        if (currentSession?.user?.id) {
+          await fetchUserProfile(currentSession.user.id);
+        }
+      } catch (error) {
+        console.error("Session initialization error:", error);
+        await handleSessionError();
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
+
+    initSession();
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.id);
-      setSession(session);
-      if (session) {
-        fetchUserProfile(session.user.id);
-      } else {
+    } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      console.log("Auth state changed:", event, currentSession?.user?.id);
+      
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        setSession(null);
         setUserProfile(null);
+        navigate('/login');
+        return;
+      }
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setSession(currentSession);
+        if (currentSession?.user?.id) {
+          await fetchUserProfile(currentSession.user.id);
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return { session, loading, userProfile };
