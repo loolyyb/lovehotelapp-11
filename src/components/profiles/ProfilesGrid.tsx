@@ -15,7 +15,7 @@ export function ProfilesGrid({ profiles }: ProfilesGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {profiles.map(({ profile, preferences }) => (
         <div key={profile.id} className="animate-fadeIn">
           <ProfileCard profile={profile} preferences={preferences} />
