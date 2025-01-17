@@ -39,20 +39,32 @@ export function StatsTab() {
   const { data: rawData } = useQuery({
     queryKey: ['admin-users-preferences'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          relationship_type,
-          preferences!profiles_preferences_fkey (
-            open_curtains_interest,
-            speed_dating_interest,
-            libertine_party_interest
-          )
-        `);
+        .select('id, relationship_type, user_id');
       
-      if (error) throw error;
-      return data;
+      if (profilesError) throw profilesError;
+
+      // Fetch preferences separately and join them in JavaScript
+      const { data: preferences, error: preferencesError } = await supabase
+        .from('preferences')
+        .select('user_id, open_curtains_interest, speed_dating_interest, libertine_party_interest');
+
+      if (preferencesError) throw preferencesError;
+
+      // Join the data
+      return profiles.map(profile => {
+        const userPreferences = preferences.find(p => p.user_id === profile.user_id);
+        return {
+          id: profile.id,
+          relationship_type: profile.relationship_type,
+          preferences: userPreferences ? {
+            open_curtains_interest: userPreferences.open_curtains_interest,
+            speed_dating_interest: userPreferences.speed_dating_interest,
+            libertine_party_interest: userPreferences.libertine_party_interest
+          } : { error: true }
+        };
+      });
     }
   });
 
