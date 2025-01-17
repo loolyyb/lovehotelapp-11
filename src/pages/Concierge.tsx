@@ -43,6 +43,9 @@ const formSchema = z.object({
   decoration: z.boolean().default(false),
   transport: z.boolean().default(false),
   playlist: z.boolean().default(false),
+  romanticTable: z.boolean().default(false),
+  customMenu: z.boolean().default(false),
+  customScenario: z.boolean().default(false),
   accessories: z.string().optional(),
   date: z.date(),
   budget: z.number().min(0),
@@ -61,6 +64,9 @@ export default function Concierge() {
       decoration: false,
       transport: false,
       playlist: false,
+      romanticTable: false,
+      customMenu: false,
+      customScenario: false,
       budget: 500,
     },
   });
@@ -115,10 +121,24 @@ export default function Concierge() {
             <Crown className="h-8 w-8" />
             Conciergerie sur mesure
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
             Exprimez vos envies les plus folles ou vos idées les plus originales.
             Notre équipe est là pour les réaliser et vous offrir une expérience unique et sur mesure.
           </p>
+          
+          <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg shadow-lg text-left mb-8">
+            <h2 className="text-2xl font-playfair font-semibold text-burgundy mb-4">Nos installations</h2>
+            <ul className="list-disc pl-6 space-y-2 text-gray-700">
+              <li>17 Love Rooms exclusives</li>
+              <li>Jacuzzi privatif</li>
+              <li>Restaurant Bar Cocktail</li>
+              <li>Chambres 4 étoiles pour la nuitée</li>
+              <li>Suites modernes et équipées sur Pigalle</li>
+              <li>Théâtre érotique</li>
+              <li>Bar à fantasme en plein Paris</li>
+              <li>Accès VIP à nos clubs partenaires</li>
+            </ul>
+          </div>
         </motion.div>
 
         <motion.div
@@ -197,6 +217,54 @@ export default function Concierge() {
                         />
                       </FormControl>
                       <FormLabel className="!mt-0">Playlist musicale</FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="romanticTable"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="!mt-0">Table dîner romantique isolé</FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="customMenu"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="!mt-0">Menu sur mesure</FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="customScenario"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="!mt-0">Scénario sur mesure</FormLabel>
                     </FormItem>
                   )}
                 />
