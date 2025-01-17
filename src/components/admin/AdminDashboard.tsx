@@ -7,6 +7,7 @@ import { UsersTab } from "./tabs/UsersTab";
 import { ConversationsTab } from "./tabs/ConversationsTab";
 import { StatsTab } from "./tabs/StatsTab";
 import { AdvertisementManager } from "./AdvertisementManager";
+import { Search, Menu } from "lucide-react";
 
 export function AdminDashboard() {
   const setAdminAuthenticated = useAdminAuthStore((state) => state.setAdminAuthenticated);
@@ -21,21 +22,43 @@ export function AdminDashboard() {
   };
 
   return (
-    <div id="admin-panel" className="min-h-screen bg-admin-bg">
+    <div id="admin-panel" className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-admin-text">Dashboard Administrateur</h1>
+        {/* Header Section */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-2xl font-bold mb-2">Bienvenue, Admin</h1>
+            <p className="text-admin-muted">Gérez et suivez les activités de votre plateforme</p>
+          </div>
           <Button 
             variant="outline" 
             onClick={handleLogout}
-            className="transition-all duration-300 hover:scale-105 bg-admin-primary text-white hover:bg-admin-secondary"
+            className="admin-button"
           >
-            Déconnexion Admin
+            Déconnexion
           </Button>
         </div>
 
-        <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="bg-admin-card rounded-lg p-1">
+        {/* Search Bar */}
+        <div className="search-bar flex items-center gap-3 mb-8">
+          <Search className="text-admin-muted" size={20} />
+          <input 
+            type="text" 
+            placeholder="Rechercher..." 
+            className="bg-transparent border-none w-full focus:outline-none"
+          />
+          <Menu className="text-admin-muted cursor-pointer hover:text-admin-text" size={20} />
+        </div>
+
+        {/* Main Content */}
+        <Tabs defaultValue="stats" className="space-y-8">
+          <TabsList className="bg-admin-card/50 p-1 rounded-lg border border-admin-border">
+            <TabsTrigger 
+              value="stats"
+              className="transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
+            >
+              Statistiques
+            </TabsTrigger>
             <TabsTrigger 
               value="users"
               className="transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
@@ -49,12 +72,6 @@ export function AdminDashboard() {
               Messages
             </TabsTrigger>
             <TabsTrigger 
-              value="stats"
-              className="transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
-            >
-              Statistiques
-            </TabsTrigger>
-            <TabsTrigger 
               value="ads"
               className="transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
             >
@@ -62,16 +79,16 @@ export function AdminDashboard() {
             </TabsTrigger>
           </TabsList>
 
+          <TabsContent value="stats" className="animate-fadeIn">
+            <StatsTab />
+          </TabsContent>
+
           <TabsContent value="users" className="animate-fadeIn">
             <UsersTab />
           </TabsContent>
 
           <TabsContent value="messages" className="animate-fadeIn">
             <ConversationsTab />
-          </TabsContent>
-
-          <TabsContent value="stats" className="animate-fadeIn">
-            <StatsTab />
           </TabsContent>
 
           <TabsContent value="ads" className="animate-fadeIn">

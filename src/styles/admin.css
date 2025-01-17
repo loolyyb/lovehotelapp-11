@@ -1,19 +1,21 @@
 /* Admin Panel Base Styles */
 #admin-panel {
-  @apply bg-admin-bg text-admin-text min-h-screen;
-}
-
-#admin-panel .card {
-  @apply bg-admin-card shadow-lg rounded-lg transition-all duration-300 ease-in-out hover:shadow-xl;
+  @apply bg-admin-bg text-admin-text min-h-screen transition-colors duration-300;
 }
 
 /* Admin Panel Components */
+#admin-panel .card {
+  @apply bg-admin-card rounded-xl border border-admin-border shadow-lg backdrop-blur-sm 
+         transition-all duration-300 hover:shadow-xl hover:border-admin-hover;
+}
+
 #admin-panel .stats-card {
-  @apply bg-admin-card p-6 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg;
+  @apply bg-admin-card p-6 rounded-xl border border-admin-border shadow-md 
+         transition-all duration-300 hover:shadow-lg;
 }
 
 #admin-panel .data-table {
-  @apply w-full bg-admin-card rounded-lg overflow-hidden transition-all duration-300;
+  @apply w-full bg-admin-card rounded-xl overflow-hidden transition-all duration-300;
 }
 
 #admin-panel .admin-header {
@@ -26,37 +28,77 @@
 
 /* Admin Button Styles */
 #admin-panel .admin-button {
-  @apply transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-md;
+  @apply bg-admin-primary text-white px-4 py-2 rounded-lg
+         transition-all duration-300 hover:bg-admin-secondary
+         focus:ring-2 focus:ring-admin-accent/50 outline-none;
 }
 
 /* Table Styles */
 #admin-panel table {
-  @apply min-w-full divide-y divide-gray-200;
+  @apply min-w-full divide-y divide-admin-border;
 }
 
 #admin-panel thead {
-  @apply bg-admin-bg;
+  @apply bg-admin-bg/50;
 }
 
 #admin-panel th {
-  @apply px-6 py-3 text-left text-xs font-medium text-admin-text uppercase tracking-wider;
+  @apply px-6 py-3 text-left text-xs font-medium text-admin-muted uppercase tracking-wider;
 }
 
 #admin-panel tbody {
-  @apply bg-admin-card divide-y divide-gray-200;
+  @apply bg-admin-card divide-y divide-admin-border;
 }
 
 #admin-panel td {
-  @apply px-6 py-4 text-admin-text;
+  @apply px-6 py-4 text-admin-text whitespace-nowrap;
 }
 
 #admin-panel tr {
-  @apply transition-colors duration-200 hover:bg-admin-bg/50;
+  @apply transition-colors duration-200 hover:bg-admin-hover/50;
 }
 
 /* Card Styles */
 #admin-panel .stat-card {
-  @apply bg-admin-card p-4 rounded-lg shadow-sm transition-all duration-300 hover:shadow-lg;
+  @apply bg-admin-card p-6 rounded-xl border border-admin-border
+         shadow-sm transition-all duration-300 hover:shadow-lg;
+}
+
+/* Stats Display */
+#admin-panel .stat-value {
+  @apply text-3xl font-bold text-admin-text mb-1;
+}
+
+#admin-panel .stat-label {
+  @apply text-sm text-admin-muted;
+}
+
+#admin-panel .stat-change {
+  @apply text-sm font-medium;
+}
+
+#admin-panel .stat-change.positive {
+  @apply text-success;
+}
+
+#admin-panel .stat-change.negative {
+  @apply text-error;
+}
+
+/* Search Bar */
+#admin-panel .search-bar {
+  @apply bg-admin-card/50 border border-admin-border rounded-lg px-4 py-2
+         focus-within:border-admin-accent transition-colors duration-200;
+}
+
+/* Navigation */
+#admin-panel .nav-item {
+  @apply flex items-center gap-3 px-4 py-2 rounded-lg text-admin-muted
+         transition-colors duration-200 hover:bg-admin-hover hover:text-admin-text;
+}
+
+#admin-panel .nav-item.active {
+  @apply bg-admin-primary/10 text-admin-primary;
 }
 
 /* Animation Classes */
@@ -87,5 +129,24 @@
 #admin-panel input,
 #admin-panel select,
 #admin-panel textarea {
-  @apply transition-all duration-200 ease-in-out focus:ring-2 focus:ring-admin-primary/50;
+  @apply bg-admin-card border border-admin-border rounded-lg px-4 py-2
+         transition-all duration-200 focus:ring-2 focus:ring-admin-accent/50
+         focus:border-admin-accent outline-none;
+}
+
+/* Charts and Graphs */
+#admin-panel .recharts-wrapper {
+  @apply !text-admin-text;
+}
+
+#admin-panel .recharts-cartesian-grid line {
+  @apply !stroke-admin-border/50;
+}
+
+#admin-panel .recharts-cartesian-axis-line {
+  @apply !stroke-admin-border;
+}
+
+#admin-panel .recharts-tooltip-wrapper {
+  @apply !bg-admin-card !border-admin-border !shadow-lg;
 }
