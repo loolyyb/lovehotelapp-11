@@ -56,7 +56,7 @@ export function useProfileData() {
 
       if (!existingProfile) {
         console.log("Creating new profile for user");
-        const defaultAvatarUrl = "/placeholder-couple.jpg";
+        const defaultAvatarUrl = "/couple-default.jpg"; // Updated default avatar URL
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .upsert([{ 
