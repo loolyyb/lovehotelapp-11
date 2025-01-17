@@ -16,7 +16,21 @@ export function useProfileData() {
   const getProfile = async () => {
     try {
       console.log("Fetching user data...");
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw sessionError;
+      }
+
+      if (!sessionData.session) {
+        console.log("No active session found");
+        await supabase.auth.signOut();
+        navigate('/login');
+        return;
+      }
+
+      const { user } = sessionData.session;
       console.log("User data:", user);
 
       if (!user) {
@@ -37,6 +51,10 @@ export function useProfileData() {
 
       if (fetchError) {
         console.error("Error fetching profile:", fetchError);
+        if (fetchError.code === 'PGRST116') {
+          setNeedsProfile(true);
+          return;
+        }
         throw fetchError;
       }
 
@@ -73,6 +91,15 @@ export function useProfileData() {
       }
     } catch (error: any) {
       console.error('Error loading profile:', error);
+      
+      // Check if it's a session error
+      if (error.message?.includes('session_not_found') || error.message?.includes('JWT')) {
+        console.log("Session error detected, signing out...");
+        await supabase.auth.signOut();
+        navigate('/login');
+        return;
+      }
+
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -86,21 +113,17 @@ export function useProfileData() {
   const updateProfile = async (updates: any) => {
     try {
       console.log("Updating profile with:", updates);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user');
-
-      if (updates.relationship_type && !Array.isArray(updates.relationship_type)) {
-        updates.relationship_type = [updates.relationship_type];
-      }
-
-      if (updates.seeking && !Array.isArray(updates.seeking)) {
-        updates.seeking = [updates.seeking];
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log("No active session, redirecting to login");
+        navigate('/login');
+        return;
       }
 
       const { error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('user_id', user.id);
+        .eq('user_id', session.user.id);
 
       if (error) throw error;
 
