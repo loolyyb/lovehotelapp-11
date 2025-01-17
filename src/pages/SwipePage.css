@@ -2,8 +2,8 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 1rem;
-  min-height: calc(100vh - 12rem);
+  min-height: calc(100vh - 8rem);
+  padding-top: 0.5rem;
 }
 
 #swipe-page .swipe-card {

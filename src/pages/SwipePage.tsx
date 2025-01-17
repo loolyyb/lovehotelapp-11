@@ -65,8 +65,8 @@ export default function SwipePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100" id="swipe-page">
-      <div className="container mx-auto px-4 py-4">
-        <h1 className="text-3xl font-cormorant text-burgundy text-center mb-4">
+      <div className="container mx-auto px-4">
+        <h1 className="text-3xl font-cormorant text-burgundy text-center pt-2">
           Slider les profils
         </h1>
         
