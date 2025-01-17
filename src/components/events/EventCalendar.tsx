@@ -9,10 +9,12 @@ import { EventModal } from './EventModal';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import { EventHeader } from './components/EventHeader';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const { data: events } = useQuery({
     queryKey: ['events'],
@@ -57,39 +59,58 @@ export function EventCalendar() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <Card className="p-6">
+    <div className="container mx-auto px-2 sm:px-4">
+      <Card className="p-2 sm:p-6">
         <EventHeader />
         
-        <FullCalendar
-          plugins={[dayGridPlugin, timeGridPlugin]}
-          initialView="dayGridMonth"
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-          }}
-          events={events}
-          eventClick={handleEventClick}
-          height="auto"
-          locale="fr"
-          buttonText={{
-            today: "Aujourd'hui",
-            month: 'Mois',
-            week: 'Semaine',
-            day: 'Jour',
-          }}
-          eventTimeFormat={{
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          }}
-          slotLabelFormat={{
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          }}
-        />
+        <div className="mt-4">
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin]}
+            initialView={isMobile ? "dayGridDay" : "dayGridMonth"}
+            headerToolbar={{
+              left: isMobile ? 'prev,next' : 'prev,next today',
+              center: 'title',
+              right: isMobile ? 'dayGridDay,dayGridMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
+            }}
+            events={events}
+            eventClick={handleEventClick}
+            height="auto"
+            locale="fr"
+            buttonText={{
+              today: "Aujourd'hui",
+              month: 'Mois',
+              week: 'Semaine',
+              day: 'Jour',
+            }}
+            eventTimeFormat={{
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            }}
+            slotLabelFormat={{
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            }}
+            dayHeaderFormat={{
+              weekday: isMobile ? 'short' : 'long',
+              day: 'numeric',
+              omitCommas: true
+            }}
+            views={{
+              dayGrid: {
+                titleFormat: { year: 'numeric', month: 'long' }
+              },
+              timeGrid: {
+                titleFormat: { year: 'numeric', month: 'long' }
+              },
+              dayGridMonth: {
+                titleFormat: { year: 'numeric', month: 'long' }
+              }
+            }}
+            className="fc-theme-custom"
+          />
+        </div>
 
         {selectedEvent && (
           <EventModal
