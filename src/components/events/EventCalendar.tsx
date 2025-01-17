@@ -108,7 +108,7 @@ export function EventCalendar() {
                 titleFormat: { year: 'numeric', month: 'long' }
               }
             }}
-            classes="fc-theme-custom"
+            themeSystem="standard"
           />
         </div>
 
