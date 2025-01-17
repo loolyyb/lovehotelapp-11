@@ -60,6 +60,7 @@ const SwipePage = () => {
             key={profile.id}
             onSwipe={(dir) => swiped(dir, profile.id)}
             className="absolute w-full"
+            preventSwipe={['up', 'down']}
           >
             <motion.div 
               className="card-gradient rounded-xl shadow-xl overflow-hidden"
