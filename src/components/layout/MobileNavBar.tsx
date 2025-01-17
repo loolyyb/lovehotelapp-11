@@ -12,46 +12,46 @@ export const MobileNavBar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-burgundy/90 backdrop-blur-sm border-t border-burgundy/20 px-2 py-1 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-burgundy/20 px-2 py-1 z-50">
       <div className="flex justify-around items-center">
         <Link
           to="/"
           className={`flex flex-col items-center p-2 transition-colors duration-200 ${
-            isActive("/") ? "text-rose-400" : "text-rose-100/80 hover:text-rose-200"
+            isActive("/") ? "text-burgundy" : "text-gray-700 hover:text-burgundy"
           }`}
         >
           <House className="w-5 h-5 stroke-[1.5]" />
-          <span className="text-xs mt-1">Accueil</span>
+          <span className="text-xs mt-1 font-medium">Accueil</span>
         </Link>
 
         <Link
           to="/profiles"
           className={`flex flex-col items-center p-2 transition-colors duration-200 ${
-            isActive("/profiles") ? "text-rose-400" : "text-rose-100/80 hover:text-rose-200"
+            isActive("/profiles") ? "text-burgundy" : "text-gray-700 hover:text-burgundy"
           }`}
         >
           <Search className="w-5 h-5 stroke-[1.5]" />
-          <span className="text-xs mt-1">Recherche</span>
+          <span className="text-xs mt-1 font-medium">Recherche</span>
         </Link>
 
         <Link
           to="/rideaux-ouverts"
           className={`flex flex-col items-center p-2 transition-colors duration-200 ${
-            isActive("/rideaux-ouverts") ? "text-rose-400" : "text-rose-100/80 hover:text-rose-200"
+            isActive("/rideaux-ouverts") ? "text-burgundy" : "text-gray-700 hover:text-burgundy"
           }`}
         >
           <Blinds className="w-5 h-5 stroke-[1.5]" />
-          <span className="text-xs mt-1">Rideaux</span>
+          <span className="text-xs mt-1 font-medium">Rideaux</span>
         </Link>
 
         <Link
           to="/lover-coin"
           className={`flex flex-col items-center p-2 transition-colors duration-200 ${
-            isActive("/lover-coin") ? "text-rose-400" : "text-rose-100/80 hover:text-rose-200"
+            isActive("/lover-coin") ? "text-burgundy" : "text-gray-700 hover:text-burgundy"
           }`}
         >
           <Heart className="w-5 h-5 stroke-[1.5]" />
-          <span className="text-xs mt-1">LoverCoin</span>
+          <span className="text-xs mt-1 font-medium">LoverCoin</span>
         </Link>
       </div>
     </nav>
