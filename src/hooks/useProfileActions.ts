@@ -34,15 +34,61 @@ export function useProfileActions(profileId: string) {
     });
   };
 
-  const handleLike = () => {
+  const handleLike = async () => {
     if (isTestProfile) {
       handleTestProfileError();
       return;
     }
-    toast({
-      title: "Coup de cœur envoyé !",
-      description: "Cette personne sera notifiée de votre intérêt.",
-    });
+
+    if (!currentUserId || !targetUserId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'envoi du coup de cœur.",
+      });
+      return;
+    }
+
+    try {
+      // Récupérer les informations du profil qui envoie le coup de cœur
+      const { data: senderProfile } = await supabase
+        .from('profiles')
+        .select('username, full_name, avatar_url')
+        .eq('user_id', currentUserId)
+        .single();
+
+      if (!senderProfile) {
+        throw new Error("Profil de l'expéditeur non trouvé");
+      }
+
+      // Créer la notification
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: targetUserId,
+          type: 'like',
+          title: 'Nouveau coup de cœur',
+          content: `${senderProfile.full_name || senderProfile.username} vous a envoyé un coup de cœur !`,
+          image_url: senderProfile.avatar_url,
+          link_url: `/profile/${profileId}`
+        });
+
+      if (notificationError) {
+        throw notificationError;
+      }
+
+      toast({
+        title: "Coup de cœur envoyé !",
+        description: "Cette personne sera notifiée de votre intérêt.",
+      });
+    } catch (error) {
+      console.error('Erreur lors de la création de la notification:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'envoyer le coup de cœur.",
+      });
+    }
   };
 
   const handleCurtainRequest = async () => {
@@ -64,7 +110,7 @@ export function useProfileActions(profileId: string) {
       // Récupérer les informations du profil qui fait la demande
       const { data: senderProfile } = await supabase
         .from('profiles')
-        .select('username, avatar_url')
+        .select('username, full_name, avatar_url')
         .eq('user_id', currentUserId)
         .single();
 
@@ -77,9 +123,9 @@ export function useProfileActions(profileId: string) {
         .from('notifications')
         .insert({
           user_id: targetUserId,
-          type: 'love_room',
+          type: 'curtain_request',
           title: 'Demande de rideau ouvert',
-          content: `${senderProfile.username} souhaite un moment rideau ouvert avec vous`,
+          content: `${senderProfile.full_name || senderProfile.username} souhaite un moment rideau ouvert avec vous`,
           image_url: senderProfile.avatar_url,
           link_url: `/profile/${profileId}`
         });
