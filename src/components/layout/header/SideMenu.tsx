@@ -3,9 +3,11 @@ import { Menu, Crown, BedDouble, Utensils, Users, Gift, Brain, Heart } from "luc
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
