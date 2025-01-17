@@ -15,7 +15,6 @@ export const useAuthSession = () => {
     console.log("Session error detected, cleaning up...");
     setSession(null);
     setUserProfile(null);
-    // Clear any stored session data
     localStorage.removeItem('supabase.auth.token');
     await supabase.auth.signOut();
     navigate('/login');
@@ -48,7 +47,6 @@ export const useAuthSession = () => {
 
       if (createError) throw createError;
 
-      // Create initial preferences for qualification
       const { error: prefError } = await supabase
         .from('preferences')
         .insert([{
@@ -86,7 +84,6 @@ export const useAuthSession = () => {
       }
 
       if (!profile) {
-        // Create profile if it doesn't exist
         const newProfile = await createProfile(userId);
         setUserProfile(newProfile);
         return;
@@ -104,53 +101,66 @@ export const useAuthSession = () => {
   };
 
   useEffect(() => {
-    // Get initial session
+    let mounted = true;
+
     const initSession = async () => {
       try {
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Session error:", error);
-          await handleSessionError();
+          if (mounted) {
+            await handleSessionError();
+          }
           return;
         }
 
-        setSession(currentSession);
-        if (currentSession?.user?.id) {
-          await fetchUserProfile(currentSession.user.id);
+        if (mounted) {
+          setSession(currentSession);
+          if (currentSession?.user?.id) {
+            await fetchUserProfile(currentSession.user.id);
+          }
         }
       } catch (error) {
         console.error("Session initialization error:", error);
-        await handleSessionError();
+        if (mounted) {
+          await handleSessionError();
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     initSession();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth state changed:", event, currentSession?.user?.id);
       
       if (event === 'SIGNED_OUT') {
-        setSession(null);
-        setUserProfile(null);
-        navigate('/login');
+        if (mounted) {
+          setSession(null);
+          setUserProfile(null);
+          navigate('/login');
+        }
         return;
       }
 
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        setSession(currentSession);
-        if (currentSession?.user?.id) {
-          await fetchUserProfile(currentSession.user.id);
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && currentSession) {
+        if (mounted) {
+          setSession(currentSession);
+          if (currentSession?.user?.id) {
+            await fetchUserProfile(currentSession.user.id);
+          }
         }
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
