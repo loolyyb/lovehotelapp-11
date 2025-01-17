@@ -68,13 +68,27 @@ export default function Login() {
     logger.debug('Composant Login monté');
     
     const checkSession = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/");
-      }
-      if (sessionError) {
-        logger.error('Session error:', sessionError);
-        setError("Une erreur est survenue lors de la vérification de votre session. Veuillez réessayer.");
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          logger.error('Session error:', sessionError);
+          // Si l'erreur est liée au refresh token, on déconnecte l'utilisateur
+          if (sessionError.message.includes('refresh_token_not_found')) {
+            await supabase.auth.signOut();
+            setError("Votre session a expiré. Veuillez vous reconnecter.");
+            return;
+          }
+          setError("Une erreur est survenue lors de la vérification de votre session. Veuillez réessayer.");
+          return;
+        }
+
+        if (session) {
+          navigate("/");
+        }
+      } catch (error) {
+        logger.error('Session check error:', error);
+        setError("Une erreur inattendue s'est produite. Veuillez réessayer.");
       }
     };
 
@@ -89,6 +103,7 @@ export default function Login() {
           title: "Inscription réussie",
           description: "Votre compte a été créé avec succès.",
         });
+        navigate("/");
       } else if (event === 'SIGNED_IN' && session) {
         await createProfileIfNeeded(session.user.id);
         toast({
@@ -105,32 +120,9 @@ export default function Login() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
-    const setupRefreshToken = () => {
-      let timeoutId: NodeJS.Timeout;
-
-      const refreshSession = async () => {
-        const { error } = await supabase.auth.refreshSession();
-        if (error) {
-          logger.error('Error refreshing session:', error);
-          if (error.message.includes('refresh_token_not_found')) {
-            setError("Votre session a expiré. Veuillez vous reconnecter.");
-            await supabase.auth.signOut();
-          }
-        }
-      };
-
-      // Refresh token every 30 minutes
-      timeoutId = setInterval(refreshSession, 30 * 60 * 1000);
-
-      return () => clearInterval(timeoutId);
-    };
-
-    const cleanup = setupRefreshToken();
-
     return () => {
       logger.debug('Composant Login démonté');
       subscription.unsubscribe();
-      cleanup();
     };
   }, [navigate, logger, toast]);
 
