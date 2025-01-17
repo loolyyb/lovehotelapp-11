@@ -1,8 +1,14 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Heart, Star, Award, Blinds } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useNavigate } from "react-router-dom";
-import { ProfileInterestIcons } from "./ProfileInterestIcons";
 
 interface ProfileCardProps {
   profile: Tables<"profiles">;
@@ -14,6 +20,72 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
 
   const handleProfileClick = () => {
     navigate(`/profile/${profile.id}`);
+  };
+
+  const renderInterestIcons = () => {
+    const icons = [];
+    
+    if (preferences?.open_curtains) {
+      icons.push(
+        <TooltipProvider key="curtains">
+          <Tooltip>
+            <TooltipTrigger>
+              <Blinds className="w-5 h-5 text-rose-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Rideaux ouverts</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    if (preferences?.libertine_party_interest) {
+      icons.push(
+        <TooltipProvider key="libertine">
+          <Tooltip>
+            <TooltipTrigger>
+              <Star className="w-5 h-5 text-rose-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Soirées libertines</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    
+    if (preferences?.speed_dating_interest) {
+      icons.push(
+        <TooltipProvider key="speed">
+          <Tooltip>
+            <TooltipTrigger>
+              <Award className="w-5 h-5 text-rose-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Speed dating</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    if (profile.is_love_hotel_member) {
+      icons.push(
+        <TooltipProvider key="member">
+          <Tooltip>
+            <TooltipTrigger>
+              <Heart className="w-5 h-5 text-rose-500" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Membre Love Hotel</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return icons;
   };
 
   return (
@@ -45,7 +117,9 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
             {profile.full_name}
           </h3>
 
-          <ProfileInterestIcons profile={profile} preferences={preferences} />
+          <div className="flex items-center justify-center space-x-3">
+            {renderInterestIcons()}
+          </div>
         </div>
       </CardContent>
     </Card>

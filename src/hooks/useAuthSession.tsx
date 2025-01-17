@@ -2,23 +2,12 @@ import { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
-import { useNavigate } from "react-router-dom";
 
 export const useAuthSession = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
-
-  const handleSessionError = async () => {
-    console.log("Session error detected, cleaning up...");
-    setSession(null);
-    setUserProfile(null);
-    localStorage.removeItem('supabase.auth.token');
-    await supabase.auth.signOut();
-    navigate('/login');
-  };
 
   const createProfile = async (userId: string) => {
     try {
@@ -38,8 +27,7 @@ export const useAuthSession = () => {
             is_loolyb_holder: false,
             photo_urls: [],
             relationship_type: [],
-            seeking: [],
-            avatar_url: '/couple-default.jpg'
+            seeking: []
           }
         ])
         .select()
@@ -47,6 +35,7 @@ export const useAuthSession = () => {
 
       if (createError) throw createError;
 
+      // Create initial preferences for qualification
       const { error: prefError } = await supabase
         .from('preferences')
         .insert([{
@@ -84,6 +73,7 @@ export const useAuthSession = () => {
       }
 
       if (!profile) {
+        // Create profile if it doesn't exist
         const newProfile = await createProfile(userId);
         setUserProfile(newProfile);
         return;
@@ -101,70 +91,29 @@ export const useAuthSession = () => {
   };
 
   useEffect(() => {
-    let mounted = true;
-    let authSubscription: { unsubscribe: () => void } | null = null;
-
-    const initSession = async () => {
-      try {
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Session error:", error);
-          if (mounted) {
-            await handleSessionError();
-          }
-          return;
-        }
-
-        if (mounted) {
-          setSession(currentSession);
-          if (currentSession?.user?.id) {
-            await fetchUserProfile(currentSession.user.id);
-          }
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error("Session initialization error:", error);
-        if (mounted) {
-          await handleSessionError();
-          setLoading(false);
-        }
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) {
+        fetchUserProfile(session.user.id);
       }
-    };
+      setLoading(false);
+    });
 
-    const setupAuthListener = () => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-        console.log("Auth state changed:", event, currentSession?.user?.id);
-        
-        if (!mounted) return;
-
-        if (event === 'SIGNED_OUT') {
-          setSession(null);
-          setUserProfile(null);
-          navigate('/login');
-          return;
-        }
-
-        if (currentSession) {
-          setSession(currentSession);
-          if (currentSession.user?.id) {
-            await fetchUserProfile(currentSession.user.id);
-          }
-        }
-      });
-
-      authSubscription = subscription;
-    };
-
-    initSession();
-    setupAuthListener();
-
-    return () => {
-      mounted = false;
-      if (authSubscription) {
-        authSubscription.unsubscribe();
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
+      setSession(session);
+      if (session) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setUserProfile(null);
       }
-    };
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return { session, loading, userProfile };
