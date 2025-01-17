@@ -51,16 +51,12 @@ export function useProfileData() {
 
       if (fetchError) {
         console.error("Error fetching profile:", fetchError);
-        if (fetchError.code === 'PGRST116') {
-          setNeedsProfile(true);
-          return;
-        }
         throw fetchError;
       }
 
       if (!existingProfile) {
         console.log("Creating new profile for user");
-        const defaultAvatarUrl = "/placeholder-couple.jpg"; // Default couple image
+        const defaultAvatarUrl = "/placeholder-couple.jpg";
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .upsert([{ 
@@ -92,7 +88,6 @@ export function useProfileData() {
     } catch (error: any) {
       console.error('Error loading profile:', error);
       
-      // Check if it's a session error
       if (error.message?.includes('session_not_found') || error.message?.includes('JWT')) {
         console.log("Session error detected, signing out...");
         await supabase.auth.signOut();
