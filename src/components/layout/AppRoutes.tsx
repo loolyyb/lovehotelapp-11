@@ -19,6 +19,7 @@ import Options from "@/pages/Options";
 import LoverCoin from "@/pages/LoverCoin";
 import Quiz from "@/pages/Quiz";
 import SwipePage from "@/pages/SwipePage";
+import Concierge from "@/pages/Concierge";
 import { QualificationJourney } from '@/components/qualification/QualificationJourney';
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -145,6 +146,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/rideaux-ouverts"
         element={<RideauxOuverts />}
+      />
+      <Route
+        path="/concierge"
+        element={session ? <Concierge /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/restaurant-du-love"
