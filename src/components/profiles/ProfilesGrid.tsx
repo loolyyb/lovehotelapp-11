@@ -6,7 +6,17 @@ interface ProfilesGridProps {
 }
 
 export function ProfilesGrid({ profiles }: ProfilesGridProps) {
-  if (profiles.length === 0) {
+  // Sort profiles to show "open curtains" first
+  const sortedProfiles = [...profiles].sort((a, b) => {
+    const aHasOpenCurtains = a.preferences?.open_curtains || a.preferences?.open_curtains_interest;
+    const bHasOpenCurtains = b.preferences?.open_curtains || b.preferences?.open_curtains_interest;
+    
+    if (aHasOpenCurtains && !bHasOpenCurtains) return -1;
+    if (!aHasOpenCurtains && bHasOpenCurtains) return 1;
+    return 0;
+  });
+
+  if (sortedProfiles.length === 0) {
     return (
       <div className="text-center py-12 text-burgundy">
         Aucun profil ne correspond à vos critères de recherche.
@@ -16,7 +26,7 @@ export function ProfilesGrid({ profiles }: ProfilesGridProps) {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-      {profiles.map(({ profile, preferences }) => (
+      {sortedProfiles.map(({ profile, preferences }) => (
         <div key={profile.id} className="animate-fadeIn">
           <ProfileCard profile={profile} preferences={preferences} />
         </div>
