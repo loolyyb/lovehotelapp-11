@@ -2,16 +2,33 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { createNewProfile, fetchExistingProfile, updateExistingProfile } from "../utils/profileUtils";
+import { Tables } from "@/integrations/supabase/types";
 
 export function useProfileData() {
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Tables<"profiles"> | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     getProfile();
   }, []);
+
+  const handleSessionError = async () => {
+    console.log("Session error detected, signing out...");
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
+
+  const handleError = (error: any, message: string) => {
+    console.error(message, error);
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: message,
+    });
+  };
 
   const getProfile = async () => {
     try {
@@ -25,8 +42,7 @@ export function useProfileData() {
 
       if (!sessionData.session) {
         console.log("No active session found");
-        await supabase.auth.signOut();
-        navigate('/login');
+        await handleSessionError();
         return;
       }
 
@@ -40,14 +56,7 @@ export function useProfileData() {
       }
 
       console.log("Fetching profile for user:", user.id);
-      let { data: existingProfile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .limit(1)
-        .maybeSingle();
-
-      console.log("Fetch result:", { existingProfile, fetchError });
+      const { data: existingProfile, error: fetchError } = await fetchExistingProfile(user.id);
 
       if (fetchError) {
         console.error("Error fetching profile:", fetchError);
@@ -56,29 +65,12 @@ export function useProfileData() {
 
       if (!existingProfile) {
         console.log("Creating new profile for user");
-        const defaultAvatarUrl = "/couple-default.jpg"; // Updated default avatar URL
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .upsert([{ 
-            user_id: user.id,
-            full_name: user.email?.split('@')[0] || 'New User',
-            is_love_hotel_member: false,
-            is_loolyb_holder: false,
-            relationship_type: [],
-            seeking: [],
-            photo_urls: [],
-            visibility: 'public',
-            allowed_viewers: [],
-            role: 'user',
-            avatar_url: defaultAvatarUrl
-          }])
-          .select()
-          .single();
-
-        if (insertError) {
-          console.error("Error creating profile:", insertError);
-          throw insertError;
+        const { data: newProfile, error: createError } = await createNewProfile(user.id, user.email || '');
+        
+        if (createError) {
+          throw createError;
         }
+        
         console.log("New profile created:", newProfile);
         setProfile(newProfile);
       } else {
@@ -89,52 +81,40 @@ export function useProfileData() {
       console.error('Error loading profile:', error);
       
       if (error.message?.includes('session_not_found') || error.message?.includes('JWT')) {
-        console.log("Session error detected, signing out...");
-        await supabase.auth.signOut();
-        navigate('/login');
+        await handleSessionError();
         return;
       }
 
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger votre profil. Veuillez réessayer.",
-      });
+      handleError(error, "Impossible de charger votre profil. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
   };
 
-  const updateProfile = async (updates: any) => {
+  const updateProfile = async (updates: Partial<Tables<"profiles">>) => {
     try {
       console.log("Updating profile with:", updates);
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (!session) {
         console.log("No active session, redirecting to login");
         navigate('/login');
         return;
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('user_id', session.user.id);
+      const { error } = await updateExistingProfile(session.user.id, updates);
 
       if (error) throw error;
 
-      setProfile((prev: any) => ({ ...prev, ...updates }));
+      setProfile((prev) => prev ? { ...prev, ...updates } : null);
       console.log("Profile updated successfully");
+      
       toast({
         title: "Profil mis à jour",
         description: "Vos modifications ont été enregistrées avec succès.",
       });
     } catch (error: any) {
-      console.error('Error updating profile:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de mettre à jour votre profil.",
-      });
+      handleError(error, "Impossible de mettre à jour votre profil.");
     }
   };
 
