@@ -102,7 +102,7 @@ export const useAuthSession = () => {
 
   useEffect(() => {
     let mounted = true;
-    let authListener: any;
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
     const initSession = async () => {
       try {
@@ -133,7 +133,7 @@ export const useAuthSession = () => {
     };
 
     const setupAuthListener = () => {
-      authListener = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession?.user?.id);
         
         if (!mounted) return;
@@ -152,6 +152,8 @@ export const useAuthSession = () => {
           }
         }
       });
+
+      authSubscription = subscription;
     };
 
     initSession();
@@ -159,8 +161,8 @@ export const useAuthSession = () => {
 
     return () => {
       mounted = false;
-      if (authListener) {
-        authListener.subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
       }
     };
   }, []);
