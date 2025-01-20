@@ -157,9 +157,10 @@ export function NotificationsMenu() {
           size="icon"
           className="relative p-0 h-5 w-5 bg-rose-400 hover:bg-rose-500 rounded-full flex items-center justify-center transition-colors duration-200"
         >
-          <Bell className="h-2.5 w-2.5 text-white" />
-          {unreadCount > 0 && (
-            <span className="absolute inset-0 flex items-center justify-center text-white font-medium text-[8px]">
+          {unreadCount === 0 ? (
+            <Bell className="h-2.5 w-2.5 text-white" />
+          ) : (
+            <span className="text-white font-medium text-[8px]">
               {unreadCount}
             </span>
           )}
