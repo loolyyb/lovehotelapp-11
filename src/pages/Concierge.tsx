@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { WidgetContainer } from "@/components/profile/form/WidgetContainer";
 import { AboutSection } from "@/components/profile/form/AboutSection";
@@ -89,22 +88,6 @@ export default function Concierge() {
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="accessories"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Accessoires particuliers</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Décrivez les accessoires souhaités..."
-                          {...field}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
               </WidgetContainer>
 
               <WidgetContainer title="Services souhaités">
@@ -116,7 +99,14 @@ export default function Concierge() {
               </WidgetContainer>
 
               <WidgetContainer title="Vos informations">
-                <AboutSection form={form} />
+                <AboutSection 
+                  description={form.watch("description")} 
+                  onUpdate={(updates) => {
+                    if (updates.description !== undefined) {
+                      form.setValue("description", updates.description);
+                    }
+                  }}
+                />
               </WidgetContainer>
 
               <Button type="submit" className="w-full">
