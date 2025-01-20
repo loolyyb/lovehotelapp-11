@@ -16,14 +16,37 @@ export function useProfileActions(profileId: string) {
   }, [profileId]);
 
   const loadUserIds = async () => {
-    const current = await getCurrentUserId();
-    setCurrentUserId(current);
-    
-    const target = await getTargetUserId(profileId);
-    if (!target) {
-      setIsTestProfile(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error("No active session");
+        return;
+      }
+
+      setCurrentUserId(session.user.id);
+
+      // Get target profile info
+      const { data: targetProfile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('id', profileId)
+        .single();
+
+      if (!targetProfile?.user_id) {
+        console.log("Test profile detected");
+        setIsTestProfile(true);
+        return;
+      }
+
+      setTargetUserId(targetProfile.user_id);
+    } catch (error) {
+      console.error("Error loading user IDs:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les informations du profil.",
+      });
     }
-    setTargetUserId(target);
   };
 
   const handleTestProfileError = () => {
@@ -50,18 +73,16 @@ export function useProfileActions(profileId: string) {
     }
 
     try {
-      // Récupérer les informations du profil qui envoie le coup de cœur
-      const { data: senderProfile } = await supabase
+      // Get sender profile info
+      const { data: senderProfile, error: profileError } = await supabase
         .from('profiles')
         .select('username, full_name, avatar_url')
         .eq('user_id', currentUserId)
         .single();
 
-      if (!senderProfile) {
-        throw new Error("Profil de l'expéditeur non trouvé");
-      }
+      if (profileError) throw profileError;
 
-      // Créer la notification
+      // Create notification
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
@@ -73,16 +94,14 @@ export function useProfileActions(profileId: string) {
           link_url: `/profile/${profileId}`
         });
 
-      if (notificationError) {
-        throw notificationError;
-      }
+      if (notificationError) throw notificationError;
 
       toast({
         title: "Coup de cœur envoyé !",
         description: "Cette personne sera notifiée de votre intérêt.",
       });
     } catch (error) {
-      console.error('Erreur lors de la création de la notification:', error);
+      console.error('Error sending like:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -107,18 +126,16 @@ export function useProfileActions(profileId: string) {
     }
 
     try {
-      // Récupérer les informations du profil qui fait la demande
-      const { data: senderProfile } = await supabase
+      // Get sender profile info
+      const { data: senderProfile, error: profileError } = await supabase
         .from('profiles')
         .select('username, full_name, avatar_url')
         .eq('user_id', currentUserId)
         .single();
 
-      if (!senderProfile) {
-        throw new Error("Profil de l'expéditeur non trouvé");
-      }
+      if (profileError) throw profileError;
 
-      // Créer la notification
+      // Create notification
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
@@ -130,16 +147,14 @@ export function useProfileActions(profileId: string) {
           link_url: `/profile/${profileId}`
         });
 
-      if (notificationError) {
-        throw notificationError;
-      }
+      if (notificationError) throw notificationError;
 
       toast({
         title: "Demande envoyée !",
         description: "Votre intérêt pour un moment rideau ouvert a été enregistré.",
       });
     } catch (error) {
-      console.error('Erreur lors de la création de la notification:', error);
+      console.error('Error sending curtain request:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -163,17 +178,8 @@ export function useProfileActions(profileId: string) {
       return;
     }
 
-    if (!targetUserId) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de trouver l'utilisateur cible.",
-      });
-      return;
-    }
-
     try {
-      const { id: conversationId, isNew } = await createOrGetConversation(currentUserId, targetUserId);
+      const { id: conversationId, isNew } = await createOrGetConversation(currentUserId, profileId);
       
       if (isNew) {
         toast({
