@@ -17,7 +17,7 @@ export const useUnreadMessages = () => {
         const { data: messages, error } = await supabase
           .from('messages')
           .select('id')
-          .eq('read_at', null)
+          .is('read_at', null)
           .neq('sender_id', session.user.id);
 
         if (error) {

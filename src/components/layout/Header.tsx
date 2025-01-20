@@ -6,7 +6,7 @@ import { useUnreadMessages } from "./header/hooks/useUnreadMessages";
 import { useUserSession } from "./header/hooks/useUserSession";
 
 export function Header({ userProfile }: { userProfile?: any }) {
-  const unreadCount = useUnreadMessages(userProfile);
+  const unreadCount = useUnreadMessages();
   const { avatarUrl, handleLogout } = useUserSession(userProfile);
 
   return (
