@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
 
 const formSchema = z.object({
-  experienceType: z.string(),
+  experienceType: z.string().min(1, "Le type d'expérience est requis"),
   customExperience: z.string().optional(),
   decoration: z.boolean().default(false),
   transport: z.boolean().default(false),
@@ -15,7 +15,10 @@ const formSchema = z.object({
   customMenu: z.boolean().default(false),
   customScenario: z.boolean().default(false),
   accessories: z.string().optional(),
-  date: z.date(),
+  date: z.date({
+    required_error: "La date est requise",
+    invalid_type_error: "Format de date invalide",
+  }),
   description: z.string().min(10, "La description doit faire au moins 10 caractères"),
   firstName: z.string().min(2, "Le prénom est requis"),
   lastName: z.string().min(2, "Le nom est requis"),
@@ -63,6 +66,7 @@ export function useConciergeForm() {
           last_name: values.lastName,
           email: values.email,
           phone: values.phone,
+          status: 'pending'
         });
 
       if (dbError) throw dbError;
