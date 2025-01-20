@@ -24,7 +24,7 @@ export function Header({ userProfile }: { userProfile?: any }) {
                 fullName={userProfile?.full_name}
                 onLogout={handleLogout}
               />
-              <div className="absolute -top-1 -right-1 z-10">
+              <div className="absolute -top-2 -left-2 z-10">
                 <NotificationsMenu />
               </div>
             </div>
