@@ -30,14 +30,6 @@ export function SideMenu() {
             <span>Nos lover's</span>
           </Link>
           <Link 
-            to="/swipe" 
-            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            <Heart className="h-5 w-5" />
-            <span>Slider les profils</span>
-          </Link>
-          <Link 
             to="/reserver-room" 
             className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
