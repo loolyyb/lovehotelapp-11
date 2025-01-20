@@ -20,7 +20,8 @@ export function NotificationsMenu() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
       if (event === 'SIGNED_IN') {
         fetchNotifications();
       } else if (event === 'SIGNED_OUT') {
@@ -30,10 +31,11 @@ export function NotificationsMenu() {
     });
 
     fetchNotifications();
-    subscribeToNotifications();
+    const unsubscribe = subscribeToNotifications();
 
     return () => {
       authListener?.subscription.unsubscribe();
+      unsubscribe();
     };
   }, []);
 
@@ -41,13 +43,16 @@ export function NotificationsMenu() {
     try {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session) {
+        console.log("No active session found");
         setLoading(false);
         return;
       }
 
+      console.log("Fetching notifications for user:", session.session.user.id);
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('user_id', session.session.user.id)
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -61,6 +66,7 @@ export function NotificationsMenu() {
         return;
       }
 
+      console.log("Fetched notifications:", data);
       setNotifications(data || []);
       setUnreadCount((data || []).filter(n => !n.is_read).length);
     } catch (error) {
@@ -76,8 +82,9 @@ export function NotificationsMenu() {
   };
 
   const subscribeToNotifications = () => {
+    console.log("Setting up notifications subscription");
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel('notifications-changes')
       .on(
         'postgres_changes',
         {
@@ -85,19 +92,22 @@ export function NotificationsMenu() {
           schema: 'public',
           table: 'notifications'
         },
-        () => {
+        (payload) => {
+          console.log("Notification change detected:", payload);
           fetchNotifications();
         }
       )
       .subscribe();
 
     return () => {
+      console.log("Cleaning up notifications subscription");
       supabase.removeChannel(channel);
     };
   };
 
   const markAsRead = async (notificationId: string) => {
     try {
+      console.log("Marking notification as read:", notificationId);
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
@@ -118,6 +128,12 @@ export function NotificationsMenu() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
+      case 'like':
+        return '❤️';
+      case 'curtain_request':
+        return '🎭';
+      case 'message':
+        return '💌';
       case 'offer':
         return '🎁';
       case 'news':
