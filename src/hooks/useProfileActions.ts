@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { getCurrentUserId, getTargetUserId, createOrGetConversation } from "@/utils/conversationUtils";
 import { supabase } from "@/integrations/supabase/client";
 
+type NotificationType = 'like' | 'curtain_request' | 'message' | 'offer' | 'news' | 'event' | 'restaurant' | 'love_room';
+
 export function useProfileActions(profileId: string) {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -49,6 +51,32 @@ export function useProfileActions(profileId: string) {
     }
   };
 
+  const createNotification = async (
+    userId: string,
+    type: NotificationType,
+    title: string,
+    content: string,
+    imageUrl?: string
+  ) => {
+    try {
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          type,
+          title,
+          content,
+          image_url: imageUrl,
+          link_url: `/profile/${profileId}`
+        });
+
+      if (notificationError) throw notificationError;
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw error;
+    }
+  };
+
   const handleTestProfileError = () => {
     toast({
       variant: "destructive",
@@ -82,19 +110,13 @@ export function useProfileActions(profileId: string) {
 
       if (profileError) throw profileError;
 
-      // Create notification
-      const { error: notificationError } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: targetUserId,
-          type: 'like',
-          title: 'Nouveau coup de cœur',
-          content: `${senderProfile.full_name || senderProfile.username} vous a envoyé un coup de cœur !`,
-          image_url: senderProfile.avatar_url,
-          link_url: `/profile/${profileId}`
-        });
-
-      if (notificationError) throw notificationError;
+      await createNotification(
+        targetUserId,
+        'like',
+        'Nouveau coup de cœur',
+        `${senderProfile.full_name || senderProfile.username} vous a envoyé un coup de cœur !`,
+        senderProfile.avatar_url
+      );
 
       toast({
         title: "Coup de cœur envoyé !",
@@ -135,19 +157,13 @@ export function useProfileActions(profileId: string) {
 
       if (profileError) throw profileError;
 
-      // Create notification
-      const { error: notificationError } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: targetUserId,
-          type: 'curtain_request',
-          title: 'Demande de rideau ouvert',
-          content: `${senderProfile.full_name || senderProfile.username} souhaite un moment rideau ouvert avec vous`,
-          image_url: senderProfile.avatar_url,
-          link_url: `/profile/${profileId}`
-        });
-
-      if (notificationError) throw notificationError;
+      await createNotification(
+        targetUserId,
+        'curtain_request',
+        'Demande de rideau ouvert',
+        `${senderProfile.full_name || senderProfile.username} souhaite un moment rideau ouvert avec vous`,
+        senderProfile.avatar_url
+      );
 
       toast({
         title: "Demande envoyée !",
