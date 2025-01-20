@@ -101,10 +101,11 @@ export default function Concierge() {
               <WidgetContainer title="Vos informations">
                 <AboutSection 
                   description={form.watch("description")} 
-                  onUpdate={(updates) => {
+                  onUpdate={async (updates) => {
                     if (updates.description !== undefined) {
                       form.setValue("description", updates.description);
                     }
+                    return Promise.resolve();
                   }}
                 />
               </WidgetContainer>
