@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMessageHandlers } from "./hooks/useMessageHandlers";
 import { useMessageRetrieval } from "./hooks/useMessageRetrieval";
 import { useConversationDetails } from "./hooks/useConversationDetails";
+import { ChevronLeft } from "lucide-react";
 
 interface MessageViewProps {
   conversationId: string;
@@ -56,12 +57,21 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col bg-cream fixed top-16 left-0 right-0 bottom-16">
-      <MessageHeader 
-        otherUser={otherUser} 
-        onBack={onBack} 
-        conversationId={conversationId}
-      />
+    <div className="h-[calc(100vh-8rem)] flex flex-col bg-cream fixed top-16 left-0 right-0 bottom-16 md:relative md:top-0">
+      <div className="flex items-center gap-2 p-4 border-b border-rose/20 bg-white">
+        <button 
+          onClick={onBack}
+          className="md:hidden flex items-center text-burgundy hover:text-rose transition-colors"
+        >
+          <ChevronLeft className="h-5 w-5" />
+          <span className="sr-only">Retour</span>
+        </button>
+        <MessageHeader 
+          otherUser={otherUser} 
+          onBack={onBack} 
+          conversationId={conversationId}
+        />
+      </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (

@@ -29,7 +29,7 @@ export default function Messages() {
             onBack={() => setSelectedConversation(null)}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500">
+          <div className="hidden md:flex flex-1 items-center justify-center text-gray-500">
             <p>Sélectionnez une conversation pour commencer</p>
           </div>
         )}
