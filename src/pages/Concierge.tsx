@@ -33,7 +33,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,7 +47,6 @@ const formSchema = z.object({
   customScenario: z.boolean().default(false),
   accessories: z.string().optional(),
   date: z.date(),
-  budget: z.number().min(0),
   description: z.string().min(10, "La description doit faire au moins 10 caractères"),
   firstName: z.string().min(2, "Le prénom est requis"),
   lastName: z.string().min(2, "Le nom est requis"),
@@ -67,7 +65,6 @@ export default function Concierge() {
       romanticTable: false,
       customMenu: false,
       customScenario: false,
-      budget: 500,
     },
   });
 
@@ -323,30 +320,6 @@ export default function Concierge() {
                         />
                       </PopoverContent>
                     </Popover>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="budget"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Budget estimé (€)</FormLabel>
-                    <FormControl>
-                      <div className="space-y-2">
-                        <Slider
-                          min={100}
-                          max={5000}
-                          step={100}
-                          value={[field.value]}
-                          onValueChange={(value) => field.onChange(value[0])}
-                        />
-                        <div className="text-right font-medium">
-                          {field.value}€
-                        </div>
-                      </div>
-                    </FormControl>
                   </FormItem>
                 )}
               />
