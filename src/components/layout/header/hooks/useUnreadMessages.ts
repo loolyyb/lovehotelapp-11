@@ -1,82 +1,55 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
-export function useUnreadMessages(userProfile: any) {
+export const useUnreadMessages = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!userProfile?.user_id) return;
-
-    const fetchUnreadMessages = async () => {
+    const fetchUnreadCount = async () => {
       try {
-        const { data: conversations } = await supabase
-          .from('conversations')
-          .select('id')
-          .or(`user1_id.eq.${userProfile?.user_id},user2_id.eq.${userProfile?.user_id}`)
-          .eq('status', 'active');
-
-        if (!conversations) return;
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.log('No active session found');
+          return;
+        }
 
         const { data: messages, error } = await supabase
           .from('messages')
           .select('id')
-          .in('conversation_id', conversations.map(c => c.id))
-          .is('read_at', null)
-          .neq('sender_id', userProfile?.user_id);
+          .eq('read_at', null)
+          .neq('sender_id', session.user.id);
 
-        if (error) throw error;
-        
+        if (error) {
+          console.error('Error fetching unread messages:', error);
+          return;
+        }
+
         setUnreadCount(messages?.length || 0);
       } catch (error) {
-        console.error('Error fetching unread messages:', error);
+        console.error('Error in useUnreadMessages:', error);
       }
     };
 
-    const checkIfUserIsRecipient = async (conversationId: string, message: any) => {
-      try {
-        const { data: conversation } = await supabase
-          .from('conversations')
-          .select('*')
-          .eq('id', conversationId)
-          .single();
-
-        if (!conversation) return;
-
-        if (
-          (conversation.user1_id === userProfile?.user_id || 
-           conversation.user2_id === userProfile?.user_id) && 
-          message.sender_id !== userProfile?.user_id
-        ) {
-          setUnreadCount(prev => prev + 1);
-        }
-      } catch (error) {
-        console.error('Error checking message recipient:', error);
-      }
-    };
+    fetchUnreadCount();
 
     // Subscribe to new messages
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages'
-        },
-        (payload: any) => {
-          const conversation = payload.new.conversation_id;
-          checkIfUserIsRecipient(conversation, payload.new);
-        }
+    const subscription = supabase
+      .channel('messages')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'messages' 
+        }, 
+        fetchUnreadCount
       )
       .subscribe();
 
-    fetchUnreadMessages();
-
     return () => {
-      supabase.removeChannel(channel);
+      subscription.unsubscribe();
     };
-  }, [userProfile]);
+  }, []);
 
   return unreadCount;
-}
+};
