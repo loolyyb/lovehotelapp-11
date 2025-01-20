@@ -59,18 +59,22 @@ export function useProfileActions(profileId: string) {
     imageUrl?: string
   ) => {
     try {
+      console.log('Creating notification:', { userId, type, title, content });
       const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
           user_id: userId,
-          type,
+          type: type,
           title,
           content,
           image_url: imageUrl,
           link_url: `/profile/${profileId}`
         });
 
-      if (notificationError) throw notificationError;
+      if (notificationError) {
+        console.error('Notification error:', notificationError);
+        throw notificationError;
+      }
     } catch (error) {
       console.error('Error creating notification:', error);
       throw error;
