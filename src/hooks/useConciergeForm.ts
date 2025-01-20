@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const formSchema = z.object({
   experienceType: z.string(),
@@ -26,6 +27,7 @@ export type ConciergeFormData = z.infer<typeof formSchema>;
 
 export function useConciergeForm() {
   const { toast } = useToast();
+  const { session } = useAuthSession();
   
   const form = useForm<ConciergeFormData>({
     resolver: zodResolver(formSchema),
@@ -41,21 +43,35 @@ export function useConciergeForm() {
 
   const onSubmit = async (values: ConciergeFormData) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Erreur",
-          description: "Vous devez être connecté pour envoyer une demande",
-          variant: "destructive",
+      // First, store the request in the database
+      const { error: dbError } = await supabase
+        .from('concierge_requests')
+        .insert({
+          user_id: session?.user?.id,
+          experience_type: values.experienceType,
+          custom_experience: values.customExperience,
+          decoration: values.decoration,
+          transport: values.transport,
+          playlist: values.playlist,
+          romantic_table: values.romanticTable,
+          custom_menu: values.customMenu,
+          custom_scenario: values.customScenario,
+          accessories: values.accessories,
+          event_date: values.date.toISOString(),
+          description: values.description,
+          first_name: values.firstName,
+          last_name: values.lastName,
+          email: values.email,
+          phone: values.phone,
         });
-        return;
-      }
 
+      if (dbError) throw dbError;
+
+      // Then, send the email notification
       const { error } = await supabase.functions.invoke('send-concierge-email', {
         body: { 
           formData: values,
-          userId: user.id
+          userId: session?.user?.id
         }
       });
 

@@ -7,6 +7,7 @@ import { LogsManager } from "./LogsManager";
 import { ThemeTab } from "./tabs/ThemeTab";
 import { UsersTab } from "./tabs/UsersTab";
 import { ConversationsTab } from "./tabs/ConversationsTab";
+import { RequestsTab } from "./tabs/RequestsTab";
 
 interface AdminDashboardContentProps {
   session: Session;
@@ -24,6 +25,7 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
           <TabsTrigger value="theme">Thème</TabsTrigger>
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
           <TabsTrigger value="conversations">Conversations</TabsTrigger>
+          <TabsTrigger value="requests">Demandes</TabsTrigger>
           <TabsTrigger value="ads">Publicités</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
@@ -41,6 +43,10 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
 
         <TabsContent value="conversations">
           <ConversationsTab />
+        </TabsContent>
+
+        <TabsContent value="requests">
+          <RequestsTab />
         </TabsContent>
 
         <TabsContent value="ads">
