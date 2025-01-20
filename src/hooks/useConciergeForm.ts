@@ -46,6 +46,8 @@ export function useConciergeForm() {
 
   const onSubmit = async (values: ConciergeFormData) => {
     try {
+      console.log("Submitting form with values:", values);
+
       // First, store the request in the database
       const { error: dbError } = await supabase
         .from('concierge_requests')
@@ -71,6 +73,8 @@ export function useConciergeForm() {
 
       if (dbError) throw dbError;
 
+      console.log("Successfully stored request in database");
+
       // Then, send the email notification
       const { error } = await supabase.functions.invoke('send-concierge-email', {
         body: { 
@@ -80,6 +84,8 @@ export function useConciergeForm() {
       });
 
       if (error) throw error;
+
+      console.log("Successfully sent email notification");
 
       toast({
         title: "Demande envoyée",
