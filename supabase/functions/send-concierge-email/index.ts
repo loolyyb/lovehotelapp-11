@@ -24,10 +24,12 @@ const handler = async (req: Request): Promise<Response> => {
         ${formData.decoration ? '<li>Décoration personnalisée</li>' : ''}
         ${formData.transport ? '<li>Transport</li>' : ''}
         ${formData.playlist ? '<li>Playlist musicale</li>' : ''}
+        ${formData.romanticTable ? '<li>Table dîner romantique isolé</li>' : ''}
+        ${formData.customMenu ? '<li>Menu sur mesure</li>' : ''}
+        ${formData.customScenario ? '<li>Scénario sur mesure</li>' : ''}
       </ul>
       ${formData.accessories ? `<p><strong>Accessoires:</strong> ${formData.accessories}</p>` : ''}
       <p><strong>Date souhaitée:</strong> ${new Date(formData.date).toLocaleDateString()}</p>
-      <p><strong>Budget:</strong> ${formData.budget}€</p>
       <p><strong>Description:</strong> ${formData.description}</p>
       <h3>Coordonnées:</h3>
       <p><strong>Nom:</strong> ${formData.firstName} ${formData.lastName}</p>
@@ -44,7 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Love Hotel <concierge@lovehotel.com>",
-        to: ["concierge@lovehotel.com"],
+        to: ["lovehotelaparis@gmail.com"],
         subject: `Nouvelle demande de conciergerie - ${formData.experienceType}`,
         html: emailHtml,
       }),
