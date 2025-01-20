@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UsersTab } from "./tabs/UsersTab";
 import { ConversationsTab } from "./tabs/ConversationsTab";
 import { StatsTab } from "./tabs/StatsTab";
+import { RequestsTab } from "./tabs/RequestsTab";
 import { AdvertisementManager } from "./AdvertisementManager";
 import { Search, Menu } from "lucide-react";
 
@@ -55,25 +56,31 @@ export function AdminDashboard() {
           <TabsList className="bg-admin-card/50 p-1 rounded-lg border border-admin-border">
             <TabsTrigger 
               value="stats"
-              className="transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
+              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
             >
               Statistiques
             </TabsTrigger>
             <TabsTrigger 
               value="users"
-              className="transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
+              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
             >
               Utilisateurs
             </TabsTrigger>
             <TabsTrigger 
               value="messages"
-              className="transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
+              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
             >
               Messages
             </TabsTrigger>
             <TabsTrigger 
+              value="requests"
+              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
+            >
+              Demandes
+            </TabsTrigger>
+            <TabsTrigger 
               value="ads"
-              className="transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
+              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
             >
               Publicités
             </TabsTrigger>
@@ -89,6 +96,10 @@ export function AdminDashboard() {
 
           <TabsContent value="messages" className="admin-fade-in">
             <ConversationsTab />
+          </TabsContent>
+
+          <TabsContent value="requests" className="admin-fade-in">
+            <RequestsTab />
           </TabsContent>
 
           <TabsContent value="ads" className="admin-fade-in">
