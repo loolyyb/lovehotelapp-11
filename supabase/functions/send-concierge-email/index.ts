@@ -38,6 +38,8 @@ const handler = async (req: Request): Promise<Response> => {
       <p><strong>ID Utilisateur:</strong> ${userId}</p>
     `;
 
+    console.log("Sending email with data:", { formData, userId });
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -45,7 +47,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Love Hotel <concierge@lovehotel.com>",
+        from: "Love Hotel <onboarding@resend.dev>",
         to: ["lovehotelaparis@gmail.com"],
         subject: `Nouvelle demande de conciergerie - ${formData.experienceType}`,
         html: emailHtml,
@@ -53,7 +55,9 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!res.ok) {
-      throw new Error(`Failed to send email: ${await res.text()}`);
+      const errorText = await res.text();
+      console.error("Resend API error:", errorText);
+      throw new Error(`Failed to send email: ${errorText}`);
     }
 
     return new Response(JSON.stringify({ success: true }), {
