@@ -155,11 +155,11 @@ export function NotificationsMenu() {
         <Button 
           variant="ghost" 
           size="icon"
-          className="relative p-0 h-6 w-6 bg-rose-400 hover:bg-rose-500 rounded-full flex items-center justify-center transition-colors duration-200"
+          className="relative p-0 h-5 w-5 bg-rose-400 hover:bg-rose-500 rounded-full flex items-center justify-center transition-colors duration-200"
         >
-          <Bell className="h-3 w-3 text-white" />
+          <Bell className="h-2.5 w-2.5 text-white" />
           {unreadCount > 0 && (
-            <span className="absolute inset-0 flex items-center justify-center text-white font-medium text-[10px]">
+            <span className="absolute inset-0 flex items-center justify-center text-white font-medium text-[8px]">
               {unreadCount}
             </span>
           )}
