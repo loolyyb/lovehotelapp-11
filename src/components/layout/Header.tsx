@@ -211,13 +211,16 @@ export function Header({ userProfile }: { userProfile?: any }) {
               <Trophy className="h-5 w-5 text-burgundy stroke-[1.5]" />
             </Link>
             
-            <NotificationsMenu />
-            
-            <UserMenu 
-              avatarUrl={avatarUrl}
-              fullName={userProfile?.full_name}
-              onLogout={handleLogout}
-            />
+            <div className="relative">
+              <UserMenu 
+                avatarUrl={avatarUrl}
+                fullName={userProfile?.full_name}
+                onLogout={handleLogout}
+              />
+              <div className="absolute -top-1 -right-1 z-10">
+                <NotificationsMenu />
+              </div>
+            </div>
           </div>
         </div>
       </div>
