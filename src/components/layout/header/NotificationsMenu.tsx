@@ -154,12 +154,12 @@ export function NotificationsMenu() {
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
-          size="icon" 
-          className="relative h-6 w-6 hover:bg-rose/10"
+          size="icon"
+          className="relative p-0 h-10 w-10 bg-rose-400 hover:bg-rose-500 rounded-full flex items-center justify-center transition-colors duration-200"
         >
-          <Bell className="h-4 w-4 text-burgundy stroke-[1.5]" />
+          <Bell className="h-5 w-5 text-white" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-rose text-white text-xs rounded-full h-4 w-4 flex items-center justify-center text-[10px]">
+            <span className="absolute inset-0 flex items-center justify-center text-white font-medium text-sm">
               {unreadCount}
             </span>
           )}
