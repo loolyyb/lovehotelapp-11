@@ -27,7 +27,7 @@ const features = [
 
 const LoverCoin = () => {
   const handleBuyClick = () => {
-    window.open('https://loolyyb-exchange-platform.lovable.app/', '_blank');
+    window.open('https://loolyyb-exchange.lovable.app/', '_blank');
   };
 
   return (
