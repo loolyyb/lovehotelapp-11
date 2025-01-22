@@ -16,18 +16,33 @@ export function NotificationsTab() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSending(true);
+    console.log("Sending notification:", { title, message, iconUrl });
 
     try {
-      const { error } = await supabase
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+
+      const { data, error } = await supabase
         .from('push_notifications')
         .insert([
           {
             title,
             message,
             icon_url: iconUrl,
-            status: 'pending'
+            status: 'pending',
+            created_by: (await supabase.auth.getUser()).data.user?.id
           }
-        ]);
+        ])
+        .select();
+
+      console.log("Insert response:", { data, error });
 
       if (error) throw error;
 
@@ -45,7 +60,7 @@ export function NotificationsTab() {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'envoi de la notification.",
+        description: "Une erreur est survenue lors de l'envoi de la notification. Veuillez vérifier vos permissions.",
       });
     } finally {
       setIsSending(false);
@@ -69,6 +84,7 @@ export function NotificationsTab() {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Entrez le titre..."
             required
+            className="bg-white text-gray-900 placeholder:text-gray-500"
           />
         </div>
 
@@ -82,6 +98,7 @@ export function NotificationsTab() {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Entrez le message..."
             required
+            className="bg-white text-gray-900 placeholder:text-gray-500 min-h-[100px]"
           />
         </div>
 
@@ -94,10 +111,15 @@ export function NotificationsTab() {
             value={iconUrl}
             onChange={(e) => setIconUrl(e.target.value)}
             placeholder="https://..."
+            className="bg-white text-gray-900 placeholder:text-gray-500"
           />
         </div>
 
-        <Button type="submit" disabled={isSending} className="w-full">
+        <Button 
+          type="submit" 
+          disabled={isSending} 
+          className="w-full bg-primary hover:bg-primary/90"
+        >
           {isSending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
