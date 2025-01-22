@@ -18,13 +18,22 @@ export function NotificationsTab() {
   const [message, setMessage] = useState("");
   const [iconUrl, setIconUrl] = useState("");
   const [targetAudience, setTargetAudience] = useState<string>("all");
+  const [targetMotivation, setTargetMotivation] = useState<string>("all");
+  const [targetUrl, setTargetUrl] = useState("");
   const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSending(true);
-    console.log("Sending notification:", { title, message, iconUrl, targetAudience });
+    console.log("Sending notification:", { 
+      title, 
+      message, 
+      iconUrl, 
+      targetAudience,
+      targetMotivation,
+      targetUrl 
+    });
 
     try {
       const { data: profile } = await supabase
@@ -46,7 +55,9 @@ export function NotificationsTab() {
             icon_url: iconUrl,
             status: 'pending',
             created_by: (await supabase.auth.getUser()).data.user?.id,
-            target_audience: targetAudience
+            target_audience: targetAudience,
+            target_motivation: targetMotivation,
+            target_url: targetUrl
           }
         ])
         .select();
@@ -65,6 +76,8 @@ export function NotificationsTab() {
       setMessage("");
       setIconUrl("");
       setTargetAudience("all");
+      setTargetMotivation("all");
+      setTargetUrl("");
     } catch (error) {
       console.error('Error sending notification:', error);
       toast({
@@ -105,6 +118,30 @@ export function NotificationsTab() {
         </div>
 
         <div className="space-y-2">
+          <label htmlFor="targetMotivation" className="text-sm font-medium">
+            Motivation cible
+          </label>
+          <Select
+            value={targetMotivation}
+            onValueChange={setTargetMotivation}
+          >
+            <SelectTrigger className="w-full bg-white text-gray-900">
+              <SelectValue placeholder="Sélectionnez la motivation" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les motivations</SelectItem>
+              <SelectItem value="bdsm">BDSM</SelectItem>
+              <SelectItem value="rideaux_ouverts">Rideaux ouverts</SelectItem>
+              <SelectItem value="speed_dating">Speed dating</SelectItem>
+              <SelectItem value="libertinage">Libertinage</SelectItem>
+              <SelectItem value="gastronomie">Gastronomie</SelectItem>
+              <SelectItem value="jacuzzi">Jacuzzi</SelectItem>
+              <SelectItem value="art">Art</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
           <label htmlFor="title" className="text-sm font-medium">
             Titre de la notification
           </label>
@@ -129,6 +166,19 @@ export function NotificationsTab() {
             placeholder="Entrez le message..."
             required
             className="bg-white text-gray-900 placeholder:text-gray-500 min-h-[100px]"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="targetUrl" className="text-sm font-medium">
+            URL de redirection
+          </label>
+          <Input
+            id="targetUrl"
+            value={targetUrl}
+            onChange={(e) => setTargetUrl(e.target.value)}
+            placeholder="https://..."
+            className="bg-white text-gray-900 placeholder:text-gray-500"
           />
         </div>
 
