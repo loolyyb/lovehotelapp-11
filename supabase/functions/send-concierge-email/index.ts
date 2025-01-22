@@ -16,9 +16,21 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { formData, userId } = await req.json();
 
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
     const emailHtml = `
       <h2>Nouvelle demande de conciergerie</h2>
       <p><strong>Type d'expérience:</strong> ${formData.experienceType}</p>
+      ${formData.customExperience ? `<p><strong>Expérience personnalisée:</strong> ${formData.customExperience}</p>` : ''}
       <p><strong>Services demandés:</strong></p>
       <ul>
         ${formData.decoration ? '<li>Décoration personnalisée</li>' : ''}
@@ -29,13 +41,13 @@ const handler = async (req: Request): Promise<Response> => {
         ${formData.customScenario ? '<li>Scénario sur mesure</li>' : ''}
       </ul>
       ${formData.accessories ? `<p><strong>Accessoires:</strong> ${formData.accessories}</p>` : ''}
-      <p><strong>Date souhaitée:</strong> ${new Date(formData.date).toLocaleDateString()}</p>
+      <p><strong>Date souhaitée:</strong> ${formatDate(formData.date)}</p>
       <p><strong>Description:</strong> ${formData.description}</p>
       <h3>Coordonnées:</h3>
       <p><strong>Nom:</strong> ${formData.firstName} ${formData.lastName}</p>
       <p><strong>Email:</strong> ${formData.email}</p>
       ${formData.phone ? `<p><strong>Téléphone:</strong> ${formData.phone}</p>` : ''}
-      <p><strong>ID Utilisateur:</strong> ${userId}</p>
+      <p><strong>ID Utilisateur:</strong> ${userId || 'Non connecté'}</p>
     `;
 
     console.log("Sending email with data:", { formData, userId });
@@ -59,6 +71,9 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Resend API error:", errorText);
       throw new Error(`Failed to send email: ${errorText}`);
     }
+
+    const data = await res.json();
+    console.log("Email sent successfully:", data);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

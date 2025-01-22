@@ -18,12 +18,28 @@ const formSchema = z.object({
   date: z.date({
     required_error: "La date est requise",
     invalid_type_error: "Format de date invalide",
-  }),
-  description: z.string().min(10, "La description doit faire au moins 10 caractères"),
-  firstName: z.string().min(2, "Le prénom est requis"),
-  lastName: z.string().min(2, "Le nom est requis"),
-  email: z.string().email("Email invalide"),
-  phone: z.string().optional(),
+  }).refine((date) => {
+    const now = new Date();
+    return date > now;
+  }, "La date doit être dans le futur"),
+  description: z.string()
+    .min(10, "La description doit faire au moins 10 caractères")
+    .max(1000, "La description ne doit pas dépasser 1000 caractères"),
+  firstName: z.string()
+    .min(2, "Le prénom doit faire au moins 2 caractères")
+    .max(50, "Le prénom ne doit pas dépasser 50 caractères"),
+  lastName: z.string()
+    .min(2, "Le nom doit faire au moins 2 caractères")
+    .max(50, "Le nom ne doit pas dépasser 50 caractères"),
+  email: z.string()
+    .email("Format d'email invalide")
+    .min(5, "L'email doit faire au moins 5 caractères")
+    .max(100, "L'email ne doit pas dépasser 100 caractères"),
+  phone: z.string()
+    .optional()
+    .refine((val) => !val || /^(\+33|0)[1-9](\d{8}|\d{2}\s\d{2}\s\d{2}\s\d{2})$/.test(val), {
+      message: "Format de téléphone invalide (format français uniquement)",
+    }),
 });
 
 export type ConciergeFormData = z.infer<typeof formSchema>;
@@ -97,7 +113,7 @@ export function useConciergeForm() {
       console.error('Error sending concierge request:', error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'envoi de votre demande",
+        description: "Une erreur est survenue lors de l'envoi de votre demande. Veuillez réessayer.",
         variant: "destructive",
       });
     }
