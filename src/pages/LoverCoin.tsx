@@ -47,7 +47,7 @@ const LoverCoin = () => {
           </p>
           <Button
             size="lg"
-            className="bg-burgundy hover:bg-burgundy/90 text-cream font-semibold px-8 py-6 text-lg"
+            className="bg-white hover:bg-gray-50 text-[#222222] font-semibold px-8 py-6 text-lg shadow-lg"
             onClick={handleBuyClick}
           >
             En savoir plus
