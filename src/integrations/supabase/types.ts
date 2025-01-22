@@ -893,6 +893,42 @@ export type Database = {
         }
         Relationships: []
       }
+      push_notifications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          icon_url: string | null
+          id: string
+          message: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["notification_status"] | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          icon_url?: string | null
+          id?: string
+          message: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"] | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          icon_url?: string | null
+          id?: string
+          message?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"] | null
+          title?: string
+        }
+        Relationships: []
+      }
       stream_viewers: {
         Row: {
           id: string
@@ -953,6 +989,7 @@ export type Database = {
         | "speed_dating"
         | "libertinage"
         | "art"
+      notification_status: "pending" | "sent" | "failed"
       stream_type: "video" | "audio"
       user_role: "user" | "moderator" | "admin"
     }

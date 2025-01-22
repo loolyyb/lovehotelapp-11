@@ -8,6 +8,7 @@ import { ConversationsTab } from "./tabs/ConversationsTab";
 import { StatsTab } from "./tabs/StatsTab";
 import { RequestsTab } from "./tabs/RequestsTab";
 import { AdvertisementManager } from "./AdvertisementManager";
+import { NotificationsTab } from "./tabs/NotificationsTab";
 import { Search, Menu } from "lucide-react";
 
 export function AdminDashboard() {
@@ -84,6 +85,12 @@ export function AdminDashboard() {
             >
               Publicités
             </TabsTrigger>
+            <TabsTrigger 
+              value="notifications"
+              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
+            >
+              Notifications
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="stats" className="admin-fade-in">
@@ -104,6 +111,10 @@ export function AdminDashboard() {
 
           <TabsContent value="ads" className="admin-fade-in">
             <AdvertisementManager />
+          </TabsContent>
+
+          <TabsContent value="notifications" className="admin-fade-in">
+            <NotificationsTab />
           </TabsContent>
         </Tabs>
       </div>
