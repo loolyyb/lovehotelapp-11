@@ -56,6 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending email with HTML:", emailHtml);
 
+    // For testing, we'll use the Resend test email until the domain is verified
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -63,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Love Hotel <contact@lovehotel.fr>",
+        from: "onboarding@resend.dev",
         to: ["lovehotelaparis@gmail.com"],
         subject: `Nouvelle demande de conciergerie - ${formData.experienceType}`,
         html: emailHtml,
