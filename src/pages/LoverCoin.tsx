@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Coins, Heart, Lock, Users, Sparkles, Crown } from "lucide-react";
+import { Heart, Lock, Users, Crown } from "lucide-react";
 
 const features = [
   {
-    icon: Coins,
+    icon: Crown,
     title: "Première Monnaie du Plaisir",
     description: "Une crypto-monnaie dédiée aux amoureux et libertins",
   },
@@ -49,7 +49,6 @@ const LoverCoin = () => {
               transition={{ delay: 0.2 }}
               className="mb-8"
             >
-              <Sparkles className="w-16 h-16 text-burgundy mx-auto mb-4" />
               <h1 className="text-5xl md:text-6xl font-cormorant font-bold text-burgundy mb-6">
                 LooLyyb (LLGT)
               </h1>
@@ -70,19 +69,6 @@ const LoverCoin = () => {
             </div>
           </div>
         </motion.div>
-      </section>
-
-      {/* PancakeSwap iframe Section */}
-      <section className="py-10 bg-white/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <iframe
-            src="https://pancakeswap.finance/swap?outputCurrency=0x76DBa34F24E6915F9b5BE61f66f1B9b437C47777"
-            width="100%"
-            height="600"
-            style={{ border: 'none' }}
-            title="PancakeSwap Exchange"
-          />
-        </div>
       </section>
 
       {/* Features Section */}
