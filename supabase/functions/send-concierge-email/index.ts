@@ -16,6 +16,8 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { formData, userId } = await req.json();
 
+    console.log("Received form data:", formData);
+
     const formatDate = (dateString: string) => {
       const date = new Date(dateString);
       return date.toLocaleString('fr-FR', {
@@ -27,19 +29,21 @@ const handler = async (req: Request): Promise<Response> => {
       });
     };
 
+    const services = [
+      formData.decoration && "Décoration personnalisée",
+      formData.transport && "Transport",
+      formData.playlist && "Playlist musicale",
+      formData.romanticTable && "Table dîner romantique isolé",
+      formData.customMenu && "Menu sur mesure",
+      formData.customScenario && "Scénario sur mesure",
+    ].filter(Boolean);
+
     const emailHtml = `
       <h2>Nouvelle demande de conciergerie</h2>
       <p><strong>Type d'expérience:</strong> ${formData.experienceType}</p>
       ${formData.customExperience ? `<p><strong>Expérience personnalisée:</strong> ${formData.customExperience}</p>` : ''}
       <p><strong>Services demandés:</strong></p>
-      <ul>
-        ${formData.decoration ? '<li>Décoration personnalisée</li>' : ''}
-        ${formData.transport ? '<li>Transport</li>' : ''}
-        ${formData.playlist ? '<li>Playlist musicale</li>' : ''}
-        ${formData.romanticTable ? '<li>Table dîner romantique isolé</li>' : ''}
-        ${formData.customMenu ? '<li>Menu sur mesure</li>' : ''}
-        ${formData.customScenario ? '<li>Scénario sur mesure</li>' : ''}
-      </ul>
+      ${services.length > 0 ? `<ul>${services.map(service => `<li>${service}</li>`).join('')}</ul>` : '<p>Aucun service additionnel sélectionné</p>'}
       ${formData.accessories ? `<p><strong>Accessoires:</strong> ${formData.accessories}</p>` : ''}
       <p><strong>Date souhaitée:</strong> ${formatDate(formData.date)}</p>
       <p><strong>Description:</strong> ${formData.description}</p>
@@ -50,7 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
       <p><strong>ID Utilisateur:</strong> ${userId || 'Non connecté'}</p>
     `;
 
-    console.log("Sending email with data:", { formData, userId });
+    console.log("Sending email with HTML:", emailHtml);
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -78,7 +82,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in send-concierge-email function:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

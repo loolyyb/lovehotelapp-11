@@ -7,6 +7,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import {
   Select,
@@ -86,6 +87,7 @@ export default function Concierge() {
                           <SelectItem value="other">Autre</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -122,6 +124,7 @@ export default function Concierge() {
                         <FormControl>
                           <Input placeholder="Votre prénom" {...field} />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -134,6 +137,7 @@ export default function Concierge() {
                         <FormControl>
                           <Input placeholder="Votre nom" {...field} />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -146,6 +150,7 @@ export default function Concierge() {
                         <FormControl>
                           <Input type="email" placeholder="votre@email.com" {...field} />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -158,14 +163,19 @@ export default function Concierge() {
                         <FormControl>
                           <Input type="tel" placeholder="Votre numéro de téléphone" {...field} />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
               </WidgetContainer>
 
-              <Button type="submit" className="w-full">
-                Envoyer ma demande
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={form.formState.isSubmitting}
+              >
+                {form.formState.isSubmitting ? 'Envoi en cours...' : 'Envoyer ma demande'}
               </Button>
             </form>
           </Form>

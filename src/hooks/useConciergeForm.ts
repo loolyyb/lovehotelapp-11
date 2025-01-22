@@ -87,7 +87,10 @@ export function useConciergeForm() {
           status: 'pending'
         });
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error("Database error:", dbError);
+        throw dbError;
+      }
 
       console.log("Successfully stored request in database");
 
@@ -99,7 +102,10 @@ export function useConciergeForm() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Email function error:", error);
+        throw error;
+      }
 
       console.log("Successfully sent email notification");
 
@@ -109,7 +115,7 @@ export function useConciergeForm() {
       });
 
       form.reset();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending concierge request:', error);
       toast({
         title: "Erreur",
