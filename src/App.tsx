@@ -12,6 +12,7 @@ import { appConfig } from "./config/app.config";
 import { useToast } from "./hooks/use-toast";
 import { Loader } from "lucide-react";
 import { supabase } from "./integrations/supabase/client";
+import { UpdatePrompt } from "./components/pwa/UpdatePrompt";
 
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
@@ -81,6 +82,7 @@ function AppContent() {
       </div>
       <Footer />
       {appConfig.features.enablePWA && <MobileNavBar />}
+      <UpdatePrompt />
       <Toaster />
     </div>
   );
