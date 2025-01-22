@@ -1,14 +1,31 @@
 import { Link } from "react-router-dom";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Home, Users, CalendarDays, Settings } from "lucide-react";
 
 interface MenuLinkProps {
   to: string;
-  icon: LucideIcon;
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
-export const MenuLink = ({ to, icon: Icon, label, onClick }: MenuLinkProps) => {
+export const MenuLink = ({ to, label, onClick }: MenuLinkProps) => {
+  // Map routes to icons
+  const getIcon = (path: string): LucideIcon => {
+    switch (path) {
+      case "/":
+        return Home;
+      case "/profiles":
+        return Users;
+      case "/reservations":
+        return CalendarDays;
+      case "/settings":
+        return Settings;
+      default:
+        return Home;
+    }
+  };
+
+  const Icon = getIcon(to);
+
   return (
     <Link 
       to={to} 

@@ -33,10 +33,10 @@ export function MenuNavigation({ onLinkClick }: MenuNavigationProps) {
 
   return (
     <nav className="space-y-2 py-4">
-      <MenuLink to="/" onClick={onLinkClick}>Accueil</MenuLink>
-      <MenuLink to="/profiles" onClick={onLinkClick}>Profils</MenuLink>
-      <MenuLink to="/reservations" onClick={onLinkClick}>Réservations</MenuLink>
-      <MenuLink to="/settings" onClick={onLinkClick}>Paramètres</MenuLink>
+      <MenuLink to="/" label="Accueil" onClick={onLinkClick} />
+      <MenuLink to="/profiles" label="Profils" onClick={onLinkClick} />
+      <MenuLink to="/reservations" label="Réservations" onClick={onLinkClick} />
+      <MenuLink to="/settings" label="Paramètres" onClick={onLinkClick} />
 
       <div className="fixed bottom-4 left-4 right-4">
         <Button 
