@@ -5,18 +5,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function NotificationsTab() {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [iconUrl, setIconUrl] = useState("");
+  const [targetAudience, setTargetAudience] = useState<string>("all");
   const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSending(true);
-    console.log("Sending notification:", { title, message, iconUrl });
+    console.log("Sending notification:", { title, message, iconUrl, targetAudience });
 
     try {
       const { data: profile } = await supabase
@@ -37,7 +45,8 @@ export function NotificationsTab() {
             message,
             icon_url: iconUrl,
             status: 'pending',
-            created_by: (await supabase.auth.getUser()).data.user?.id
+            created_by: (await supabase.auth.getUser()).data.user?.id,
+            target_audience: targetAudience
           }
         ])
         .select();
@@ -55,6 +64,7 @@ export function NotificationsTab() {
       setTitle("");
       setMessage("");
       setIconUrl("");
+      setTargetAudience("all");
     } catch (error) {
       console.error('Error sending notification:', error);
       toast({
@@ -74,6 +84,26 @@ export function NotificationsTab() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label htmlFor="targetAudience" className="text-sm font-medium">
+            Audience cible
+          </label>
+          <Select
+            value={targetAudience}
+            onValueChange={setTargetAudience}
+          >
+            <SelectTrigger className="w-full bg-white text-gray-900">
+              <SelectValue placeholder="Sélectionnez l'audience" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les utilisateurs</SelectItem>
+              <SelectItem value="casual">Relations occasionnelles</SelectItem>
+              <SelectItem value="serious">Relations sérieuses</SelectItem>
+              <SelectItem value="libertine">Relations libertines</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="space-y-2">
           <label htmlFor="title" className="text-sm font-medium">
             Titre de la notification
