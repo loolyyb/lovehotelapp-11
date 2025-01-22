@@ -63,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Love Hotel <onboarding@resend.dev>",
+        from: "Love Hotel <contact@lovehotel.fr>",
         to: ["lovehotelaparis@gmail.com"],
         subject: `Nouvelle demande de conciergerie - ${formData.experienceType}`,
         html: emailHtml,
