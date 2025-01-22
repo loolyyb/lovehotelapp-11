@@ -62,7 +62,7 @@ export function useConciergeForm() {
 
   const onSubmit = async (values: ConciergeFormData) => {
     try {
-      console.log("Submitting form with values:", values);
+      console.log("Starting form submission with values:", values);
 
       // First, store the request in the database
       const { error: dbError } = await supabase
@@ -97,7 +97,10 @@ export function useConciergeForm() {
       // Then, send the email notification
       const { error } = await supabase.functions.invoke('send-concierge-email', {
         body: { 
-          formData: values,
+          formData: {
+            ...values,
+            date: values.date.toISOString()
+          },
           userId: session?.user?.id
         }
       });

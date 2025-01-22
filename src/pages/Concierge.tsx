@@ -27,6 +27,13 @@ import { useConciergeForm } from "@/hooks/useConciergeForm";
 export default function Concierge() {
   const { form, onSubmit } = useConciergeForm();
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Form submission started");
+    await onSubmit(e);
+    console.log("Form submission completed");
+  };
+
   return (
     <div className="min-h-screen bg-background pt-20">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -66,7 +73,7 @@ export default function Concierge() {
           className="space-y-6"
         >
           <Form {...form}>
-            <form onSubmit={onSubmit} className="space-y-6">
+            <form onSubmit={handleFormSubmit} className="space-y-6">
               <WidgetContainer title="Type d'expérience">
                 <FormField
                   control={form.control}
