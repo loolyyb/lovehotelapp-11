@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Sending email with HTML:", emailHtml);
 
-    // For testing, we'll use the Resend test email and only send to loolyyb@gmail.com
+    // For testing, we'll use the Resend test email and only send to lovehotelaparis@gmail.com
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -65,7 +65,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "onboarding@resend.dev",
-        to: ["loolyyb@gmail.com"], // Using the allowed test email
+        to: ["lovehotelaparis@gmail.com"], // Using the correct email
         subject: `Nouvelle demande de conciergerie - ${formData.experienceType}`,
         html: emailHtml,
       }),
