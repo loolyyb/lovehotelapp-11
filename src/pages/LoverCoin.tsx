@@ -34,7 +34,7 @@ const LoverCoin = () => {
     <div className="min-h-screen bg-gradient-to-b from-burgundy-50 to-rose-50">
       {/* Hero Section */}
       <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0wIDBoNjB2NjBIMHoiLz48cGF0aCBkPSJNMzAgMzBoMzB2MzBIMzB6IiBmaWxsPSIjZjFmMWYxIiBmaWxsLW9wYWNpdHk9IjAuMiIvPjwvZz48L3N2Zz4=')] opacity-30" />
+        <div className="absolute inset-0 bg-[url('/lovable-uploads/95ce2bb8-c19c-4ab3-9141-7d60293849ba.png')] opacity-30" />
         
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -58,19 +58,10 @@ const LoverCoin = () => {
               </p>
             </motion.div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+            <div className="flex justify-center mb-16">
               <Button
                 size="lg"
                 className="bg-burgundy hover:bg-burgundy/90 text-white font-semibold px-8 py-6 text-lg"
-                onClick={handleBuyClick}
-              >
-                <Coins className="mr-2 h-5 w-5" />
-                En savoir plus
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-burgundy text-burgundy hover:bg-burgundy/10 font-semibold px-8 py-6 text-lg"
                 onClick={handleBuyClick}
               >
                 <Heart className="mr-2 h-5 w-5" />
@@ -134,14 +125,6 @@ const LoverCoin = () => {
             <p className="text-lg md:text-xl mb-8 text-white/80">
               Profitez d'avantages exclusifs et accédez à un univers de possibilités avec LooLyyb
             </p>
-            <Button
-              size="lg"
-              className="bg-white text-burgundy hover:bg-white/90 font-semibold px-8 py-6 text-lg"
-              onClick={handleBuyClick}
-            >
-              <Coins className="mr-2 h-5 w-5" />
-              En savoir plus
-            </Button>
           </motion.div>
         </div>
       </section>
