@@ -53,7 +53,6 @@ function AppContent() {
           await supabase.auth.signOut();
         }
       } else if (event === 'SIGNED_OUT') {
-        // Clear any stored tokens
         localStorage.removeItem('supabase.auth.token');
       }
     });
@@ -90,11 +89,13 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </ThemeProvider>
+    <React.StrictMode>
+      <ThemeProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </ThemeProvider>
+    </React.StrictMode>
   );
 }
 
