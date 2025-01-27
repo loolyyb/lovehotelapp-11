@@ -11,13 +11,17 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-// Move this function outside of the component
+// Utility function moved outside component
 function incrementVersion(version: string): string {
   const [major, minor, patch] = version.split(".").map(Number);
   return `${major}.${minor}.${patch + 1}`;
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+interface ThemeProviderProps {
+  children: React.ReactNode;
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
   const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
   const [theme, setTheme] = useState<CustomTheme>(themes[currentThemeName]);
 
