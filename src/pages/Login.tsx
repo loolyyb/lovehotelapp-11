@@ -44,11 +44,28 @@ const Login = () => {
                   email_label: 'Adresse email',
                   password_label: 'Mot de passe',
                   button_label: 'Se connecter',
+                  loading_button_label: 'Connexion en cours...',
+                  social_provider_text: 'Se connecter avec {{provider}}',
+                  link_text: "Vous avez déjà un compte ? Connectez-vous",
                 },
                 sign_up: {
                   email_label: 'Adresse email',
                   password_label: 'Mot de passe',
                   button_label: "S'inscrire",
+                  loading_button_label: 'Inscription en cours...',
+                  social_provider_text: "S'inscrire avec {{provider}}",
+                  link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
+                },
+                forgotten_password: {
+                  email_label: 'Adresse email',
+                  password_label: 'Mot de passe',
+                  button_label: 'Réinitialiser le mot de passe',
+                  loading_button_label: 'Envoi en cours...',
+                  link_text: 'Mot de passe oublié ?',
+                },
+                update_password: {
+                  password_label: 'Nouveau mot de passe',
+                  button_label: 'Mettre à jour le mot de passe',
                 },
               },
             }}
