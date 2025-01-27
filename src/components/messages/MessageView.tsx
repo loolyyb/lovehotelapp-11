@@ -73,7 +73,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20 md:pb-4">
         {messages.map((message) => (
           <MessageBubble
             key={message.id}
@@ -84,12 +84,14 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      <MessageInput
-        newMessage={newMessage}
-        setNewMessage={setNewMessage}
-        onSend={sendMessage}
-        conversationId={conversationId}
-      />
+      <div className="fixed bottom-16 left-0 right-0 md:relative md:bottom-0">
+        <MessageInput
+          newMessage={newMessage}
+          setNewMessage={setNewMessage}
+          onSend={sendMessage}
+          conversationId={conversationId}
+        />
+      </div>
     </div>
   );
 }

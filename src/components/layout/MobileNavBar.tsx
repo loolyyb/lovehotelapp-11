@@ -9,6 +9,9 @@ export const MobileNavBar = () => {
 
   if (!isMobile) return null;
 
+  // Hide the mobile nav bar on the messages route
+  if (location.pathname === "/messages") return null;
+
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -56,4 +59,4 @@ export const MobileNavBar = () => {
       </div>
     </nav>
   );
-};
+}
