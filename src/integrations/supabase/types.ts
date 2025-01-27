@@ -903,8 +903,6 @@ export type Database = {
           message: string
           sent_at: string | null
           status: Database["public"]["Enums"]["notification_status"] | null
-          target_motivation: string | null
-          target_url: string | null
           title: string
         }
         Insert: {
@@ -916,8 +914,6 @@ export type Database = {
           message: string
           sent_at?: string | null
           status?: Database["public"]["Enums"]["notification_status"] | null
-          target_motivation?: string | null
-          target_url?: string | null
           title: string
         }
         Update: {
@@ -929,8 +925,6 @@ export type Database = {
           message?: string
           sent_at?: string | null
           status?: Database["public"]["Enums"]["notification_status"] | null
-          target_motivation?: string | null
-          target_url?: string | null
           title?: string
         }
         Relationships: []

@@ -11,11 +11,6 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-function incrementVersion(version: string): string {
-  const [major, minor, patch] = version.split(".").map(Number);
-  return `${major}.${minor}.${patch + 1}`;
-}
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
   const [theme, setTheme] = useState<CustomTheme>(themes[currentThemeName]);
@@ -59,4 +54,9 @@ export function useTheme() {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
+}
+
+function incrementVersion(version: string): string {
+  const [major, minor, patch] = version.split(".").map(Number);
+  return `${major}.${minor}.${patch + 1}`;
 }
