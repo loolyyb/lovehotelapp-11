@@ -21,7 +21,7 @@ interface ThemeProviderProps {
   children: React.ReactNode;
 }
 
-function ThemeProvider({ children }: ThemeProviderProps) {
+export function ThemeProvider({ children }: ThemeProviderProps) {
   const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
   const [theme, setTheme] = useState<CustomTheme>(themes[currentThemeName]);
 
@@ -58,12 +58,10 @@ function ThemeProvider({ children }: ThemeProviderProps) {
   );
 }
 
-function useTheme() {
+export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
 }
-
-export { ThemeProvider, useTheme };
