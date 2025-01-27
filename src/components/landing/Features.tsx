@@ -1,55 +1,107 @@
 import { motion } from "framer-motion";
-import { Heart, Lock, Hotel, Coins, Utensils, Calendar, Users, Crown } from "lucide-react";
+import { 
+  Heart, Lock, Hotel, Coins, Utensils, Calendar, Users, Crown,
+  MessageCircle, Gift, Star, Sparkles, Search, Shield, Headphones,
+  PartyPopper, Wine, Coffee
+} from "lucide-react";
 
 const features = [
   {
     icon: Hotel,
     title: "Love Rooms",
     description:
-      "Réservez des chambres luxueuses pour vos moments romantiques.",
+      "Chambres thématiques luxueuses pour des moments inoubliables.",
   },
   {
     icon: Coins,
     title: "LooLyyb Coin",
     description:
-      "Une monnaie dédiée aux amoureux pour des expériences uniques.",
+      "Monnaie exclusive pour accéder à des services premium.",
   },
   {
     icon: Utensils,
     title: "Restaurant Lovers",
     description:
-      "Un restaurant exclusif pour des dîners romantiques mémorables.",
+      "Expérience gastronomique romantique dans un cadre intimiste.",
   },
   {
     icon: Calendar,
     title: "Events Exclusifs",
     description:
-      "Speed dating, soirées à thème et événements VIP réguliers.",
+      "Soirées privées, speed dating et événements thématiques.",
   },
   {
-    icon: Crown,
-    title: "Expérience Premium",
+    icon: MessageCircle,
+    title: "Messagerie Privée",
     description:
-      "Un service haut de gamme pour des rencontres de qualité.",
+      "Échangez en toute confidentialité avec d'autres membres.",
   },
   {
     icon: Users,
     title: "Communauté Select",
     description:
-      "Rejoignez une communauté de célibataires raffinés et authentiques.",
+      "Rencontrez des célibataires authentiques et raffinés.",
   },
   {
     icon: Heart,
     title: "Matching Intelligent",
     description:
-      "Un algorithme sophistiqué pour des rencontres qui vous correspondent.",
+      "Algorithme sophistiqué pour des rencontres compatibles.",
   },
   {
     icon: Lock,
     title: "Confidentialité",
     description:
-      "Votre vie privée est notre priorité absolue.",
+      "Protection maximale de vos données et de votre vie privée.",
   },
+  {
+    icon: Crown,
+    title: "Statut Premium",
+    description:
+      "Accès privilégié à des fonctionnalités exclusives.",
+  },
+  {
+    icon: Gift,
+    title: "Programme Fidélité",
+    description:
+      "Gagnez des points et débloquez des avantages exclusifs.",
+  },
+  {
+    icon: Search,
+    title: "Recherche Avancée",
+    description:
+      "Filtres détaillés pour trouver votre match idéal.",
+  },
+  {
+    icon: Shield,
+    title: "Profils Vérifiés",
+    description:
+      "Communauté sécurisée avec vérification des membres.",
+  },
+  {
+    icon: Headphones,
+    title: "Conciergerie",
+    description:
+      "Service personnalisé pour organiser vos moments spéciaux.",
+  },
+  {
+    icon: PartyPopper,
+    title: "Événements Libertins",
+    description:
+      "Soirées exclusives pour explorer vos fantasmes.",
+  },
+  {
+    icon: Wine,
+    title: "Bar Lounge",
+    description:
+      "Espace cosy pour des rencontres décontractées.",
+  },
+  {
+    icon: Coffee,
+    title: "Speed Dating",
+    description:
+      "Rencontres rapides dans un cadre élégant.",
+  }
 ];
 
 export const Features = () => {
