@@ -41,31 +41,37 @@ const Login = () => {
             localization={{
               variables: {
                 sign_in: {
-                  email_label: 'Adresse email',
-                  password_label: 'Mot de passe',
-                  button_label: 'Se connecter',
-                  loading_button_label: 'Connexion en cours...',
-                  social_provider_text: 'Se connecter avec {{provider}}',
-                  link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
+                  email_label: "Adresse email",
+                  password_label: "Mot de passe",
+                  button_label: "Se connecter",
+                  loading_button_label: "Connexion en cours...",
+                  social_provider_text: "Se connecter avec {{provider}}",
+                  link_text: "Pas de compte ? Créez-en un",
+                  email_input_placeholder: "Votre adresse email",
+                  password_input_placeholder: "Votre mot de passe"
                 },
                 sign_up: {
-                  email_label: 'Adresse email',
-                  password_label: 'Mot de passe',
+                  email_label: "Adresse email",
+                  password_label: "Mot de passe",
                   button_label: "S'inscrire",
-                  loading_button_label: 'Inscription en cours...',
+                  loading_button_label: "Inscription en cours...",
                   social_provider_text: "S'inscrire avec {{provider}}",
                   link_text: "Vous avez déjà un compte ? Connectez-vous",
+                  email_input_placeholder: "Votre adresse email",
+                  password_input_placeholder: "Votre mot de passe"
                 },
                 forgotten_password: {
-                  email_label: 'Adresse email',
-                  password_label: 'Mot de passe',
-                  button_label: 'Réinitialiser le mot de passe',
-                  loading_button_label: 'Envoi en cours...',
-                  link_text: 'Mot de passe oublié ?',
+                  email_label: "Adresse email",
+                  password_label: "Mot de passe",
+                  button_label: "Réinitialiser le mot de passe",
+                  loading_button_label: "Envoi en cours...",
+                  link_text: "Mot de passe oublié ?",
+                  email_input_placeholder: "Votre adresse email"
                 },
                 update_password: {
-                  password_label: 'Nouveau mot de passe',
-                  button_label: 'Mettre à jour le mot de passe',
+                  password_label: "Nouveau mot de passe",
+                  button_label: "Mettre à jour le mot de passe",
+                  password_input_placeholder: "Votre nouveau mot de passe"
                 },
               },
             }}
