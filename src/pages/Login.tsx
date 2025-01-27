@@ -46,7 +46,7 @@ const Login = () => {
                   button_label: 'Se connecter',
                   loading_button_label: 'Connexion en cours...',
                   social_provider_text: 'Se connecter avec {{provider}}',
-                  link_text: "Vous avez déjà un compte ? Connectez-vous",
+                  link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
                 },
                 sign_up: {
                   email_label: 'Adresse email',
@@ -54,7 +54,7 @@ const Login = () => {
                   button_label: "S'inscrire",
                   loading_button_label: 'Inscription en cours...',
                   social_provider_text: "S'inscrire avec {{provider}}",
-                  link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
+                  link_text: "Vous avez déjà un compte ? Connectez-vous",
                 },
                 forgotten_password: {
                   email_label: 'Adresse email',
