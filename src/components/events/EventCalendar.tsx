@@ -2,7 +2,7 @@ import React from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Event } from './types';
 import { EventModal } from './EventModal';
@@ -10,11 +10,17 @@ import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import { EventHeader } from './components/EventHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { EventForm } from './components/EventForm';
 
 export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
 
   const { data: events } = useQuery({
     queryKey: ['events'],
@@ -50,6 +56,35 @@ export function EventCalendar() {
     }
   });
 
+  const createEventMutation = useMutation({
+    mutationFn: async (values: any) => {
+      const { data, error } = await supabase
+        .from('events')
+        .insert([values])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: "Succès",
+        description: "L'événement a été créé avec succès",
+      });
+      setIsCreateModalOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer l'événement",
+        variant: "destructive",
+      });
+      console.error('Error creating event:', error);
+    }
+  });
+
   const handleEventClick = (info: any) => {
     setSelectedEvent(info.event);
   };
@@ -58,10 +93,28 @@ export function EventCalendar() {
     setSelectedEvent(null);
   };
 
+  const handleCreateEvent = async (values: any) => {
+    createEventMutation.mutate(values);
+  };
+
   return (
     <div className="container mx-auto px-2 sm:px-4">
       <Card className="p-2 sm:p-6">
-        <EventHeader />
+        <div className="flex justify-between items-center mb-4">
+          <EventHeader />
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="ml-auto">
+                <Plus className="mr-2 h-4 w-4" />
+                Créer un événement
+              </Button>
+            </DialogTrigger>
+            <EventForm 
+              onSubmit={handleCreateEvent}
+              isLoading={createEventMutation.isPending}
+            />
+          </Dialog>
+        </div>
         
         <div className="mt-4">
           <FullCalendar
