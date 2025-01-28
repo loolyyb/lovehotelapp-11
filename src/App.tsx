@@ -6,14 +6,12 @@ import { ServiceWorkerManager } from "./components/pwa/ServiceWorkerManager";
 
 function App() {
   return (
-    <React.StrictMode>
-      <ThemeProvider>
-        <Router>
-          <ServiceWorkerManager />
-          <AppContent />
-        </Router>
-      </ThemeProvider>
-    </React.StrictMode>
+    <ThemeProvider>
+      <Router>
+        <ServiceWorkerManager />
+        <AppContent />
+      </Router>
+    </ThemeProvider>
   );
 }
 
