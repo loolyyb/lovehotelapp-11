@@ -1,54 +1,39 @@
-import React, { createContext, useContext, useState, useMemo } from "react";
-import { type CustomTheme, ThemeName } from "@/types/theme";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { themes } from "@/config/themes.config";
 
-interface ThemeContextType {
-  theme: CustomTheme;
-  currentThemeName: ThemeName;
-  updateTheme: (newTheme: Partial<CustomTheme>) => void;
-  switchTheme: (themeName: ThemeName) => Promise<void>;
-}
+type Theme = {
+  name: string;
+  colors: Record<string, string>;
+};
+
+type ThemeContextType = {
+  currentTheme: Theme;
+  currentThemeName: string;
+  switchTheme: (themeName: string) => Promise<void>;
+};
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-function incrementVersion(version: string): string {
-  const [major, minor, patch] = version.split(".").map(Number);
-  return `${major}.${minor}.${patch + 1}`;
-}
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [currentTheme, setCurrentTheme] = useState<Theme>(themes.lover);
+  const [currentThemeName, setCurrentThemeName] = useState<string>("lover");
 
-interface ThemeProviderProps {
-  children: React.ReactNode;
-}
-
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
-  const [theme, setTheme] = useState<CustomTheme>(themes[currentThemeName]);
-
-  const updateTheme = (newTheme: Partial<CustomTheme>) => {
-    setTheme((current) => ({
-      ...current,
-      ...newTheme,
-      version: incrementVersion(current.version),
-    }));
-  };
-
-  const switchTheme = async (themeName: ThemeName) => {
-    if (!themes[themeName]) {
-      throw new Error(`Theme "${themeName}" not found`);
+  const switchTheme = async (themeName: string) => {
+    if (themes[themeName]) {
+      setCurrentTheme(themes[themeName]);
+      setCurrentThemeName(themeName);
     }
-    setCurrentThemeName(themeName);
-    setTheme(themes[themeName]);
   };
 
-  const value = useMemo(
-    () => ({
-      theme,
-      currentThemeName,
-      updateTheme,
-      switchTheme,
-    }),
-    [theme, currentThemeName]
-  );
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", currentThemeName);
+  }, [currentThemeName]);
+
+  const value = {
+    currentTheme,
+    currentThemeName,
+    switchTheme,
+  };
 
   return (
     <ThemeContext.Provider value={value}>
@@ -57,10 +42,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   );
 }
 
-export function useTheme() {
+export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
-}
+};
