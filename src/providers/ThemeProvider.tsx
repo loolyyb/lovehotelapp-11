@@ -1,24 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { themes } from "@/config/themes.config";
-
-type Theme = {
-  name: string;
-  colors: Record<string, string>;
-};
+import { CustomTheme, ThemeName } from "@/types/theme";
 
 type ThemeContextType = {
-  currentTheme: Theme;
-  currentThemeName: string;
-  switchTheme: (themeName: string) => Promise<void>;
+  currentTheme: CustomTheme;
+  currentThemeName: ThemeName;
+  switchTheme: (themeName: ThemeName) => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [currentTheme, setCurrentTheme] = useState<Theme>(themes.lover);
-  const [currentThemeName, setCurrentThemeName] = useState<string>("lover");
+  const [currentTheme, setCurrentTheme] = useState<CustomTheme>(themes.lover);
+  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("lover");
 
-  const switchTheme = async (themeName: string) => {
+  const switchTheme = async (themeName: ThemeName) => {
     if (themes[themeName]) {
       setCurrentTheme(themes[themeName]);
       setCurrentThemeName(themeName);
