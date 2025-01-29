@@ -1,14 +1,15 @@
 import React, { createContext, useState, useContext } from "react";
+import { ThemeName } from "@/types/theme";
 
 interface ThemeContextType {
-  theme: string;
-  setTheme: (theme: string) => void;
+  currentThemeName: ThemeName;
+  switchTheme: (theme: ThemeName) => Promise<void>;
 }
 
 // Create theme context with proper typing
 const ThemeContext = createContext<ThemeContextType>({
-  theme: "light",
-  setTheme: () => {},
+  currentThemeName: "default",
+  switchTheme: async () => {},
 });
 
 interface ThemeProviderProps {
@@ -17,10 +18,14 @@ interface ThemeProviderProps {
 
 // Provider component
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setTheme] = useState("light");
+  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
+
+  const switchTheme = async (theme: ThemeName) => {
+    setCurrentThemeName(theme);
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ currentThemeName, switchTheme }}>
       {children}
     </ThemeContext.Provider>
   );
