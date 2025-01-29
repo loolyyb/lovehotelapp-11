@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       // Add React plugin options for better error handling
-      plugins: ['react-refresh'],
+      plugins: [['react-refresh', {}]],
       fastRefresh: true,
     }),
     mode === 'development' && componentTagger(),
