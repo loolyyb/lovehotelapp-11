@@ -25,14 +25,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.setAttribute("data-theme", currentThemeName);
   }, [currentThemeName]);
 
-  const value = {
+  const contextValue = {
     currentTheme,
     currentThemeName,
     switchTheme,
   };
 
   return (
-    <ThemeContext.Provider value={value}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );
