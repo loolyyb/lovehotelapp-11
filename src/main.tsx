@@ -23,8 +23,10 @@ if (!container) {
 }
 
 const root = createRoot(container);
-const SentryApp = Sentry.withProfiler(App);
+
+// Wrap the App component with Sentry after React has been initialized
+const SentryWrappedApp = Sentry.withProfiler(App);
 
 root.render(
-  <SentryApp />
+  <SentryWrappedApp />
 );

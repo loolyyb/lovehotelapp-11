@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState, useEffect } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import { AppContent } from "./components/layout/AppContent";
@@ -16,17 +16,28 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    // Simulate async initialization
+    Promise.resolve().then(() => {
+      setIsReady(true);
+    });
+  }, []);
+
+  if (!isReady) {
+    return null; // or a loading spinner
+  }
+
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <Router>
-            <ServiceWorkerManager />
-            <AppContent />
-          </Router>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <Router>
+          <ServiceWorkerManager />
+          <AppContent />
+        </Router>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
