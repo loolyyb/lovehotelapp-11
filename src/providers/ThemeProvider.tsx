@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { themes } from "@/config/themes.config";
+import React, { createContext, useContext, useState } from "react";
 import { CustomTheme, ThemeName } from "@/types/theme";
+import { themes } from "@/config/themes.config";
 
 type ThemeContextType = {
   currentTheme: CustomTheme;
@@ -18,12 +18,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (themes[themeName]) {
       setCurrentTheme(themes[themeName]);
       setCurrentThemeName(themeName);
+      document.documentElement.setAttribute("data-theme", themeName);
     }
   };
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", currentThemeName);
-  }, [currentThemeName]);
 
   const contextValue = {
     currentTheme,
