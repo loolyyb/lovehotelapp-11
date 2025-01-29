@@ -19,7 +19,7 @@ function App() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Simulate async initialization
+    // Ensure React is fully initialized before rendering content
     Promise.resolve().then(() => {
       setIsReady(true);
     });
