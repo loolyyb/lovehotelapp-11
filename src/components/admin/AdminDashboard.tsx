@@ -9,6 +9,7 @@ import { StatsTab } from "./tabs/StatsTab";
 import { RequestsTab } from "./tabs/RequestsTab";
 import { AdvertisementManager } from "./AdvertisementManager";
 import { NotificationsTab } from "./tabs/NotificationsTab";
+import { EventsTab } from "./tabs/EventsTab";
 import { Search, Menu } from "lucide-react";
 
 export function AdminDashboard() {
@@ -55,65 +56,40 @@ export function AdminDashboard() {
         {/* Main Content */}
         <Tabs defaultValue="stats" className="admin-tabs">
           <TabsList className="bg-admin-card/50 p-1 rounded-lg border border-admin-border">
-            <TabsTrigger 
-              value="stats"
-              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
-            >
-              Statistiques
-            </TabsTrigger>
-            <TabsTrigger 
-              value="users"
-              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
-            >
-              Utilisateurs
-            </TabsTrigger>
-            <TabsTrigger 
-              value="messages"
-              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
-            >
-              Messages
-            </TabsTrigger>
-            <TabsTrigger 
-              value="requests"
-              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
-            >
-              Demandes
-            </TabsTrigger>
-            <TabsTrigger 
-              value="ads"
-              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
-            >
-              Publicités
-            </TabsTrigger>
-            <TabsTrigger 
-              value="notifications"
-              className="text-white transition-colors duration-300 data-[state=active]:bg-admin-primary data-[state=active]:text-white"
-            >
-              Notifications
-            </TabsTrigger>
+            <TabsTrigger value="stats">Statistiques</TabsTrigger>
+            <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="requests">Demandes</TabsTrigger>
+            <TabsTrigger value="events">Événements</TabsTrigger>
+            <TabsTrigger value="ads">Publicités</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="stats" className="admin-fade-in">
+          <TabsContent value="stats">
             <StatsTab />
           </TabsContent>
 
-          <TabsContent value="users" className="admin-fade-in">
+          <TabsContent value="users">
             <UsersTab />
           </TabsContent>
 
-          <TabsContent value="messages" className="admin-fade-in">
+          <TabsContent value="messages">
             <ConversationsTab />
           </TabsContent>
 
-          <TabsContent value="requests" className="admin-fade-in">
+          <TabsContent value="requests">
             <RequestsTab />
           </TabsContent>
 
-          <TabsContent value="ads" className="admin-fade-in">
+          <TabsContent value="events">
+            <EventsTab />
+          </TabsContent>
+
+          <TabsContent value="ads">
             <AdvertisementManager />
           </TabsContent>
 
-          <TabsContent value="notifications" className="admin-fade-in">
+          <TabsContent value="notifications">
             <NotificationsTab />
           </TabsContent>
         </Tabs>
