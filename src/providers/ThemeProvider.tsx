@@ -22,16 +22,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  if (!children) {
-    console.error('ThemeProvider: children is null or undefined');
-    return null;
-  }
-
   const contextValue = {
     currentTheme,
     currentThemeName,
     switchTheme,
   };
+
+  if (!children) {
+    console.error('ThemeProvider: children is null or undefined');
+    return null;
+  }
 
   return (
     <ThemeContext.Provider value={contextValue}>
