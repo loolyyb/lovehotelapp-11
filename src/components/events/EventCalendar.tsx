@@ -11,14 +11,23 @@ import { Card } from '@/components/ui/card';
 import { EventHeader } from './components/EventHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Filter } from 'lucide-react';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { EventForm } from './components/EventForm';
 import { useAuthSession } from '@/hooks/useAuthSession';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+  const [selectedEventType, setSelectedEventType] = React.useState<string>('all');
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
@@ -26,12 +35,18 @@ export function EventCalendar() {
   const isAdmin = userProfile?.role === 'admin';
 
   const { data: events, isLoading } = useQuery({
-    queryKey: ['events'],
+    queryKey: ['events', selectedEventType],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('events')
-        .select('*')
+        .select('*, event_participants(*))')
         .order('event_date', { ascending: true });
+
+      if (selectedEventType !== 'all') {
+        query = query.eq('event_type', selectedEventType);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         toast({
@@ -54,6 +69,9 @@ export function EventCalendar() {
           price: event.price,
           freeForMembers: event.free_for_members,
           imageUrl: event.image_url,
+          waitingList: event.event_participants.length >= (event.max_participants || 0),
+          participantCount: event.event_participants.length,
+          maxParticipants: event.max_participants,
         }
       }));
     }
@@ -117,22 +135,41 @@ export function EventCalendar() {
   return (
     <div className="container mx-auto px-2 sm:px-4">
       <Card className="p-2 sm:p-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
           <EventHeader />
-          {isAdmin && (
-            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="ml-auto">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Créer un événement
-                </Button>
-              </DialogTrigger>
-              <EventForm 
-                onSubmit={handleCreateEvent}
-                isLoading={createEventMutation.isPending}
-              />
-            </Dialog>
-          )}
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Select
+              value={selectedEventType}
+              onValueChange={setSelectedEventType}
+            >
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Type d'événement" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les événements</SelectItem>
+                <SelectItem value="bdsm">BDSM</SelectItem>
+                <SelectItem value="jacuzzi">Jacuzzi</SelectItem>
+                <SelectItem value="gastronomy">Gastronomie</SelectItem>
+                <SelectItem value="speed_dating">Speed Dating</SelectItem>
+                <SelectItem value="other">Autre</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {isAdmin && (
+              <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Créer un événement
+                  </Button>
+                </DialogTrigger>
+                <EventForm 
+                  onSubmit={handleCreateEvent}
+                  isLoading={createEventMutation.isPending}
+                />
+              </Dialog>
+            )}
+          </div>
         </div>
         
         <div className="mt-4">
@@ -179,6 +216,25 @@ export function EventCalendar() {
               dayGridMonth: {
                 titleFormat: { year: 'numeric', month: 'long' }
               }
+            }}
+            eventContent={(eventInfo) => {
+              const event = eventInfo.event;
+              return (
+                <div className="p-1">
+                  <div className="font-semibold text-sm">{event.title}</div>
+                  <div className="flex gap-1 mt-1 flex-wrap">
+                    <Badge variant="secondary" className="text-xs">
+                      {event.extendedProps.type}
+                    </Badge>
+                    {event.extendedProps.waitingList && (
+                      <Badge variant="destructive" className="text-xs">
+                        Liste d'attente
+                      </Badge>
+                    )}
+                    {event.extendedProps.participantCount}/{event.extendedProps.maxParticipants}
+                  </div>
+                </div>
+              );
             }}
           />
         </div>
