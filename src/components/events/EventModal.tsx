@@ -8,6 +8,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Event } from './types';
 import { EventParticipationButton } from './components/EventParticipationButton';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface EventModalProps {
   event: Event;
@@ -22,6 +24,8 @@ export function EventModal({ event, onClose, onParticipationSuccess }: EventModa
     setIsOpen(false);
     onClose();
   };
+
+  const formattedDate = format(new Date(event.start), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr });
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -43,14 +47,7 @@ export function EventModal({ event, onClose, onParticipationSuccess }: EventModa
         <div className="space-y-4">
           <div>
             <p className="text-sm text-gray-500">
-              {new Date(event.start).toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+              {formattedDate}
             </p>
           </div>
 
@@ -69,7 +66,9 @@ export function EventModal({ event, onClose, onParticipationSuccess }: EventModa
             <p>
               {event.extendedProps.freeForMembers 
                 ? "Gratuit pour les membres" 
-                : `Prix: ${event.extendedProps.price}€`}
+                : event.extendedProps.price 
+                  ? `Prix: ${event.extendedProps.price}€`
+                  : "Gratuit"}
             </p>
           </div>
 

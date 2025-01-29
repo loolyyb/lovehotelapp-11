@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { EventForm } from './components/EventForm';
+import { useAuthSession } from '@/hooks/useAuthSession';
 
 export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
@@ -21,8 +22,10 @@ export function EventCalendar() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  const { session, userProfile } = useAuthSession();
+  const isAdmin = userProfile?.role === 'admin';
 
-  const { data: events } = useQuery({
+  const { data: events, isLoading } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,9 +61,14 @@ export function EventCalendar() {
 
   const createEventMutation = useMutation({
     mutationFn: async (values: any) => {
+      if (!session?.user?.id) throw new Error("Vous devez être connecté");
+
       const { data, error } = await supabase
         .from('events')
-        .insert([values])
+        .insert([{
+          ...values,
+          created_by: session.user.id,
+        }])
         .select()
         .single();
 
@@ -91,29 +99,40 @@ export function EventCalendar() {
 
   const handleParticipationSuccess = () => {
     setSelectedEvent(null);
+    queryClient.invalidateQueries({ queryKey: ['events'] });
   };
 
   const handleCreateEvent = async (values: any) => {
     createEventMutation.mutate(values);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-2 sm:px-4">
       <Card className="p-2 sm:p-6">
         <div className="flex justify-between items-center mb-4">
           <EventHeader />
-          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="ml-auto">
-                <Plus className="mr-2 h-4 w-4" />
-                Créer un événement
-              </Button>
-            </DialogTrigger>
-            <EventForm 
-              onSubmit={handleCreateEvent}
-              isLoading={createEventMutation.isPending}
-            />
-          </Dialog>
+          {isAdmin && (
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="ml-auto">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Créer un événement
+                </Button>
+              </DialogTrigger>
+              <EventForm 
+                onSubmit={handleCreateEvent}
+                isLoading={createEventMutation.isPending}
+              />
+            </Dialog>
+          )}
         </div>
         
         <div className="mt-4">
@@ -161,7 +180,6 @@ export function EventCalendar() {
                 titleFormat: { year: 'numeric', month: 'long' }
               }
             }}
-            themeSystem="standard"
           />
         </div>
 
