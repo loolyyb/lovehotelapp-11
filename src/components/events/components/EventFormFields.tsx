@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { EventFormValues } from "../types";
 import { BasicInfoFields } from "./form-fields/BasicInfoFields";
