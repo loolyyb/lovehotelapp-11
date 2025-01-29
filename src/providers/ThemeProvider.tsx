@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { ThemeName } from "@/types/theme";
 
 interface ThemeContextType {
@@ -6,7 +6,6 @@ interface ThemeContextType {
   switchTheme: (theme: ThemeName) => Promise<void>;
 }
 
-// Create theme context with proper typing
 const ThemeContext = React.createContext<ThemeContextType>({
   currentThemeName: "default",
   switchTheme: async () => {},
@@ -16,7 +15,6 @@ interface ThemeProviderProps {
   children: React.ReactNode;
 }
 
-// Provider component
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [currentThemeName, setCurrentThemeName] = React.useState<ThemeName>("default");
 
@@ -24,14 +22,21 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setCurrentThemeName(theme);
   };
 
+  const value = React.useMemo(
+    () => ({
+      currentThemeName,
+      switchTheme,
+    }),
+    [currentThemeName]
+  );
+
   return (
-    <ThemeContext.Provider value={{ currentThemeName, switchTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
-// Custom hook to use theme
 export function useTheme() {
   const context = React.useContext(ThemeContext);
   if (!context) {
