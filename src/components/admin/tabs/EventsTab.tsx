@@ -55,6 +55,8 @@ export function EventsTab() {
           is_private: values.is_private,
           price: values.price,
           free_for_members: values.free_for_members,
+          max_participants: values.max_participants,
+          image_url: values.image_url,
           created_by: (await supabase.auth.getUser()).data.user?.id,
         }])
         .select()
