@@ -1,32 +1,25 @@
-import React, { createContext, useContext, useState } from "react";
-import { CustomTheme, ThemeName } from "@/types/theme";
-import { themes } from "@/config/themes.config";
+import React, { createContext, useState, useEffect } from 'react';
 
-type ThemeContextType = {
-  currentTheme: CustomTheme;
-  currentThemeName: ThemeName;
-  switchTheme: (themeName: ThemeName) => Promise<void>;
-};
+interface ThemeContextType {
+  theme: string;
+  setTheme: (theme: string) => void;
+}
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType>({
+  theme: 'light',
+  setTheme: () => {},
+});
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [currentTheme, setCurrentTheme] = useState<CustomTheme>(themes.lover);
-  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("lover");
+interface ThemeProviderProps {
+  children: React.ReactNode;
+}
 
-  const switchTheme = async (themeName: ThemeName) => {
-    if (themes[themeName]) {
-      setCurrentTheme(themes[themeName]);
-      setCurrentThemeName(themeName);
-      document.documentElement.setAttribute("data-theme", themeName);
-    }
-  };
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const [theme, setTheme] = useState('light');
 
-  const contextValue = {
-    currentTheme,
-    currentThemeName,
-    switchTheme,
-  };
+  useEffect(() => {
+    console.log('ThemeProvider monté avec le thème :', theme);
+  }, [theme]);
 
   if (!children) {
     console.error('ThemeProvider: children is null or undefined');
@@ -34,16 +27,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ThemeContext.Provider value={contextValue}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
 }
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
-};
