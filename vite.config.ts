@@ -9,29 +9,15 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react({
-      // Use the correct options for @vitejs/plugin-react-swc
-      swcOptions: {
-        jsc: {
-          transform: {
-            react: {
-              refresh: true,
-              development: mode === 'development',
-            },
-          },
-        },
-      },
-    }),
+    react(),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    // Add extensions to improve module resolution
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
-  // Add better error reporting
   build: {
     sourcemap: true,
     rollupOptions: {
@@ -40,7 +26,6 @@ export default defineConfig(({ mode }) => ({
       }
     }
   },
-  // Improve HMR and error overlay
   optimizeDeps: {
     include: ['react', 'react-dom']
   }
