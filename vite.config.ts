@@ -10,8 +10,17 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react({
-      // Update to use reactRefresh instead of fastRefresh
-      reactRefresh: true,
+      // Use the correct options for @vitejs/plugin-react-swc
+      swcOptions: {
+        jsc: {
+          transform: {
+            react: {
+              refresh: true,
+              development: mode === 'development',
+            },
+          },
+        },
+      },
     }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
