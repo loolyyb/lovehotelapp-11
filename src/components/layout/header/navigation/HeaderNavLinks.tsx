@@ -39,7 +39,7 @@ export function HeaderNavLinks({ unreadCount }: HeaderNavLinksProps) {
       <Link 
         to="/events" 
         className="hover:opacity-80 transition-opacity"
-        title="Calendrier des événements"
+        title="Agenda des événements"
       >
         <Calendar className="h-5 w-5 text-burgundy stroke-[1.5]" />
       </Link>
