@@ -24,7 +24,5 @@ const root = ReactDOM.createRoot(rootElement);
 const SentryApp = Sentry.withProfiler(App);
 
 root.render(
-  <React.StrictMode>
-    <SentryApp />
-  </React.StrictMode>
+  <SentryApp />
 );
