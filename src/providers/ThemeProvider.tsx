@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from "react";
+import * as React from "react";
 import { ThemeName } from "@/types/theme";
 
 interface ThemeContextType {
@@ -7,7 +7,7 @@ interface ThemeContextType {
 }
 
 // Create theme context with proper typing
-const ThemeContext = createContext<ThemeContextType>({
+const ThemeContext = React.createContext<ThemeContextType>({
   currentThemeName: "default",
   switchTheme: async () => {},
 });
@@ -18,7 +18,7 @@ interface ThemeProviderProps {
 
 // Provider component
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
+  const [currentThemeName, setCurrentThemeName] = React.useState<ThemeName>("default");
 
   const switchTheme = async (theme: ThemeName) => {
     setCurrentThemeName(theme);
@@ -33,9 +33,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
 // Custom hook to use theme
 export function useTheme() {
-  const context = useContext(ThemeContext);
+  const context = React.useContext(ThemeContext);
   if (!context) {
-    throw new Error("useTheme doit être utilisé à l'intérieur de ThemeProvider");
+    throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
 }
