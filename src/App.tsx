@@ -20,13 +20,16 @@ function App() {
 
   useEffect(() => {
     // Ensure React is fully initialized before rendering content
-    Promise.resolve().then(() => {
+    const initializeApp = async () => {
+      await Promise.resolve();
       setIsReady(true);
-    });
+    };
+
+    initializeApp();
   }, []);
 
   if (!isReady) {
-    return null; // or a loading spinner
+    return null;
   }
 
   return (
