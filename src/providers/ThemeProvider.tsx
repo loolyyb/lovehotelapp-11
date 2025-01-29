@@ -11,7 +11,11 @@ const ThemeContext = createContext<ThemeContextType>({
   switchTheme: async () => {},
 });
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+interface ThemeProviderProps {
+  children: React.ReactNode;
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
   const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
 
   const switchTheme = useCallback(async (theme: ThemeName) => {
