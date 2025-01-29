@@ -14,6 +14,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState<CustomTheme>(themes.lover);
   const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("lover");
 
+  if (!children) {
+    console.error('ThemeProvider: children is null or undefined');
+    return null;
+  }
+
   const switchTheme = async (themeName: ThemeName) => {
     if (themes[themeName]) {
       setCurrentTheme(themes[themeName]);
