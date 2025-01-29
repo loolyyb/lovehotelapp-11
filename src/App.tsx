@@ -18,14 +18,12 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <React.StrictMode>
-        <ThemeProvider>
-          <Router>
-            <ServiceWorkerManager />
-            <AppContent />
-          </Router>
-        </ThemeProvider>
-      </React.StrictMode>
+      <ThemeProvider>
+        <Router>
+          <ServiceWorkerManager />
+          <AppContent />
+        </Router>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

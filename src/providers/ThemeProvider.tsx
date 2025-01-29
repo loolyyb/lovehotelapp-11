@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { themes } from "@/config/themes.config";
-import { CustomTheme, ThemeName } from "@/types/theme";
+import { themes } from "@Theme, ThemeName } from "@/types/theme";
 
 type ThemeContextType = {
   currentTheme: CustomTheme;
