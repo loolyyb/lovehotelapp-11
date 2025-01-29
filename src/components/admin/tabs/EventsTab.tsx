@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import { EventFormValues } from "@/components/events/types";
 export function EventsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
@@ -126,7 +126,9 @@ export function EventsTab() {
             </Button>
           </DialogTrigger>
           <EventForm 
-            onSubmit={(values) => createEventMutation.mutate(values)}
+            onSubmit={async (values) => {
+              await createEventMutation.mutateAsync(values);
+            }}
             isLoading={createEventMutation.isPending}
           />
         </Dialog>
