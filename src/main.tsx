@@ -20,8 +20,8 @@ Sentry.init({
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error('Failed to find the "root" element');
 
-const SentryApp = Sentry.withProfiler(App);
 const root = ReactDOM.createRoot(rootElement);
+const SentryApp = Sentry.withProfiler(App);
 
 root.render(
   <React.StrictMode>
