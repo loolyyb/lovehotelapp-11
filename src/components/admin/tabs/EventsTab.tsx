@@ -14,10 +14,14 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2, Trash2, Edit, Users } from "lucide-react";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { EventForm } from "@/components/events/components/EventForm";
+import { EventFormValues } from "@/components/events/types";
 
 export function EventsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
@@ -36,6 +40,44 @@ export function EventsTab() {
 
       if (error) throw error;
       return data;
+    }
+  });
+
+  const createEventMutation = useMutation({
+    mutationFn: async (values: EventFormValues) => {
+      const { data, error } = await supabase
+        .from('events')
+        .insert([{
+          title: values.title,
+          description: values.description,
+          event_date: values.event_date,
+          event_type: values.event_type,
+          is_private: values.is_private,
+          price: values.price,
+          free_for_members: values.free_for_members,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+      toast({
+        title: "Événement créé",
+        description: "L'événement a été créé avec succès",
+      });
+      setIsCreateModalOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de créer l'événement",
+      });
+      console.error('Error creating event:', error);
     }
   });
 
@@ -77,9 +119,17 @@ export function EventsTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Gestion des événements</h2>
-        <Button>
-          Créer un événement
-        </Button>
+        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              Créer un événement
+            </Button>
+          </DialogTrigger>
+          <EventForm 
+            onSubmit={(values) => createEventMutation.mutate(values)}
+            isLoading={createEventMutation.isPending}
+          />
+        </Dialog>
       </div>
 
       <Table>
