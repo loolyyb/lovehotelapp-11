@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card';
 import { EventHeader } from './components/EventHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { EventForm } from './components/EventForm';
 import { useAuthSession } from '@/hooks/useAuthSession';
@@ -23,11 +23,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Database } from '@/integrations/supabase/types';
+
+type EventType = Database['public']['Enums']['event_type'];
 
 export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
-  const [selectedEventType, setSelectedEventType] = React.useState<string>('all');
+  const [selectedEventType, setSelectedEventType] = React.useState<EventType | 'all'>('all');
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
@@ -39,8 +42,7 @@ export function EventCalendar() {
     queryFn: async () => {
       let query = supabase
         .from('events')
-        .select('*, event_participants(*))')
-        .order('event_date', { ascending: true });
+        .select('*, event_participants(*)');
 
       if (selectedEventType !== 'all') {
         query = query.eq('event_type', selectedEventType);
@@ -140,7 +142,7 @@ export function EventCalendar() {
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <Select
               value={selectedEventType}
-              onValueChange={setSelectedEventType}
+              onValueChange={(value: EventType | 'all') => setSelectedEventType(value)}
             >
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Type d'événement" />
