@@ -1,25 +1,25 @@
-import { Event as BaseEvent } from "@/types/events";
+import { Event } from "@/types/events";
 
 export interface EventTableProps {
-  events: BaseEvent[] | undefined;
-  onEdit: (event: BaseEvent) => void;
+  events: Event[] | undefined;
+  onEdit: (event: Event) => void;
   onDelete: (eventId: string) => void;
-  onShowParticipants: (event: BaseEvent) => void;
+  onShowParticipants: (event: Event) => void;
   isUpdateLoading: boolean;
 }
 
 export interface EventFormModalProps {
-  event?: BaseEvent | null;
+  event?: Event | null;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (values: any) => Promise<any>;
+  onSubmit: (values: any) => Promise<void>;
   isLoading: boolean;
 }
 
 export interface EventActionsProps {
-  event: BaseEvent;
-  onEdit: (event: BaseEvent) => void;
+  event: Event;
+  onEdit: (event: Event) => void;
   onDelete: (eventId: string) => void;
-  onShowParticipants: (event: BaseEvent) => void;
+  onShowParticipants: (event: Event) => void;
   isUpdateLoading: boolean;
 }
