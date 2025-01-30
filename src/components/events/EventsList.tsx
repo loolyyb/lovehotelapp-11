@@ -23,11 +23,11 @@ export const EventsList = ({ events, onParticipate }: EventsListProps) => {
           key={event.id}
           id={event.id}
           title={event.title}
-          type={event.extendedProps.type}
-          description={event.extendedProps.description}
-          imageUrl={event.extendedProps.imageUrl}
-          startTime={event.start.toLocaleTimeString()}
-          endTime={event.end.toLocaleTimeString()}
+          type={event.event_type}
+          description={event.description}
+          imageUrl={event.image_url}
+          startTime={new Date(event.event_date).toLocaleTimeString()}
+          endTime={new Date(event.event_date).toLocaleTimeString()}
           onParticipate={onParticipate}
         />
       ))}

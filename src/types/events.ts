@@ -44,15 +44,15 @@ export const sampleEvents: Event[] = [
   {
     id: "1",
     title: "Speed Dating",
-    start: new Date(2024, 0, 24, 19, 0),
-    end: new Date(2024, 0, 24, 23, 0),
-    extendedProps: {
-      description: "Une soirée de rencontres rapides dans une ambiance chaleureuse et décontractée.",
-      type: "speed_dating",
-      isPrivate: false,
-      price: null,
-      freeForMembers: true,
-      imageUrl: "https://media.istockphoto.com/id/1317810289/fr/vectoriel/jeune-homme-et-femme-sasseyant-%C3%A0-la-table-et-parlant.jpg?s=612x612&w=0&k=20&c=-UzHEeczHYiQIoFirPugh1ockhVz-CY5ontY6vCCOzg="
-    }
+    description: "Une soirée de rencontres rapides dans une ambiance chaleureuse et décontractée.",
+    event_type: "speed_dating",
+    event_date: "2024-01-24T19:00:00Z",
+    created_by: "system",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+    is_private: false,
+    free_for_members: true,
+    image_url: "https://media.istockphoto.com/id/1317810289/fr/vectoriel/jeune-homme-et-femme-sasseyant-%C3%A0-la-table-et-parlant.jpg?s=612x612&w=0&k=20&c=-UzHEeczHYiQIoFirPugh1ockhVz-CY5ontY6vCCOzg=",
+    event_participants: []
   }
 ];
