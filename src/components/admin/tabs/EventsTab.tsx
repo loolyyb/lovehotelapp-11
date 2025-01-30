@@ -2,7 +2,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { EventForm } from "@/components/events/components/EventForm";
 import { EventsHeader } from "../events/EventsHeader";
 import { EventsTable } from "../events/EventsTable";
@@ -44,11 +44,24 @@ export function EventsTab() {
     <div className="space-y-6">
       <EventsHeader onCreateClick={() => setIsCreateDialogOpen(true)} />
 
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+      <Dialog 
+        open={isCreateDialogOpen} 
+        onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) {
+            // Reset form state when dialog is closed
+            createMutation.reset();
+          }
+        }}
+      >
         <EventForm 
           onSubmit={async (values) => {
-            await createMutation.mutateAsync(values);
-            setIsCreateDialogOpen(false);
+            try {
+              await createMutation.mutateAsync(values);
+              setIsCreateDialogOpen(false);
+            } catch (error) {
+              console.error('Error creating event:', error);
+            }
           }}
           isLoading={createMutation.isPending}
         />
