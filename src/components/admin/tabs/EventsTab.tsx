@@ -17,11 +17,24 @@ import { Loader2, Trash2, Edit, Users } from "lucide-react";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { EventForm } from "@/components/events/components/EventForm";
 import { EventFormValues } from "@/components/events/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function EventsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
@@ -83,6 +96,45 @@ export function EventsTab() {
     }
   });
 
+  const updateEventMutation = useMutation({
+    mutationFn: async (values: EventFormValues & { id: string }) => {
+      const { id, ...eventData } = values;
+      const { error } = await supabase
+        .from('events')
+        .update({
+          title: eventData.title,
+          description: eventData.description,
+          event_date: eventData.event_date,
+          event_type: eventData.event_type,
+          is_private: eventData.is_private,
+          price: eventData.price,
+          free_for_members: eventData.free_for_members,
+          max_participants: eventData.max_participants,
+          image_url: eventData.image_url,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+      toast({
+        title: "Événement modifié",
+        description: "L'événement a été modifié avec succès",
+      });
+      setIsEditModalOpen(false);
+      setSelectedEvent(null);
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de modifier l'événement",
+      });
+      console.error('Error updating event:', error);
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (eventId: string) => {
       const { error } = await supabase
@@ -98,6 +150,8 @@ export function EventsTab() {
         title: "Événement supprimé",
         description: "L'événement a été supprimé avec succès",
       });
+      setIsDeleteDialogOpen(false);
+      setSelectedEvent(null);
     },
     onError: (error) => {
       toast({
@@ -108,6 +162,16 @@ export function EventsTab() {
       console.error('Error deleting event:', error);
     }
   });
+
+  const handleEditClick = (event: any) => {
+    setSelectedEvent(event);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = (event: any) => {
+    setSelectedEvent(event);
+    setIsDeleteDialogOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -169,6 +233,7 @@ export function EventsTab() {
                   variant="outline" 
                   size="icon"
                   title="Modifier"
+                  onClick={() => handleEditClick(event)}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -176,11 +241,7 @@ export function EventsTab() {
                   variant="outline" 
                   size="icon"
                   title="Supprimer"
-                  onClick={() => {
-                    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) {
-                      deleteMutation.mutate(event.id);
-                    }
-                  }}
+                  onClick={() => handleDeleteClick(event)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -189,6 +250,54 @@ export function EventsTab() {
           ))}
         </TableBody>
       </Table>
+
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        {selectedEvent && (
+          <EventForm
+            initialData={selectedEvent}
+            onSubmit={async (values) => {
+              await updateEventMutation.mutateAsync({
+                ...values,
+                id: selectedEvent.id,
+              });
+            }}
+            isLoading={updateEventMutation.isPending}
+          />
+        )}
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Cela supprimera définitivement l'événement
+              et toutes les inscriptions associées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (selectedEvent) {
+                  deleteMutation.mutate(selectedEvent.id);
+                }
+              }}
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Suppression...
+                </>
+              ) : (
+                "Supprimer"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
