@@ -20,11 +20,32 @@ import { useLogger } from "@/hooks/useLogger";
 import { AlertService } from "@/services/AlertService";
 import { EventFormValues } from "@/components/events/types";
 
+interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  event_date: string;
+  event_type: "bdsm" | "jacuzzi" | "gastronomy" | "speed_dating" | "other";
+  free_for_members?: boolean;
+  is_private?: boolean;
+  price?: number;
+  event_participants?: Array<{
+    id: string;
+    user_id: string;
+    status: string;
+    profiles?: {
+      id: string;
+      full_name: string;
+      avatar_url?: string;
+    };
+  }>;
+}
+
 export function EventsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const logger = useLogger('EventsTab');
-  const [selectedEvent, setSelectedEvent] = React.useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const [isParticipantsModalOpen, setIsParticipantsModalOpen] = React.useState(false);
 
@@ -52,18 +73,26 @@ export function EventsTab() {
         logger.error('Error fetching events:', { error });
         throw error;
       }
-      return data;
+      return data as Event[];
     }
   });
 
   const createEventMutation = useMutation({
     mutationFn: async (values: EventFormValues) => {
+      const eventData = {
+        title: values.title,
+        description: values.description,
+        event_date: values.event_date,
+        event_type: values.event_type,
+        free_for_members: values.free_for_members,
+        is_private: values.is_private,
+        price: values.price,
+        created_by: (await supabase.auth.getUser()).data.user?.id
+      };
+
       const { data, error } = await supabase
         .from('events')
-        .insert([{
-          ...values,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        }])
+        .insert([eventData])
         .select()
         .single();
 
@@ -92,9 +121,20 @@ export function EventsTab() {
 
   const updateEventMutation = useMutation({
     mutationFn: async (values: EventFormValues & { id: string }) => {
+      const eventData = {
+        id: values.id,
+        title: values.title,
+        description: values.description,
+        event_date: values.event_date,
+        event_type: values.event_type,
+        free_for_members: values.free_for_members,
+        is_private: values.is_private,
+        price: values.price
+      };
+
       const { data, error } = await supabase
         .from('events')
-        .update(values)
+        .update(eventData)
         .eq('id', values.id)
         .select()
         .single();
