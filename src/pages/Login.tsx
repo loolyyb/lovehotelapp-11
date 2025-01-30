@@ -4,7 +4,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-const Login: React.FC = () => {
+const Login = () => {
   const { error } = useAuth();
 
   return (
@@ -84,4 +84,5 @@ const Login: React.FC = () => {
   );
 };
 
+// Make sure to export as default
 export default Login;
