@@ -8,6 +8,7 @@ import { ThemeTab } from "./tabs/ThemeTab";
 import { UsersTab } from "./tabs/UsersTab";
 import { ConversationsTab } from "./tabs/ConversationsTab";
 import { RequestsTab } from "./tabs/RequestsTab";
+import { ThemeName } from "@/types/theme";
 
 interface AdminDashboardContentProps {
   session: Session;
@@ -32,7 +33,7 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
 
         <TabsContent value="theme">
           <ThemeTab 
-            currentThemeName={currentThemeName}
+            currentThemeName={currentThemeName as ThemeName}
             switchTheme={switchTheme}
           />
         </TabsContent>
