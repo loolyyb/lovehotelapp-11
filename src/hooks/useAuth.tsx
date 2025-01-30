@@ -62,7 +62,14 @@ export const useAuth = () => {
           description: "Bienvenue !",
         });
         navigate("/");
-      } else if (event === 'SIGNED_OUT') {
+      } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        // Clear any stored tokens
+        localStorage.removeItem('supabase.auth.token');
+        if (event === 'SIGNED_OUT') {
+          navigate("/login");
+        }
+      } else if (event === 'USER_DELETED') {
+        localStorage.clear();
         navigate("/login");
       }
     } catch (error: any) {
@@ -79,15 +86,17 @@ export const useAuth = () => {
         logger.error('Session error:', { error: sessionError });
         if (sessionError.message.includes('refresh_token_not_found')) {
           await supabase.auth.signOut();
+          localStorage.removeItem('supabase.auth.token');
           setError("Votre session a expiré. Veuillez vous reconnecter.");
+          navigate("/login");
           return;
         }
         setError("Une erreur est survenue lors de la vérification de votre session. Veuillez réessayer.");
         return;
       }
 
-      if (session) {
-        navigate("/");
+      if (!session) {
+        navigate("/login");
       }
     } catch (error) {
       logger.error('Session check error:', { error });
