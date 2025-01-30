@@ -80,7 +80,6 @@ export function AppContent() {
       </div>
       <Footer />
       {appConfig.features.enablePWA && <MobileNavBar />}
-      <UpdatePrompt />
       <Toaster />
     </div>
   );
