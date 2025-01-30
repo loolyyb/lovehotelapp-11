@@ -1,40 +1,49 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
-import { ThemeName } from "@/types/theme";
+import React, { createContext, useContext, useState } from "react";
+import { CustomTheme, ThemeName } from "@/types/theme";
+import { themes } from "@/config/themes.config";
 
-interface ThemeContextType {
+type ThemeContextType = {
+  currentTheme: CustomTheme;
   currentThemeName: ThemeName;
-  switchTheme: (theme: ThemeName) => Promise<void>;
-}
-
-const ThemeContext = createContext<ThemeContextType | null>(null);
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
+  switchTheme: (themeName: ThemeName) => Promise<void>;
 };
 
-interface ThemeProviderProps {
-  children: React.ReactNode;
-}
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [currentTheme, setCurrentTheme] = useState<CustomTheme>(themes.lover);
+  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("lover");
 
-  const switchTheme = useCallback(async (theme: ThemeName) => {
-    setCurrentThemeName(theme);
-  }, []);
+  if (!children) {
+    console.error('ThemeProvider: children is null or undefined');
+    return null;
+  }
 
-  const value = useMemo(() => ({
+  const switchTheme = async (themeName: ThemeName) => {
+    if (themes[themeName]) {
+      setCurrentTheme(themes[themeName]);
+      setCurrentThemeName(themeName);
+      document.documentElement.setAttribute("data-theme", themeName);
+    }
+  };
+
+  const contextValue = {
+    currentTheme,
     currentThemeName,
     switchTheme,
-  }), [currentThemeName, switchTheme]);
+  };
 
   return (
-    <ThemeContext.Provider value={value}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );
 }
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+  return context;
+};

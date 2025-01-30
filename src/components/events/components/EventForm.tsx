@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
@@ -21,12 +21,13 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
       title: initialData?.title || "",
       description: initialData?.description || "",
       event_date: initialData?.event_date || "",
+      start_time: initialData?.start_time || "",
+      end_time: initialData?.end_time || "",
       event_type: initialData?.event_type || "other",
       is_private: initialData?.is_private || false,
       price: initialData?.price || null,
       free_for_members: initialData?.free_for_members || true,
-      image_url: initialData?.image_url,
-      max_participants: initialData?.max_participants,
+      image: undefined,
     },
   });
 

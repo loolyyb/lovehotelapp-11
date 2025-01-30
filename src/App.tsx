@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { ThemeProvider } from "./providers/ThemeProvider";
 import { AppContent } from "./components/layout/AppContent";
@@ -16,25 +16,17 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <Router>
-          <ServiceWorkerManager />
-          <AppContent />
-        </Router>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <Router>
+            <ServiceWorkerManager />
+            <AppContent />
+          </Router>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 }
 

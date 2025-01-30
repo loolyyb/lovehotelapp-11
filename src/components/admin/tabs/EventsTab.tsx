@@ -1,35 +1,69 @@
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import React from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { EventForm } from "@/components/events/components/EventForm";
-import { EventsTable } from "./events/EventsTable";
-import { DeleteEventDialog } from "./events/DeleteEventDialog";
-import { useEvents } from "./events/useEvents";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Loader2, Trash2, Edit, Users } from "lucide-react";
 
 export function EventsTab() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const {
-    events,
-    isLoading,
-    createEventMutation,
-    updateEventMutation,
-    deleteEventMutation,
-  } = useEvents();
+  const { data: events, isLoading } = useQuery({
+    queryKey: ['admin-events'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          event_participants (
+            id,
+            user_id,
+            status
+          )
+        `)
+        .order('event_date', { ascending: true });
 
-  const handleEditClick = (event: any) => {
-    setSelectedEvent(event);
-    setIsEditModalOpen(true);
-  };
+      if (error) throw error;
+      return data;
+    }
+  });
 
-  const handleDeleteClick = (event: any) => {
-    setSelectedEvent(event);
-    setIsDeleteDialogOpen(true);
-  };
+  const deleteMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+      toast({
+        title: "Événement supprimé",
+        description: "L'événement a été supprimé avec succès",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer l'événement",
+      });
+      console.error('Error deleting event:', error);
+    }
+  });
 
   if (isLoading) {
     return (
@@ -43,59 +77,64 @@ export function EventsTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Gestion des événements</h2>
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
-            <Button variant="default">
-              Créer un événement
-            </Button>
-          </DialogTrigger>
-          <EventForm 
-            onSubmit={async (values) => {
-              await createEventMutation.mutateAsync(values);
-              setIsCreateModalOpen(false);
-            }}
-            isLoading={createEventMutation.isPending}
-          />
-        </Dialog>
+        <Button>
+          Créer un événement
+        </Button>
       </div>
 
-      <EventsTable 
-        events={events || []}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteClick}
-      />
-
-      {/* Edit Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        {selectedEvent && (
-          <EventForm
-            initialData={selectedEvent}
-            onSubmit={async (values) => {
-              await updateEventMutation.mutateAsync({
-                ...values,
-                id: selectedEvent.id,
-              });
-              setIsEditModalOpen(false);
-              setSelectedEvent(null);
-            }}
-            isLoading={updateEventMutation.isPending}
-          />
-        )}
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <DeleteEventDialog 
-        isOpen={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        onConfirm={() => {
-          if (selectedEvent) {
-            deleteEventMutation.mutate(selectedEvent.id);
-            setIsDeleteDialogOpen(false);
-            setSelectedEvent(null);
-          }
-        }}
-        isLoading={deleteEventMutation.isPending}
-      />
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Titre</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Participants</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {events?.map((event) => (
+            <TableRow key={event.id}>
+              <TableCell>
+                {format(new Date(event.event_date), "d MMMM yyyy", { locale: fr })}
+              </TableCell>
+              <TableCell>{event.title}</TableCell>
+              <TableCell>{event.event_type}</TableCell>
+              <TableCell>
+                {event.event_participants?.length || 0}
+              </TableCell>
+              <TableCell className="space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  title="Voir les participants"
+                >
+                  <Users className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  title="Modifier"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  title="Supprimer"
+                  onClick={() => {
+                    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) {
+                      deleteMutation.mutate(event.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

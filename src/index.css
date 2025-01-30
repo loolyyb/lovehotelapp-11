@@ -132,13 +132,11 @@
   .fc .fc-toolbar {
     flex-direction: column;
     gap: 0.5rem;
-    margin-bottom: 1rem;
   }
 
   .fc .fc-toolbar-title {
     font-size: 1.25rem;
     margin: 0.5rem 0;
-    text-align: center;
   }
 
   .fc .fc-button {
@@ -157,15 +155,6 @@
 
   .fc .fc-col-header-cell-cushion {
     padding: 0.25rem;
-  }
-
-  .fc-event {
-    margin: 0.125rem;
-    padding: 0.25rem;
-  }
-
-  .fc-daygrid-event-harness {
-    margin-top: 0.125rem;
   }
 }
 
@@ -188,21 +177,4 @@
 
 .fc-theme-custom .fc-event {
   @apply bg-primary border-primary cursor-pointer hover:opacity-90 transition-opacity;
-}
-
-/* Event Badge Styles */
-.event-badge {
-  @apply inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold;
-}
-
-.event-badge-waiting {
-  @apply bg-red-100 text-red-800;
-}
-
-.event-badge-type {
-  @apply bg-gray-100 text-gray-800;
-}
-
-.event-badge-count {
-  @apply bg-blue-100 text-blue-800;
 }

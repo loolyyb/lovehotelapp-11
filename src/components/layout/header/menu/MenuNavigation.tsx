@@ -1,4 +1,4 @@
-import { Crown, BedDouble, Utensils, Users, Gift, Brain, Calendar } from "lucide-react";
+import { Crown, BedDouble, Utensils, Users, Gift, Brain } from "lucide-react";
 import { MenuLink } from "./MenuLink";
 
 interface MenuNavigationProps {
@@ -13,7 +13,6 @@ export const MenuNavigation = ({ onLinkClick }: MenuNavigationProps) => {
     { to: "/restaurant-du-love", icon: Utensils, label: "Restaurant du Love" },
     { to: "/features", icon: Users, label: "Nos fonctionnalités" },
     { to: "/concierge", icon: Crown, label: "Conciergerie sur mesure" },
-    { to: "/events", icon: Calendar, label: "Agenda des événements" },
     { to: "/options", icon: Gift, label: "Nos Options" },
     { to: "/quiz", icon: Brain, label: "Quiz Love Hotel" },
   ];
