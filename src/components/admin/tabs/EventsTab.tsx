@@ -1,4 +1,7 @@
 import React from "react";
+import { useTheme } from "@/providers/ThemeProvider";
+import { Session } from "@supabase/supabase-js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -20,6 +23,17 @@ import { useLogger } from "@/hooks/useLogger";
 import { AlertService } from "@/services/AlertService";
 import { EventFormValues } from "@/components/events/types";
 
+interface EventParticipant {
+  id: string;
+  user_id: string;
+  status: string;
+  profiles?: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+  } | null;
+}
+
 interface Event {
   id: string;
   title: string;
@@ -29,16 +43,9 @@ interface Event {
   free_for_members?: boolean;
   is_private?: boolean;
   price?: number;
-  event_participants?: Array<{
-    id: string;
-    user_id: string;
-    status: string;
-    profiles?: {
-      id: string;
-      full_name: string;
-      avatar_url?: string;
-    };
-  }>;
+  event_participants?: EventParticipant[];
+  created_at?: string;
+  created_by?: string;
 }
 
 export function EventsTab() {
@@ -73,7 +80,9 @@ export function EventsTab() {
         logger.error('Error fetching events:', { error });
         throw error;
       }
-      return data as Event[];
+      
+      // Cast the data to our Event type after validating the structure
+      return (data || []) as Event[];
     }
   });
 
@@ -190,12 +199,12 @@ export function EventsTab() {
     }
   });
 
-  const handleCreateEvent = (values: EventFormValues) => {
-    createEventMutation.mutate(values);
+  const handleCreateEvent = async (values: EventFormValues) => {
+    await createEventMutation.mutateAsync(values);
   };
 
-  const handleUpdateEvent = (values: EventFormValues & { id: string }) => {
-    updateEventMutation.mutate(values);
+  const handleUpdateEvent = async (values: EventFormValues & { id: string }) => {
+    await updateEventMutation.mutateAsync(values);
   };
 
   if (isLoading) {
