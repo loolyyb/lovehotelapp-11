@@ -6,6 +6,7 @@ import { Footer } from "./Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { AppRoutes } from "./AppRoutes";
+import { useTheme } from "@/providers/ThemeProvider";
 import { appConfig } from "@/config/app.config";
 import { useToast } from "@/hooks/use-toast";
 import { Loader } from "lucide-react";
@@ -15,7 +16,26 @@ import { UpdatePrompt } from "../pwa/UpdatePrompt";
 export function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
+  const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const initTheme = async () => {
+      try {
+        if (!session) return;
+        await switchTheme("lover");
+      } catch (error) {
+        console.error("Erreur lors du changement de thème:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger le thème. Veuillez vous connecter et réessayer.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    initTheme();
+  }, [session, switchTheme, toast]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -50,7 +70,10 @@ export function AppContent() {
   }
 
   return (
-    <div className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground ${isMobile ? "pb-20" : ""}`}>
+    <div 
+      data-theme={currentThemeName} 
+      className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}
+    >
       {session && <Header userProfile={userProfile} />}
       <div className="flex-grow pt-[4.5rem]">
         <AppRoutes session={session} />

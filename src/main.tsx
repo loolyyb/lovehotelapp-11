@@ -1,18 +1,15 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './index.css'
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import './index.css';
 
-// Get the root element
-const rootElement = document.getElementById('root')
-if (!rootElement) throw new Error('Failed to find the root element')
+const container = document.getElementById('root');
 
-// Create root outside of render call
-const root = ReactDOM.createRoot(rootElement)
+if (!container) {
+  throw new Error('Root element not found. Please check your index.html file.');
+}
 
-// Only wrap in StrictMode, BrowserRouter is in App.tsx
+const root = createRoot(container);
+
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)
+  <App />
+);

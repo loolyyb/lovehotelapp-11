@@ -5,7 +5,7 @@ import { useToast } from "./use-toast";
 import { useLogger } from "./useLogger";
 import { AuthError } from "@supabase/supabase-js";
 
-export function useAuth() {
+export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -31,18 +31,6 @@ export function useAuth() {
       throw error;
     }
   };
-
-  useEffect(() => {
-    logger.debug('Auth hook initialized');
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
-
-    return () => {
-      logger.debug('Auth hook cleanup');
-      subscription.unsubscribe();
-    };
-  }, []);
 
   const handleAuthChange = async (event: string, session: any) => {
     logger.debug('Auth state changed:', { event });
@@ -95,5 +83,17 @@ export function useAuth() {
     }
   };
 
+  useEffect(() => {
+    logger.debug('Auth hook initialized');
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+
+    return () => {
+      logger.debug('Auth hook cleanup');
+      subscription.unsubscribe();
+    };
+  }, []);
+
   return { error };
-}
+};

@@ -1,16 +1,23 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { EventForm } from "@/components/events/components/EventForm";
-import { EventsHeader } from "../events/EventsHeader";
-import { EventsTable } from "../events/EventsTable";
-import { useEventMutations } from "../events/useEventMutations";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Loader2, Trash2, Edit, Users } from "lucide-react";
 
 export function EventsTab() {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
-  const { createMutation, deleteMutation } = useEventMutations();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
@@ -32,6 +39,32 @@ export function EventsTab() {
     }
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+      toast({
+        title: "Événement supprimé",
+        description: "L'événement a été supprimé avec succès",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer l'événement",
+      });
+      console.error('Error deleting event:', error);
+    }
+  });
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -42,43 +75,66 @@ export function EventsTab() {
 
   return (
     <div className="space-y-6">
-      <EventsHeader onCreateClick={() => setIsCreateDialogOpen(true)} />
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Gestion des événements</h2>
+        <Button>
+          Créer un événement
+        </Button>
+      </div>
 
-      <Dialog 
-        open={isCreateDialogOpen} 
-        onOpenChange={(open) => {
-          setIsCreateDialogOpen(open);
-          if (!open) {
-            // Reset form state when dialog is closed
-            createMutation.reset();
-          }
-        }}
-      >
-        <EventForm 
-          onSubmit={async (values) => {
-            try {
-              await createMutation.mutateAsync(values);
-              setIsCreateDialogOpen(false);
-            } catch (error) {
-              console.error('Error creating event:', error);
-            }
-          }}
-          isLoading={createMutation.isPending}
-        />
-      </Dialog>
-
-      <EventsTable 
-        events={events || []}
-        onDelete={(eventId) => deleteMutation.mutate(eventId)}
-        onEdit={(event) => {
-          // TODO: Implement edit functionality
-          console.log('Edit event:', event);
-        }}
-        onViewParticipants={(event) => {
-          // TODO: Implement view participants functionality
-          console.log('View participants:', event);
-        }}
-      />
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Titre</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Participants</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {events?.map((event) => (
+            <TableRow key={event.id}>
+              <TableCell>
+                {format(new Date(event.event_date), "d MMMM yyyy", { locale: fr })}
+              </TableCell>
+              <TableCell>{event.title}</TableCell>
+              <TableCell>{event.event_type}</TableCell>
+              <TableCell>
+                {event.event_participants?.length || 0}
+              </TableCell>
+              <TableCell className="space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  title="Voir les participants"
+                >
+                  <Users className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  title="Modifier"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  title="Supprimer"
+                  onClick={() => {
+                    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) {
+                      deleteMutation.mutate(event.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

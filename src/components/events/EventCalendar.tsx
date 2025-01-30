@@ -2,20 +2,96 @@ import React from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Event } from './types';
 import { EventModal } from './EventModal';
+import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import { EventHeader } from './components/EventHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { EventForm } from './components/EventForm';
 import { useAuthSession } from '@/hooks/useAuthSession';
-import { useEvents } from './hooks/useEvents';
-import { EventCalendarLoading } from './components/EventCalendarLoading';
 
 export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+  const { toast } = useToast();
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
   const { session, userProfile } = useAuthSession();
-  const { data: events, isLoading } = useEvents();
+  const isAdmin = userProfile?.role === 'admin';
+
+  const { data: events, isLoading } = useQuery({
+    queryKey: ['events'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('event_date', { ascending: true });
+
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les événements",
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      return data.map(event => ({
+        id: event.id,
+        title: event.title,
+        start: new Date(event.event_date),
+        end: new Date(event.event_date),
+        extendedProps: {
+          description: event.description,
+          type: event.event_type,
+          isPrivate: event.is_private,
+          price: event.price,
+          freeForMembers: event.free_for_members,
+          imageUrl: event.image_url,
+        }
+      }));
+    }
+  });
+
+  const createEventMutation = useMutation({
+    mutationFn: async (values: any) => {
+      if (!session?.user?.id) throw new Error("Vous devez être connecté");
+
+      const { data, error } = await supabase
+        .from('events')
+        .insert([{
+          ...values,
+          created_by: session.user.id,
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      toast({
+        title: "Succès",
+        description: "L'événement a été créé avec succès",
+      });
+      setIsCreateModalOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer l'événement",
+        variant: "destructive",
+      });
+      console.error('Error creating event:', error);
+    }
+  });
 
   const handleEventClick = (info: any) => {
     setSelectedEvent(info.event);
@@ -23,10 +99,19 @@ export function EventCalendar() {
 
   const handleParticipationSuccess = () => {
     setSelectedEvent(null);
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+  };
+
+  const handleCreateEvent = async (values: any) => {
+    createEventMutation.mutate(values);
   };
 
   if (isLoading) {
-    return <EventCalendarLoading />;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
@@ -34,6 +119,20 @@ export function EventCalendar() {
       <Card className="p-2 sm:p-6">
         <div className="flex justify-between items-center mb-4">
           <EventHeader />
+          {isAdmin && (
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="ml-auto">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Créer un événement
+                </Button>
+              </DialogTrigger>
+              <EventForm 
+                onSubmit={handleCreateEvent}
+                isLoading={createEventMutation.isPending}
+              />
+            </Dialog>
+          )}
         </div>
         
         <div className="mt-4">
