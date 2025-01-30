@@ -24,7 +24,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   useEffect(() => {
-    switchTheme('default').catch(console.error);
+    const initTheme = async () => {
+      try {
+        await switchTheme('default');
+      } catch (error) {
+        console.error('[ThemeProvider] Error initializing theme:', error);
+      }
+    };
+
+    initTheme();
   }, []);
 
   const value = {
