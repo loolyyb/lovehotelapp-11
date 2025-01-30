@@ -62,8 +62,7 @@ const Login: React.FC = () => {
                   link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
                   confirmation_text: "Vérifiez vos emails pour confirmer votre inscription",
                   email_input_placeholder: "Votre adresse email",
-                  password_input_placeholder: "Choisissez un mot de passe",
-                  confirmation_placeholder: "Code de confirmation"
+                  password_input_placeholder: "Choisissez un mot de passe"
                 },
                 sign_in: {
                   email_label: "Adresse email",
