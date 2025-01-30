@@ -3,9 +3,22 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const Login: React.FC = () => {
   const { error } = useAuth();
+  const { toast } = useToast();
+
+  // Show error toast if authentication fails
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur d'authentification",
+        description: error,
+      });
+    }
+  }, [error, toast]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-champagne via-rose-50 to-cream p-4">
@@ -15,16 +28,10 @@ const Login: React.FC = () => {
             <h1 className="text-2xl font-bold text-burgundy mb-2">
               Bienvenue
             </h1>
-            <p className="text-burgundy/80">
-              Connectez-vous pour accéder à votre espace
+            <p className="text-burgundy/80 mb-4">
+              Connectez-vous ou créez un compte pour accéder à votre espace
             </p>
           </div>
-
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-md">
-              {error}
-            </div>
-          )}
 
           <Auth
             supabaseClient={supabase}
@@ -38,26 +45,33 @@ const Login: React.FC = () => {
                   },
                 },
               },
+              className: {
+                container: 'auth-container',
+                button: 'auth-button',
+                input: 'auth-input',
+              },
             }}
             localization={{
               variables: {
+                sign_up: {
+                  email_label: "Adresse email",
+                  password_label: "Mot de passe",
+                  button_label: "Créer un compte",
+                  loading_button_label: "Création en cours...",
+                  social_provider_text: "S'inscrire avec {{provider}}",
+                  link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
+                  confirmation_text: "Vérifiez vos emails pour confirmer votre inscription",
+                  email_input_placeholder: "Votre adresse email",
+                  password_input_placeholder: "Choisissez un mot de passe",
+                  confirmation_placeholder: "Code de confirmation"
+                },
                 sign_in: {
                   email_label: "Adresse email",
                   password_label: "Mot de passe",
                   button_label: "Se connecter",
                   loading_button_label: "Connexion en cours...",
                   social_provider_text: "Se connecter avec {{provider}}",
-                  link_text: "Pas de compte ? Créez-en un",
-                  email_input_placeholder: "Votre adresse email",
-                  password_input_placeholder: "Votre mot de passe"
-                },
-                sign_up: {
-                  email_label: "Adresse email",
-                  password_label: "Mot de passe",
-                  button_label: "S'inscrire",
-                  loading_button_label: "Inscription en cours...",
-                  social_provider_text: "S'inscrire avec {{provider}}",
-                  link_text: "Vous avez déjà un compte ? Connectez-vous",
+                  link_text: "Déjà inscrit ? Connectez-vous",
                   email_input_placeholder: "Votre adresse email",
                   password_input_placeholder: "Votre mot de passe"
                 },
@@ -67,13 +81,9 @@ const Login: React.FC = () => {
                   button_label: "Réinitialiser le mot de passe",
                   loading_button_label: "Envoi en cours...",
                   link_text: "Mot de passe oublié ?",
+                  confirmation_text: "Vérifiez vos emails pour réinitialiser votre mot de passe",
                   email_input_placeholder: "Votre adresse email"
-                },
-                update_password: {
-                  password_label: "Nouveau mot de passe",
-                  button_label: "Mettre à jour le mot de passe",
-                  password_input_placeholder: "Votre nouveau mot de passe"
-                },
+                }
               },
             }}
             providers={[]}

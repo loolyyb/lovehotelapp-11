@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
 import { useLogger } from "./useLogger";
-import { AuthError } from "@supabase/supabase-js";
 
 export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
@@ -17,12 +16,25 @@ export const useAuth = () => {
         .from('profiles')
         .select('id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (!existingProfile) {
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert([{ user_id: userId }]);
+          .insert([{
+            user_id: userId,
+            full_name: 'Nouvel utilisateur',
+            role: 'user',
+            visibility: 'public',
+            allowed_viewers: [],
+            loolyb_tokens: 0,
+            loyalty_points: 0,
+            is_love_hotel_member: false,
+            is_loolyb_holder: false,
+            photo_urls: [],
+            relationship_type: [],
+            seeking: []
+          }]);
 
         if (profileError) throw profileError;
       }
@@ -40,9 +52,9 @@ export const useAuth = () => {
         await createProfileIfNeeded(session.user.id);
         toast({
           title: "Inscription réussie",
-          description: "Votre compte a été créé avec succès.",
+          description: "Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.",
         });
-        navigate("/");
+        navigate("/login");
       } else if (event === 'SIGNED_IN' && session) {
         await createProfileIfNeeded(session.user.id);
         toast({
@@ -53,9 +65,9 @@ export const useAuth = () => {
       } else if (event === 'SIGNED_OUT') {
         navigate("/login");
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Auth change error:', { error });
-      setError("Une erreur est survenue. Veuillez réessayer.");
+      setError("Une erreur est survenue lors de la création de votre profil. Veuillez réessayer.");
     }
   };
 
