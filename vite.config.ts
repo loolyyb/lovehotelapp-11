@@ -42,6 +42,6 @@ export default defineConfig(({ mode }) => ({
   // Force disable caching
   force: true,
   clearScreen: false,
-  // Use string path instead of boolean for cacheDir
-  cacheDir: '.vite-cache'
+  // Disable caching completely
+  cacheDir: false
 }));
