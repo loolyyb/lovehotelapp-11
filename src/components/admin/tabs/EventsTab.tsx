@@ -43,7 +43,8 @@ export function EventsTab() {
         throw error;
       }
 
-      return data as Event[];
+      // Type assertion to ensure the data matches our Event type
+      return data as unknown as Event[];
     }
   });
 
