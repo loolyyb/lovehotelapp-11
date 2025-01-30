@@ -45,7 +45,7 @@ export function EventsTab() {
         <h2 className="text-2xl font-bold">Gestion des événements</h2>
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button variant="default">
               Créer un événement
             </Button>
           </DialogTrigger>
