@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TestComponent } from "./TestComponent";
 
-console.log('TestApp: Starting initialization');
+console.log('[TestApp] Starting initialization');
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,18 +15,20 @@ const queryClient = new QueryClient({
   },
 });
 
-console.log('TestApp: QueryClient initialized');
+console.log('[TestApp] QueryClient initialized');
 
 export function TestApp() {
-  console.log('TestApp: Rendering component');
+  console.log('[TestApp] Rendering component');
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <Router>
-          <TestComponent />
-        </Router>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <Router>
+            <TestComponent />
+          </Router>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 }
