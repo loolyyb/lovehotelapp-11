@@ -43,7 +43,7 @@ export function EventsTab() {
         throw error;
       }
 
-      // Type assertion to ensure the data matches our Event type
+      // Type assertion to handle the Supabase response type
       return data as unknown as Event[];
     }
   });
@@ -171,7 +171,9 @@ export function EventsTab() {
         <CreateEventDialog
           isOpen={isCreateModalOpen}
           onOpenChange={setIsCreateModalOpen}
-          onSubmit={createEventMutation.mutateAsync}
+          onSubmit={async (values) => {
+            await createEventMutation.mutateAsync(values);
+          }}
           isLoading={createEventMutation.isPending}
         />
       </div>
