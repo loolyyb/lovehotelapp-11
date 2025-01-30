@@ -16,19 +16,13 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const [isReady, setIsReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Ensure React is fully initialized before rendering content
-    const initializeApp = async () => {
-      await Promise.resolve();
-      setIsReady(true);
-    };
-
-    initializeApp();
+    setMounted(true);
   }, []);
 
-  if (!isReady) {
+  if (!mounted) {
     return null;
   }
 
