@@ -1,5 +1,4 @@
 import React from "react";
-import { useTheme } from "@/providers/ThemeProvider";
 import { Session } from "@supabase/supabase-js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdvertisementManager } from "./AdvertisementManager";
@@ -8,15 +7,12 @@ import { ThemeTab } from "./tabs/ThemeTab";
 import { UsersTab } from "./tabs/UsersTab";
 import { ConversationsTab } from "./tabs/ConversationsTab";
 import { RequestsTab } from "./tabs/RequestsTab";
-import { ThemeName } from "@/types/theme";
 
 interface AdminDashboardContentProps {
   session: Session;
 }
 
 export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
-  const { currentThemeName, switchTheme } = useTheme();
-
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-semibold mb-8">Tableau de bord administrateur</h1>
@@ -32,10 +28,7 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
         </TabsList>
 
         <TabsContent value="theme">
-          <ThemeTab 
-            currentThemeName={currentThemeName as ThemeName}
-            switchTheme={switchTheme}
-          />
+          <ThemeTab />
         </TabsContent>
 
         <TabsContent value="users">
