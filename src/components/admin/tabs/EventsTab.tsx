@@ -5,9 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Search } from "lucide-react";
 import { useLogger } from "@/hooks/useLogger";
 import { AlertService } from "@/services/AlertService";
-import { EventFormValues } from "@/components/events/types";
 import { Event } from "@/types/events";
-import { EventList } from "./events/EventList";
+import { EventTable } from "./events/EventTable";
 import { ParticipantsList } from "./events/ParticipantsList";
 import { CreateEventDialog } from "./events/CreateEventDialog";
 
@@ -44,27 +43,24 @@ export function EventsTab() {
         throw error;
       }
 
-      const typedData = (data || []) as unknown as Event[];
-      return typedData;
+      return data as Event[];
     }
   });
 
   const createEventMutation = useMutation({
-    mutationFn: async (values: EventFormValues) => {
-      const eventData = {
-        title: values.title,
-        description: values.description,
-        event_date: values.event_date,
-        event_type: values.event_type,
-        free_for_members: values.free_for_members,
-        is_private: values.is_private,
-        price: values.price,
-        created_by: (await supabase.auth.getUser()).data.user?.id
-      };
-
+    mutationFn: async (values: any) => {
       const { data, error } = await supabase
         .from('events')
-        .insert([eventData])
+        .insert([{
+          title: values.title,
+          description: values.description,
+          event_date: values.event_date,
+          event_type: values.event_type,
+          free_for_members: values.free_for_members,
+          is_private: values.is_private,
+          price: values.price,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        }])
         .select()
         .single();
 
@@ -92,21 +88,18 @@ export function EventsTab() {
   });
 
   const updateEventMutation = useMutation({
-    mutationFn: async (values: EventFormValues & { id: string }) => {
-      const eventData = {
-        id: values.id,
-        title: values.title,
-        description: values.description,
-        event_date: values.event_date,
-        event_type: values.event_type,
-        free_for_members: values.free_for_members,
-        is_private: values.is_private,
-        price: values.price
-      };
-
+    mutationFn: async (values: any) => {
       const { data, error } = await supabase
         .from('events')
-        .update(eventData)
+        .update({
+          title: values.title,
+          description: values.description,
+          event_date: values.event_date,
+          event_type: values.event_type,
+          free_for_members: values.free_for_members,
+          is_private: values.is_private,
+          price: values.price
+        })
         .eq('id', values.id)
         .select()
         .single();
@@ -162,14 +155,6 @@ export function EventsTab() {
     }
   });
 
-  const handleCreateEvent = async (values: EventFormValues) => {
-    await createEventMutation.mutateAsync(values);
-  };
-
-  const handleUpdateEvent = async (values: EventFormValues & { id: string }) => {
-    await updateEventMutation.mutateAsync(values);
-  };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -185,7 +170,7 @@ export function EventsTab() {
         <CreateEventDialog
           isOpen={isCreateModalOpen}
           onOpenChange={setIsCreateModalOpen}
-          onSubmit={handleCreateEvent}
+          onSubmit={createEventMutation.mutateAsync}
           isLoading={createEventMutation.isPending}
         />
       </div>
@@ -199,7 +184,7 @@ export function EventsTab() {
         />
       </div>
 
-      <EventList
+      <EventTable
         events={events}
         onEdit={setSelectedEvent}
         onDelete={(eventId) => deleteMutation.mutate(eventId)}
