@@ -6,7 +6,7 @@ export function EventHeader() {
     <div className="mb-6">
       <h2 className="text-2xl font-semibold">Calendrier des événements</h2>
       <p className="text-muted-foreground mt-2">
-        Découvrez tous nos événements à venir et participez à ceux qui vous intéressent.
+        Option disponible dès le 15 février 2025
       </p>
     </div>
   );
