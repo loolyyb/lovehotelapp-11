@@ -4,6 +4,8 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TestComponent } from "./TestComponent";
 
+console.log('TestApp: Starting initialization');
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -13,7 +15,11 @@ const queryClient = new QueryClient({
   },
 });
 
+console.log('TestApp: QueryClient initialized');
+
 export function TestApp() {
+  console.log('TestApp: Rendering component');
+  
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
