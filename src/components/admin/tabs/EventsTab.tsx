@@ -14,10 +14,14 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2, Trash2, Edit, Users } from "lucide-react";
+import { Dialog } from "@/components/ui/dialog";
+import { EventForm } from "@/components/events/components/EventForm";
+import { EventFormValues } from "@/components/events/types";
 
 export function EventsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
@@ -36,6 +40,61 @@ export function EventsTab() {
 
       if (error) throw error;
       return data;
+    }
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (values: EventFormValues) => {
+      // First, upload the image if provided
+      let image_url = null;
+      if (values.image) {
+        const fileExt = values.image.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const { error: uploadError, data } = await supabase.storage
+          .from('event_images')
+          .upload(fileName, values.image);
+        
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('event_images')
+          .getPublicUrl(fileName);
+          
+        image_url = publicUrl;
+      }
+
+      // Then create the event
+      const { error } = await supabase
+        .from('events')
+        .insert([{
+          title: values.title,
+          description: values.description,
+          event_type: values.event_type,
+          event_date: `${values.event_date}T${values.start_time}`,
+          is_private: values.is_private,
+          price: values.price,
+          free_for_members: values.free_for_members,
+          image_url,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        }]);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+      setIsCreateDialogOpen(false);
+      toast({
+        title: "Événement créé",
+        description: "L'événement a été créé avec succès",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de créer l'événement",
+      });
+      console.error('Error creating event:', error);
     }
   });
 
@@ -77,10 +136,19 @@ export function EventsTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Gestion des événements</h2>
-        <Button>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
           Créer un événement
         </Button>
       </div>
+
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <EventForm 
+          onSubmit={async (values) => {
+            await createMutation.mutateAsync(values);
+          }}
+          isLoading={createMutation.isPending}
+        />
+      </Dialog>
 
       <Table>
         <TableHeader>
