@@ -80,8 +80,9 @@ export function EventsTab() {
         logger.error('Error fetching events:', { error });
         throw error;
       }
-      
-      return (data || []) as Event[];
+
+      const typedData = (data || []) as unknown as Event[];
+      return typedData;
     }
   });
 
@@ -310,7 +311,6 @@ export function EventsTab() {
         </TableBody>
       </Table>
 
-      {/* Modal des participants */}
       <Dialog open={isParticipantsModalOpen} onOpenChange={setIsParticipantsModalOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <h3 className="text-lg font-semibold mb-4">
