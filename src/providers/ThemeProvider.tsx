@@ -18,7 +18,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const switchTheme = async (themeName: ThemeName) => {
     console.log('[ThemeProvider] Switching theme to:', themeName);
     try {
-      // Simulate theme loading for now
       setCurrentThemeName(themeName);
       setCurrentTheme({ name: themeName });
     } catch (error) {
@@ -29,7 +28,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     console.log('[ThemeProvider] Initial theme setup');
-    switchTheme('default');
+    switchTheme('default').catch(console.error);
   }, []);
 
   const value = {
