@@ -9,7 +9,6 @@ const Login: React.FC = () => {
   const { error } = useAuth();
   const { toast } = useToast();
 
-  // Show error toast if authentication fails
   React.useEffect(() => {
     if (error) {
       toast({
@@ -25,6 +24,11 @@ const Login: React.FC = () => {
       <div className="w-full max-w-md">
         <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-burgundy/10">
           <div className="mb-6 text-center">
+            <img 
+              src="https://dev.lovehotelaparis.com/wp-content/uploads/2020/04/logo-header-lovehotel.png" 
+              alt="Love Hotel Logo" 
+              className="h-12 w-auto mx-auto mb-4"
+            />
             <h1 className="text-2xl font-bold text-burgundy mb-2">
               Bienvenue
             </h1>
@@ -42,13 +46,29 @@ const Login: React.FC = () => {
                   colors: {
                     brand: '#800020',
                     brandAccent: '#4E0014',
+                    inputBackground: 'white',
+                    inputText: '#1a1a1a',
+                    inputBorder: '#e5e7eb',
+                    inputBorderHover: '#800020',
+                    inputBorderFocus: '#800020',
+                  },
+                  borderWidths: {
+                    buttonBorderWidth: '1px',
+                    inputBorderWidth: '1px',
+                  },
+                  borderRadii: {
+                    borderRadiusButton: '0.375rem',
+                    buttonBorderRadius: '0.375rem',
+                    inputBorderRadius: '0.375rem',
                   },
                 },
               },
               className: {
                 container: 'auth-container',
-                button: 'auth-button',
+                button: 'auth-button hover:bg-burgundy/90 transition-colors',
                 input: 'auth-input',
+                label: 'text-burgundy',
+                anchor: 'text-burgundy hover:text-burgundy/80',
               },
             }}
             localization={{
@@ -60,9 +80,7 @@ const Login: React.FC = () => {
                   loading_button_label: "Création en cours...",
                   social_provider_text: "S'inscrire avec {{provider}}",
                   link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
-                  confirmation_text: "Confirmez votre mot de passe",
-                  email_input_placeholder: "Votre adresse email",
-                  password_input_placeholder: "Choisissez un mot de passe"
+                  confirmation_text: "Vérifiez vos emails pour confirmer votre inscription",
                 },
                 sign_in: {
                   email_label: "Adresse email",
@@ -71,18 +89,14 @@ const Login: React.FC = () => {
                   loading_button_label: "Connexion en cours...",
                   social_provider_text: "Se connecter avec {{provider}}",
                   link_text: "Déjà inscrit ? Connectez-vous",
-                  email_input_placeholder: "Votre adresse email",
-                  password_input_placeholder: "Votre mot de passe"
                 },
                 forgotten_password: {
                   email_label: "Adresse email",
-                  password_label: "Mot de passe",
                   button_label: "Réinitialiser le mot de passe",
                   loading_button_label: "Envoi en cours...",
                   link_text: "Mot de passe oublié ?",
                   confirmation_text: "Vérifiez vos emails pour réinitialiser votre mot de passe",
-                  email_input_placeholder: "Votre adresse email"
-                }
+                },
               },
             }}
             providers={[]}
