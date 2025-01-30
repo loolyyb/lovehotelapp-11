@@ -10,13 +10,10 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  console.log('[ThemeProvider] Initializing');
-  
   const [currentTheme, setCurrentTheme] = useState<{ name: string } | null>(null);
   const [currentThemeName, setCurrentThemeName] = useState<string>('default');
 
   const switchTheme = async (themeName: ThemeName) => {
-    console.log('[ThemeProvider] Switching theme to:', themeName);
     try {
       setCurrentThemeName(themeName);
       setCurrentTheme({ name: themeName });
@@ -27,7 +24,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    console.log('[ThemeProvider] Initial theme setup');
     switchTheme('default').catch(console.error);
   }, []);
 
@@ -36,8 +32,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     currentThemeName,
     switchTheme,
   };
-
-  console.log('[ThemeProvider] Rendering with theme:', currentThemeName);
   
   return (
     <ThemeContext.Provider value={value}>

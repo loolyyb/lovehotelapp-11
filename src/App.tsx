@@ -5,7 +5,6 @@ import { AppContent } from "./components/layout/AppContent";
 import { ServiceWorkerManager } from "./components/pwa/ServiceWorkerManager";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
