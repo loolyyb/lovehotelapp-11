@@ -28,5 +28,13 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ['react', 'react-dom']
+  },
+  // Disable caching
+  cacheDir: false,
+  clearScreen: false,
+  server: {
+    hmr: {
+      overlay: false
+    }
   }
 }));
