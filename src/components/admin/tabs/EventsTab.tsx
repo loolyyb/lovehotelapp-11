@@ -18,12 +18,13 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { EventForm } from "@/components/events/components/EventForm";
 import { useLogger } from "@/hooks/useLogger";
 import { AlertService } from "@/services/AlertService";
+import { EventFormValues } from "@/components/events/types";
 
 export function EventsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const logger = useLogger('EventsTab');
-  const [selectedEvent, setSelectedEvent] = React.useState(null);
+  const [selectedEvent, setSelectedEvent] = React.useState<any>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const [isParticipantsModalOpen, setIsParticipantsModalOpen] = React.useState(false);
 
@@ -56,7 +57,7 @@ export function EventsTab() {
   });
 
   const createEventMutation = useMutation({
-    mutationFn: async (values) => {
+    mutationFn: async (values: EventFormValues) => {
       const { data, error } = await supabase
         .from('events')
         .insert([{
@@ -90,7 +91,7 @@ export function EventsTab() {
   });
 
   const updateEventMutation = useMutation({
-    mutationFn: async (values) => {
+    mutationFn: async (values: EventFormValues & { id: string }) => {
       const { data, error } = await supabase
         .from('events')
         .update(values)
@@ -122,7 +123,7 @@ export function EventsTab() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (eventId) => {
+    mutationFn: async (eventId: string) => {
       const { error } = await supabase
         .from('events')
         .delete()
@@ -149,11 +150,11 @@ export function EventsTab() {
     }
   });
 
-  const handleCreateEvent = async (values) => {
+  const handleCreateEvent = (values: EventFormValues) => {
     createEventMutation.mutate(values);
   };
 
-  const handleUpdateEvent = async (values) => {
+  const handleUpdateEvent = (values: EventFormValues & { id: string }) => {
     updateEventMutation.mutate(values);
   };
 
