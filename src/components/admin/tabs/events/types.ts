@@ -12,7 +12,7 @@ export interface EventFormModalProps {
   event?: BaseEvent | null;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (values: any) => Promise<void>;
+  onSubmit: (values: any) => Promise<any>;
   isLoading: boolean;
 }
 
