@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
 import { ThemeName } from "@/types/theme";
 
 interface ThemeContextType {
@@ -21,7 +21,7 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [currentThemeName, setCurrentThemeName] = React.useState<ThemeName>("default");
+  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
 
   const switchTheme = useCallback(async (theme: ThemeName) => {
     setCurrentThemeName(theme);
