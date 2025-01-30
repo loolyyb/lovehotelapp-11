@@ -14,10 +14,18 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Loader2, Trash2, Edit, Users } from "lucide-react";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { EventForm } from "@/components/events/components/EventForm";
+import { useLogger } from "@/hooks/useLogger";
+import { AlertService } from "@/services/AlertService";
 
 export function EventsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const logger = useLogger('EventsTab');
+  const [selectedEvent, setSelectedEvent] = React.useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+  const [isParticipantsModalOpen, setIsParticipantsModalOpen] = React.useState(false);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
@@ -29,18 +37,92 @@ export function EventsTab() {
           event_participants (
             id,
             user_id,
-            status
+            status,
+            profiles (
+              id,
+              full_name,
+              avatar_url
+            )
           )
         `)
         .order('event_date', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('Error fetching events:', { error });
+        throw error;
+      }
       return data;
     }
   });
 
+  const createEventMutation = useMutation({
+    mutationFn: async (values) => {
+      const { data, error } = await supabase
+        .from('events')
+        .insert([{
+          ...values,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+      toast({
+        title: "Événement créé",
+        description: "L'événement a été créé avec succès",
+      });
+      setIsCreateModalOpen(false);
+      logger.info('Event created successfully');
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de créer l'événement",
+      });
+      logger.error('Error creating event:', { error });
+      AlertService.captureException(error);
+    }
+  });
+
+  const updateEventMutation = useMutation({
+    mutationFn: async (values) => {
+      const { data, error } = await supabase
+        .from('events')
+        .update(values)
+        .eq('id', values.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+      toast({
+        title: "Événement modifié",
+        description: "L'événement a été modifié avec succès",
+      });
+      setSelectedEvent(null);
+      logger.info('Event updated successfully');
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de modifier l'événement",
+      });
+      logger.error('Error updating event:', { error });
+      AlertService.captureException(error);
+    }
+  });
+
   const deleteMutation = useMutation({
-    mutationFn: async (eventId: string) => {
+    mutationFn: async (eventId) => {
       const { error } = await supabase
         .from('events')
         .delete()
@@ -54,6 +136,7 @@ export function EventsTab() {
         title: "Événement supprimé",
         description: "L'événement a été supprimé avec succès",
       });
+      logger.info('Event deleted successfully');
     },
     onError: (error) => {
       toast({
@@ -61,9 +144,18 @@ export function EventsTab() {
         title: "Erreur",
         description: "Impossible de supprimer l'événement",
       });
-      console.error('Error deleting event:', error);
+      logger.error('Error deleting event:', { error });
+      AlertService.captureException(error);
     }
   });
+
+  const handleCreateEvent = async (values) => {
+    createEventMutation.mutate(values);
+  };
+
+  const handleUpdateEvent = async (values) => {
+    updateEventMutation.mutate(values);
+  };
 
   if (isLoading) {
     return (
@@ -77,9 +169,19 @@ export function EventsTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Gestion des événements</h2>
-        <Button>
-          Créer un événement
-        </Button>
+        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              Créer un événement
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <EventForm 
+              onSubmit={handleCreateEvent}
+              isLoading={createEventMutation.isPending}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Table>
@@ -89,6 +191,7 @@ export function EventsTab() {
             <TableHead>Titre</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Participants</TableHead>
+            <TableHead>Prix</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -102,22 +205,44 @@ export function EventsTab() {
               <TableCell>{event.event_type}</TableCell>
               <TableCell>
                 {event.event_participants?.length || 0}
+                {event.free_for_members && (
+                  <span className="ml-2 text-xs text-green-500">Gratuit membres</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {event.price ? `${event.price}€` : 'Gratuit'}
               </TableCell>
               <TableCell className="space-x-2">
                 <Button 
                   variant="outline" 
                   size="icon"
                   title="Voir les participants"
+                  onClick={() => {
+                    setSelectedEvent(event);
+                    setIsParticipantsModalOpen(true);
+                  }}
                 >
                   <Users className="h-4 w-4" />
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  title="Modifier"
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      title="Modifier"
+                      onClick={() => setSelectedEvent(event)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px]">
+                    <EventForm 
+                      initialData={event}
+                      onSubmit={handleUpdateEvent}
+                      isLoading={updateEventMutation.isPending}
+                    />
+                  </DialogContent>
+                </Dialog>
                 <Button 
                   variant="outline" 
                   size="icon"
@@ -135,6 +260,42 @@ export function EventsTab() {
           ))}
         </TableBody>
       </Table>
+
+      {/* Modal des participants */}
+      <Dialog open={isParticipantsModalOpen} onOpenChange={setIsParticipantsModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <h3 className="text-lg font-semibold mb-4">
+            Participants à {selectedEvent?.title}
+          </h3>
+          <div className="space-y-4">
+            {selectedEvent?.event_participants?.map((participant) => (
+              <div key={participant.id} className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  {participant.profiles?.avatar_url && (
+                    <img 
+                      src={participant.profiles.avatar_url} 
+                      alt="Avatar" 
+                      className="w-8 h-8 rounded-full"
+                    />
+                  )}
+                  <span>{participant.profiles?.full_name || 'Utilisateur inconnu'}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (window.confirm('Voulez-vous retirer ce participant ?')) {
+                      // TODO: Implement remove participant
+                    }
+                  }}
+                >
+                  Retirer
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
