@@ -67,7 +67,7 @@ export function EventsTab() {
             id,
             user_id,
             status,
-            profiles (
+            profiles:user_id (
               id,
               full_name,
               avatar_url
@@ -81,7 +81,6 @@ export function EventsTab() {
         throw error;
       }
       
-      // Cast the data to our Event type after validating the structure
       return (data || []) as Event[];
     }
   });
