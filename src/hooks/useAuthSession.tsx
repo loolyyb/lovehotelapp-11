@@ -3,7 +3,7 @@ import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
 
-export const useAuthSession = () => {
+export function useAuthSession() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -35,7 +35,6 @@ export const useAuthSession = () => {
 
       if (createError) throw createError;
 
-      // Create initial preferences for qualification
       const { error: prefError } = await supabase
         .from('preferences')
         .insert([{
@@ -73,7 +72,6 @@ export const useAuthSession = () => {
       }
 
       if (!profile) {
-        // Create profile if it doesn't exist
         const newProfile = await createProfile(userId);
         setUserProfile(newProfile);
         return;
@@ -91,7 +89,6 @@ export const useAuthSession = () => {
   };
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
@@ -100,7 +97,6 @@ export const useAuthSession = () => {
       setLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -117,4 +113,4 @@ export const useAuthSession = () => {
   }, []);
 
   return { session, loading, userProfile };
-};
+}
