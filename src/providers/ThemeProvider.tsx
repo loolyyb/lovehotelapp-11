@@ -9,7 +9,7 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = useState<{ name: string } | null>(null);
   const [currentThemeName, setCurrentThemeName] = useState<string>("default");
 
@@ -46,7 +46,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
 export function useTheme() {
   const context = useContext(ThemeContext);
