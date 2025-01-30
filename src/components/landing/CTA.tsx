@@ -1,40 +1,41 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 export const CTA = () => {
   return (
-    <section className="py-24 bg-burgundy text-white px-4">
+    <section className="py-20 px-4 bg-burgundy/5">
       <div className="max-w-6xl mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="space-y-6"
+          className="max-w-3xl mx-auto"
         >
-          <span className="inline-block px-3 py-1 text-sm bg-white/10 rounded-full">
-            Rejoignez-nous
-          </span>
-          <h2 className="text-4xl md:text-5xl font-cormorant font-bold">
-            Commencez Votre Histoire d'Amour
+          <h2 className="text-4xl font-cormorant font-bold text-gray-900 mb-6">
+            Prêt à vivre une expérience unique ?
           </h2>
-          <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto">
-            Profitez d'avantages exclusifs : Love Rooms, Restaurant Lovers, 
-            LooLyyb Coin et bien plus encore. Une nouvelle façon de vivre l'amour.
+          <p className="text-lg text-gray-600 mb-8">
+            Rejoignez notre communauté et découvrez un monde de possibilités
           </p>
-          <div className="pt-8 space-y-4 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row justify-center">
-            <Button
-              size="lg"
-              className="bg-white text-burgundy hover:bg-white/90 text-lg"
-            >
-              Créer un Compte
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white/10 text-lg"
-            >
-              Découvrir les Offres
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/login">
+              <Button 
+                size="lg"
+                className="bg-burgundy hover:bg-burgundy/90 text-white w-full sm:w-auto"
+              >
+                Commencer l'aventure
+              </Button>
+            </Link>
+            <Link to="/features">
+              <Button 
+                size="lg"
+                variant="outline"
+                className="border-burgundy text-burgundy hover:bg-burgundy/5 w-full sm:w-auto"
+              >
+                En savoir plus
+              </Button>
+            </Link>
           </div>
         </motion.div>
       </div>
