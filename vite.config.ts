@@ -42,6 +42,5 @@ export default defineConfig(({ mode }) => ({
   // Force disable caching
   force: true,
   clearScreen: false,
-  // Disable caching completely
-  cacheDir: false
+  // Remove cacheDir option completely since we want to disable caching
 }));
