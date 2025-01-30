@@ -1,52 +1,15 @@
 import React from "react";
-import { useTheme } from "@/providers/ThemeProvider";
-import { Session } from "@supabase/supabase-js";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { Loader2, Trash2, Edit, Users } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { EventForm } from "@/components/events/components/EventForm";
+import { Loader2, Search } from "lucide-react";
 import { useLogger } from "@/hooks/useLogger";
 import { AlertService } from "@/services/AlertService";
 import { EventFormValues } from "@/components/events/types";
-
-interface EventParticipant {
-  id: string;
-  user_id: string;
-  status: string;
-  profiles?: {
-    id: string;
-    full_name: string;
-    avatar_url?: string;
-  } | null;
-}
-
-interface Event {
-  id: string;
-  title: string;
-  description?: string;
-  event_date: string;
-  event_type: "bdsm" | "jacuzzi" | "gastronomy" | "speed_dating" | "other";
-  free_for_members?: boolean;
-  is_private?: boolean;
-  price?: number;
-  event_participants?: EventParticipant[];
-  created_at?: string;
-  created_by?: string;
-}
+import { Event } from "@/types/events";
+import { EventList } from "./events/EventList";
+import { ParticipantsList } from "./events/ParticipantsList";
+import { CreateEventDialog } from "./events/CreateEventDialog";
 
 export function EventsTab() {
   const { toast } = useToast();
@@ -219,132 +182,39 @@ export function EventsTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Gestion des événements</h2>
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              Créer un événement
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <EventForm 
-              onSubmit={handleCreateEvent}
-              isLoading={createEventMutation.isPending}
-            />
-          </DialogContent>
-        </Dialog>
+        <CreateEventDialog
+          isOpen={isCreateModalOpen}
+          onOpenChange={setIsCreateModalOpen}
+          onSubmit={handleCreateEvent}
+          isLoading={createEventMutation.isPending}
+        />
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Titre</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Participants</TableHead>
-            <TableHead>Prix</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {events?.map((event) => (
-            <TableRow key={event.id}>
-              <TableCell>
-                {format(new Date(event.event_date), "d MMMM yyyy", { locale: fr })}
-              </TableCell>
-              <TableCell>{event.title}</TableCell>
-              <TableCell>{event.event_type}</TableCell>
-              <TableCell>
-                {event.event_participants?.length || 0}
-                {event.free_for_members && (
-                  <span className="ml-2 text-xs text-green-500">Gratuit membres</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {event.price ? `${event.price}€` : 'Gratuit'}
-              </TableCell>
-              <TableCell className="space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  title="Voir les participants"
-                  onClick={() => {
-                    setSelectedEvent(event);
-                    setIsParticipantsModalOpen(true);
-                  }}
-                >
-                  <Users className="h-4 w-4" />
-                </Button>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      title="Modifier"
-                      onClick={() => setSelectedEvent(event)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px]">
-                    <EventForm 
-                      initialData={event}
-                      onSubmit={handleUpdateEvent}
-                      isLoading={updateEventMutation.isPending}
-                    />
-                  </DialogContent>
-                </Dialog>
-                <Button 
-                  variant="outline" 
-                  size="icon"
-                  title="Supprimer"
-                  onClick={() => {
-                    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) {
-                      deleteMutation.mutate(event.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="admin-search flex items-center gap-3 mb-8">
+        <Search className="text-admin-muted" size={20} />
+        <input 
+          type="text" 
+          placeholder="Rechercher..." 
+          className="admin-input w-full"
+        />
+      </div>
 
-      <Dialog open={isParticipantsModalOpen} onOpenChange={setIsParticipantsModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <h3 className="text-lg font-semibold mb-4">
-            Participants à {selectedEvent?.title}
-          </h3>
-          <div className="space-y-4">
-            {selectedEvent?.event_participants?.map((participant) => (
-              <div key={participant.id} className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  {participant.profiles?.avatar_url && (
-                    <img 
-                      src={participant.profiles.avatar_url} 
-                      alt="Avatar" 
-                      className="w-8 h-8 rounded-full"
-                    />
-                  )}
-                  <span>{participant.profiles?.full_name || 'Utilisateur inconnu'}</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (window.confirm('Voulez-vous retirer ce participant ?')) {
-                      // TODO: Implement remove participant
-                    }
-                  }}
-                >
-                  Retirer
-                </Button>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <EventList
+        events={events}
+        onEdit={setSelectedEvent}
+        onDelete={(eventId) => deleteMutation.mutate(eventId)}
+        onShowParticipants={(event) => {
+          setSelectedEvent(event);
+          setIsParticipantsModalOpen(true);
+        }}
+        isUpdateLoading={updateEventMutation.isPending}
+      />
+
+      <ParticipantsList
+        isOpen={isParticipantsModalOpen}
+        onOpenChange={setIsParticipantsModalOpen}
+        selectedEvent={selectedEvent}
+      />
     </div>
   );
 }
