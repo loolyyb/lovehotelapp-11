@@ -1,15 +1,17 @@
-import { createRoot } from 'react-dom/client';
-import App from './App';
-import './index.css';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import App from './App'
+import './index.css'
 
-const container = document.getElementById('root');
+// Create root outside of render call
+const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 
-if (!container) {
-  throw new Error('Root element not found. Please check your index.html file.');
-}
-
-const root = createRoot(container);
-
+// Wrap the entire app in StrictMode and BrowserRouter
 root.render(
-  <App />
-);
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
+)

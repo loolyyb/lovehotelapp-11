@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 
-function Login() {
+const Login: React.FC = () => {
   const { error } = useAuth();
 
   return (
@@ -83,6 +83,6 @@ function Login() {
       </Card>
     </div>
   );
-}
+};
 
 export default Login;
