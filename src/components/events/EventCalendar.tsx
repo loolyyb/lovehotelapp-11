@@ -2,56 +2,20 @@ import React from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Event } from './types';
 import { EventModal } from './EventModal';
-import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import { EventHeader } from './components/EventHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuthSession } from '@/hooks/useAuthSession';
+import { useEvents } from './hooks/useEvents';
+import { EventCalendarLoading } from './components/EventCalendarLoading';
 
 export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
-  const { toast } = useToast();
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
   const { session, userProfile } = useAuthSession();
-
-  const { data: events, isLoading } = useQuery({
-    queryKey: ['events'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('event_date', { ascending: true });
-
-      if (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les événements",
-          variant: "destructive",
-        });
-        throw error;
-      }
-
-      return data.map(event => ({
-        id: event.id,
-        title: event.title,
-        start: new Date(event.event_date),
-        end: new Date(event.event_date),
-        extendedProps: {
-          description: event.description,
-          type: event.event_type,
-          isPrivate: event.is_private,
-          price: event.price,
-          freeForMembers: event.free_for_members,
-          imageUrl: event.image_url,
-        }
-      }));
-    }
-  });
+  const { data: events, isLoading } = useEvents();
 
   const handleEventClick = (info: any) => {
     setSelectedEvent(info.event);
@@ -59,15 +23,10 @@ export function EventCalendar() {
 
   const handleParticipationSuccess = () => {
     setSelectedEvent(null);
-    queryClient.invalidateQueries({ queryKey: ['events'] });
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <EventCalendarLoading />;
   }
 
   return (
