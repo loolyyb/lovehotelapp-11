@@ -14,11 +14,14 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  console.log('[ThemeProvider] Initializing...');
+  
   const [currentTheme, setCurrentTheme] = useState<Theme>(themes.lover);
   const [currentThemeName, setCurrentThemeName] = useState<string>("lover");
 
   const switchTheme = async (themeName: string) => {
+    console.log('[ThemeProvider] Switching theme to:', themeName);
     const newTheme = themes[themeName as keyof typeof themes];
     if (newTheme) {
       setCurrentTheme(newTheme);
@@ -27,22 +30,24 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   useEffect(() => {
-    // Initialize with default theme
+    console.log('[ThemeProvider] Initial theme setup');
     switchTheme("lover");
   }, []);
 
+  const value = {
+    currentTheme,
+    currentThemeName,
+    switchTheme,
+  };
+
+  console.log('[ThemeProvider] Rendering with theme:', currentThemeName);
+
   return (
-    <ThemeContext.Provider
-      value={{
-        currentTheme,
-        currentThemeName,
-        switchTheme,
-      }}
-    >
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
