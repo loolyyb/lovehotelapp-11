@@ -52,14 +52,13 @@ const Login: React.FC = () => {
                     inputBorderHover: '#800020',
                     inputBorderFocus: '#800020',
                   },
-                  borderWidths: {
-                    buttonBorderWidth: '1px',
-                    inputBorderWidth: '1px',
+                  space: {
+                    buttonPadding: '10px 15px',
+                    inputPadding: '10px 15px',
                   },
-                  borderRadii: {
-                    borderRadiusButton: '0.375rem',
-                    buttonBorderRadius: '0.375rem',
-                    inputBorderRadius: '0.375rem',
+                  radii: {
+                    button: '0.375rem',
+                    input: '0.375rem',
                   },
                 },
               },
