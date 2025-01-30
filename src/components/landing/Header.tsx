@@ -44,21 +44,12 @@ export const Header = () => {
       } else {
         setIsAuthenticated(!!session);
       }
-
-      // Handle authentication errors
-      if (event === 'USER_UPDATED' && !session) {
-        toast({
-          variant: "destructive",
-          title: "Erreur d'authentification",
-          description: "Vos identifiants sont invalides. Veuillez réessayer.",
-        });
-      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, []);
 
   const handleLogout = async () => {
     try {
