@@ -7,6 +7,16 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    hmr: {
+      overlay: false
+    },
+    cors: true, // Enable CORS
+    headers: {
+      // Add permissive headers for development
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+    }
   },
   plugins: [
     react(),
@@ -29,12 +39,9 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     include: ['react', 'react-dom']
   },
-  // Disable caching
-  cacheDir: false,
+  // Force disable caching
+  force: true,
   clearScreen: false,
-  server: {
-    hmr: {
-      overlay: false
-    }
-  }
+  // Use string path instead of boolean for cacheDir
+  cacheDir: '.vite-cache'
 }));
