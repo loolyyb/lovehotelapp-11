@@ -60,7 +60,7 @@ const Login: React.FC = () => {
                   loading_button_label: "Création en cours...",
                   social_provider_text: "S'inscrire avec {{provider}}",
                   link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
-                  confirmation_text: "Vérifiez vos emails pour confirmer votre inscription",
+                  confirmation_text: "Confirmez votre mot de passe",
                   email_input_placeholder: "Votre adresse email",
                   password_input_placeholder: "Choisissez un mot de passe"
                 },
