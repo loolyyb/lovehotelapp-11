@@ -14,9 +14,9 @@ export function EventsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const logger = useLogger('EventsTab');
-  const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
-  const [isParticipantsModalOpen, setIsParticipantsModalOpen] = React.useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
