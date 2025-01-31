@@ -10,9 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import { EventHeader } from './components/EventHeader';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog } from '@/components/ui/dialog';
 import { EventForm } from './components/EventForm';
 import { useAuthSession } from '@/hooks/useAuthSession';
 
@@ -119,20 +117,6 @@ export function EventCalendar() {
       <Card className="p-2 sm:p-6">
         <div className="flex justify-between items-center mb-4">
           <EventHeader />
-          {isAdmin && (
-            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="ml-auto">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Créer un événement
-                </Button>
-              </DialogTrigger>
-              <EventForm 
-                onSubmit={handleCreateEvent}
-                isLoading={createEventMutation.isPending}
-              />
-            </Dialog>
-          )}
         </div>
         
         <div className="mt-4">
