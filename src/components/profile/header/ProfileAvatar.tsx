@@ -1,7 +1,7 @@
+import React, { useState } from "react";
 import { Camera } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 

@@ -1,6 +1,6 @@
+import React, { useState } from 'react';
 import { ProfileForm } from "../form/ProfileForm";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { QualificationJourney } from "@/components/qualification/QualificationJourney";
 
 interface DatingTabProps {
