@@ -33,10 +33,24 @@ export function DateTimeFields({ form }: DateTimeFieldsProps) {
 
       <FormField
         control={form.control}
-        name="event_type"
+        name="start_time"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Type</FormLabel>
+            <FormLabel>Heure de début</FormLabel>
+            <FormControl>
+              <Input type="time" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="end_time"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Heure de fin</FormLabel>
             <FormControl>
               <Input type="time" {...field} />
             </FormControl>
