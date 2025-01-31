@@ -23,14 +23,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const contextValue = {
-    currentTheme,
-    currentThemeName,
-    switchTheme,
-  };
-
   return (
-    <ThemeContext.Provider value={contextValue}>
+    <ThemeContext.Provider 
+      value={{
+        currentTheme,
+        currentThemeName,
+        switchTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

@@ -1,9 +1,3 @@
-/**
- * ConversationsTab Component
- * 
- * Provides an interface for administrators to monitor and moderate user conversations.
- * Displays a list of recent messages with filtering and moderation capabilities.
- */
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -56,7 +50,7 @@ export function ConversationsTab() {
           read_at,
           sender_id,
           conversation_id,
-          sender:profiles(full_name, username),
+          sender:profiles!messages_sender_id_fkey(full_name, username),
           conversation:conversations(
             user1:profiles!conversations_user1_profile_fkey(full_name, username),
             user2:profiles!conversations_user2_profile_fkey(full_name, username)
