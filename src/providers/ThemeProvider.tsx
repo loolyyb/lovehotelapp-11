@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { type ThemeName } from "@/types/theme";
 
 type ThemeContextType = {
@@ -22,18 +22,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
   };
-
-  useEffect(() => {
-    const initTheme = async () => {
-      try {
-        await switchTheme("default");
-      } catch (error) {
-        console.error("[ThemeProvider] Error initializing theme:", error);
-      }
-    };
-
-    initTheme();
-  }, []);
 
   const value = {
     currentTheme,
