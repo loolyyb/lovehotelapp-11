@@ -17,6 +17,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     try {
       setCurrentThemeName(themeName);
       setCurrentTheme({ name: themeName });
+      console.log("Theme switched to:", themeName);
     } catch (error) {
       console.error("[ThemeProvider] Error switching theme:", error);
       throw error;
