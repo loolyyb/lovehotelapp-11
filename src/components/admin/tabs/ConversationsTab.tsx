@@ -16,48 +16,83 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export function ConversationsTab() {
-  const { data: messages } = useQuery({
+  const { data: messages, isLoading } = useQuery({
     queryKey: ['admin-messages'],
     queryFn: async () => {
+      console.log("Fetching messages for admin view");
       const { data, error } = await supabase
         .from('messages')
         .select(`
           *,
+          sender:profiles!messages_sender_id_fkey(full_name, username),
           conversation:conversations(
-            user1:profiles!conversations_user1_profile_fkey(user_id),
-            user2:profiles!conversations_user2_profile_fkey(user_id)
+            user1:profiles!conversations_user1_profile_fkey(full_name, username),
+            user2:profiles!conversations_user2_profile_fkey(full_name, username)
           )
         `)
         .order('created_at', { ascending: false })
         .limit(100);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching messages:", error);
+        throw error;
+      }
+      console.log("Fetched messages:", data);
       return data;
     }
   });
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-gray-500">Chargement des messages...</div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
             <TableHead>De</TableHead>
+            <TableHead>À</TableHead>
             <TableHead>Message</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>Statut</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {messages?.map((message) => (
-            <TableRow key={message.id}>
-              <TableCell>{message.id}</TableCell>
-              <TableCell>{message.sender_id}</TableCell>
-              <TableCell>{message.content}</TableCell>
-              <TableCell>{new Date(message.created_at).toLocaleString()}</TableCell>
-            </TableRow>
-          ))}
+          {messages?.map((message) => {
+            const sender = message.sender?.full_name || message.sender?.username || message.sender_id;
+            const user1Name = message.conversation?.user1?.full_name || message.conversation?.user1?.username;
+            const user2Name = message.conversation?.user2?.full_name || message.conversation?.user2?.username;
+            const recipient = user1Name === sender ? user2Name : user1Name;
+
+            return (
+              <TableRow key={message.id}>
+                <TableCell className="font-medium">{sender}</TableCell>
+                <TableCell>{recipient}</TableCell>
+                <TableCell className="max-w-md truncate">
+                  {message.content}
+                </TableCell>
+                <TableCell>
+                  {format(new Date(message.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
+                </TableCell>
+                <TableCell>
+                  {message.read_at ? (
+                    <span className="text-green-600">Lu</span>
+                  ) : (
+                    <span className="text-yellow-600">Non lu</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </Card>
