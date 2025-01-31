@@ -19,8 +19,29 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
+interface MessageWithProfiles {
+  id: string;
+  content: string | null;
+  created_at: string;
+  read_at: string | null;
+  sender: {
+    full_name: string | null;
+    username: string | null;
+  } | null;
+  conversation: {
+    user1: {
+      full_name: string | null;
+      username: string | null;
+    } | null;
+    user2: {
+      full_name: string | null;
+      username: string | null;
+    } | null;
+  } | null;
+}
+
 export function ConversationsTab() {
-  const { data: messages, isLoading } = useQuery({
+  const { data: messages, isLoading } = useQuery<MessageWithProfiles[]>({
     queryKey: ['admin-messages'],
     queryFn: async () => {
       console.log("Fetching messages for admin view");
