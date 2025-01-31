@@ -16,7 +16,7 @@ export function useMessages() {
           read_at,
           sender_id,
           conversation_id,
-          sender:profiles!sender_id(full_name, username),
+          sender:profiles(full_name, username),
           conversation:conversations(
             user1:profiles!conversations_user1_profile_fkey(full_name, username),
             user2:profiles!conversations_user2_profile_fkey(full_name, username)
