@@ -24,6 +24,8 @@ interface MessageWithProfiles {
   content: string | null;
   created_at: string;
   read_at: string | null;
+  sender_id: string;
+  conversation_id: string;
   sender: {
     full_name: string | null;
     username: string | null;
@@ -48,7 +50,12 @@ export function ConversationsTab() {
       const { data, error } = await supabase
         .from('messages')
         .select(`
-          *,
+          id,
+          content,
+          created_at,
+          read_at,
+          sender_id,
+          conversation_id,
           sender:profiles!messages_sender_id_fkey(full_name, username),
           conversation:conversations(
             user1:profiles!conversations_user1_profile_fkey(full_name, username),
@@ -63,7 +70,7 @@ export function ConversationsTab() {
         throw error;
       }
       console.log("Fetched messages:", data);
-      return data;
+      return data as MessageWithProfiles[];
     }
   });
 
