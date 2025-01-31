@@ -1,22 +1,31 @@
 import React, { createContext, useContext, useState } from "react";
-import { type ThemeName } from "@/types/theme";
+import { type ThemeName, type CustomTheme } from "@/types/theme";
+import { themes } from "@/config/themes.config";
 
 type ThemeContextType = {
-  currentTheme: { name: string } | null;
-  currentThemeName: string;
+  currentTheme: CustomTheme;
+  currentThemeName: ThemeName;
   switchTheme: (themeName: ThemeName) => Promise<void>;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+/**
+ * ThemeProvider component that manages the application's theme state
+ * and provides theme switching functionality.
+ */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [currentTheme, setCurrentTheme] = useState<{ name: string } | null>(null);
-  const [currentThemeName, setCurrentThemeName] = useState<string>("default");
+  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
+  const [currentTheme, setCurrentTheme] = useState<CustomTheme>(themes.default);
 
   const switchTheme = async (themeName: ThemeName) => {
     try {
+      if (!themes[themeName]) {
+        throw new Error(`Theme "${themeName}" not found`);
+      }
+
       setCurrentThemeName(themeName);
-      setCurrentTheme({ name: themeName });
+      setCurrentTheme(themes[themeName]);
     } catch (error) {
       console.error("[ThemeProvider] Error switching theme:", error);
       throw error;
@@ -36,6 +45,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Custom hook to access the theme context.
+ * Must be used within a ThemeProvider component.
+ */
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
