@@ -10,7 +10,6 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Ensure useState is called at the root level
   const [currentTheme, setCurrentTheme] = useState<{ name: string } | null>(null);
   const [currentThemeName, setCurrentThemeName] = useState<string>("default");
 
@@ -24,7 +23,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Create value object outside of JSX
   const contextValue = {
     currentTheme,
     currentThemeName,
