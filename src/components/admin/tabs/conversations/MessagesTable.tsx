@@ -14,6 +14,14 @@ interface MessagesTableProps {
 }
 
 export function MessagesTable({ messages }: MessagesTableProps) {
+  if (!messages || messages.length === 0) {
+    return (
+      <div className="text-center text-gray-500 py-8">
+        Aucun message trouvé
+      </div>
+    );
+  }
+
   return (
     <Table>
       <TableHeader>
@@ -26,7 +34,7 @@ export function MessagesTable({ messages }: MessagesTableProps) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {messages?.map((message) => (
+        {messages.map((message) => (
           <MessageRow key={message.id} message={message} />
         ))}
       </TableBody>

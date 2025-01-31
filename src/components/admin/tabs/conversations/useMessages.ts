@@ -58,6 +58,8 @@ export function useMessages() {
 
       console.log("Transformed messages:", messages);
       return messages;
-    }
+    },
+    refetchInterval: 5000, // Refresh every 5 seconds
+    staleTime: 1000, // Consider data stale after 1 second
   });
 }
