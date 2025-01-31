@@ -14,6 +14,10 @@ const queryClient = new QueryClient({
   },
 });
 
+// Log application version and React version for debugging
+console.log("React version:", React.version);
+console.log("Application version:", process.env.npm_package_version || "1.0.0");
+
 function App() {
   return (
     <React.StrictMode>
