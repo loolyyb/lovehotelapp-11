@@ -29,8 +29,35 @@ export function useMessages() {
         console.error("Error fetching messages:", error);
         throw error;
       }
-      console.log("Fetched messages:", data);
-      return data as MessageWithProfiles[];
+
+      console.log("Raw messages data:", data);
+
+      // Transform the data to match MessageWithProfiles interface
+      const messages: MessageWithProfiles[] = (data || []).map((message: any) => ({
+        id: message.id,
+        content: message.content,
+        created_at: message.created_at,
+        read_at: message.read_at,
+        sender_id: message.sender_id,
+        conversation_id: message.conversation_id,
+        sender: message.sender ? {
+          full_name: message.sender.full_name,
+          username: message.sender.username
+        } : null,
+        conversation: message.conversation ? {
+          user1: message.conversation.user1 ? {
+            full_name: message.conversation.user1.full_name,
+            username: message.conversation.user1.username
+          } : null,
+          user2: message.conversation.user2 ? {
+            full_name: message.conversation.user2.full_name,
+            username: message.conversation.user2.username
+          } : null,
+        } : null
+      }));
+
+      console.log("Transformed messages:", messages);
+      return messages;
     }
   });
 }
