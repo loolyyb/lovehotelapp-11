@@ -10,9 +10,8 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false
     },
-    cors: true, // Enable CORS
+    cors: true,
     headers: {
-      // Add permissive headers for development
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE',
       'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
@@ -25,6 +24,8 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "react": path.resolve(__dirname, "./node_modules/react"),
+      "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
@@ -39,8 +40,6 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     include: ['react', 'react-dom']
   },
-  // Force disable caching
   force: true,
   clearScreen: false,
-  // Remove cacheDir option completely since we want to disable caching
 }));
