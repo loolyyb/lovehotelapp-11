@@ -3,6 +3,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { MessageWithProfiles } from "./types";
+import { Badge } from "@/components/ui/badge";
 
 interface MessageRowProps {
   message: MessageWithProfiles;
@@ -11,28 +12,30 @@ interface MessageRowProps {
 export function MessageRow({ message }: MessageRowProps) {
   console.log("MessageRow: Rendering message:", {
     id: message.id,
-    sender: message.sender,
-    conversation: message.conversation,
-    content: message.content?.substring(0, 50) + "..."
+    sender: message.sender?.full_name,
+    recipient: message.conversation?.user2?.full_name,
+    timestamp: message.created_at
   });
 
   const senderName = message.sender?.full_name || message.sender?.username || "Inconnu";
   const recipientName = message.conversation?.user2?.full_name || 
                        message.conversation?.user2?.username || "Inconnu";
 
+  const formattedDate = React.useMemo(() => {
+    return format(new Date(message.created_at), "Pp", { locale: fr });
+  }, [message.created_at]);
+
   return (
-    <TableRow>
-      <TableCell>{senderName}</TableCell>
+    <TableRow className="hover:bg-muted/50 transition-colors">
+      <TableCell className="font-medium">{senderName}</TableCell>
       <TableCell>{recipientName}</TableCell>
-      <TableCell>{message.content}</TableCell>
-      <TableCell>
-        {format(new Date(message.created_at), "Pp", { locale: fr })}
-      </TableCell>
+      <TableCell className="max-w-[300px] truncate">{message.content}</TableCell>
+      <TableCell>{formattedDate}</TableCell>
       <TableCell>
         {message.read_at ? (
-          <span className="text-green-500">Lu</span>
+          <Badge variant="success" className="bg-green-500">Lu</Badge>
         ) : (
-          <span className="text-gray-500">Non lu</span>
+          <Badge variant="secondary">Non lu</Badge>
         )}
       </TableCell>
     </TableRow>
