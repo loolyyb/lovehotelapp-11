@@ -1,4 +1,5 @@
 import * as React from "react";
+console.log("React =", React);
 import { type ThemeName } from "@/types/theme";
 
 type ThemeContextType = {
