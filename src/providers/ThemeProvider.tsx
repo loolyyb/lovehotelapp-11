@@ -13,25 +13,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [currentTheme, setCurrentTheme] = React.useState<{ name: string } | null>(null);
   const [currentThemeName, setCurrentThemeName] = React.useState<string>("default");
 
-  const switchTheme = async (themeName: ThemeName) => {
+  const switchTheme = React.useCallback(async (themeName: ThemeName) => {
     try {
+      console.log("Switching theme to:", themeName);
       setCurrentThemeName(themeName);
       setCurrentTheme({ name: themeName });
-      console.log("Theme switched to:", themeName);
     } catch (error) {
       console.error("[ThemeProvider] Error switching theme:", error);
       throw error;
     }
-  };
+  }, []);
+
+  const value = React.useMemo(() => ({
+    currentTheme,
+    currentThemeName,
+    switchTheme,
+  }), [currentTheme, currentThemeName, switchTheme]);
 
   return (
-    <ThemeContext.Provider 
-      value={{
-        currentTheme,
-        currentThemeName,
-        switchTheme,
-      }}
-    >
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
