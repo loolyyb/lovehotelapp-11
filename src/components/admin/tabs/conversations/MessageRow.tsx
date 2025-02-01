@@ -33,7 +33,7 @@ export function MessageRow({ message }: MessageRowProps) {
       <TableCell>{formattedDate}</TableCell>
       <TableCell>
         {message.read_at ? (
-          <Badge variant="success" className="bg-green-500">Lu</Badge>
+          <Badge variant="default" className="bg-green-500 hover:bg-green-600">Lu</Badge>
         ) : (
           <Badge variant="secondary">Non lu</Badge>
         )}
