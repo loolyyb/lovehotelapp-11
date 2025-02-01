@@ -1,5 +1,13 @@
-import * as React from "react";
-console.log("React =", React);
+import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
+console.log("React import check:", {
+  React,
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo
+});
+
 import { type ThemeName } from "@/types/theme";
 
 type ThemeContextType = {
@@ -8,13 +16,19 @@ type ThemeContextType = {
   switchTheme: (themeName: ThemeName) => Promise<void>;
 };
 
-const ThemeContext = React.createContext<ThemeContextType | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [currentTheme, setCurrentTheme] = React.useState<{ name: string } | null>(null);
-  const [currentThemeName, setCurrentThemeName] = React.useState<string>("default");
+  console.log("ThemeProvider rendering, React hooks available:", {
+    useState: typeof useState === 'function',
+    useCallback: typeof useCallback === 'function',
+    useMemo: typeof useMemo === 'function'
+  });
 
-  const switchTheme = React.useCallback(async (themeName: ThemeName) => {
+  const [currentTheme, setCurrentTheme] = useState<{ name: string } | null>(null);
+  const [currentThemeName, setCurrentThemeName] = useState<string>("default");
+
+  const switchTheme = useCallback(async (themeName: ThemeName) => {
     try {
       console.log("Switching theme to:", themeName);
       setCurrentThemeName(themeName);
@@ -25,11 +39,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const value = React.useMemo(() => ({
+  const value = useMemo(() => ({
     currentTheme,
     currentThemeName,
     switchTheme,
   }), [currentTheme, currentThemeName, switchTheme]);
+
+  console.log("ThemeProvider value:", value);
 
   return (
     <ThemeContext.Provider value={value}>
@@ -39,7 +55,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useTheme() {
-  const context = React.useContext(ThemeContext);
+  const context = useContext(ThemeContext);
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
