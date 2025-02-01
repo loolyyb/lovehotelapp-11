@@ -21,6 +21,7 @@ import Quiz from "@/pages/Quiz";
 import SwipePage from "@/pages/SwipePage";
 import Concierge from "@/pages/Concierge";
 import { QualificationJourney } from '@/components/qualification/QualificationJourney';
+import { ThemeTest } from '@/components/test/ThemeTest';
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -86,6 +87,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/"
         element={session ? <Dashboard /> : <Landing />}
+      />
+      <Route
+        path="/theme-test"
+        element={<ThemeTest />}
       />
       <Route
         path="/login"
