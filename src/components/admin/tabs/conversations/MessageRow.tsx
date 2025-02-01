@@ -9,26 +9,30 @@ interface MessageRowProps {
 }
 
 export function MessageRow({ message }: MessageRowProps) {
-  const sender = message.sender?.full_name || message.sender?.username || message.sender_id;
-  const user1Name = message.conversation?.user1?.full_name || message.conversation?.user1?.username;
-  const user2Name = message.conversation?.user2?.full_name || message.conversation?.user2?.username;
-  const recipient = user1Name === sender ? user2Name : user1Name;
+  console.log("MessageRow: Rendering message:", {
+    id: message.id,
+    sender: message.sender,
+    conversation: message.conversation,
+    content: message.content?.substring(0, 50) + "..."
+  });
+
+  const senderName = message.sender?.full_name || message.sender?.username || "Inconnu";
+  const recipientName = message.conversation?.user2?.full_name || 
+                       message.conversation?.user2?.username || "Inconnu";
 
   return (
-    <TableRow key={message.id}>
-      <TableCell className="font-medium">{sender}</TableCell>
-      <TableCell>{recipient}</TableCell>
-      <TableCell className="max-w-md truncate">
-        {message.content}
-      </TableCell>
+    <TableRow>
+      <TableCell>{senderName}</TableCell>
+      <TableCell>{recipientName}</TableCell>
+      <TableCell>{message.content}</TableCell>
       <TableCell>
-        {format(new Date(message.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
+        {format(new Date(message.created_at), "Pp", { locale: fr })}
       </TableCell>
       <TableCell>
         {message.read_at ? (
-          <span className="text-green-600">Lu</span>
+          <span className="text-green-500">Lu</span>
         ) : (
-          <span className="text-yellow-600">Non lu</span>
+          <span className="text-gray-500">Non lu</span>
         )}
       </TableCell>
     </TableRow>

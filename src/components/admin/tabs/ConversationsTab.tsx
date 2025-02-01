@@ -6,7 +6,15 @@ import { useMessages } from "./conversations/useMessages";
 export function ConversationsTab() {
   const { data: messages, isLoading, error } = useMessages();
 
+  console.log("ConversationsTab render state:", { 
+    hasMessages: !!messages, 
+    messageCount: messages?.length,
+    isLoading, 
+    hasError: !!error 
+  });
+
   if (isLoading) {
+    console.log("ConversationsTab: Loading state");
     return (
       <Card className="p-6">
         <div className="text-center text-gray-500">Chargement des messages...</div>
@@ -15,6 +23,7 @@ export function ConversationsTab() {
   }
 
   if (error) {
+    console.error("ConversationsTab: Error state", error);
     return (
       <Card className="p-6">
         <div className="text-center text-rose-500">Erreur lors du chargement des messages</div>
@@ -22,6 +31,7 @@ export function ConversationsTab() {
     );
   }
 
+  console.log("ConversationsTab: Rendering messages table with data:", messages);
   return (
     <Card className="p-6">
       <MessagesTable messages={messages || []} />
