@@ -155,7 +155,7 @@ export function QualificationQuestion({ question, value, onChange }: Qualificati
       <p className="text-sm text-gray-700">{question.question}</p>
       <RadioGroup
         value={value ?? undefined}
-        onValueChange={(val) => onChange(val)}
+        onValueChange={onChange}
         className="space-y-2"
       >
         {question.options?.map((option) => (
