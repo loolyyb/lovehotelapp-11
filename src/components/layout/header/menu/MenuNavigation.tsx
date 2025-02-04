@@ -1,4 +1,4 @@
-import { Crown, BedDouble, Utensils, Users, Gift, Brain } from "lucide-react";
+import { Crown, BedDouble, Utensils, Gift, Brain } from "lucide-react";
 import { MenuLink } from "./MenuLink";
 
 interface MenuNavigationProps {
