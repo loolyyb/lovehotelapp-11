@@ -51,12 +51,21 @@ export function useConciergeForm() {
   const form = useForm<ConciergeFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      experienceType: "", // Required field, initialize with empty string
+      customExperience: "",
       decoration: false,
       transport: false,
       playlist: false,
       romanticTable: false,
       customMenu: false,
       customScenario: false,
+      accessories: "",
+      date: new Date(Date.now() + 86400000), // Tomorrow's date as default
+      description: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
     },
   });
 
