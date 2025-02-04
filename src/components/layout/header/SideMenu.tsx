@@ -15,54 +15,62 @@ export function SideMenu() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-64 bg-white/95 backdrop-blur-sm">
-        <img 
+        <img
           src="https://lovehotelaparis.fr/wp-content/uploads/2024/09/logo-web-love-hotel.png"
           alt="Love Hotel Logo"
           className="h-24 mx-auto mb-6 object-contain"
         />
         <nav className="flex flex-col gap-4">
-          <Link 
-            to="/profiles" 
+          <Link
+            to="/profiles"
             className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <Crown className="h-5 w-5" />
             <span>Nos lover's</span>
           </Link>
-          <Link 
-            to="/reserver-room" 
+          <Link
+            to="/reserver-room"
             className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <BedDouble className="h-5 h-5" />
             <span>Réserver une Love Room</span>
           </Link>
-          <Link 
-            to="/rideaux-ouverts" 
+          <Link
+            to="/rideaux-ouverts"
             className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <BedDouble className="h-5 w-5" />
             <span>Rideaux Ouverts</span>
           </Link>
-          <Link 
-            to="/restaurant-du-love" 
+          <Link
+            to="/restaurant-du-love"
             className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <Utensils className="h-5 w-5" />
             <span>Restaurant du Love</span>
           </Link>
-          <Link 
-            to="/features" 
+          <Link
+            to="/concierge"
+            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            <Crown className="h-5 w-5" />
+            <span>Conciergerie</span>
+          </Link>
+          <Link
+            to="/features"
             className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >
             <Users className="h-5 w-5" />
             <span>Nos fonctionnalités</span>
           </Link>
-          <Link 
-            to="/options" 
+          <Link
+            to="/options"
             className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
             onClick={() => setIsOpen(false)}
           >

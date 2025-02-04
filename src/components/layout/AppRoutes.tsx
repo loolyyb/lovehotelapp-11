@@ -17,6 +17,7 @@ import RideauxOuverts from "@/pages/RideauxOuverts";
 import Dashboard from "@/pages/Dashboard";
 import Options from "@/pages/Options";
 import LoverCoin from "@/pages/LoverCoin";
+import Concierge from "@/pages/Concierge";
 import { QualificationJourney } from "@/components/qualification/QualificationJourney";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,7 +57,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
           setNeedsQualification(true);
           return;
         }
-        
+
         toast({
           variant: "destructive",
           title: "Erreur",
@@ -129,6 +130,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/lover-coin"
         element={<LoverCoin />}
+      />
+            <Route
+        path="/concierge"
+        element={session ? <Concierge /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/reserver-room"
