@@ -40,7 +40,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Shield, Globe } from "lucide-react";
+import { Shield, Globe, Pencil, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const eventSchema = z.object({
   title: z.string().min(1, "Le titre est requis"),
@@ -59,6 +70,7 @@ type EventFormValues = z.infer<typeof eventSchema>;
 export function EventsManager() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [editingEvent, setEditingEvent] = React.useState<any>(null);
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
@@ -88,34 +100,95 @@ export function EventsManager() {
     }
   });
 
-  const onSubmit = async (values: EventFormValues) => {
+  const handleEdit = (event: any) => {
+    setEditingEvent(event);
+    form.reset({
+      title: event.title,
+      description: event.description || "",
+      event_date: new Date(event.event_date).toISOString().split('T')[0],
+      start_time: new Date(event.event_date).toTimeString().slice(0, 5),
+      end_time: event.end_time || "",
+      event_type: event.event_type,
+      is_private: event.is_private,
+      price: event.price,
+      free_for_members: event.free_for_members,
+    });
+    setIsOpen(true);
+  };
+
+  const handleDelete = async (eventId: string) => {
     try {
-      const { error } = await supabase.from('events').insert({
-        title: values.title,
-        description: values.description,
-        event_date: values.event_date,
-        event_type: values.event_type,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-        is_private: values.is_private,
-        price: values.free_for_members ? null : values.price,
-        free_for_members: values.free_for_members,
-      });
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
 
       if (error) throw error;
 
       toast({
-        title: "Événement créé",
-        description: "L'événement a été créé avec succès",
+        title: "Événement supprimé",
+        description: "L'événement a été supprimé avec succès",
+      });
+
+      refetch();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression de l'événement",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const onSubmit = async (values: EventFormValues) => {
+    try {
+      const eventDate = new Date(`${values.event_date}T${values.start_time}`);
+      
+      const eventData = {
+        title: values.title,
+        description: values.description,
+        event_date: eventDate.toISOString(),
+        event_type: values.event_type,
+        is_private: values.is_private,
+        price: values.free_for_members ? null : values.price,
+        free_for_members: values.free_for_members,
+      };
+
+      let error;
+
+      if (editingEvent) {
+        ({ error } = await supabase
+          .from('events')
+          .update(eventData)
+          .eq('id', editingEvent.id));
+      } else {
+        ({ error } = await supabase
+          .from('events')
+          .insert({
+            ...eventData,
+            created_by: (await supabase.auth.getUser()).data.user?.id,
+          }));
+      }
+
+      if (error) throw error;
+
+      toast({
+        title: editingEvent ? "Événement modifié" : "Événement créé",
+        description: editingEvent 
+          ? "L'événement a été modifié avec succès"
+          : "L'événement a été créé avec succès",
       });
 
       setIsOpen(false);
+      setEditingEvent(null);
       form.reset();
       refetch();
     } catch (error) {
-      console.error('Error creating event:', error);
+      console.error('Error saving event:', error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la création de l'événement",
+        description: "Une erreur est survenue lors de l'enregistrement de l'événement",
         variant: "destructive",
       });
     }
@@ -125,13 +198,21 @@ export function EventsManager() {
     <Card className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Gestion des événements</h2>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={(open) => {
+          if (!open) {
+            setEditingEvent(null);
+            form.reset();
+          }
+          setIsOpen(open);
+        }}>
           <DialogTrigger asChild>
             <Button>Nouvel événement</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Créer un nouvel événement</DialogTitle>
+              <DialogTitle>
+                {editingEvent ? "Modifier l'événement" : "Créer un nouvel événement"}
+              </DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -293,7 +374,7 @@ export function EventsManager() {
                 )}
 
                 <Button type="submit" className="w-full">
-                  Créer l'événement
+                  {editingEvent ? "Modifier l'événement" : "Créer l'événement"}
                 </Button>
               </form>
             </Form>
@@ -309,6 +390,7 @@ export function EventsManager() {
             <TableHead>Type</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Prix</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -333,6 +415,41 @@ export function EventsManager() {
                 {event.free_for_members 
                   ? "Gratuit pour les membres" 
                   : `${event.price || 0}€`}
+              </TableCell>
+              <TableCell>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEdit(event)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Cette action ne peut pas être annulée. Cela supprimera définitivement l'événement.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(event.id)}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          Supprimer
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </TableCell>
             </TableRow>
           ))}

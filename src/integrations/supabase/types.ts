@@ -215,6 +215,79 @@ export type Database = {
         }
         Relationships: []
       }
+      concierge_requests: {
+        Row: {
+          accessories: string | null
+          created_at: string
+          custom_experience: string | null
+          custom_menu: boolean | null
+          custom_scenario: boolean | null
+          decoration: boolean | null
+          description: string
+          email: string
+          event_date: string
+          experience_type: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          playlist: boolean | null
+          romantic_table: boolean | null
+          status: Database["public"]["Enums"]["concierge_request_status"] | null
+          transport: boolean | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          accessories?: string | null
+          created_at?: string
+          custom_experience?: string | null
+          custom_menu?: boolean | null
+          custom_scenario?: boolean | null
+          decoration?: boolean | null
+          description: string
+          email: string
+          event_date: string
+          experience_type: string
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          playlist?: boolean | null
+          romantic_table?: boolean | null
+          status?:
+            | Database["public"]["Enums"]["concierge_request_status"]
+            | null
+          transport?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          accessories?: string | null
+          created_at?: string
+          custom_experience?: string | null
+          custom_menu?: boolean | null
+          custom_scenario?: boolean | null
+          decoration?: boolean | null
+          description?: string
+          email?: string
+          event_date?: string
+          experience_type?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          playlist?: boolean | null
+          romantic_table?: boolean | null
+          status?:
+            | Database["public"]["Enums"]["concierge_request_status"]
+            | null
+          transport?: boolean | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           blocked_by: string | null
@@ -820,6 +893,48 @@ export type Database = {
         }
         Relationships: []
       }
+      push_notifications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          icon_url: string | null
+          id: string
+          message: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["notification_status"] | null
+          target_motivation: string | null
+          target_url: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          icon_url?: string | null
+          id?: string
+          message: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"] | null
+          target_motivation?: string | null
+          target_url?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          icon_url?: string | null
+          id?: string
+          message?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"] | null
+          target_motivation?: string | null
+          target_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       stream_viewers: {
         Row: {
           id: string
@@ -865,6 +980,11 @@ export type Database = {
     }
     Enums: {
       challenge_type: "quiz" | "puzzle" | "photo" | "activity"
+      concierge_request_status:
+        | "pending"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
       event_type: "bdsm" | "jacuzzi" | "gastronomy" | "other" | "speed_dating"
       group_type: "bdsm" | "libertins" | "rideaux_ouverts" | "other"
       interest_type:
@@ -875,6 +995,7 @@ export type Database = {
         | "speed_dating"
         | "libertinage"
         | "art"
+      notification_status: "pending" | "sent" | "failed"
       stream_type: "video" | "audio"
       user_role: "user" | "moderator" | "admin"
     }
