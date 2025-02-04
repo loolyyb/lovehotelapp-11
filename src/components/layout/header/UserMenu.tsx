@@ -1,4 +1,4 @@
-import { LogOut, User, MessageSquare } from "lucide-react";
+import { LogOut, User, MessageSquare, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   DropdownMenu,
@@ -46,6 +46,13 @@ export function UserMenu({ avatarUrl, fullName, onLogout }: UserMenuProps) {
                 {unreadCount}
               </span>
             )}
+          </DropdownMenuItem>
+        </Link>
+
+        <Link to="/features">
+          <DropdownMenuItem className="cursor-pointer">
+            <Users className="mr-2 h-4 w-4" />
+            <span>Nos fonctionnalités</span>
           </DropdownMenuItem>
         </Link>
 

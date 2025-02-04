@@ -11,7 +11,6 @@ export const MenuNavigation = ({ onLinkClick }: MenuNavigationProps) => {
     { to: "/reserver-room", icon: BedDouble, label: "Réserver une Love Room" },
     { to: "/rideaux-ouverts", icon: BedDouble, label: "Rideaux Ouverts" },
     { to: "/restaurant-du-love", icon: Utensils, label: "Restaurant du Love" },
-    { to: "/features", icon: Users, label: "Nos fonctionnalités" },
     { to: "/concierge", icon: Crown, label: "Conciergerie sur mesure" },
     { to: "/options", icon: Gift, label: "Nos Options" },
     { to: "/quiz", icon: Brain, label: "Quiz Love Hotel" },
