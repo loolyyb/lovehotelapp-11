@@ -19,13 +19,13 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",
-      event_date: initialData?.event_date || "",
+      event_date: initialData?.event_date ? new Date(initialData.event_date).toISOString().split('T')[0] : "",
       start_time: initialData?.start_time || "",
       end_time: initialData?.end_time || "",
       event_type: initialData?.event_type || "other",
       is_private: initialData?.is_private || false,
       price: initialData?.price || null,
-      free_for_members: initialData?.free_for_members || true,
+      free_for_members: initialData?.free_for_members ?? true,
       image: undefined,
     },
   });

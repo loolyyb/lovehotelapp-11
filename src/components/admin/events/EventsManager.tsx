@@ -72,7 +72,19 @@ export function EventsManager() {
   };
 
   const handleEdit = (event: any) => {
-    setEditingEvent(event);
+    // Format the event data for the form
+    const formattedEvent = {
+      ...event,
+      event_date: new Date(event.event_date).toISOString().split('T')[0],
+      start_time: new Date(event.event_date).toLocaleTimeString('fr-FR', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      }),
+      end_time: event.end_time || ""
+    };
+    
+    setEditingEvent(formattedEvent);
     setIsOpen(true);
   };
 

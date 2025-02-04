@@ -12,13 +12,12 @@ export function useEventManagement() {
     try {
       setIsLoading(true);
       const eventDate = new Date(`${values.event_date}T${values.start_time}`);
-      const endTime = new Date(`${values.event_date}T${values.end_time}`);
       
       const eventData = {
         title: values.title,
         description: values.description,
         event_date: eventDate.toISOString(),
-        end_time: endTime.toTimeString().slice(0, 5),
+        end_time: values.end_time,
         event_type: values.event_type,
         is_private: values.is_private,
         price: values.free_for_members ? null : values.price,
