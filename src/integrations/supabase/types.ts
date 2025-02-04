@@ -842,7 +842,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           seeking: string[] | null
           sexual_orientation: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["profile_status"] | null
           updated_at: string
           user_id: string | null
           username: string | null
@@ -865,7 +865,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           seeking?: string[] | null
           sexual_orientation?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["profile_status"] | null
           updated_at?: string
           user_id?: string | null
           username?: string | null
@@ -888,7 +888,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           seeking?: string[] | null
           sexual_orientation?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["profile_status"] | null
           updated_at?: string
           user_id?: string | null
           username?: string | null
@@ -999,6 +999,14 @@ export type Database = {
         | "libertinage"
         | "art"
       notification_status: "pending" | "sent" | "failed"
+      profile_status:
+        | "single_man"
+        | "married_man"
+        | "single_woman"
+        | "married_woman"
+        | "couple_mf"
+        | "couple_mm"
+        | "couple_ff"
       stream_type: "video" | "audio"
       user_role: "user" | "moderator" | "admin"
     }

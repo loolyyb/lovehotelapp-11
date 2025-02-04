@@ -121,7 +121,7 @@ export function QualificationQuestion({ question, value, onChange }: Qualificati
 
   const renderRelationshipType = () => (
     <div className="space-y-2">
-      {question.options?.map((option) => {
+      {question.options?.map((option: string) => {
         const labels: Record<string, string> = {
           casual: "D'un soir",
           serious: "Relations sérieuses",
@@ -158,7 +158,7 @@ export function QualificationQuestion({ question, value, onChange }: Qualificati
         onValueChange={onChange}
         className="space-y-2"
       >
-        {question.options?.map((option) => (
+        {question.options?.map((option: string) => (
           <div key={option} className="flex items-center space-x-2">
             <RadioGroupItem value={option} id={option} />
             <Label htmlFor={option}>
