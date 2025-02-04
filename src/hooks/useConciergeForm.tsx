@@ -51,7 +51,7 @@ export function useConciergeForm() {
   const form = useForm<ConciergeFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      experienceType: "", // Required field, initialize with empty string
+      experienceType: "",
       customExperience: "",
       decoration: false,
       transport: false,
@@ -73,7 +73,6 @@ export function useConciergeForm() {
     try {
       console.log("Starting form submission with values:", values);
 
-      // First, store the request in the database
       const { error: dbError } = await supabase
         .from('concierge_requests')
         .insert({
@@ -102,24 +101,6 @@ export function useConciergeForm() {
       }
 
       console.log("Successfully stored request in database");
-
-      // Then, send the email notification
-      const { error } = await supabase.functions.invoke('send-concierge-email', {
-        body: {
-          formData: {
-            ...values,
-            date: values.date.toISOString()
-          },
-          userId: session?.user?.id
-        }
-      });
-
-      if (error) {
-        console.error("Email function error:", error);
-        throw error;
-      }
-
-      console.log("Successfully sent email notification");
 
       toast({
         title: "Demande envoyée",
