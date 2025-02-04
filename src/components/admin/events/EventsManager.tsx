@@ -72,16 +72,20 @@ export function EventsManager() {
   };
 
   const handleEdit = (event: any) => {
-    // Format the event data for the form
+    const eventDate = new Date(event.event_date);
+    
     const formattedEvent = {
       ...event,
-      event_date: new Date(event.event_date).toISOString().split('T')[0],
-      start_time: new Date(event.event_date).toLocaleTimeString('fr-FR', { 
+      event_date: eventDate.toISOString().split('T')[0],
+      start_time: eventDate.toLocaleTimeString('fr-FR', { 
         hour: '2-digit', 
         minute: '2-digit',
         hour12: false 
       }),
-      end_time: event.end_time || ""
+      end_time: event.end_time || "",
+      free_for_members: event.free_for_members ?? true,
+      price: event.price || null,
+      is_private: event.is_private || false,
     };
     
     setEditingEvent(formattedEvent);

@@ -11,6 +11,8 @@ export function useEventManagement() {
   const handleSubmit = async (values: EventFormValues) => {
     try {
       setIsLoading(true);
+      
+      // Format the event date with the start time
       const eventDate = new Date(`${values.event_date}T${values.start_time}`);
       
       const eventData = {

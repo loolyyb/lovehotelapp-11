@@ -19,7 +19,7 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",
-      event_date: initialData?.event_date ? new Date(initialData.event_date).toISOString().split('T')[0] : "",
+      event_date: initialData?.event_date || "",
       start_time: initialData?.start_time || "",
       end_time: initialData?.end_time || "",
       event_type: initialData?.event_type || "other",
