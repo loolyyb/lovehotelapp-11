@@ -151,19 +151,22 @@ export function QualificationQuestion({ question, value, onChange }: Qualificati
   );
 
   const renderChoice = () => (
-    <div className="space-y-2">
-      {question.options?.map((option) => (
-        <div key={option} className="flex items-center space-x-2">
-          <Checkbox
-            id={option}
-            checked={value === option}
-            onCheckedChange={(checked) => onChange(checked ? option : null)}
-          />
-          <Label htmlFor={option}>
-            {option === "true" ? "Oui" : option === "false" ? "Non" : option}
-          </Label>
-        </div>
-      ))}
+    <div className="space-y-4">
+      <p className="text-sm text-gray-700">{question.question}</p>
+      <RadioGroup
+        value={value ?? undefined}
+        onValueChange={(val) => onChange(val)}
+        className="space-y-2"
+      >
+        {question.options?.map((option) => (
+          <div key={option} className="flex items-center space-x-2">
+            <RadioGroupItem value={option} id={option} />
+            <Label htmlFor={option}>
+              {option === "true" ? "Oui" : option === "false" ? "Non" : option}
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
     </div>
   );
 
