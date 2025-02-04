@@ -2,13 +2,15 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EventFormValues } from "../types";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useEventManagement() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  const handleSubmit = async (values: EventFormValues) => {
+  const handleSubmit = async (values: EventFormValues, eventId?: string) => {
     try {
       setIsLoading(true);
       
@@ -26,20 +28,37 @@ export function useEventManagement() {
         free_for_members: values.free_for_members,
       };
 
-      const { error } = await supabase
-        .from('events')
-        .insert({
-          ...eventData,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-        });
+      let error;
+      
+      if (eventId) {
+        // Update existing event
+        const { error: updateError } = await supabase
+          .from('events')
+          .update(eventData)
+          .eq('id', eventId);
+        error = updateError;
+      } else {
+        // Create new event
+        const { error: insertError } = await supabase
+          .from('events')
+          .insert({
+            ...eventData,
+            created_by: (await supabase.auth.getUser()).data.user?.id,
+          });
+        error = insertError;
+      }
 
       if (error) throw error;
 
       toast({
-        title: "Événement créé",
-        description: "L'événement a été créé avec succès",
+        title: eventId ? "Événement modifié" : "Événement créé",
+        description: eventId 
+          ? "L'événement a été modifié avec succès"
+          : "L'événement a été créé avec succès",
       });
 
+      // Refresh events data
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       setIsOpen(false);
     } catch (error) {
       console.error('Error saving event:', error);

@@ -92,6 +92,10 @@ export function EventsManager() {
     setIsOpen(true);
   };
 
+  const handleFormSubmit = async (values: any) => {
+    await handleSubmit(values, editingEvent?.id);
+  };
+
   return (
     <Card className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -110,7 +114,7 @@ export function EventsManager() {
         event={editingEvent}
       >
         <EventForm
-          onSubmit={handleSubmit}
+          onSubmit={handleFormSubmit}
           isLoading={isLoading}
           initialData={editingEvent}
         />

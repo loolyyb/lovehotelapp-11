@@ -384,6 +384,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          end_time: string | null
           event_date: string
           event_type: Database["public"]["Enums"]["event_type"]
           free_for_members: boolean | null
@@ -400,6 +401,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          end_time?: string | null
           event_date: string
           event_type: Database["public"]["Enums"]["event_type"]
           free_for_members?: boolean | null
@@ -416,6 +418,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          end_time?: string | null
           event_date?: string
           event_type?: Database["public"]["Enums"]["event_type"]
           free_for_members?: boolean | null
