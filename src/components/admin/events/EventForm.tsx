@@ -40,15 +40,15 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <EventFormFields form={form} />
-          <Button 
-            type="submit" 
-            className="w-full" 
+          <Button
+            type="submit"
+            className="w-full"
             disabled={isLoading}
           >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {initialData ? "Modification en cours..." : "Création en cours..."}
+                {initialData ? "Modification en cours..." : "Création de l'événement en cours..."}
               </>
             ) : (
               initialData ? "Modifier l'événement" : "Créer l'événement"
