@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useMemo } from "react";
+import * as React from "react";
+import { createContext, useContext, useState, useMemo } from "react";
 import { type CustomTheme, ThemeName } from "@/types/theme";
 import { themes } from "@/config/themes.config";
 

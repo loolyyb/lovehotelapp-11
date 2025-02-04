@@ -8,12 +8,12 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 const formSchema = z.object({
   experienceType: z.string().min(1, "Le type d'expérience est requis"),
   customExperience: z.string(),
-  decoration: z.boolean().default(false),
-  transport: z.boolean().default(false),
-  playlist: z.boolean().default(false),
-  romanticTable: z.boolean().default(false),
-  customMenu: z.boolean().default(false),
-  customScenario: z.boolean().default(false),
+  decoration: z.boolean(),
+  transport: z.boolean(),
+  playlist: z.boolean(),
+  romanticTable: z.boolean(),
+  customMenu: z.boolean(),
+  customScenario: z.boolean(),
   accessories: z.string(),
   date: z.date({
     required_error: "La date est requise",
@@ -60,7 +60,7 @@ export function useConciergeForm() {
       customMenu: false,
       customScenario: false,
       accessories: "",
-      date: new Date(Date.now() + 86400000), // Tomorrow's date as default
+      date: new Date(Date.now() + 86400000),
       description: "",
       firstName: "",
       lastName: "",
