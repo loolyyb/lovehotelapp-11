@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
-@import './styles/admin.css';
 
 @tailwind base;
 @tailwind components;
@@ -121,60 +120,4 @@
 
 [data-theme="lover"] .animate-fade-in {
   animation: fadeIn 0.5s ease-out forwards;
-}
-
-/* Calendar Mobile Styles */
-@media (max-width: 640px) {
-  .fc {
-    font-size: 0.875rem;
-  }
-
-  .fc .fc-toolbar {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .fc .fc-toolbar-title {
-    font-size: 1.25rem;
-    margin: 0.5rem 0;
-  }
-
-  .fc .fc-button {
-    padding: 0.3rem 0.6rem;
-    font-size: 0.875rem;
-  }
-
-  .fc .fc-daygrid-day-number {
-    padding: 0.25rem;
-  }
-
-  .fc .fc-daygrid-day-top {
-    flex-direction: row;
-    justify-content: center;
-  }
-
-  .fc .fc-col-header-cell-cushion {
-    padding: 0.25rem;
-  }
-}
-
-.fc-theme-custom .fc-button-primary {
-  @apply bg-primary border-primary hover:bg-primary/90 hover:border-primary/90;
-}
-
-.fc-theme-custom .fc-button-primary:disabled {
-  @apply bg-primary/70 border-primary/70;
-}
-
-.fc-theme-custom .fc-button-primary:not(:disabled).fc-button-active,
-.fc-theme-custom .fc-button-primary:not(:disabled):active {
-  @apply bg-primary/80 border-primary/80;
-}
-
-.fc-theme-custom .fc-daygrid-day.fc-day-today {
-  @apply bg-primary/5;
-}
-
-.fc-theme-custom .fc-event {
-  @apply bg-primary border-primary cursor-pointer hover:opacity-90 transition-opacity;
 }

@@ -1,34 +1,45 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
-import { type ThemeName } from "@/types/theme";
+import React, { createContext, useContext, useState, useMemo } from "react";
+import { type CustomTheme, ThemeName } from "@/types/theme";
+import { themes } from "@/config/themes.config";
 
-type ThemeContextType = {
-  currentTheme: { name: string } | null;
-  currentThemeName: string;
+interface ThemeContextType {
+  theme: CustomTheme;
+  currentThemeName: ThemeName;
+  updateTheme: (newTheme: Partial<CustomTheme>) => void;
   switchTheme: (themeName: ThemeName) => Promise<void>;
-};
+}
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [currentTheme, setCurrentTheme] = useState<{ name: string } | null>(null);
-  const [currentThemeName, setCurrentThemeName] = useState<string>("default");
+  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
+  const [theme, setTheme] = useState<CustomTheme>(themes[currentThemeName]);
 
-  const switchTheme = useCallback(async (themeName: ThemeName) => {
-    try {
-      console.log("Switching theme to:", themeName);
-      setCurrentThemeName(themeName);
-      setCurrentTheme({ name: themeName });
-    } catch (error) {
-      console.error("[ThemeProvider] Error switching theme:", error);
-      throw error;
+  const updateTheme = (newTheme: Partial<CustomTheme>) => {
+    setTheme((current) => ({
+      ...current,
+      ...newTheme,
+      version: incrementVersion(current.version),
+    }));
+  };
+
+  const switchTheme = async (themeName: ThemeName) => {
+    if (!themes[themeName]) {
+      throw new Error(`Theme "${themeName}" not found`);
     }
-  }, []);
+    setCurrentThemeName(themeName);
+    setTheme(themes[themeName]);
+  };
 
-  const value = useMemo(() => ({
-    currentTheme,
-    currentThemeName,
-    switchTheme,
-  }), [currentTheme, currentThemeName, switchTheme]);
+  const value = useMemo(
+    () => ({
+      theme,
+      currentThemeName,
+      updateTheme,
+      switchTheme,
+    }),
+    [theme, currentThemeName]
+  );
 
   return (
     <ThemeContext.Provider value={value}>
@@ -43,4 +54,9 @@ export function useTheme() {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
   return context;
+}
+
+function incrementVersion(version: string): string {
+  const [major, minor, patch] = version.split(".").map(Number);
+  return `${major}.${minor}.${patch + 1}`;
 }

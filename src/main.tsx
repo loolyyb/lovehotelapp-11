@@ -1,40 +1,42 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
 import * as Sentry from "@sentry/react";
-import App from './App';
-import './index.css';
+import { BrowserTracing } from "@sentry/tracing";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import "./index.css";
 
-// Ensure the DOM element exists
-const container = document.getElementById('root');
+// Initialize Sentry
+Sentry.init({
+  dsn: "https://5c08652afca264d9e6bf17808b646ea9@o4508588731924480.ingest.de.sentry.io/4508588759973968",
+  integrations: [
+    new BrowserTracing({
+      tracePropagationTargets: ["localhost", /^https:\/\/lovable\.dev/],
+    }),
+  ],
+  tracesSampleRate: 1.0,
+  environment: import.meta.env.MODE,
+});
 
-if (!container) {
-  throw new Error('Root element not found. Please check your index.html file.');
-}
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
-// Initialize Sentry after React is loaded
-if (process.env.NODE_ENV === 'production') {
-  console.log('Initializing Sentry...');
-  Sentry.init({
-    dsn: process.env.VITE_SENTRY_DSN,
-    integrations: [
-      new Sentry.BrowserTracing(),
-      new Sentry.Replay(),
-    ],
-    tracesSampleRate: 1.0,
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
-  });
-}
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error('Failed to find the "root" element');
 
-const root = createRoot(container);
-
-// Wrap the app with Sentry only in production
-const AppWithSentry = process.env.NODE_ENV === 'production' 
-  ? Sentry.withProfiler(App)
-  : App;
+const root = ReactDOM.createRoot(rootElement);
 
 root.render(
   <React.StrictMode>
-    <AppWithSentry />
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
   </React.StrictMode>
 );

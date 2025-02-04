@@ -1,35 +1,72 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
-import { ThemeProvider } from "./providers/ThemeProvider";
-import { AppContent } from "./components/layout/AppContent";
-import { ServiceWorkerManager } from "./components/pwa/ServiceWorkerManager";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Header } from "./components/layout/Header";
+import { MobileNavBar } from "./components/layout/MobileNavBar";
+import { Toaster } from "@/components/ui/toaster";
+import { Footer } from "./components/layout/Footer";
+import { useIsMobile } from "./hooks/use-mobile";
+import { useAuthSession } from "./hooks/useAuthSession";
+import { AppRoutes } from "./components/layout/AppRoutes";
+import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
+import { appConfig } from "./config/app.config";
+import { useToast } from "./hooks/use-toast";
+import { Loader } from "lucide-react";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
-});
+function AppContent() {
+  const { session, loading, userProfile } = useAuthSession();
+  const isMobile = useIsMobile();
+  const { currentThemeName, switchTheme } = useTheme();
+  const { toast } = useToast();
 
-// Log application version and React version for debugging
-console.log("React version:", React.version);
-console.log("Application version:", process.env.npm_package_version || "1.0.0");
+  useEffect(() => {
+    const initTheme = async () => {
+      try {
+        if (!session) return;
+        await switchTheme("lover");
+      } catch (error) {
+        console.error("Erreur lors du changement de thème:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger le thème. Veuillez vous connecter et réessayer.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    initTheme();
+  }, [session, switchTheme, toast]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      data-theme={currentThemeName} 
+      className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}
+    >
+      {session && <Header userProfile={userProfile} />}
+      <div className="flex-grow pt-[4.5rem]">
+        <AppRoutes session={session} />
+      </div>
+      <Footer />
+      {appConfig.features.enablePWA && <MobileNavBar />}
+      <Toaster />
+    </div>
+  );
+}
 
 function App() {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <Router>
-            <ServiceWorkerManager />
-            <AppContent />
-          </Router>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <ThemeProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </ThemeProvider>
   );
 }
 

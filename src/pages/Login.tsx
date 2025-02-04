@@ -1,42 +1,115 @@
-import React from "react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { Card } from "@/components/ui/card";
+import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
 
-const Login: React.FC = () => {
-  const { error } = useAuth();
+export default function Login() {
+  const navigate = useNavigate();
+  const logger = useLogger('Login');
   const { toast } = useToast();
 
-  React.useEffect(() => {
-    if (error) {
+  const createProfileIfNeeded = async (userId: string) => {
+    try {
+      // Check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!existingProfile) {
+        logger.info('Creating missing profile for user', { userId });
+        
+        // Create new profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{
+            user_id: userId,
+            full_name: 'Nouveau membre',
+            is_love_hotel_member: false,
+            is_loolyb_holder: false,
+            relationship_type: [],
+            seeking: [],
+            photo_urls: [],
+            visibility: 'public',
+            allowed_viewers: [],
+            role: 'user'
+          }]);
+
+        if (profileError) throw profileError;
+
+        // Create initial preferences
+        const { error: prefError } = await supabase
+          .from('preferences')
+          .insert([{
+            user_id: userId,
+            qualification_completed: false,
+            qualification_step: 0
+          }]);
+
+        if (prefError) throw prefError;
+
+        logger.info('Successfully created missing profile and preferences', { userId });
+      }
+    } catch (error) {
+      logger.error('Error creating profile:', { error, userId });
       toast({
         variant: "destructive",
-        title: "Erreur d'authentification",
-        description: error,
+        title: "Erreur",
+        description: "Impossible de créer votre profil. Veuillez réessayer.",
       });
     }
-  }, [error, toast]);
+  };
+
+  useEffect(() => {
+    logger.debug('Composant Login monté');
+    
+    const handleAuthChange = async (event: string, session: any) => {
+      logger.info('Changement d\'état d\'authentification', { event, hasSession: !!session });
+      
+      if (event === 'SIGNED_UP' && session) {
+        await createProfileIfNeeded(session.user.id);
+        toast({
+          title: "Inscription réussie",
+          description: "Votre compte a été créé avec succès.",
+        });
+      } else if (event === 'SIGNED_IN' && session) {
+        await createProfileIfNeeded(session.user.id);
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue !",
+        });
+        navigate("/");
+      } else if (event === 'USER_UPDATED' && !session) {
+        const { error } = await supabase.auth.getSession();
+        if (error?.message.includes('user_already_exists')) {
+          toast({
+            variant: "destructive",
+            title: "Erreur d'inscription",
+            description: "Un compte existe déjà avec cette adresse email. Veuillez vous connecter.",
+          });
+        }
+      }
+    };
+
+    // Check if user is already logged in
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+
+    return () => {
+      logger.debug('Composant Login démonté');
+      subscription.unsubscribe();
+    };
+  }, [navigate, logger, toast]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-champagne via-rose-50 to-cream p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white/80 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-burgundy/10">
-          <div className="mb-6 text-center">
-            <img 
-              src="https://dev.lovehotelaparis.com/wp-content/uploads/2020/04/logo-header-lovehotel.png" 
-              alt="Love Hotel Logo" 
-              className="h-12 w-auto mx-auto mb-4"
-            />
-            <h1 className="text-2xl font-bold text-burgundy mb-2">
-              Bienvenue
-            </h1>
-            <p className="text-burgundy/80 mb-4">
-              Connectez-vous ou créez un compte pour accéder à votre espace
-            </p>
-          </div>
-
+    <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center bg-gradient-to-r from-pink-50 to-rose-100 pt-12">
+      <div className="w-full max-w-md px-4">
+        <Card className="p-8 space-y-4">
+          <h1 className="text-3xl font-playfair text-center mb-6">Se Connecter</h1>
           <Auth
             supabaseClient={supabase}
             appearance={{
@@ -44,66 +117,54 @@ const Login: React.FC = () => {
               variables: {
                 default: {
                   colors: {
-                    brand: '#800020',
-                    brandAccent: '#4E0014',
-                    inputBackground: 'white',
-                    inputText: '#1a1a1a',
-                    inputBorder: '#e5e7eb',
-                    inputBorderHover: '#800020',
-                    inputBorderFocus: '#800020',
-                  },
-                  space: {
-                    buttonPadding: '10px 15px',
-                    inputPadding: '10px 15px',
-                  },
-                  radii: {
-                    buttonBorderRadius: '0.375rem',
-                    inputBorderRadius: '0.375rem',
-                  },
-                },
-              },
-              className: {
-                container: 'auth-container',
-                button: 'auth-button hover:bg-burgundy/90 transition-colors',
-                input: 'auth-input',
-                label: 'text-burgundy',
-                anchor: 'text-burgundy hover:text-burgundy/80',
-              },
+                    brand: '#7C3A47',
+                    brandAccent: '#96495B',
+                  }
+                }
+              }
             }}
             localization={{
               variables: {
-                sign_up: {
-                  email_label: "Adresse email",
-                  password_label: "Mot de passe",
-                  button_label: "Créer un compte",
-                  loading_button_label: "Création en cours...",
-                  social_provider_text: "S'inscrire avec {{provider}}",
-                  link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
-                  confirmation_text: "Vérifiez vos emails pour confirmer votre inscription",
-                },
                 sign_in: {
                   email_label: "Adresse email",
                   password_label: "Mot de passe",
                   button_label: "Se connecter",
                   loading_button_label: "Connexion en cours...",
                   social_provider_text: "Se connecter avec {{provider}}",
-                  link_text: "Déjà inscrit ? Connectez-vous",
+                  link_text: "Vous avez déjà un compte ? Connectez-vous",
+                },
+                sign_up: {
+                  email_label: "Adresse email",
+                  password_label: "Mot de passe",
+                  button_label: "S'inscrire",
+                  loading_button_label: "Inscription en cours...",
+                  social_provider_text: "S'inscrire avec {{provider}}",
+                  link_text: "Vous n'avez pas de compte ? Inscrivez-vous",
+                },
+                magic_link: {
+                  email_input_label: "Adresse email",
+                  button_label: "Envoyer le lien magique",
+                  loading_button_label: "Envoi du lien magique...",
+                  link_text: "Envoyer un lien magique",
                 },
                 forgotten_password: {
                   email_label: "Adresse email",
                   button_label: "Réinitialiser le mot de passe",
-                  loading_button_label: "Envoi en cours...",
+                  loading_button_label: "Envoi des instructions...",
                   link_text: "Mot de passe oublié ?",
-                  confirmation_text: "Vérifiez vos emails pour réinitialiser votre mot de passe",
+                },
+                update_password: {
+                  password_label: "Nouveau mot de passe",
+                  button_label: "Mettre à jour le mot de passe",
+                  loading_button_label: "Mise à jour du mot de passe...",
                 },
               },
             }}
             providers={[]}
+            theme="light"
           />
-        </div>
+        </Card>
       </div>
     </div>
   );
-};
-
-export default Login;
+}

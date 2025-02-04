@@ -17,11 +17,7 @@ import RideauxOuverts from "@/pages/RideauxOuverts";
 import Dashboard from "@/pages/Dashboard";
 import Options from "@/pages/Options";
 import LoverCoin from "@/pages/LoverCoin";
-import Quiz from "@/pages/Quiz";
-import SwipePage from "@/pages/SwipePage";
-import Concierge from "@/pages/Concierge";
-import { QualificationJourney } from '@/components/qualification/QualificationJourney';
-import { ThemeTest } from '@/components/test/ThemeTest';
+import { QualificationJourney } from "@/components/qualification/QualificationJourney";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +40,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     if (!session?.user) return;
 
     try {
+      // On récupère la dernière préférence créée pour l'utilisateur
       const { data: preferences, error } = await supabase
         .from('preferences')
         .select('qualification_completed, created_at')
@@ -54,6 +51,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
 
       if (error) {
         console.error('Error checking qualification status:', error);
+        // Si l'erreur est qu'aucune préférence n'existe, on considère que l'utilisateur doit faire la qualification
         if (error.code === 'PGRST116') {
           setNeedsQualification(true);
           return;
@@ -89,10 +87,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
         element={session ? <Dashboard /> : <Landing />}
       />
       <Route
-        path="/theme-test"
-        element={<ThemeTest />}
-      />
-      <Route
         path="/login"
         element={!session ? <Login /> : <Navigate to="/" replace />}
       />
@@ -103,10 +97,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/profiles"
         element={session ? <Profiles /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/swipe"
-        element={session ? <SwipePage /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/profile/:id"
@@ -141,20 +131,12 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
         element={<LoverCoin />}
       />
       <Route
-        path="/quiz"
-        element={session ? <Quiz /> : <Navigate to="/login" replace />}
-      />
-      <Route
         path="/reserver-room"
         element={session ? <ReserverRoom /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/rideaux-ouverts"
         element={<RideauxOuverts />}
-      />
-      <Route
-        path="/concierge"
-        element={session ? <Concierge /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/restaurant-du-love"

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { EventsList } from "./EventsList";
-import { Event, sampleEvents } from "@/types/events";
+import { sampleEvents } from "@/types/events";
 
 export const EventsCalendar = () => {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
@@ -16,7 +16,7 @@ export const EventsCalendar = () => {
     if (!selectedDate) return [];
     
     return sampleEvents.filter((event) => {
-      const eventDate = new Date(event.event_date);
+      const eventDate = event.start; // Changed from event.date to event.start
       const selected = new Date(selectedDate);
       
       return (

@@ -6,26 +6,40 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Event } from './types';
-import { EventParticipationButton } from './components/EventParticipationButton';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Event } from '@/types/events';
 
 interface EventModalProps {
   event: Event;
   onClose: () => void;
-  onParticipationSuccess?: () => void;
 }
 
-export function EventModal({ event, onClose, onParticipationSuccess }: EventModalProps) {
+export function EventModal({ event, onClose }: EventModalProps) {
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = React.useState(true);
+
+  const handleParticipate = async () => {
+    try {
+      // Implement participation logic here
+      toast({
+        title: "Succès",
+        description: "Votre participation a été enregistrée",
+      });
+      setIsOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleClose = () => {
     setIsOpen(false);
     onClose();
   };
-
-  const formattedDate = format(new Date(event.start), "EEEE d MMMM yyyy 'à' HH:mm", { locale: fr });
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -47,7 +61,14 @@ export function EventModal({ event, onClose, onParticipationSuccess }: EventModa
         <div className="space-y-4">
           <div>
             <p className="text-sm text-gray-500">
-              {formattedDate}
+              {new Date(event.start).toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
             </p>
           </div>
 
@@ -66,16 +87,18 @@ export function EventModal({ event, onClose, onParticipationSuccess }: EventModa
             <p>
               {event.extendedProps.freeForMembers 
                 ? "Gratuit pour les membres" 
-                : event.extendedProps.price 
-                  ? `Prix: ${event.extendedProps.price}€`
-                  : "Gratuit"}
+                : `Prix: ${event.extendedProps.price}€`}
             </p>
           </div>
 
-          <EventParticipationButton 
-            eventId={event.id} 
-            onSuccess={onParticipationSuccess}
-          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={handleClose}>
+              Fermer
+            </Button>
+            <Button onClick={handleParticipate}>
+              Participer
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

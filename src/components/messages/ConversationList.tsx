@@ -19,28 +19,7 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
 
   useEffect(() => {
     getCurrentUserProfile();
-    
-    // Subscribe to new messages
-    const channel = supabase
-      .channel('conversation-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages'
-        },
-        () => {
-          console.log("Message change detected, refreshing conversations");
-          refetch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [refetch]);
+  }, []);
 
   const getCurrentUserProfile = async () => {
     try {

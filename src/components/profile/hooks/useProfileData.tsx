@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { createNewProfile, fetchExistingProfile, handleSessionError } from "./useProfileUtils";
 
 export function useProfileData() {
   const [loading, setLoading] = useState(true);
@@ -17,26 +16,7 @@ export function useProfileData() {
   const getProfile = async () => {
     try {
       console.log("Fetching user data...");
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Session error:", sessionError);
-        const shouldRedirect = await handleSessionError(sessionError);
-        if (shouldRedirect) {
-          navigate('/login');
-          return;
-        }
-        throw sessionError;
-      }
-
-      if (!sessionData.session) {
-        console.log("No active session found");
-        await supabase.auth.signOut();
-        navigate('/login');
-        return;
-      }
-
-      const { user } = sessionData.session;
+      const { data: { user } } = await supabase.auth.getUser();
       console.log("User data:", user);
 
       if (!user) {
@@ -46,33 +26,51 @@ export function useProfileData() {
       }
 
       console.log("Fetching profile for user:", user.id);
-      const { profile: existingProfile, error: fetchError } = await fetchExistingProfile(user.id);
+      let { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+
+      console.log("Fetch result:", { existingProfile, fetchError });
 
       if (fetchError) {
-        if (fetchError.code === 'PGRST116') {
-          const newProfile = await createNewProfile(user.id, user.email);
-          setProfile(newProfile);
-          return;
-        }
+        console.error("Error fetching profile:", fetchError);
         throw fetchError;
       }
 
       if (!existingProfile) {
-        const newProfile = await createNewProfile(user.id, user.email);
+        console.log("Creating new profile for user");
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .upsert([{ 
+            user_id: user.id,
+            full_name: user.email?.split('@')[0] || 'New User',
+            is_love_hotel_member: false,
+            is_loolyb_holder: false,
+            relationship_type: [],
+            seeking: [],
+            photo_urls: [],
+            visibility: 'public',
+            allowed_viewers: [],
+            role: 'user'
+          }])
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error("Error creating profile:", insertError);
+          throw insertError;
+        }
+        console.log("New profile created:", newProfile);
         setProfile(newProfile);
       } else {
+        console.log("Using existing profile:", existingProfile);
         setProfile(existingProfile);
       }
     } catch (error: any) {
       console.error('Error loading profile:', error);
-      
-      if (error.message?.includes('session_not_found') || error.message?.includes('JWT')) {
-        console.log("Session error detected, signing out...");
-        await supabase.auth.signOut();
-        navigate('/login');
-        return;
-      }
-
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -86,17 +84,21 @@ export function useProfileData() {
   const updateProfile = async (updates: any) => {
     try {
       console.log("Updating profile with:", updates);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.log("No active session, redirecting to login");
-        navigate('/login');
-        return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user');
+
+      if (updates.relationship_type && !Array.isArray(updates.relationship_type)) {
+        updates.relationship_type = [updates.relationship_type];
+      }
+
+      if (updates.seeking && !Array.isArray(updates.seeking)) {
+        updates.seeking = [updates.seeking];
       }
 
       const { error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('user_id', session.user.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
 

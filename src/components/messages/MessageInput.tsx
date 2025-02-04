@@ -1,10 +1,10 @@
-import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Image, Send, Smile } from "lucide-react";
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -55,10 +55,10 @@ export function MessageInput({ newMessage, setNewMessage, onSend, conversationId
   };
 
   return (
-    <form onSubmit={onSend} className="p-4 border-t border-rose/20 bg-white/95 backdrop-blur-sm">
-      <div className="flex space-x-2 items-center">
-        <div className="flex-1 flex space-x-2 items-center">
-          <label className="cursor-pointer flex-shrink-0">
+    <form onSubmit={onSend} className="p-4 border-t border-rose/20">
+      <div className="flex space-x-2">
+        <div className="flex-1 flex space-x-2">
+          <label className="cursor-pointer">
             <Input
               type="file"
               accept="image/*"
@@ -71,7 +71,7 @@ export function MessageInput({ newMessage, setNewMessage, onSend, conversationId
           
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6 p-0 flex-shrink-0">
+              <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
                 <Smile className="h-6 w-6 text-gray-500 hover:text-burgundy transition-colors" />
               </Button>
             </PopoverTrigger>
@@ -87,11 +87,7 @@ export function MessageInput({ newMessage, setNewMessage, onSend, conversationId
             className="flex-1"
           />
         </div>
-        <Button 
-          type="submit" 
-          disabled={!newMessage.trim() || isUploading}
-          className="flex-shrink-0"
-        >
+        <Button type="submit" disabled={!newMessage.trim() || isUploading}>
           <Send className="h-4 w-4" />
         </Button>
       </div>
