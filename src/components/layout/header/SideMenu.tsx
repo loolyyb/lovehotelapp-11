@@ -15,9 +15,11 @@ export function SideMenu() {
           <Menu className="h-5 w-5 text-burgundy" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 bg-white/95 backdrop-blur-sm">
-        <MenuLogo />
-        <MenuNavigation onLinkClick={() => setIsOpen(false)} />
+      <SheetContent side="left" className="w-64 bg-white/95 backdrop-blur-sm overflow-y-auto">
+        <div className="flex flex-col h-full">
+          <MenuLogo />
+          <MenuNavigation onLinkClick={() => setIsOpen(false)} />
+        </div>
       </SheetContent>
     </Sheet>
   );
