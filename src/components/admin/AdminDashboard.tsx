@@ -14,7 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { EventsManager } from "./EventsManager";
+import { EventsManager } from "./events/EventsManager";
 
 export function AdminDashboard() {
   const setAdminAuthenticated = useAdminAuthStore((state) => state.setAdminAuthenticated);
