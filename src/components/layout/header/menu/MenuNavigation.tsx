@@ -18,7 +18,7 @@ export const MenuNavigation = ({ onLinkClick }: MenuNavigationProps) => {
   ];
 
   return (
-    <nav className="flex flex-col gap-4">
+    <nav className="flex flex-col gap-4 w-full">
       {menuItems.map((item) => (
         <MenuLink
           key={item.to}
@@ -30,4 +30,4 @@ export const MenuNavigation = ({ onLinkClick }: MenuNavigationProps) => {
       ))}
     </nav>
   );
-};
+}
