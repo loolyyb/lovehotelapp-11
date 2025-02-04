@@ -1,13 +1,4 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
-console.log("React import check:", {
-  React,
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useMemo
-});
-
 import { type ThemeName } from "@/types/theme";
 
 type ThemeContextType = {
@@ -19,12 +10,6 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  console.log("ThemeProvider rendering, React hooks available:", {
-    useState: typeof useState === 'function',
-    useCallback: typeof useCallback === 'function',
-    useMemo: typeof useMemo === 'function'
-  });
-
   const [currentTheme, setCurrentTheme] = useState<{ name: string } | null>(null);
   const [currentThemeName, setCurrentThemeName] = useState<string>("default");
 
@@ -44,8 +29,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     currentThemeName,
     switchTheme,
   }), [currentTheme, currentThemeName, switchTheme]);
-
-  console.log("ThemeProvider value:", value);
 
   return (
     <ThemeContext.Provider value={value}>
