@@ -7,14 +7,14 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 
 const formSchema = z.object({
   experienceType: z.string().min(1, "Le type d'expérience est requis"),
-  customExperience: z.string().optional(),
+  customExperience: z.string(),
   decoration: z.boolean().default(false),
   transport: z.boolean().default(false),
   playlist: z.boolean().default(false),
   romanticTable: z.boolean().default(false),
   customMenu: z.boolean().default(false),
   customScenario: z.boolean().default(false),
-  accessories: z.string().optional(),
+  accessories: z.string(),
   date: z.date({
     required_error: "La date est requise",
     invalid_type_error: "Format de date invalide",
@@ -36,8 +36,8 @@ const formSchema = z.object({
     .min(5, "L'email doit faire au moins 5 caractères")
     .max(100, "L'email ne doit pas dépasser 100 caractères"),
   phone: z.string()
-    .optional()
-    .refine((val) => !val || /^(\+33|0)[1-9](\d{8}|\d{2}\s\d{2}\s\d{2}\s\d{2})$/.test(val), {
+    .min(1, "Le numéro de téléphone est requis")
+    .refine((val) => /^(\+33|0)[1-9](\d{8}|\d{2}\s\d{2}\s\d{2}\s\d{2})$/.test(val), {
       message: "Format de téléphone invalide (format français uniquement)",
     }),
 });
