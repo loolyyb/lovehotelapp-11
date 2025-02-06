@@ -37,7 +37,7 @@ const formSchema = z.object({
     .max(100, "L'email ne doit pas dépasser 100 caractères"),
   phone: z.string()
     .min(1, "Le numéro de téléphone est requis")
-    .refine((val) => /^(\+33|0)[1-9](\d{8}|\d{2}\s\d{2}\s\d{2}\s\d{2})$/.test(val), {
+    .refine((val) => /^(\+33|0)[1-9](\d{8}|\s*\d{2}\s*\d{2}\s*\d{2}\s*\d{2})$/.test(val), {
       message: "Format de téléphone invalide (format français uniquement)",
     }),
 });
@@ -103,16 +103,17 @@ export function useConciergeForm() {
       console.log("Successfully stored request in database");
 
       toast({
-        title: "Demande envoyée",
-        description: "Notre équipe vous contactera dans les plus brefs délais.",
+        title: "Demande envoyée avec succès",
+        description: "Notre équipe de conciergerie va étudier votre demande et vous recontacter dans les plus brefs délais.",
+        variant: "default",
       });
 
       form.reset();
     } catch (error: any) {
       console.error('Error sending concierge request:', error);
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de l'envoi de votre demande. Veuillez réessayer.",
+        title: "Erreur lors de l'envoi",
+        description: "Une erreur est survenue lors de l'envoi de votre demande. Veuillez réessayer ou nous contacter directement.",
         variant: "destructive",
       });
     }
