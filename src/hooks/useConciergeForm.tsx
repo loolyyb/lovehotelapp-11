@@ -60,7 +60,7 @@ export function useConciergeForm() {
       customMenu: false,
       customScenario: false,
       accessories: "",
-      date: new Date(Date.now() + 86400000),
+      date: new Date(Date.now() + 86400000), // Tomorrow
       description: "",
       firstName: "",
       lastName: "",
