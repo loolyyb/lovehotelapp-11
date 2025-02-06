@@ -51,7 +51,7 @@ export function useConciergeForm() {
   const form = useForm<ConciergeFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      experienceType: "anniversary", // Set a default value for required field
+      experienceType: "anniversary",
       customExperience: "",
       decoration: false,
       transport: false,
@@ -60,8 +60,8 @@ export function useConciergeForm() {
       customMenu: false,
       customScenario: false,
       accessories: "",
-      date: new Date(Date.now() + 86400000), // Tomorrow
-      description: "Décrivez votre expérience idéale...", // Default text for required field
+      date: new Date(Date.now() + 86400000),
+      description: "Décrivez votre expérience idéale...",
       firstName: "",
       lastName: "",
       email: "",
@@ -98,6 +98,32 @@ export function useConciergeForm() {
       if (dbError) {
         console.error("Database error:", dbError);
         throw dbError;
+      }
+
+      // Send confirmation email
+      const { error: emailError } = await supabase.functions.invoke('send-concierge-email', {
+        body: {
+          experienceType: values.experienceType,
+          customExperience: values.customExperience,
+          decoration: values.decoration,
+          transport: values.transport,
+          playlist: values.playlist,
+          romanticTable: values.romanticTable,
+          customMenu: values.customMenu,
+          customScenario: values.customScenario,
+          accessories: values.accessories,
+          event_date: values.date.toISOString(),
+          description: values.description,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          phone: values.phone,
+        },
+      });
+
+      if (emailError) {
+        console.error("Error sending email:", emailError);
+        // Don't throw here, we still want to show success message for the form submission
       }
 
       console.log("Successfully stored request in database");
