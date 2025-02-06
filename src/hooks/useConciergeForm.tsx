@@ -51,7 +51,7 @@ export function useConciergeForm() {
   const form = useForm<ConciergeFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      experienceType: "",
+      experienceType: "anniversary", // Set a default value for required field
       customExperience: "",
       decoration: false,
       transport: false,
@@ -61,7 +61,7 @@ export function useConciergeForm() {
       customScenario: false,
       accessories: "",
       date: new Date(Date.now() + 86400000), // Tomorrow
-      description: "",
+      description: "Décrivez votre expérience idéale...", // Default text for required field
       firstName: "",
       lastName: "",
       email: "",
