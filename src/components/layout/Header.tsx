@@ -111,7 +111,7 @@ export function Header({ userProfile }: { userProfile?: any }) {
         .neq('sender_id', userProfile?.user_id);
 
       if (error) throw error;
-      
+
       setUnreadCount(messages?.length || 0);
     } catch (error) {
       console.error('Error fetching unread messages:', error);
@@ -129,8 +129,8 @@ export function Header({ userProfile }: { userProfile?: any }) {
       if (!conversation) return;
 
       if (
-        (conversation.user1_id === userProfile?.user_id || 
-         conversation.user2_id === userProfile?.user_id) && 
+        (conversation.user1_id === userProfile?.user_id ||
+         conversation.user2_id === userProfile?.user_id) &&
         message.sender_id !== userProfile?.user_id
       ) {
         setUnreadCount(prev => prev + 1);
@@ -165,18 +165,18 @@ export function Header({ userProfile }: { userProfile?: any }) {
       <div className="container mx-auto px-4">
         <div className="w-full h-16 flex items-center justify-between">
           <SideMenu />
-          
+
           <div className="flex items-center gap-4">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="hover:opacity-80 transition-opacity"
               title="Accueil"
             >
               <Home className="h-5 w-5 text-burgundy stroke-[1.5]" />
             </Link>
 
-            <Link 
-              to="/messages" 
+            <Link
+              to="/messages"
               className="relative hover:opacity-80 transition-opacity"
             >
               <MessagesSquare className="h-5 w-5 text-burgundy stroke-[1.5]" />
@@ -187,33 +187,27 @@ export function Header({ userProfile }: { userProfile?: any }) {
               )}
             </Link>
 
-            <Link 
-              to="/matching-scores" 
+            <Link
+              to="/matching-scores"
               className="hover:opacity-80 transition-opacity"
               title="Scores de compatibilité"
             >
               <Percent className="h-5 w-5 text-burgundy stroke-[1.5]" />
             </Link>
 
-            <Link 
-              to="/events" 
+            <Link
+              to="/events"
               className="hover:opacity-80 transition-opacity"
               title="Calendrier des événements"
             >
               <Calendar className="h-5 w-5 text-burgundy stroke-[1.5]" />
             </Link>
 
-            <Link 
-              to="/challenges" 
-              className="hover:opacity-80 transition-opacity"
-              title="Défis en couple"
-            >
-              <Trophy className="h-5 w-5 text-burgundy stroke-[1.5]" />
-            </Link>
-            
+
+
             <NotificationsMenu />
-            
-            <UserMenu 
+
+            <UserMenu
               avatarUrl={avatarUrl}
               fullName={userProfile?.full_name}
               onLogout={handleLogout}
