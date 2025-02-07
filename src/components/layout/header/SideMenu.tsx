@@ -3,7 +3,7 @@ import { Menu, Crown, BedDouble, Utensils, Users, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
-
+import { LogOut, Home, User } from "lucide-react";
 export function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -53,14 +53,16 @@ export function SideMenu() {
             <Utensils className="h-5 w-5" />
             <span>Restaurant du Love</span>
           </Link>
-          <Link
-            to="/concierge"
-            className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            <Crown className="h-5 w-5" />
-            <span>Conciergerie</span>
-          </Link>
+          <a
+                href="https://lovehotelaparis.fr/conciergerie/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                <User className="h-5 w-5" />
+                <span>Conciergerie sur mesure</span>
+              </a>
           <Link
             to="/features"
             className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors"
