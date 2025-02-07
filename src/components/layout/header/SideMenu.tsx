@@ -59,7 +59,7 @@ export function SideMenu() {
             onClick={() => setIsOpen(false)}
           >
             <Crown className="h-5 w-5" />
-            <span>Conciergerie XXX</span>
+            <span>Conciergerie</span>
           </Link>
           <Link
             to="/features"
