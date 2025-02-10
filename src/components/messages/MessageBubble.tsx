@@ -15,7 +15,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
       <div
         className={`max-w-[70%] p-3 rounded-lg ${
           isCurrentUser
-            ? 'bg-burgundy text-white rounded-br-none'
+            ? 'bg-burgundy text-rose/80 rounded-br-none'
             : 'bg-rose/20 text-gray-800 rounded-bl-none'
         }`}
       >
