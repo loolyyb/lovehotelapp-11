@@ -152,7 +152,7 @@ export function QualificationQuestion({ question, value, onChange }: Qualificati
 
   const renderChoice = () => (
     <div className="space-y-4">
-      <p className="text-sm text-gray-700">{question.question}</p>
+      <p className="text-sm text-gray-100">{question.question}</p>
       <RadioGroup
         value={value ?? undefined}
         onValueChange={onChange}
