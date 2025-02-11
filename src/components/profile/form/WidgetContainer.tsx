@@ -12,7 +12,7 @@ export function WidgetContainer({ children, title }: WidgetContainerProps) {
       animate={{ opacity: 1, y: 0 }}
       className="glass-card rounded-xl p-6 space-y-4 w-full"
     >
-      <h2 className="text-2xl font-cormorant font-semibold text-burgundy">{title}</h2>
+      <h2 className="text-2xl font-cormorant font-semibold text-rose-500">{title}</h2>
       {children}
     </motion.div>
   );
