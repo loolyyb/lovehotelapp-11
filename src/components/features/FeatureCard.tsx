@@ -39,7 +39,7 @@ export const FeatureCard = ({ icon: Icon, title, description, memberOnly, toolti
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xl font-cormorant font-bold text-gray-900">
+                    <h3 className="text-xl font-cormorant font-bold text-gray-100">
                       {title}
                     </h3>
                     {memberOnly && (
