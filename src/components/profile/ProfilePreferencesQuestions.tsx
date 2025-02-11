@@ -31,10 +31,10 @@ export function ProfilePreferencesQuestions({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-burgundy">Vos centres d'intérêt</h3>
+      <h3 className="text-lg font-semibold text-burgundy text-gray-800">Vos centres d'intérêt</h3>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Label htmlFor="open-curtains" className="flex-1">
+          <Label htmlFor="open-curtains" className="flex-1 text-gray-800">
             Intéressé(e) par notre option rideau ouvert ?
           </Label>
           <Switch
@@ -45,7 +45,7 @@ export function ProfilePreferencesQuestions({
         </div>
 
         <div className="flex items-center justify-between">
-          <Label htmlFor="speed-dating" className="flex-1">
+          <Label htmlFor="speed-dating" className="flex-1 text-gray-800">
             Intéressé(e) de participer à nos sessions de speed dating ?
           </Label>
           <Switch
@@ -56,7 +56,7 @@ export function ProfilePreferencesQuestions({
         </div>
 
         <div className="flex items-center justify-between">
-          <Label htmlFor="libertine-party" className="flex-1">
+          <Label htmlFor="libertine-party" className="flex-1 text-gray-800">
             Intéressé(e) de participer à nos soirées libertines ?
           </Label>
           <Switch
