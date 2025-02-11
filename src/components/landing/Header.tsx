@@ -86,7 +86,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-sm border-b">
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="w-full flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-burgundy">
