@@ -21,7 +21,7 @@ export function ProfileOrientation({ orientation, onOrientationChange }: Profile
 
   return (
     <div className="space-y-4">
-      <Label>Orientation sexuelle</Label>
+      <Label className="text-gray-800">Orientation sexuelle</Label>
       <RadioGroup
         value={orientation ?? undefined}
         onValueChange={handleOrientationChange}
@@ -29,28 +29,28 @@ export function ProfileOrientation({ orientation, onOrientationChange }: Profile
       >
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="hetero" id="hetero" />
-          <Label htmlFor="hetero" className="flex items-center gap-2">
+          <Label htmlFor="hetero" className="flex items-center gap-2 text-gray-800">
             <Heart className="w-4 h-4" />
             Hétéro
           </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="gay" id="gay" />
-          <Label htmlFor="gay" className="flex items-center gap-2">
+          <Label htmlFor="gay" className="flex items-center gap-2 text-gray-800">
             <Heart className="w-4 h-4" />
             Gay
           </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="bisexual" id="bisexual" />
-          <Label htmlFor="bisexual" className="flex items-center gap-2">
+          <Label htmlFor="bisexual" className="flex items-center gap-2 text-gray-800">
             <Heart className="w-4 h-4" />
             Bisexuel(le)
           </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="pansexual" id="pansexual" />
-          <Label htmlFor="pansexual" className="flex items-center gap-2">
+          <Label htmlFor="pansexual" className="flex items-center gap-2 text-gray-800">
             <Heart className="w-4 h-4" />
             Pansexuel(le)
           </Label>
