@@ -16,7 +16,7 @@ export function LocationSection({ preferences, onPreferenceChange }: LocationSec
   return (
     <WidgetContainer title="Localisation">
       <div className="space-y-4">
-        <Label htmlFor="location">Quartier</Label>
+        <Label htmlFor="location" className="text-gray-800">Quartier</Label>
         <Select
           value={preferences?.location}
           onValueChange={(value) => onPreferenceChange({ location: value })}
