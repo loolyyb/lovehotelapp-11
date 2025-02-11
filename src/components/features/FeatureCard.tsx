@@ -28,7 +28,7 @@ export const FeatureCard = ({ icon: Icon, title, description, memberOnly, toolti
             }}
             className="h-full"
           >
-            <Card className="p-6 h-full bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-300 border-rose-100 hover:shadow-xl relative overflow-hidden group">
+            <Card className="p-6 h-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300 border-rose-100 hover:shadow-xl relative overflow-hidden group">
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-500">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine" />
               </div>
