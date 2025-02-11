@@ -56,7 +56,7 @@ export function ProfilesFilter({ onFilterChange }: ProfilesFilterProps) {
   };
 
   return (
-    <Card className="p-4 mb-6 bg-white/80 backdrop-blur-sm">
+    <Card className="p-4 mb-6 bg-white/20 backdrop-blur-sm">
       <Collapsible
         open={isOpen}
         onOpenChange={setIsOpen}
