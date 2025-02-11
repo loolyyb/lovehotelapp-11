@@ -10,7 +10,7 @@ export function SideMenu() {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="hover:bg-rose/10">
+        <Button variant="ghost" size="icon" className="hover:bg-white/50">
           <Menu className="h-5 w-5 text-burgundy" />
         </Button>
       </SheetTrigger>
