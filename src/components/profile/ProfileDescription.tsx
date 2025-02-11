@@ -25,7 +25,7 @@ export function ProfileDescription({ initialDescription, onSave }: ProfileDescri
 
   return (
     <div className="space-y-4">
-      <Label htmlFor="description">Description (300 caractères max)</Label>
+      <Label htmlFor="description" className="text-gray-800">Description (300 caractères max)</Label>
       <Textarea
         id="description"
         value={description}
@@ -33,7 +33,7 @@ export function ProfileDescription({ initialDescription, onSave }: ProfileDescri
         placeholder="Décrivez-vous en quelques mots..."
         className="min-h-[100px]"
       />
-      <p className="text-sm text-gray-500 text-right">
+      <p className="text-sm text-gray-800 text-right">
         {description.length}/300 caractères
       </p>
     </div>
