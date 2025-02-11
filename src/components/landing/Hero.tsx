@@ -35,7 +35,7 @@ export const Hero = () => {
             L'Amour en Mode
             <br /> Premium
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-800 max-w-2xl mx-auto">
             Découvrez une nouvelle façon de rencontrer l'amour avec des expériences exclusives et une monnaie dédiée.
           </p>
           
@@ -46,7 +46,7 @@ export const Hero = () => {
             >
               <Hotel className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">Love Rooms</h3>
-              <p className="text-sm text-gray-600 mt-2">Des chambres luxueuses pour vos moments romantiques</p>
+              <p className="text-sm text-gray-800 mt-2">Des chambres luxueuses pour vos moments romantiques</p>
             </motion.div>
             
             <motion.div
@@ -55,7 +55,7 @@ export const Hero = () => {
             >
               <Coins className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">LooLyyb Coin</h3>
-              <p className="text-sm text-gray-600 mt-2">La première monnaie dédiée aux amoureux</p>
+              <p className="text-sm text-gray-800 mt-2">La première monnaie dédiée aux amoureux</p>
             </motion.div>
             
             <motion.div
@@ -64,7 +64,7 @@ export const Hero = () => {
             >
               <Utensils className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">Restaurant Lovers</h3>
-              <p className="text-sm text-gray-600 mt-2">Une expérience gastronomique romantique</p>
+              <p className="text-sm text-gray-800 mt-2">Une expérience gastronomique romantique</p>
             </motion.div>
             
             <motion.div
@@ -73,7 +73,7 @@ export const Hero = () => {
             >
               <Calendar className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">Events Exclusifs</h3>
-              <p className="text-sm text-gray-600 mt-2">Speed dating et soirées thématiques</p>
+              <p className="text-sm text-gray-800 mt-2">Speed dating et soirées thématiques</p>
             </motion.div>
 
             <motion.div
@@ -82,7 +82,7 @@ export const Hero = () => {
             >
               <Users className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">Communauté Select</h3>
-              <p className="text-sm text-gray-600 mt-2">Des célibataires raffinés et authentiques</p>
+              <p className="text-sm text-gray-800 mt-2">Des célibataires raffinés et authentiques</p>
             </motion.div>
 
             <motion.div
@@ -91,7 +91,7 @@ export const Hero = () => {
             >
               <Heart className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">Matching Intelligent</h3>
-              <p className="text-sm text-gray-600 mt-2">Un algorithme sophistiqué pour des rencontres de qualité</p>
+              <p className="text-sm text-gray-800 mt-2">Un algorithme sophistiqué pour des rencontres de qualité</p>
             </motion.div>
           </div>
 
