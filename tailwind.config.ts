@@ -24,64 +24,56 @@ export default {
         cormorant: ['Cormorant Garamond', 'serif'],
       },
       colors: {
-        champagne: "#FDE8D7",
-        rose: {
-          50: "#FFF5F8",
-          100: "#FFDDE5",
-          200: "#FFBFD2",
-          300: "#FF92B3",
-          400: "#FF6B96",
-          500: "#FF4E83",
-          600: "#E0356C",
-          700: "#B22756",
-          800: "#861941",
-          900: "#550F2C",
+        gray: {
+          50: "#F5F5F5",
+          100: "#E0E0E0",
+          200: "#C2C2C2",
+          300: "#9E9E9E",
+          400: "#757575",
+          500: "#616161",
+          600: "#E0E0E0",
+          700: "#2C2C2C",  // Fond principal sombre
+          800: "#1E1E1E",
+          900: "#121212",
         },
-        peach: {
-          50: "#FFF1E8",
-          100: "#FFE0CC",
-          200: "#FFBF99",
-          300: "#FF9966",
-          400: "#FF7540",
-          500: "#FF5B29",
-          600: "#E0491F",
-          700: "#B43818",
-          800: "#882810",
-          900: "#55180A",
-        },
-        cream: "#FFF8ED",
-        background: "#FFF5F0",
-        foreground: "#4C0B1A",
-        border: "#FF4E83",
-        input: "#FFE3EB",
-        ring: "#FF6B96",
+        background: "#1E1E1E",  // Fond sombre
+        foreground: "#EDEDED",  // Texte clair
+        border: "#5A5A5A",  // Bordures discrètes
+        input: "#2C2C2C",  // Fond des champs de saisie
+        ring: "#FF69B4",  // Rose vif pour les surbrillances et focus
         primary: {
-          DEFAULT: "#FF4E83",
-          foreground: "#FFF8ED",
+          DEFAULT: "#FF69B4",  // Rose vif comme couleur primaire
+          foreground: "#1E1E1E",
         },
         secondary: {
-          DEFAULT: "#FF8F98",
-          foreground: "#4C0B1A",
+          DEFAULT: "#FF4893",  // Rose foncé intense pour les éléments secondaires
+          100: "#FFDDEB",  // Tons pastel pour variantes
+          200: "#FF99C5",
+          300: "#FF66A3",
+          foreground: "#1E1E1E",
         },
         destructive: {
-          DEFAULT: "#FF2E5E",
-          foreground: "#FFF5F8",
+          DEFAULT: "#FF3B62",  // Rouge vif
+          foreground: "#1E1E1E",
         },
         muted: {
-          DEFAULT: "#FFDEE6",
-          foreground: "#4C0B1A",
+          DEFAULT: "#4A4A4A",  // Fond neutre pour éléments discrets
+          foreground: "#D4D4D4",
         },
         accent: {
-          DEFAULT: "#FF7260",
-          foreground: "#FFF5F8",
+          DEFAULT: "#E61E8A",  // Fuchsia très accentué pour attirer l’attention
+          100: "#FFD6F1",
+          200: "#FF8ED6",
+          300: "#E61E8A",  // Accent principal
+          foreground: "#1E1E1E",
         },
         popover: {
-          DEFAULT: "#FFE4E8",
-          foreground: "#4C0B1A",
+          DEFAULT: "#2F2F2F",  // Fond sombre des popups
+          foreground: "#EDEDED",
         },
         card: {
-          DEFAULT: "#FFF1F3",
-          foreground: "#800F33",
+          DEFAULT: "#292929",  // Fond des cartes en gris sombre
+          foreground: "#EDEDED",
         },
       },
       keyframes: {
