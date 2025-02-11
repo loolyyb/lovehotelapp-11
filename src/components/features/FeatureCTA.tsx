@@ -25,7 +25,7 @@ export const FeatureCTA = () => {
           <Button
             onClick={() => navigate("/login")}
             size="lg"
-            className="bg-white text-burgundy-900 hover:bg-rose-50 transition-all duration-300 transform hover:scale-105 font-semibold"
+            className="bg-white text-rose-500 hover:bg-white/10 transition-all duration-300 transform hover:scale-105 font-semibold"
           >
             Créer un Compte
           </Button>
