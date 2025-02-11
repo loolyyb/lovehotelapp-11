@@ -95,21 +95,6 @@ export const Hero = () => {
             </motion.div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-12">
-            <Button
-              size="lg"
-              className="bg-burgundy hover:bg-burgundy/90 text-white text-lg"
-            >
-              Rejoindre l'Aventure
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-burgundy text-burgundy hover:bg-burgundy/5 text-lg"
-            >
-              En Savoir Plus
-            </Button>
-          </div>
         </motion.div>
       </div>
     </section>
