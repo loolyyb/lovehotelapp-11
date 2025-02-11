@@ -19,7 +19,7 @@ const RestaurantDuLove = () => {
             />
           </div>
           <div className="bg-white/80 backdrop-blur-sm p-6 rounded-xl shadow-lg">
-            <h2 className="text-2xl font-cormorant font-semibold text-burgundy mb-4">
+            <h2 className="text-2xl font-cormorant font-semibold text-rose-500 mb-4">
               Le Restaurant du Love
             </h2>
             <p className="text-gray-700 leading-relaxed">
