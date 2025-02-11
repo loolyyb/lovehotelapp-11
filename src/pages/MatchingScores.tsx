@@ -205,14 +205,14 @@ export default function MatchingScores() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream flex items-center justify-center">
         <div className="animate-pulse text-burgundy">Chargement...</div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 pt-20">
+    <main className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-cormorant text-burgundy text-center mb-8 animate-fadeIn">
           Scores de Compatibilité
