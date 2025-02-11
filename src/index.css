@@ -94,7 +94,7 @@
 
 /* Effets visuels pour le thème lover */
 [data-theme="lover"] .glass-card {
-    @apply bg-white/70 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300;
+    @apply bg-white/95 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300;
 }
 
 [data-theme="lover"] .hover-scale {
