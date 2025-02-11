@@ -54,7 +54,7 @@ export function ProfileGallery({ photos }: ProfileGalleryProps) {
         animate={{ opacity: 1, y: 0 }}
         className="mt-8"
       >
-        <h2 className="text-xl font-semibold text-burgundy mb-4">Galerie photos</h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Galerie photos</h2>
         <Card className="p-8 flex flex-col items-center justify-center text-gray-500 bg-white/80 backdrop-blur-sm">
           <motion.div
             initial={{ scale: 0.8 }}
