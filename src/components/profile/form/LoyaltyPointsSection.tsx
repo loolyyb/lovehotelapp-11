@@ -22,15 +22,15 @@ export function LoyaltyPointsSection({ points }: LoyaltyPointsSectionProps) {
   return (
     <WidgetContainer title="Points Fidélité">
       <div className="space-y-6">
-        <div className="text-lg text-gray-700">
+        <div className="text-lg text-gray-900">
           Vous avez actuellement <span className="font-semibold text-burgundy">{totalBookings}</span> points de fidélité
         </div>
 
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-800">
           Les points de fidélité sont attribués automatiquement lors de vos réservations et peuvent être échangés contre des avantages exclusifs.
         </p>
 
-        <p className="text-sm font-medium text-burgundy">
+        <p className="text-sm font-medium text-rose-500">
           Plus que {bookingsUntilBonus} réservations avant votre prochain bonus !
         </p>
       </div>
