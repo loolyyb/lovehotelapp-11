@@ -188,7 +188,7 @@ export function QualificationQuestion({ question, value, onChange }: Qualificati
         {question.type === "choice" && renderChoice()}
       </div>
       {question.type === "choice" && question.id === "libertine_party_interest" && (
-        <div className="space-y-4 mt-4 p-4 bg-gray-50 rounded-lg">
+        <div className="space-y-4 mt-4 p-4 bg-white/10 rounded-lg">
           <p className="text-sm text-gray-600">
             Une fois votre qualification terminée, vous pourrez compléter votre profil avec des photos et des informations supplémentaires.
           </p>
