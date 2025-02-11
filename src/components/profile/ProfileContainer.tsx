@@ -11,7 +11,7 @@ export function ProfileContainer({ profile, onUpdate }: ProfileContainerProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream">
       <div className="container mx-auto px-4 py-4">
-        <Card className="p-8 space-y-8 bg-white/80 backdrop-blur-sm shadow-xl rounded-xl animate-fadeIn">
+        <Card className="p-8 space-y-8 bg-white/20 backdrop-blur-sm shadow-xl rounded-xl animate-fadeIn">
           <ProfileHeader
             avatarUrl={profile?.avatar_url}
             fullName={profile?.full_name}
