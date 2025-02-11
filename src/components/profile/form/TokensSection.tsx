@@ -24,8 +24,8 @@ export function TokensSection({ tokens, onUpdate }: TokensSectionProps) {
 
   return (
     <WidgetContainer title="Tokens LooLyyb">
-      <div className="space-y-4">
-        <Label htmlFor="loolyb-tokens">Nombre de tokens en votre possession</Label>
+      <div className="space-y-4 text-gray-800">
+        <Label htmlFor="loolyb-tokens">Nombre de tokens en votre possession (à partir de mars 2025)</Label>
         <Input
           id="loolyb-tokens"
           type="number"
