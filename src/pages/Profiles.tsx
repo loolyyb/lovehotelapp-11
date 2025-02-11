@@ -73,14 +73,14 @@ export default function Profiles() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream flex items-center justify-center">
         <Loader className="w-8 h-8 animate-spin text-burgundy" />
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100">
+    <main className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream">
       <div className="container mx-auto px-4 py-4">
         <h1 className="text-4xl font-cormorant text-burgundy text-center mb-8 animate-fadeIn">
           Découvrez des profils
