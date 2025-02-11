@@ -101,7 +101,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
           </Avatar>
 
           <div className="text-center space-y-2">
-            <h3 className="text-xl font-semibold text-rose-500">
+            <h3 className="text-xl font-semibold text-gray-100">
               {profile.full_name}
             </h3>
 
