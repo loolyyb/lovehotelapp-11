@@ -106,7 +106,7 @@ export default function Login() {
   }, [navigate, logger, toast]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center bg-gradient-to-r from-pink-50 to-rose-100 pt-12">
+    <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center bg-gradient-to-b from-champagne via-rose-50 to-cream pt-12">
       <div className="w-full max-w-md px-4">
         <Card className="p-8 space-y-4">
           <h1 className="text-3xl font-playfair text-center mb-6">Se Connecter</h1>
@@ -161,7 +161,7 @@ export default function Login() {
               },
             }}
             providers={[]}
-            theme="light"
+            theme="dark"
           />
         </Card>
       </div>
