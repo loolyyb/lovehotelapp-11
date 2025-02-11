@@ -73,7 +73,7 @@ export default function ProfileDetails() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream flex items-center justify-center">
         <div className="text-burgundy">Profil non trouvé</div>
       </div>
     );
@@ -84,7 +84,7 @@ export default function ProfileDetails() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen bg-gradient-to-r from-pink-50 to-rose-100"
+      className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream"
     >
       <div className="max-w-4xl mx-auto px-4 py-4">
         <ProfileDetailsHeader />
