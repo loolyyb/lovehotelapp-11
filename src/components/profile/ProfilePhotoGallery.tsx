@@ -68,7 +68,7 @@ export function ProfilePhotoGallery({ photos = [], onPhotosChange }: ProfilePhot
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-burgundy">Galerie photos</h2>
+      <h2 className="text-xl font-semibold text-gray-800">Galerie photos</h2>
       <Card className="p-6">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {photos?.map((photo, index) => (
