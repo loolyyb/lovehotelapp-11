@@ -88,7 +88,7 @@ export const Features = () => {
               <h3 className="text-xl font-cormorant font-bold mb-2 text-gray-900">
                 {feature.title}
               </h3>
-              <p className="text-gray-600 font-montserrat">
+              <p className="text-gray-800 font-montserrat">
                 {feature.description}
               </p>
             </motion.div>
