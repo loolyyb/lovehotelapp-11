@@ -23,7 +23,7 @@ export default function Options() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-12 text-center">
-        <p className="text-base md:text-lg text-gray-700 max-w-2xl mx-auto">
+        <p className="text-base md:text-lg text-rosey-500 max-w-2xl mx-auto">
           Retrouvez ces options et bien d'autres lors de la réservation de votre Love Room.
         </p>
       </div>
@@ -44,8 +44,8 @@ export default function Options() {
                 />
               </div>
               <div className="p-4">
-                <h3 className="text-xl font-cormorant font-bold text-burgundy mb-2">{option.title}</h3>
-                <p className="text-gray-600">{option.description}</p>
+                <h3 className="text-xl font-cormorant font-bold text-rose-500 mb-2">{option.title}</h3>
+                <p className="text-gray-900">{option.description}</p>
               </div>
             </Card>
           </motion.div>
