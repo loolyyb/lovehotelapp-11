@@ -95,25 +95,25 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
               alt={profile.full_name ?? "Profile"} 
               className="object-cover"
             />
-            <AvatarFallback className="text-2xl bg-burgundy text-white">
+            <AvatarFallback className="text-2xl bg-burgundy text-rose-500">
               {profile.full_name?.charAt(0) ?? "?"}
             </AvatarFallback>
           </Avatar>
 
           <div className="text-center space-y-2">
-            <h3 className="text-xl font-semibold text-burgundy">
+            <h3 className="text-xl font-semibold text-rose-500">
               {profile.full_name}
             </h3>
 
             {preferences?.location && !isMobile && (
-              <div className="flex items-center justify-center space-x-2 text-gray-600">
+              <div className="flex items-center justify-center space-x-2 text-gray-200">
                 <MapPin className="w-4 h-4" />
                 <span>{preferences.location}</span>
               </div>
             )}
 
             {profile.bio && !isMobile && (
-              <p className="text-gray-600 line-clamp-2 text-sm">
+              <p className="text-gray-200 line-clamp-2 text-sm">
                 {profile.bio}
               </p>
             )}
