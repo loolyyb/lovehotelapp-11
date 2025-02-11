@@ -21,7 +21,7 @@ export function ProfileStatus({ status, onStatusChange }: ProfileStatusProps) {
 
   return (
     <div className="space-y-4">
-      <Label>Statut</Label>
+      <Label  className="text-gray-800">Statut</Label>
       <Select value={status ?? undefined} onValueChange={handleStatusChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Sélectionnez votre statut" />
