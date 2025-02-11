@@ -26,7 +26,7 @@ export function RelationshipTypeCheckbox({
         checked={checked}
         onCheckedChange={(checked) => onCheckedChange(checked as boolean)}
       />
-      <Label htmlFor={id} className="flex items-center gap-2">
+      <Label htmlFor={id} className="flex items-center gap-2 text-gray-800">
         <Icon className={`w-4 h-4 ${iconColor} fill-current`} />
         {label}
       </Label>
