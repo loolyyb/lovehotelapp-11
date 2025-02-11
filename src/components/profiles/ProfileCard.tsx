@@ -77,7 +77,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
 
   return (
     <Card 
-      className="overflow-hidden hover:shadow-lg transition-shadow duration-300 animate-fadeIn bg-white/80 backdrop-blur-sm cursor-pointer transform hover:scale-105 transition-all"
+      className="overflow-hidden hover:shadow-lg transition-shadow duration-300 animate-fadeIn bg-white/20 backdrop-blur-sm cursor-pointer transform hover:scale-105 transition-all"
       onClick={handleProfileClick}
       role="button"
       tabIndex={0}
