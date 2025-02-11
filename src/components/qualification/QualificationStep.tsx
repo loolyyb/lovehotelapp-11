@@ -19,7 +19,7 @@ export function QualificationStep({ step, answers, onAnswer }: QualificationStep
     >
       <Card className="p-4 md:p-6 space-y-4 max-w-2xl mx-auto">
         <div className="space-y-2">
-          <h2 className="text-xl md:text-2xl font-semibold text-burgundy">
+          <h2 className="text-xl md:text-2xl font-semibold text-rose-500">
             {step.title}
           </h2>
           <p className="text-sm md:text-base text-gray-600">{step.description}</p>
