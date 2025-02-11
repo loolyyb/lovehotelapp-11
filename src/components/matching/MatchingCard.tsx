@@ -25,7 +25,7 @@ export function MatchingCard({ profile, onProfileClick, onMessageClick, index }:
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
     >
-      <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 bg-white/80 backdrop-blur-sm">
+      <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 bg-white/20 backdrop-blur-sm">
         <div className="p-6 space-y-4">
           <div 
             className="flex items-center space-x-4 cursor-pointer"
