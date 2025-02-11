@@ -24,7 +24,7 @@ export const CTA = () => {
           <div className="pt-8 space-y-4 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row justify-center">
             <Button
               size="lg"
-              className="bg-white text-burgundy hover:bg-white/10 text-lg"
+              className="bg-white text-rose-500 hover:bg-white/10 text-lg"
             >
               Créer un Compte
             </Button>
