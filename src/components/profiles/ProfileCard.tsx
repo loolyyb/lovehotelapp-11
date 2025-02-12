@@ -78,7 +78,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
 
   return (
     <Card 
-      className="h-[400px] overflow-hidden hover:shadow-lg transition-shadow duration-300 animate-fadeIn bg-white/20 backdrop-blur-sm cursor-pointer transform hover:scale-105 transition-all"
+      className={`${isMobile ? 'h-[300px]' : 'h-[400px]'} overflow-hidden hover:shadow-lg transition-shadow duration-300 animate-fadeIn bg-white/20 backdrop-blur-sm cursor-pointer transform hover:scale-105 transition-all`}
       onClick={handleProfileClick}
       role="button"
       tabIndex={0}
@@ -90,7 +90,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
     >
       <CardContent className="p-6 h-full flex flex-col">
         <div className="flex flex-col items-center space-y-4 flex-grow">
-          <Avatar className="w-32 h-32 border-4 border-[#CE0067] shadow-lg">
+          <Avatar className={`${isMobile ? 'w-24 h-24' : 'w-32 h-32'} border-4 border-[#CE0067] shadow-lg`}>
             <AvatarImage 
               src={profile.avatar_url ?? undefined} 
               alt={profile.full_name ?? "Profile"} 
