@@ -14,7 +14,7 @@ export function DatingTab({
   if (showQualification) {
     return <QualificationJourney isEditing onComplete={() => setShowQualification(false)} />;
   }
-  return <div className="p-6 w-full">
+  return <div className="p-0 w-full">
       <div className="mb-8">
         <Button onClick={() => setShowQualification(true)} className="w-full md:w-auto text-white bg-[#ce0067]">
           Modifier mes réponses de qualification
