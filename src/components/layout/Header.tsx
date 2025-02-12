@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MessagesSquare, Percent, Calendar, Trophy, Home } from "lucide-react";
@@ -149,7 +150,7 @@ export function Header({ userProfile }: { userProfile?: any }) {
         title: "Déconnexion réussie",
         description: "À bientôt !",
       });
-      navigate("/");
+      window.location.href = "https://lovehotelaparis.fr/";
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       toast({
@@ -202,8 +203,6 @@ export function Header({ userProfile }: { userProfile?: any }) {
             >
               <Calendar className="h-5 w-5 text-burgundy stroke-[1.5]" />
             </Link>
-
-
 
             <NotificationsMenu />
 
