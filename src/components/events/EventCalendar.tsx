@@ -67,6 +67,40 @@ export function EventCalendar() {
         return;
       }
 
+      // D'abord, vérifions si un profil existe pour cet utilisateur
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error checking profile:', profileError);
+        throw profileError;
+      }
+
+      // Si aucun profil n'existe, on en crée un
+      if (!profile) {
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            full_name: user.email?.split('@')[0] || 'Nouveau membre',
+            role: 'user',
+            relationship_type: [],
+            seeking: [],
+            photo_urls: [],
+            is_love_hotel_member: false,
+            is_loolyb_holder: false
+          });
+
+        if (createProfileError) {
+          console.error('Error creating profile:', createProfileError);
+          throw createProfileError;
+        }
+      }
+
+      // Maintenant on peut enregistrer la participation
       const { error } = await supabase
         .from('event_participants')
         .insert({
