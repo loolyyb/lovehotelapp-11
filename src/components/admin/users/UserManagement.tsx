@@ -24,26 +24,42 @@ export function UserManagement() {
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      // Récupérer d'abord les profils
+      // Récupérer d'abord les profils avec tous les champs
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      console.log('Fetched profiles:', profiles);
 
       // Récupérer les utilisateurs via l'Edge Function
       const { data: authData, error: authError } = await supabase.functions.invoke('list-users');
       
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        throw authError;
+      }
+
+      console.log('Fetched auth users:', authData);
 
       // Combiner les données des profils avec les emails des utilisateurs
-      return profiles.map(profile => ({
-        ...profile,
-        user: {
-          email: authData.users.find(user => user.id === profile.user_id)?.email
-        }
-      }));
+      const combinedData = profiles.map(profile => {
+        const authUser = authData.users.find(user => user.id === profile.user_id);
+        return {
+          ...profile,
+          user: {
+            email: authUser?.email
+          }
+        };
+      });
+
+      console.log('Combined data:', combinedData);
+      return combinedData;
     }
   });
 
