@@ -22,6 +22,7 @@ import { QualificationJourney } from "@/components/qualification/QualificationJo
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Header } from "./Header";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -30,6 +31,16 @@ interface AppRoutesProps {
 export const AppRoutes = ({ session }: AppRoutesProps) => {
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
   const { toast } = useToast();
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
 
   useEffect(() => {
     if (session?.user) {
@@ -82,71 +93,74 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
   }
 
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={session ? <Dashboard /> : <Landing />}
-      />
-      <Route
-        path="/login"
-        element={!session ? <Login /> : <Navigate to="/" replace />}
-      />
-      <Route
-        path="/profile"
-        element={session ? <Profile /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/profiles"
-        element={session ? <Profiles /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/profile/:id"
-        element={session ? <ProfileDetails /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/messages"
-        element={session ? <Messages /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/matching-scores"
-        element={session ? <MatchingScores /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/events"
-        element={session ? <Events /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/challenges"
-        element={session ? <Challenges /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/features"
-        element={<Features />}
-      />
-      <Route
-        path="/options"
-        element={<Options />}
-      />
-      <Route
-        path="/lover-coin"
-        element={<LoverCoin />}
-      />
-      <Route
-        path="/reserver-room"
-        element={session ? <ReserverRoom /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/rideaux-ouverts"
-        element={<RideauxOuverts />}
-      />
-      <Route
-        path="/restaurant-du-love"
-        element={<RestaurantDuLove />}
-      />
-      <Route
-        path="/admin"
-        element={<Admin />}
-      />
-    </Routes>
+    <>
+      {currentPath !== '/admin' && <Header />}
+      <Routes>
+        <Route
+          path="/"
+          element={session ? <Dashboard /> : <Landing />}
+        />
+        <Route
+          path="/login"
+          element={!session ? <Login /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/profile"
+          element={session ? <Profile /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/profiles"
+          element={session ? <Profiles /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/profile/:id"
+          element={session ? <ProfileDetails /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/messages"
+          element={session ? <Messages /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/matching-scores"
+          element={session ? <MatchingScores /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/events"
+          element={session ? <Events /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/challenges"
+          element={session ? <Challenges /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/features"
+          element={<Features />}
+        />
+        <Route
+          path="/options"
+          element={<Options />}
+        />
+        <Route
+          path="/lover-coin"
+          element={<LoverCoin />}
+        />
+        <Route
+          path="/reserver-room"
+          element={session ? <ReserverRoom /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/rideaux-ouverts"
+          element={<RideauxOuverts />}
+        />
+        <Route
+          path="/restaurant-du-love"
+          element={<RestaurantDuLove />}
+        />
+        <Route
+          path="/admin"
+          element={<Admin />}
+        />
+      </Routes>
+    </>
   );
 };
