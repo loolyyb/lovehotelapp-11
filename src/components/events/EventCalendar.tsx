@@ -17,7 +17,7 @@ export function EventCalendar() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  const { data: events } = useQuery({
+  const { data: events, refetch } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,10 +55,57 @@ export function EventCalendar() {
     setSelectedEvent(info.event);
   };
 
-  const handleParticipate = (eventId: string) => {
-    const event = events?.find(e => e.id === eventId);
-    if (event) {
-      setSelectedEvent(event);
+  const handleParticipate = async (eventId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté pour participer à un événement",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('event_participants')
+        .insert({
+          event_id: eventId,
+          user_id: user.id,
+          status: 'registered'
+        });
+
+      if (error) {
+        if (error.code === '23505') { // Unique violation
+          toast({
+            title: "Information",
+            description: "Vous êtes déjà inscrit à cet événement",
+          });
+          return;
+        }
+        throw error;
+      }
+
+      toast({
+        title: "Succès",
+        description: "Votre participation a été enregistrée",
+      });
+
+      // Refresh events list
+      refetch();
+
+      // Find and show event details
+      const event = events?.find(e => e.id === eventId);
+      if (event) {
+        setSelectedEvent(event);
+      }
+    } catch (error) {
+      console.error('Error registering for event:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'enregistrer votre participation",
+        variant: "destructive",
+      });
     }
   };
 
