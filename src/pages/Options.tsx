@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 const options = [{
@@ -32,7 +33,7 @@ export default function Options() {
       }}>
             <Card className="overflow-hidden bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 h-full">
               <div className="relative overflow-hidden">
-                <img src={option.image} alt={option.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+                <img src={option.image} alt={option.title} className="w-full h-full object-cover transition-transform duration-300 hover:scale-105 border border-white" />
               </div>
               <div className="p-4 bg-zinc-50">
                 <h3 className="text-xl font-cormorant font-bold text-rose-500 mb-2">{option.title}</h3>
