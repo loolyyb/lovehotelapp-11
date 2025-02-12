@@ -16,6 +16,7 @@ export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [participatingEvents, setParticipatingEvents] = React.useState<string[]>([]);
 
   const { data: events, refetch } = useQuery({
     queryKey: ['events'],
@@ -51,6 +52,32 @@ export function EventCalendar() {
     }
   });
 
+  // Fetch user's participating events
+  const fetchParticipatingEvents = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('event_participants')
+      .select('event_id')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error fetching participations:', error);
+      return;
+    }
+
+    setParticipatingEvents(data.map(p => p.event_id));
+  };
+
+  React.useEffect(() => {
+    const checkCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        fetchParticipatingEvents(user.id);
+      }
+    };
+    
+    checkCurrentUser();
+  }, []);
+
   const handleEventClick = (info: any) => {
     setSelectedEvent(info.event);
   };
@@ -67,29 +94,50 @@ export function EventCalendar() {
         return;
       }
 
-      const { error } = await supabase
-        .from('event_participants')
-        .insert({
-          event_id: eventId,
-          user_id: user.id,
-          status: 'registered'
+      // Si l'utilisateur participe déjà, on le désinscrit
+      if (participatingEvents.includes(eventId)) {
+        const { error } = await supabase
+          .from('event_participants')
+          .delete()
+          .eq('event_id', eventId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Succès",
+          description: "Vous êtes désinscrit de l'événement",
         });
 
-      if (error) {
-        if (error.code === '23505') { // Unique violation
-          toast({
-            title: "Information",
-            description: "Vous êtes déjà inscrit à cet événement",
+        setParticipatingEvents(prev => prev.filter(id => id !== eventId));
+      } else {
+        // Sinon, on l'inscrit
+        const { error } = await supabase
+          .from('event_participants')
+          .insert({
+            event_id: eventId,
+            user_id: user.id,
+            status: 'registered'
           });
-          return;
-        }
-        throw error;
-      }
 
-      toast({
-        title: "Succès",
-        description: "Votre participation a été enregistrée",
-      });
+        if (error) {
+          if (error.code === '23505') { // Unique violation
+            toast({
+              title: "Information",
+              description: "Vous êtes déjà inscrit à cet événement",
+            });
+            return;
+          }
+          throw error;
+        }
+
+        toast({
+          title: "Succès",
+          description: "Votre participation a été enregistrée",
+        });
+
+        setParticipatingEvents(prev => [...prev, eventId]);
+      }
 
       // Refresh events list
       refetch();
@@ -100,10 +148,10 @@ export function EventCalendar() {
         setSelectedEvent(event);
       }
     } catch (error) {
-      console.error('Error registering for event:', error);
+      console.error('Error managing event participation:', error);
       toast({
         title: "Erreur",
-        description: "Impossible d'enregistrer votre participation",
+        description: "Une erreur est survenue lors de la gestion de votre participation",
         variant: "destructive",
       });
     }
@@ -119,6 +167,7 @@ export function EventCalendar() {
         <EventsList 
           events={events || []} 
           onParticipate={handleParticipate}
+          participatingEvents={participatingEvents}
         />
       ) : (
         <FullCalendar
@@ -156,6 +205,8 @@ export function EventCalendar() {
         <EventModal
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
+          onParticipate={handleParticipate}
+          isParticipating={participatingEvents.includes(selectedEvent.id)}
         />
       )}
     </Card>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Dialog,
@@ -13,20 +14,17 @@ import { Event } from '@/types/events';
 interface EventModalProps {
   event: Event;
   onClose: () => void;
+  onParticipate: (eventId: string) => void;
+  isParticipating: boolean;
 }
 
-export function EventModal({ event, onClose }: EventModalProps) {
+export function EventModal({ event, onClose, onParticipate, isParticipating }: EventModalProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = React.useState(true);
 
   const handleParticipate = async () => {
     try {
-      // Implement participation logic here
-      toast({
-        title: "Succès",
-        description: "Votre participation a été enregistrée",
-      });
-      setIsOpen(false);
+      await onParticipate(event.id);
     } catch (error) {
       toast({
         title: "Erreur",
@@ -95,8 +93,11 @@ export function EventModal({ event, onClose }: EventModalProps) {
             <Button variant="outline" onClick={handleClose}>
               Fermer
             </Button>
-            <Button onClick={handleParticipate}>
-              Participer
+            <Button 
+              onClick={handleParticipate}
+              className={isParticipating ? "bg-gray-500 hover:bg-gray-600" : ""}
+            >
+              {isParticipating ? "Ne plus participer" : "Participer"}
             </Button>
           </div>
         </div>

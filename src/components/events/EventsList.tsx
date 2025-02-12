@@ -1,3 +1,4 @@
+
 import React from "react";
 import { EventCard } from "./EventCard";
 import { Event } from "@/types/events";
@@ -5,9 +6,10 @@ import { Event } from "@/types/events";
 interface EventsListProps {
   events: Event[];
   onParticipate: (eventId: string) => void;
+  participatingEvents: string[];
 }
 
-export const EventsList = ({ events, onParticipate }: EventsListProps) => {
+export const EventsList = ({ events, onParticipate, participatingEvents }: EventsListProps) => {
   if (events.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -29,6 +31,7 @@ export const EventsList = ({ events, onParticipate }: EventsListProps) => {
           startTime={event.start.toLocaleTimeString()}
           endTime={event.end.toLocaleTimeString()}
           onParticipate={onParticipate}
+          isParticipating={participatingEvents.includes(event.id)}
         />
       ))}
     </div>
