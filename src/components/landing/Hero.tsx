@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Coins, Hotel, Utensils, Calendar, Users, Heart } from "lucide-react";
-
 export const Hero = () => {
-  return (
-    <section className="min-h-screen pt-24 flex items-center justify-center bg-gradient-to-b from-champagne to-cream px-4 relative overflow-hidden pb-20">
+  return <section className="min-h-screen pt-24 flex items-center justify-center bg-gradient-to-b from-champagne to-cream px-4 relative overflow-hidden pb-20 py-[100px]">
       {/* Background Illustrations */}
       <div className="absolute inset-0 pointer-events-none opacity-5">
         <div className="absolute top-20 left-10 w-64 h-64">
@@ -22,12 +20,15 @@ export const Hero = () => {
       </div>
 
       <div className="max-w-6xl mx-auto text-center relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="space-y-8"
-        >
+        <motion.div initial={{
+        opacity: 0,
+        y: 20
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} transition={{
+        duration: 0.6
+      }} className="space-y-8">
           <span className="inline-block px-3 py-1 text-sm text-burgundy bg-rose/20 rounded-full">
             Une Expérience Unique
           </span>
@@ -40,55 +41,49 @@ export const Hero = () => {
           </p>
           
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-8">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center"
-            >
+            <motion.div whileHover={{
+            scale: 1.05
+          }} className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center">
               <Hotel className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">Love Rooms</h3>
               <p className="text-sm text-gray-200 mt-2">Des chambres luxueuses pour vos moments romantiques</p>
             </motion.div>
             
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center"
-            >
+            <motion.div whileHover={{
+            scale: 1.05
+          }} className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center">
               <Coins className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">LooLyyb Coin</h3>
               <p className="text-sm text-gray-200 mt-2">La première monnaie dédiée aux amoureux</p>
             </motion.div>
             
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center"
-            >
+            <motion.div whileHover={{
+            scale: 1.05
+          }} className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center">
               <Utensils className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">Restaurant Lovers</h3>
               <p className="text-sm text-gray-200 mt-2">Une expérience gastronomique romantique</p>
             </motion.div>
             
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center"
-            >
+            <motion.div whileHover={{
+            scale: 1.05
+          }} className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center">
               <Calendar className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">Events Exclusifs</h3>
               <p className="text-sm text-gray-200 mt-2">Speed dating et soirées thématiques</p>
             </motion.div>
 
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center"
-            >
+            <motion.div whileHover={{
+            scale: 1.05
+          }} className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center">
               <Users className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">Communauté Select</h3>
               <p className="text-sm text-gray-200 mt-2">Des célibataires raffinés et authentiques</p>
             </motion.div>
 
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center"
-            >
+            <motion.div whileHover={{
+            scale: 1.05
+          }} className="p-6 bg-white/10 rounded-xl shadow-lg backdrop-blur-sm flex flex-col items-center">
               <Heart className="w-12 h-12 text-burgundy mb-3" />
               <h3 className="font-cormorant text-xl font-semibold">Matching Intelligent</h3>
               <p className="text-sm text-gray-200 mt-2">Un algorithme sophistiqué pour des rencontres de qualité</p>
@@ -97,6 +92,5 @@ export const Hero = () => {
 
         </motion.div>
       </div>
-    </section>
-  );
+    </section>;
 };
