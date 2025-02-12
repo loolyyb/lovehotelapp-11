@@ -24,13 +24,26 @@ export function UserManagement() {
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Récupérer d'abord les profils
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*, user:user_id(email)')
+        .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data;
+      if (profilesError) throw profilesError;
+
+      // Ensuite, récupérer les informations des utilisateurs correspondants
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) throw authError;
+
+      // Combiner les données des profils avec les emails des utilisateurs
+      return profiles.map(profile => ({
+        ...profile,
+        user: {
+          email: authUsers.users.find(user => user.id === profile.user_id)?.email
+        }
+      }));
     }
   });
 
