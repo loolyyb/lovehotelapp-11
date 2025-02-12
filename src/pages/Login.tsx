@@ -16,17 +16,21 @@ export default function Login() {
   const createProfileIfNeeded = async (userId: string) => {
     try {
       // Check if profile exists
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
+
+      if (profileError) {
+        throw profileError;
+      }
 
       if (!existingProfile) {
         logger.info('Creating missing profile for user', { userId });
         
         // Create new profile
-        const { error: profileError } = await supabase
+        const { error: createError } = await supabase
           .from('profiles')
           .insert([{
             user_id: userId,
@@ -41,7 +45,7 @@ export default function Login() {
             role: 'user'
           }]);
 
-        if (profileError) throw profileError;
+        if (createError) throw createError;
 
         // Create initial preferences
         const { error: prefError } = await supabase
@@ -57,7 +61,7 @@ export default function Login() {
         logger.info('Successfully created missing profile and preferences', { userId });
       }
     } catch (error) {
-      logger.error('Error creating profile:', { error, userId });
+      logger.error('Error in createProfileIfNeeded:', { error });
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -78,6 +82,7 @@ export default function Login() {
           title: "Inscription réussie",
           description: "Votre compte a été créé avec succès.",
         });
+        navigate("/");
       } else if (event === 'SIGNED_IN' && session) {
         await createProfileIfNeeded(session.user.id);
         toast({
@@ -85,20 +90,28 @@ export default function Login() {
           description: "Bienvenue !",
         });
         navigate("/");
-      } else if (event === 'USER_UPDATED' && !session) {
-        const { error } = await supabase.auth.getSession();
-        if (error?.message.includes('user_already_exists')) {
-          toast({
-            variant: "destructive",
-            title: "Erreur d'inscription",
-            description: "Un compte existe déjà avec cette adresse email. Veuillez vous connecter.",
-          });
-        }
+      } else if (event === 'SIGNED_OUT') {
+        navigate("/login");
       }
     };
 
-    // Check if user is already logged in
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+    // Check and handle initial session
+    const checkInitialSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        logger.error('Error checking initial session:', { error });
+        return;
+      }
+      if (session) {
+        navigate("/");
+      }
+    };
+
+    checkInitialSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(handleAuthChange);
 
     return () => {
       logger.debug('Composant Login démonté');
