@@ -51,7 +51,7 @@ export function UserTable({ users, onUpdate, onDelete }: UserTableProps) {
                 <TableCell>{user.full_name || 'Non renseigné'}</TableCell>
                 <TableCell>{user.user?.email || 'Non renseigné'}</TableCell>
                 <TableCell>
-                  <Badge variant={user.account_status === 'active' ? 'success' : 'destructive'}>
+                  <Badge variant={user.account_status === 'active' ? 'default' : 'destructive'}>
                     {user.account_status || 'actif'}
                   </Badge>
                 </TableCell>
