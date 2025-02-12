@@ -1,9 +1,7 @@
-
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-
 const options = [{
   image: "https://lovehotelaparis.fr/wp-content/uploads/2024/11/champagne-chambre.webp",
   title: "Champagne en chambre",
@@ -17,19 +15,14 @@ const options = [{
   title: "Décoration romantique",
   description: "Personnalisez votre Love Room avec notre décoration romantique"
 }];
-
 export default function Options() {
   const navigate = useNavigate();
-
   return <div className="container mx-auto px-4 py-8">
       <div className="mb-12 text-center">
         <p className="text-base md:text-lg text-rosey-500 max-w-2xl mx-auto mb-6">
           Retrouvez ces options et bien d'autres lors de la réservation de votre Love Room.
         </p>
-        <Button 
-          onClick={() => navigate("/reserver-room")}
-          className="bg-[#ce0067] text-white hover:bg-[#ce0067]/90"
-        >
+        <Button onClick={() => navigate("/reserver-room")} className="bg-[#ce0067] text-white hover:bg-[#ce0067]/90 py-[15px] px-[122px]">
           Réserver
         </Button>
       </div>
