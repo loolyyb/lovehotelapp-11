@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,18 +6,20 @@ import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { EventsList } from "./EventsList";
 import { sampleEvents } from "@/types/events";
+import { supabase } from "@/integrations/supabase/client";
 
 export const EventsCalendar = () => {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
     new Date(2024, 0, 24) // Set initial date to January 24, 2024
   );
+  const [participatingEvents, setParticipatingEvents] = React.useState<string[]>([]);
   const { toast } = useToast();
 
   const eventsForSelectedDate = React.useMemo(() => {
     if (!selectedDate) return [];
     
     return sampleEvents.filter((event) => {
-      const eventDate = event.start; // Changed from event.date to event.start
+      const eventDate = event.start;
       const selected = new Date(selectedDate);
       
       return (
@@ -27,11 +30,89 @@ export const EventsCalendar = () => {
     });
   }, [selectedDate]);
 
-  const handleParticipate = (eventId: string) => {
-    toast({
-      title: "Participation enregistrée",
-      description: "Vous êtes inscrit à cet événement. Vous recevrez un email de confirmation.",
-    });
+  React.useEffect(() => {
+    const fetchParticipatingEvents = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('event_participants')
+        .select('event_id')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching participations:', error);
+        return;
+      }
+
+      setParticipatingEvents(data.map(p => p.event_id));
+    };
+
+    fetchParticipatingEvents();
+  }, []);
+
+  const handleParticipate = async (eventId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erreur",
+          description: "Vous devez être connecté pour participer à un événement",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (participatingEvents.includes(eventId)) {
+        // Désinscription
+        const { error } = await supabase
+          .from('event_participants')
+          .delete()
+          .eq('event_id', eventId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        setParticipatingEvents(prev => prev.filter(id => id !== eventId));
+        toast({
+          title: "Succès",
+          description: "Vous êtes désinscrit de cet événement",
+        });
+      } else {
+        // Inscription
+        const { error } = await supabase
+          .from('event_participants')
+          .insert({
+            event_id: eventId,
+            user_id: user.id,
+            status: 'registered'
+          });
+
+        if (error) {
+          if (error.code === '23505') {
+            toast({
+              title: "Information",
+              description: "Vous êtes déjà inscrit à cet événement",
+            });
+            return;
+          }
+          throw error;
+        }
+
+        setParticipatingEvents(prev => [...prev, eventId]);
+        toast({
+          title: "Succès",
+          description: "Votre participation a été enregistrée",
+        });
+      }
+    } catch (error) {
+      console.error('Error managing event participation:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la gestion de votre participation",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -83,6 +164,7 @@ export const EventsCalendar = () => {
             <EventsList 
               events={eventsForSelectedDate}
               onParticipate={handleParticipate}
+              participatingEvents={participatingEvents}
             />
           </CardContent>
         </Card>
