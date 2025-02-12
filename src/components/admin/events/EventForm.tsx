@@ -17,14 +17,17 @@ export interface EventFormProps {
 export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) {
   console.log("Initial form data:", initialData);
 
+  // Obtenir la date du jour au format YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0];
+
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",
-      event_date: initialData?.event_date || "",
-      start_time: initialData?.start_time || "",
-      end_time: initialData?.end_time || "",
+      event_date: initialData?.event_date || today,
+      start_time: initialData?.start_time || "00:00",
+      end_time: initialData?.end_time || "00:00",
       event_type: initialData?.event_type || "other",
       is_private: initialData?.is_private || false,
       price: initialData?.price || 0,
