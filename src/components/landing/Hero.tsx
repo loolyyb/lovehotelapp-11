@@ -4,7 +4,7 @@ import { Coins, Hotel, Utensils, Calendar, Users, Heart } from "lucide-react";
 
 export const Hero = () => {
   return (
-    <section className="min-h-screen pt-24 flex items-center justify-center bg-gradient-to-b from-champagne to-cream px-4 relative overflow-hidden">
+    <section className="min-h-screen pt-24 flex items-center justify-center bg-gradient-to-b from-champagne to-cream px-4 relative overflow-hidden pb-20">
       {/* Background Illustrations */}
       <div className="absolute inset-0 pointer-events-none opacity-5">
         <div className="absolute top-20 left-10 w-64 h-64">
