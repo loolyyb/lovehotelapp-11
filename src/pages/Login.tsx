@@ -1,3 +1,4 @@
+
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useNavigate } from "react-router-dom";
@@ -117,8 +118,8 @@ export default function Login() {
               variables: {
                 default: {
                   colors: {
-                    brand: '#7C3A47',
-                    brandAccent: '#96495B',
+                    brand: '#CE0067',
+                    brandAccent: '#CE0067',
                   }
                 }
               }
