@@ -11,11 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdvertisementManager } from "./AdvertisementManager";
 import { LogsManager } from "./LogsManager";
 import { UserManagement } from "./users/UserManagement";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 export function AdminDashboard() {
   const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const { session } = useAuthSession();
 
   const handleThemeChange = async (themeName: ThemeName) => {
     setIsLoading(true);
@@ -96,7 +98,7 @@ export function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="ads">
-          <AdvertisementManager />
+          <AdvertisementManager session={session} />
         </TabsContent>
 
         <TabsContent value="logs">
