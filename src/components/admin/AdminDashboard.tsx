@@ -71,7 +71,7 @@ export function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="events">
-          <EventsManager session={session} />
+          <EventsManager />
         </TabsContent>
 
         <TabsContent value="ads">
