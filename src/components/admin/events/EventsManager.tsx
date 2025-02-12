@@ -72,22 +72,22 @@ export function EventsManager() {
   };
 
   const handleEdit = (event: any) => {
+    console.log("Original event data:", event);
+    
     const eventDate = new Date(event.event_date);
+    const startTime = eventDate.toISOString().split('T')[1].substring(0, 5);
     
     const formattedEvent = {
       ...event,
-      event_date: eventDate.toISOString().split('T')[0],
-      start_time: eventDate.toLocaleTimeString('fr-FR', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      }),
+      event_date: eventDate.toISOString().split('T')[0], // Format: YYYY-MM-DD
+      start_time: startTime, // Format: HH:mm
       end_time: event.end_time || "",
       free_for_members: event.free_for_members ?? true,
       price: event.price || null,
       is_private: event.is_private || false,
     };
     
+    console.log("Formatted event data:", formattedEvent);
     setEditingEvent(formattedEvent);
     setIsOpen(true);
   };

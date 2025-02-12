@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,9 +14,11 @@ export function useEventManagement() {
   const handleSubmit = async (values: EventFormValues, eventId?: string) => {
     try {
       setIsLoading(true);
+      console.log("Form values:", values);
       
       // Format the event date with the start time
       const eventDate = new Date(`${values.event_date}T${values.start_time}`);
+      console.log("Formatted event date:", eventDate);
       
       const eventData = {
         title: values.title,
@@ -28,6 +31,7 @@ export function useEventManagement() {
         free_for_members: values.free_for_members,
       };
 
+      console.log("Event data to save:", eventData);
       let error;
       
       if (eventId) {
