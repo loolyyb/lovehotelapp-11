@@ -16,7 +16,7 @@ export const MobileNavBar = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[#CE0067] border-t border-white/20 px-2 py-1 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-[#2A2726] border-t border-white/20 px-2 py-1 z-50">
       <div className="flex justify-around items-center">
         <Link
           to="/"
