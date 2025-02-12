@@ -32,8 +32,8 @@ export function UserManagement() {
       
       if (profilesError) throw profilesError;
 
-      // Ensuite, récupérer les informations des utilisateurs correspondants
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      // Récupérer les utilisateurs via l'Edge Function
+      const { data: authData, error: authError } = await supabase.functions.invoke('list-users');
       
       if (authError) throw authError;
 
@@ -41,7 +41,7 @@ export function UserManagement() {
       return profiles.map(profile => ({
         ...profile,
         user: {
-          email: authUsers.users.find(user => user.id === profile.user_id)?.email
+          email: authData.users.find(user => user.id === profile.user_id)?.email
         }
       }));
     }
