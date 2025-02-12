@@ -64,12 +64,17 @@ export const EventsCalendar = () => {
       }
 
       // Vérifier si l'utilisateur est déjà inscrit
-      const { data: existingParticipation } = await supabase
+      const { data: existingParticipation, error: checkError } = await supabase
         .from('event_participants')
         .select('id')
         .eq('event_id', eventId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking participation:', checkError);
+        throw checkError;
+      }
 
       if (existingParticipation) {
         // Si l'utilisateur est déjà inscrit, on le désinscrit
@@ -96,7 +101,16 @@ export const EventsCalendar = () => {
             status: 'registered'
           });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          if (insertError.code === '23505') {
+            toast({
+              title: "Information",
+              description: "Vous êtes déjà inscrit à cet événement",
+            });
+            return;
+          }
+          throw insertError;
+        }
 
         setParticipatingEvents(prev => [...prev, eventId]);
         toast({
