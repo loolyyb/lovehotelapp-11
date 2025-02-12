@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Heart, Award, Star, Trophy } from "lucide-react";
@@ -77,7 +78,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
 
   return (
     <Card 
-      className="overflow-hidden hover:shadow-lg transition-shadow duration-300 animate-fadeIn bg-white/20 backdrop-blur-sm cursor-pointer transform hover:scale-105 transition-all"
+      className="h-[400px] overflow-hidden hover:shadow-lg transition-shadow duration-300 animate-fadeIn bg-white/20 backdrop-blur-sm cursor-pointer transform hover:scale-105 transition-all"
       onClick={handleProfileClick}
       role="button"
       tabIndex={0}
@@ -87,8 +88,8 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
         }
       }}
     >
-      <CardContent className="p-6">
-        <div className="flex flex-col items-center space-y-4">
+      <CardContent className="p-6 h-full flex flex-col">
+        <div className="flex flex-col items-center space-y-4 flex-grow">
           <Avatar className="w-32 h-32 border-4 border-rose shadow-lg">
             <AvatarImage 
               src={profile.avatar_url ?? undefined} 
@@ -100,7 +101,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
             </AvatarFallback>
           </Avatar>
 
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-2 flex-grow">
             <h3 className="text-xl font-semibold text-gray-100">
               {profile.full_name}
             </h3>
@@ -118,7 +119,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
               </p>
             )}
 
-            <div className="flex items-center justify-center space-x-3 mt-3">
+            <div className="flex items-center justify-center space-x-3 mt-auto">
               {renderMotivationIcons()}
               {profile.is_love_hotel_member && (
                 <Heart className="w-5 h-5 text-rose-500" />

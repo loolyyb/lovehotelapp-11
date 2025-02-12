@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,11 +25,12 @@ export function MatchingCard({ profile, onProfileClick, onMessageClick, index }:
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
+      className="h-[220px]"
     >
-      <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 bg-white/20 backdrop-blur-sm">
-        <div className="p-6 space-y-4">
+      <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-white/20 backdrop-blur-sm">
+        <div className="p-6 space-y-4 h-full flex flex-col">
           <div 
-            className="flex items-center space-x-4 cursor-pointer"
+            className="flex items-center space-x-4 cursor-pointer flex-grow"
             onClick={() => onProfileClick(profile.id)}
           >
             <div className="relative">
@@ -41,7 +43,7 @@ export function MatchingCard({ profile, onProfileClick, onMessageClick, index }:
                 {profile.compatibility_score}%
               </div>
             </div>
-            <div>
+            <div className="flex-grow">
               <h3 className="text-lg font-semibold text-burgundy">
                 {profile.full_name}
               </h3>
@@ -51,7 +53,7 @@ export function MatchingCard({ profile, onProfileClick, onMessageClick, index }:
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-4">
+          <div className="flex justify-between items-center">
             <Button
               variant="ghost"
               size="sm"
