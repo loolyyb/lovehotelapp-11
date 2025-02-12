@@ -17,13 +17,23 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ avatarUrl, fullName, onLogout }: UserMenuProps) {
+  console.log("UserMenu received avatarUrl:", avatarUrl); // Debug log
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={avatarUrl ?? undefined} alt={fullName || 'Profile'} />
-            <AvatarFallback>{fullName?.[0] || '?'}</AvatarFallback>
+          <Avatar className="h-10 w-10 border border-gray-200">
+            {avatarUrl && (
+              <AvatarImage 
+                src={avatarUrl} 
+                alt={fullName || 'Profile'} 
+                className="object-cover"
+              />
+            )}
+            <AvatarFallback className="bg-burgundy text-white">
+              {fullName?.[0]?.toUpperCase() || '?'}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

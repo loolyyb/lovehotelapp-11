@@ -6,10 +6,12 @@ export function useUserAvatar(userProfile?: any) {
 
   useEffect(() => {
     if (userProfile?.avatar_url) {
-      console.log("Setting avatar URL:", userProfile.avatar_url);
       setAvatarUrl(userProfile.avatar_url);
+    } else if (userProfile?.id) {
+      // Si pas d'avatar_url mais un ID utilisateur, on met une valeur par défaut
+      setAvatarUrl(`https://api.dicebear.com/7.x/initials/svg?seed=${userProfile.id}`);
     }
-  }, [userProfile?.avatar_url]);
+  }, [userProfile?.avatar_url, userProfile?.id]);
 
   return { avatarUrl };
 }

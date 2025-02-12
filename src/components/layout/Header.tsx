@@ -13,6 +13,9 @@ export function Header({ userProfile }: { userProfile?: any }) {
   const { unreadCount } = useUnreadMessages(userProfile?.user_id);
   const { avatarUrl } = useUserAvatar(userProfile);
 
+  console.log("Header received userProfile:", userProfile); // Debug log
+  console.log("Avatar URL in Header:", avatarUrl); // Debug log
+
   const handleLogout = async () => {
     try {
       window.location.href = "https://lovehotelaparis.fr/";
