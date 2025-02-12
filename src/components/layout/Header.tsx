@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MessagesSquare, Percent, Calendar, Trophy, Home } from "lucide-react";
@@ -17,6 +16,7 @@ export function Header({ userProfile }: { userProfile?: any }) {
 
   useEffect(() => {
     if (userProfile?.avatar_url) {
+      console.log("Setting avatar URL:", userProfile.avatar_url);
       setAvatarUrl(userProfile.avatar_url);
     }
   }, [userProfile?.avatar_url]);
@@ -32,7 +32,6 @@ export function Header({ userProfile }: { userProfile?: any }) {
         return;
       }
 
-      // Vérifier si le profil existe, sinon le créer
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -45,7 +44,6 @@ export function Header({ userProfile }: { userProfile?: any }) {
       }
 
       if (!profile) {
-        // Créer un nouveau profil
         const { error: createError } = await supabase
           .from('profiles')
           .insert([
@@ -70,7 +68,6 @@ export function Header({ userProfile }: { userProfile?: any }) {
 
     checkSession();
 
-    // Subscribe to new messages
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -143,16 +140,16 @@ export function Header({ userProfile }: { userProfile?: any }) {
 
   const handleLogout = async () => {
     try {
-      // Redirection immédiate
       window.location.href = "https://lovehotelaparis.fr/";
-      // Déconnexion en arrière-plan
       await supabase.auth.signOut();
       localStorage.removeItem('supabase.auth.token');
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
-      // On ne montre pas de toast d'erreur car l'utilisateur sera déjà redirigé
     }
   };
+
+  console.log("Current user profile:", userProfile);
+  console.log("Current avatar URL:", avatarUrl);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-sm shadow-sm">
