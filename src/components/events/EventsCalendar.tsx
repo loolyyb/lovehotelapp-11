@@ -63,15 +63,23 @@ export const EventsCalendar = () => {
         return;
       }
 
-      if (participatingEvents.includes(eventId)) {
-        // Désinscription
-        const { error } = await supabase
+      // Vérifier si l'utilisateur est déjà inscrit
+      const { data: existingParticipation } = await supabase
+        .from('event_participants')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingParticipation) {
+        // Si l'utilisateur est déjà inscrit, on le désinscrit
+        const { error: deleteError } = await supabase
           .from('event_participants')
           .delete()
           .eq('event_id', eventId)
           .eq('user_id', user.id);
 
-        if (error) throw error;
+        if (deleteError) throw deleteError;
 
         setParticipatingEvents(prev => prev.filter(id => id !== eventId));
         toast({
@@ -79,8 +87,8 @@ export const EventsCalendar = () => {
           description: "Vous êtes désinscrit de cet événement",
         });
       } else {
-        // Inscription
-        const { error } = await supabase
+        // Si l'utilisateur n'est pas inscrit, on l'inscrit
+        const { error: insertError } = await supabase
           .from('event_participants')
           .insert({
             event_id: eventId,
@@ -88,16 +96,7 @@ export const EventsCalendar = () => {
             status: 'registered'
           });
 
-        if (error) {
-          if (error.code === '23505') {
-            toast({
-              title: "Information",
-              description: "Vous êtes déjà inscrit à cet événement",
-            });
-            return;
-          }
-          throw error;
-        }
+        if (insertError) throw insertError;
 
         setParticipatingEvents(prev => [...prev, eventId]);
         toast({
@@ -105,11 +104,11 @@ export const EventsCalendar = () => {
           description: "Votre participation a été enregistrée",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error managing event participation:', error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la gestion de votre participation",
+        description: error.message || "Une erreur est survenue lors de la gestion de votre participation",
         variant: "destructive",
       });
     }
