@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -7,10 +8,10 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { UseFormReturn } from "react-hook-form";
-import { ConciergeFormData } from "@/types/concierge.types";
+import { FormData } from "@/types/form.types";
 
 interface DateSectionProps {
-  form: UseFormReturn<ConciergeFormData>;
+  form: UseFormReturn<FormData>;
 }
 
 export function DateSection({ form }: DateSectionProps) {

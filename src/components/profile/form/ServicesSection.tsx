@@ -1,10 +1,11 @@
+
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UseFormReturn } from "react-hook-form";
-import { ConciergeFormData } from "@/types/concierge.types";
+import { FormData } from "@/types/form.types";
 
 interface ServicesSectionProps {
-  form: UseFormReturn<ConciergeFormData>;
+  form: UseFormReturn<FormData>;
 }
 
 export function ServicesSection({ form }: ServicesSectionProps) {
