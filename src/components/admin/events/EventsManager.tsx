@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,10 +76,10 @@ export function EventsManager() {
     console.log("Original event data:", event);
     
     const eventDate = new Date(event.event_date);
-    
     const startTime = eventDate.toTimeString().substring(0, 5);
     
     const formattedEvent = {
+      id: event.id, // Ajout de l'ID pour la mise à jour
       title: event.title,
       description: event.description,
       event_date: eventDate.toISOString().split('T')[0], // Format: YYYY-MM-DD
@@ -119,7 +120,6 @@ export function EventsManager() {
         <EventForm
           onSubmit={handleFormSubmit}
           isLoading={isLoading}
-          initialData={editingEvent}
         />
       </EventFormDialog>
 
