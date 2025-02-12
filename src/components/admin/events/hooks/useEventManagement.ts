@@ -35,14 +35,12 @@ export function useEventManagement() {
       let error;
       
       if (eventId) {
-        // Update existing event
         const { error: updateError } = await supabase
           .from('events')
           .update(eventData)
           .eq('id', eventId);
         error = updateError;
       } else {
-        // Create new event
         const { error: insertError } = await supabase
           .from('events')
           .insert({
@@ -61,7 +59,6 @@ export function useEventManagement() {
           : "L'événement a été créé avec succès",
       });
 
-      // Refresh events data
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       setIsOpen(false);
     } catch (error) {

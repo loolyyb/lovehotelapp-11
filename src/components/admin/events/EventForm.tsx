@@ -1,3 +1,4 @@
+
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
@@ -14,6 +15,8 @@ interface EventFormProps {
 }
 
 export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) {
+  console.log("Initial form data:", initialData);
+
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
@@ -24,11 +27,13 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
       end_time: initialData?.end_time || "",
       event_type: initialData?.event_type || "other",
       is_private: initialData?.is_private || false,
-      price: initialData?.price || null,
+      price: initialData?.price || 0,
       free_for_members: initialData?.free_for_members ?? true,
       image: undefined,
     },
   });
+
+  console.log("Form default values:", form.getValues());
 
   return (
     <DialogContent className="sm:max-w-[600px]">

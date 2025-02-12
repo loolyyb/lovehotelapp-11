@@ -75,19 +75,22 @@ export function EventsManager() {
     console.log("Original event data:", event);
     
     const eventDate = new Date(event.event_date);
-    const startTime = eventDate.toISOString().split('T')[1].substring(0, 5);
+    
+    const startTime = eventDate.toTimeString().substring(0, 5);
     
     const formattedEvent = {
-      ...event,
+      title: event.title,
+      description: event.description,
       event_date: eventDate.toISOString().split('T')[0], // Format: YYYY-MM-DD
       start_time: startTime, // Format: HH:mm
-      end_time: event.end_time || "",
+      end_time: event.end_time || "00:00",
+      event_type: event.event_type,
+      is_private: Boolean(event.is_private),
+      price: event.price || 0,
       free_for_members: event.free_for_members ?? true,
-      price: event.price || null,
-      is_private: event.is_private || false,
     };
     
-    console.log("Formatted event data:", formattedEvent);
+    console.log("Formatted event data for form:", formattedEvent);
     setEditingEvent(formattedEvent);
     setIsOpen(true);
   };
