@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeName } from "@/types/theme";
-import { Loader } from "lucide-react";
+import { Loader, BarChart3 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdvertisementManager } from "./AdvertisementManager";
 import { LogsManager } from "./LogsManager";
 import { UserManagement } from "./users/UserManagement";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { EventsManager } from "./events/EventsManager";
+import { StatsManager } from "./StatsManager";
 
 export function AdminDashboard() {
   const { currentThemeName, switchTheme } = useTheme();
@@ -54,13 +56,31 @@ export function AdminDashboard() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-semibold mb-8">Tableau de bord administrateur</h1>
       
-      <Tabs defaultValue="theme" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="theme">Thème</TabsTrigger>
+      <Tabs defaultValue="users" className="space-y-6">
+        <TabsList className="grid grid-cols-7 gap-4">
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+          <TabsTrigger value="events">Événements</TabsTrigger>
           <TabsTrigger value="ads">Publicités</TabsTrigger>
+          <TabsTrigger value="stats">Statistiques</TabsTrigger>
+          <TabsTrigger value="theme">Thème</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="users">
+          <UserManagement />
+        </TabsContent>
+
+        <TabsContent value="events">
+          <EventsManager session={session} />
+        </TabsContent>
+
+        <TabsContent value="ads">
+          <AdvertisementManager session={session} />
+        </TabsContent>
+
+        <TabsContent value="stats">
+          <StatsManager />
+        </TabsContent>
 
         <TabsContent value="theme">
           <Card className="p-6">
@@ -91,14 +111,6 @@ export function AdminDashboard() {
               </div>
             </div>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="users">
-          <UserManagement />
-        </TabsContent>
-
-        <TabsContent value="ads">
-          <AdvertisementManager session={session} />
         </TabsContent>
 
         <TabsContent value="logs">
