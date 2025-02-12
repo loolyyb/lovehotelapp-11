@@ -1,3 +1,4 @@
+
 import React from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -8,10 +9,13 @@ import { Event } from '@/types/events';
 import { EventModal } from './EventModal';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { EventsList } from './EventsList';
 
 export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const { data: events } = useQuery({
     queryKey: ['events'],
@@ -51,41 +55,55 @@ export function EventCalendar() {
     setSelectedEvent(info.event);
   };
 
+  const handleParticipate = (eventId: string) => {
+    const event = events?.find(e => e.id === eventId);
+    if (event) {
+      setSelectedEvent(event);
+    }
+  };
+
   return (
     <Card className="p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-semibold">Calendrier des événements</h2>
       </div>
       
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin]}
-        initialView="dayGridMonth"
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        }}
-        events={events}
-        eventClick={handleEventClick}
-        height="auto"
-        locale="fr"
-        buttonText={{
-          today: "Aujourd'hui",
-          month: 'Mois',
-          week: 'Semaine',
-          day: 'Jour',
-        }}
-        eventTimeFormat={{
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        }}
-        slotLabelFormat={{
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        }}
-      />
+      {isMobile ? (
+        <EventsList 
+          events={events || []} 
+          onParticipate={handleParticipate}
+        />
+      ) : (
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin]}
+          initialView="dayGridMonth"
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          }}
+          events={events}
+          eventClick={handleEventClick}
+          height="auto"
+          locale="fr"
+          buttonText={{
+            today: "Aujourd'hui",
+            month: 'Mois',
+            week: 'Semaine',
+            day: 'Jour',
+          }}
+          eventTimeFormat={{
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }}
+          slotLabelFormat={{
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }}
+        />
+      )}
 
       {selectedEvent && (
         <EventModal
