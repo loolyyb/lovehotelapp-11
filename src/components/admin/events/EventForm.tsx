@@ -8,7 +8,7 @@ import { EventFormValues, eventSchema } from "./types";
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 
-interface EventFormProps {
+export interface EventFormProps {
   onSubmit: (values: EventFormValues) => Promise<void>;
   isLoading?: boolean;
   initialData?: Partial<EventFormValues>;
