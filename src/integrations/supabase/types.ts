@@ -1024,6 +1024,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      sync_missing_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       challenge_type: "quiz" | "puzzle" | "photo" | "activity"
