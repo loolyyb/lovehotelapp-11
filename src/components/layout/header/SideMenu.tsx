@@ -17,7 +17,7 @@ export function SideMenu() {
         <nav className="flex flex-col gap-4">
           <Link to="/profiles" className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors" onClick={() => setIsOpen(false)}>
             <Crown className="h-5 w-5" />
-            <span>Nos lover's</span>
+            <span>Rencontres</span>
           </Link>
           <Link to="/reserver-room" className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors" onClick={() => setIsOpen(false)}>
             <BedDouble className="h-5 h-5" />
