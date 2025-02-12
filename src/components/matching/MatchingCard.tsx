@@ -35,8 +35,8 @@ export function MatchingCard({
         <div className="p-6 space-y-4 h-full flex flex-col">
           <div className="flex items-center space-x-4 cursor-pointer flex-grow" onClick={() => onProfileClick(profile.id)}>
             <div className="relative">
-              <img src={profile.avatar_url || "/placeholder.svg"} alt={profile.full_name} className="w-16 h-16 rounded-full object-cover" />
-              <div className="absolute -top-2 -right-2 text-white text-xs rounded-full h-8 w-8 flex items-center justify-center font-bold bg-[#ce0067]">
+              <img src={profile.avatar_url || "/placeholder.svg"} alt={profile.full_name} className="w-36 h-36 rounded-full object-cover" />
+              <div className="absolute -top-2 -right-2 text-white text-xs rounded-full h-10 w-10 flex items-center justify-center font-bold bg-[#ce0067]">
                 {profile.compatibility_score}%
               </div>
             </div>
