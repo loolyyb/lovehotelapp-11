@@ -1,13 +1,17 @@
+
 import { House, Search, Blinds, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "react-router-dom";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 export const MobileNavBar = () => {
   const isMobile = useIsMobile();
   const location = useLocation();
+  const { session } = useAuthSession();
 
-  if (!isMobile) return null;
+  // Ne pas afficher la barre si on n'est pas sur mobile ou si l'utilisateur n'est pas connecté
+  if (!isMobile || !session) return null;
 
   const isActive = (path: string) => location.pathname === path;
 
