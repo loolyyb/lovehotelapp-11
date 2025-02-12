@@ -145,13 +145,13 @@ export function ProfileInfo({
           </div>}
       </motion.div>
 
-      {bio && <motion.p className="text-gray-700 max-w-2xl text-lg font-montserrat" initial={{
+      {bio && <motion.p initial={{
       opacity: 0
     }} animate={{
       opacity: 1
     }} transition={{
       delay: 0.5
-    }}>
+    }} className="max-w-2xl text-lg font-montserrat text-zinc-50">
           {bio}
         </motion.p>}
     </motion.div>;
