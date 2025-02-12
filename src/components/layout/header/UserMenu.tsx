@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,23 +16,13 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ avatarUrl, fullName, onLogout }: UserMenuProps) {
-  console.log("UserMenu received avatarUrl:", avatarUrl); // Debug log
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10 border border-gray-200">
-            {avatarUrl && (
-              <AvatarImage 
-                src={avatarUrl} 
-                alt={fullName || 'Profile'} 
-                className="object-cover"
-              />
-            )}
-            <AvatarFallback className="bg-burgundy text-white">
-              {fullName?.[0]?.toUpperCase() || '?'}
-            </AvatarFallback>
+        <Button variant="ghost" className="p-0 hover:bg-transparent">
+          <Avatar className="h-10 w-10 cursor-pointer">
+            <AvatarImage src={avatarUrl} alt={fullName} />
+            <AvatarFallback>{fullName?.[0] || '?'}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

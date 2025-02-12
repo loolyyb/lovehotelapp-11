@@ -1,120 +1,162 @@
-
 import React from "react";
-import { Card } from "@/components/ui/card";
-import { useTheme } from "@/providers/ThemeProvider";
 import { Button } from "@/components/ui/button";
+import { useAdminAuthStore } from "@/stores/adminAuthStore";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { ThemeName } from "@/types/theme";
-import { Loader, BarChart3 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AdvertisementManager } from "./AdvertisementManager";
-import { LogsManager } from "./LogsManager";
-import { UserManagement } from "./users/UserManagement";
-import { useAuthSession } from "@/hooks/useAuthSession";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { EventsManager } from "./events/EventsManager";
-import { StatsManager } from "./StatsManager";
 
 export function AdminDashboard() {
-  const { currentThemeName, switchTheme } = useTheme();
+  const setAdminAuthenticated = useAdminAuthStore((state) => state.setAdminAuthenticated);
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = React.useState(false);
-  const { session } = useAuthSession();
 
-  const handleThemeChange = async (themeName: ThemeName) => {
-    setIsLoading(true);
-    try {
-      await switchTheme(themeName);
+  const { data: users } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      const { error } = await supabase
-        .from('admin_settings')
-        .update({ 
-          value: { current: themeName, available: ["default", "lover"] },
-          updated_at: new Date().toISOString()
-        })
-        .eq('key', 'theme');
-
       if (error) throw error;
-
-      toast({
-        title: "Thème mis à jour",
-        description: `Le thème ${themeName} a été activé avec succès.`,
-      });
-    } catch (error) {
-      console.error('Error updating theme:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour le thème. Veuillez réessayer.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      return data;
     }
+  });
+
+  const { data: messages } = useQuery({
+    queryKey: ['admin-messages'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('messages')
+        .select(`
+          *,
+          conversation:conversations(
+            user1:profiles!conversations_user1_profile_fkey(user_id),
+            user2:profiles!conversations_user2_profile_fkey(user_id)
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const handleLogout = () => {
+    setAdminAuthenticated(false);
+    toast({
+      title: "Déconnexion réussie",
+      description: "Vous êtes déconnecté de l'interface administrateur",
+    });
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-semibold mb-8">Tableau de bord administrateur</h1>
-      
-      <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid grid-cols-7 gap-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Dashboard Administrateur </h1>
+        <Button variant="outline" onClick={handleLogout}>
+          Déconnexion Admin
+        </Button>
+      </div>
+
+      <Tabs defaultValue="users" className="space-y-4">
+        <TabsList>
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+          <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="events">Événements</TabsTrigger>
-          <TabsTrigger value="ads">Publicités</TabsTrigger>
           <TabsTrigger value="stats">Statistiques</TabsTrigger>
-          <TabsTrigger value="theme">Thème</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
-          <UserManagement />
+          <Card className="p-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Nom</TableHead>
+                  <TableHead>User ID</TableHead>
+                  <TableHead>Rôle</TableHead>
+                  <TableHead>Créé le</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users?.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.id}</TableCell>
+                    <TableCell>{user.full_name}</TableCell>
+                    <TableCell>{user.user_id}</TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="messages">
+          <Card className="p-6">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>De</TableHead>
+                  <TableHead>Message</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {messages?.map((message) => (
+                  <TableRow key={message.id}>
+                    <TableCell>{message.id}</TableCell>
+                    <TableCell>{message.sender_id}</TableCell>
+                    <TableCell>{message.content}</TableCell>
+                    <TableCell>{new Date(message.created_at).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
         </TabsContent>
 
         <TabsContent value="events">
           <EventsManager />
         </TabsContent>
 
-        <TabsContent value="ads">
-          <AdvertisementManager session={session} />
-        </TabsContent>
-
         <TabsContent value="stats">
-          <StatsManager />
-        </TabsContent>
-
-        <TabsContent value="theme">
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Gestion des thèmes</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span>Thème actuel : {currentThemeName}</span>
-                <div className="space-x-4">
-                  <Button
-                    onClick={() => handleThemeChange("default")}
-                    variant={currentThemeName === "default" ? "secondary" : "outline"}
-                    className="cursor-pointer hover:bg-secondary/80"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Thème par défaut
-                  </Button>
-                  <Button
-                    onClick={() => handleThemeChange("lover")}
-                    variant={currentThemeName === "lover" ? "secondary" : "outline"}
-                    className="cursor-pointer hover:bg-secondary/80"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Thème Lover
-                  </Button>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 border rounded-lg">
+                <h3 className="font-semibold mb-2">Total Utilisateurs</h3>
+                <p className="text-2xl">{users?.length || 0}</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <h3 className="font-semibold mb-2">Messages Aujourd'hui</h3>
+                <p className="text-2xl">
+                  {messages?.filter(m => 
+                    new Date(m.created_at).toDateString() === new Date().toDateString()
+                  ).length || 0}
+                </p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <h3 className="font-semibold mb-2">Utilisateurs Actifs</h3>
+                <p className="text-2xl">
+                  {users?.length || 0}
+                </p>
               </div>
             </div>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="logs">
-          <LogsManager />
         </TabsContent>
       </Tabs>
     </div>
