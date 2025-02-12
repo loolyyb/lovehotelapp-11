@@ -834,6 +834,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string | null
+          admin_notes: string | null
           allowed_viewers: string[] | null
           avatar_url: string | null
           bio: string | null
@@ -843,6 +845,7 @@ export type Database = {
           id: string
           is_loolyb_holder: boolean | null
           is_love_hotel_member: boolean | null
+          last_login: string | null
           loolyb_tokens: number | null
           loyalty_points: number | null
           photo_urls: string[] | null
@@ -857,6 +860,8 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          account_status?: string | null
+          admin_notes?: string | null
           allowed_viewers?: string[] | null
           avatar_url?: string | null
           bio?: string | null
@@ -866,6 +871,7 @@ export type Database = {
           id?: string
           is_loolyb_holder?: boolean | null
           is_love_hotel_member?: boolean | null
+          last_login?: string | null
           loolyb_tokens?: number | null
           loyalty_points?: number | null
           photo_urls?: string[] | null
@@ -880,6 +886,8 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          account_status?: string | null
+          admin_notes?: string | null
           allowed_viewers?: string[] | null
           avatar_url?: string | null
           bio?: string | null
@@ -889,6 +897,7 @@ export type Database = {
           id?: string
           is_loolyb_holder?: boolean | null
           is_love_hotel_member?: boolean | null
+          last_login?: string | null
           loolyb_tokens?: number | null
           loyalty_points?: number | null
           photo_urls?: string[] | null
@@ -1008,6 +1017,12 @@ export type Database = {
           full_name: string
         }
         Returns: string
+      }
+      disable_user: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
