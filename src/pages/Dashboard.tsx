@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { BedDouble, Calendar, Heart, Theater, Utensils, UserRound } from "lucide-react";
 import { DashboardWidget } from "@/components/dashboard/DashboardWidget";
@@ -20,7 +21,7 @@ const Dashboard = () => {
     {
       icon: Heart,
       title: "Rencontre",
-      to: "/profiles"  // Modification ici : changement de la route
+      to: "/profiles"
     },
     {
       icon: Theater,
@@ -48,7 +49,7 @@ const Dashboard = () => {
       </div>
 
       {/* Content */}
-      <main className="flex-grow w-full px-2 sm:px-4 relative z-10 flex flex-col items-center h-[calc(100vh-4rem)]">
+      <main className="flex-grow w-full px-2 sm:px-4 relative z-10 flex flex-col items-center h-[calc(100vh-8rem)]">
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
