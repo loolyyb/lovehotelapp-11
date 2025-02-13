@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,18 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { QualificationJourney } from "@/components/qualification/QualificationJourney";
+import { useNotificationSubscription } from "@/hooks/useNotificationSubscription";
+
 interface AccountTabProps {
   profile: any;
   onUpdate: (updates: any) => void;
 }
+
 export function AccountTab({
   profile,
   onUpdate
 }: AccountTabProps) {
   const [showQualification, setShowQualification] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const { isSubscribed, subscribeToNotifications, unsubscribeFromNotifications } = useNotificationSubscription();
+
   const handleFullNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate({
       full_name: event.target.value
@@ -27,6 +31,7 @@ export function AccountTab({
       description: "Votre nom a été modifié avec succès."
     });
   };
+
   const handleDatingProfileChange = (checked: boolean) => {
     onUpdate({
       visibility: checked ? 'public' : 'private'
@@ -36,9 +41,19 @@ export function AccountTab({
       description: checked ? "Votre profil est maintenant visible dans la section Rencontres" : "Votre profil n'est plus visible dans la section Rencontres"
     });
   };
+
+  const handleNotificationChange = (checked: boolean) => {
+    if (checked) {
+      subscribeToNotifications();
+    } else {
+      unsubscribeFromNotifications();
+    }
+  };
+
   if (showQualification) {
     return <QualificationJourney isEditing onComplete={() => setShowQualification(false)} />;
   }
+
   return <div className="space-y-8">
       <Card className="p-6">
         <div className="space-y-6">
@@ -60,6 +75,20 @@ export function AccountTab({
               </p>
             </Label>
             <Switch id="dating-profile" checked={profile?.visibility === 'public'} onCheckedChange={handleDatingProfileChange} />
+          </div>
+
+          <div className="flex items-center justify-between space-x-2">
+            <Label htmlFor="push-notifications" className="flex-1">
+              Notifications push
+              <p className="text-sm text-gray-500 mt-1">
+                Recevez des notifications même lorsque l'application est fermée
+              </p>
+            </Label>
+            <Switch 
+              id="push-notifications" 
+              checked={isSubscribed} 
+              onCheckedChange={handleNotificationChange}
+            />
           </div>
 
           <div className="pt-4">
