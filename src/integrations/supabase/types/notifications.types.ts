@@ -1,3 +1,4 @@
+
 export interface NotificationsTable {
   Row: {
     id: string;
