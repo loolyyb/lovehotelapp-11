@@ -75,17 +75,17 @@ export function InstallPrompt() {
     <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg animate-slide-in-bottom">
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex-1 mr-4">
-          <h3 className="text-lg font-semibold text-burgundy">
+          <h3 className="text-lg font-semibold text-rose-500">
             Installer Love Hotel
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-800">
             Installez notre application pour une meilleure expérience
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <Button
             onClick={handleInstall}
-            className="bg-burgundy hover:bg-burgundy/90 text-white select-none"
+            className="bg-burgundy hover:bg-burgundy/90 text-rose-500 select-none"
           >
             Installer
           </Button>
