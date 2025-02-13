@@ -55,17 +55,38 @@ export function useNotificationSubscription() {
         return false;
       }
 
-      try {
-        // Demander directement la permission sans vérification préalable
-        await Notification.requestPermission();
-      } catch (error) {
-        console.error('Erreur lors de la demande de permission:', error);
-        return false;
-      }
+      // Demander la permission de manière simple et directe
+      const result = await Notification.requestPermission();
+      console.log('Résultat de la demande de permission:', result);
 
-      // Ne vérifier la permission qu'APRÈS avoir fait la demande
-      if (Notification.permission !== 'granted') {
-        setIsSubscribed(false);
+      // Si la permission est accordée, continuer avec l'abonnement
+      if (result === 'granted') {
+        const registration = await navigator.serviceWorker.ready;      
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
+        });
+
+        // Enregistrer l'inscription dans la base de données
+        const { error } = await supabase.from('push_subscriptions').insert([{
+          user_id: session.user.id,
+          endpoint: subscription.endpoint,
+          auth: subscription.toJSON().keys?.auth,
+          p256dh: subscription.toJSON().keys?.p256dh
+        }]);
+
+        if (error) throw error;
+
+        setSubscription(subscription);
+        setIsSubscribed(true);
+
+        toast({
+          title: "Succès",
+          description: "Vous êtes maintenant inscrit aux notifications push.",
+        });
+        
+        return true;
+      } else {
         toast({
           variant: "destructive",
           title: "Notifications bloquées",
@@ -73,32 +94,6 @@ export function useNotificationSubscription() {
         });
         return false;
       }
-
-      const registration = await navigator.serviceWorker.ready;      
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
-      });
-
-      // Enregistrer l'inscription dans la base de données
-      const { error } = await supabase.from('push_subscriptions').insert([{
-        user_id: session.user.id,
-        endpoint: subscription.endpoint,
-        auth: subscription.toJSON().keys?.auth,
-        p256dh: subscription.toJSON().keys?.p256dh
-      }]);
-
-      if (error) throw error;
-
-      setSubscription(subscription);
-      setIsSubscribed(true);
-
-      toast({
-        title: "Succès",
-        description: "Vous êtes maintenant inscrit aux notifications push.",
-      });
-      
-      return true;
     } catch (error) {
       console.error('Erreur lors de l\'inscription aux notifications:', error);
       AlertService.captureException(error as Error);
