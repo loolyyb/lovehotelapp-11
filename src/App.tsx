@@ -12,6 +12,8 @@ import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
 import { appConfig } from "./config/app.config";
 import { useToast } from "./hooks/use-toast";
 import { Loader } from "lucide-react";
+import { InstallPrompt } from './components/pwa/InstallPrompt';
+import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 
 // Fonction utilitaire pour détecter l'environnement de preview
 const getBasename = () => {
@@ -66,7 +68,13 @@ function AppContent() {
         <AppRoutes session={session} />
       </div>
       <Footer />
-      {appConfig.features.enablePWA && <MobileNavBar />}
+      {appConfig.features.enablePWA && (
+        <>
+          <MobileNavBar />
+          <InstallPrompt />
+          <UpdatePrompt />
+        </>
+      )}
       <Toaster />
     </div>
   );
