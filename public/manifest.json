@@ -1,7 +1,7 @@
 
 {
   "name": "Love Hotel Paris",
-  "short_name": "Love Hotel",
+  "short_name": "LHP",
   "description": "Votre application de réservation pour Love Hotel Paris",
   "start_url": "./",
   "display": "standalone",
