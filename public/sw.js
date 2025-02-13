@@ -3,8 +3,8 @@
 const CACHE_NAME = 'love-hotel-cache-v2';
 const CURRENT_VERSION = '1.0.195'; // Synchronisé avec versionDb.ts
 
-// Liste des ressources à mettre en cache
-const CACHE_ASSETS = [
+// Liste des ressources statiques à mettre en cache
+const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
@@ -20,10 +20,9 @@ self.addEventListener('install', (event) => {
     (async () => {
       try {
         const cache = await caches.open(CACHE_NAME);
-        console.log('[Service Worker] Mise en cache globale');
+        console.log('[Service Worker] Mise en cache des ressources statiques');
         
-        // Vérifie chaque ressource individuellement
-        for (const asset of CACHE_ASSETS) {
+        for (const asset of STATIC_ASSETS) {
           try {
             const response = await fetch(asset);
             if (response.ok) {
@@ -65,6 +64,35 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     (async () => {
       try {
+        // Ne pas mettre en cache les requêtes non GET
+        if (event.request.method !== 'GET') {
+          return fetch(event.request);
+        }
+
+        const url = new URL(event.request.url);
+        
+        // Pour les fichiers JS, toujours aller chercher la dernière version
+        if (url.pathname.endsWith('.js')) {
+          try {
+            console.log('[Service Worker] Récupération du fichier JS depuis le réseau:', url.pathname);
+            const response = await fetch(event.request);
+            if (!response || response.status !== 200) {
+              throw new Error('Fichier JS non trouvé');
+            }
+            return response;
+          } catch (error) {
+            console.error('[Service Worker] Erreur lors de la récupération du fichier JS:', error);
+            // En cas d'erreur, essayer de retourner la version en cache
+            const cache = await caches.open(CACHE_NAME);
+            const cachedResponse = await cache.match(event.request);
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            throw error;
+          }
+        }
+
+        // Pour les autres ressources, vérifier d'abord le cache
         const cache = await caches.open(CACHE_NAME);
         const cachedResponse = await cache.match(event.request);
         
@@ -73,16 +101,16 @@ self.addEventListener('fetch', (event) => {
           return cachedResponse;
         }
 
+        // Si pas en cache, récupérer depuis le réseau
         console.log('[Service Worker] Récupération depuis le réseau pour:', event.request.url);
         const networkResponse = await fetch(event.request);
         
-        // Met en cache uniquement les ressources statiques
-        if (event.request.method === 'GET' && 
-            (event.request.url.endsWith('.js') || 
-             event.request.url.endsWith('.css') ||
-             event.request.url.endsWith('.png') ||
-             event.request.url.endsWith('.ico') ||
-             event.request.url.endsWith('.json'))) {
+        // Mettre en cache uniquement les ressources statiques
+        if (STATIC_ASSETS.includes(url.pathname) || 
+            url.pathname.endsWith('.css') ||
+            url.pathname.endsWith('.png') ||
+            url.pathname.endsWith('.ico') ||
+            url.pathname.endsWith('.json')) {
           await cache.put(event.request, networkResponse.clone());
         }
         
