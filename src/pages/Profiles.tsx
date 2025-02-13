@@ -1,16 +1,25 @@
-import { useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ProfilesFilter, FilterCriteria } from "@/components/profiles/ProfilesFilter";
 import { ProfilesGrid } from "@/components/profiles/ProfilesGrid";
 import { useProfiles } from "@/hooks/useProfiles";
 import { Loader } from "lucide-react";
-import { useState } from "react";
+import { MatchingFilter } from "@/components/matching/MatchingFilter";
+
+type InterestType = "all" | "casual" | "serious" | "libertine" | "bdsm" | "exhibitionist" | "open_curtains" | "speed_dating";
 
 export default function Profiles() {
   const navigate = useNavigate();
   const { profiles, loading } = useProfiles();
   const [filteredProfiles, setFilteredProfiles] = useState(profiles);
+  const [selectedInterest, setSelectedInterest] = useState<InterestType>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [location, setLocation] = useState("");
+  const [status, setStatus] = useState("");
+  const [orientation, setOrientation] = useState("");
+  const [membershipTypes, setMembershipTypes] = useState<string[]>([]);
+  const [openCurtains, setOpenCurtains] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -27,11 +36,11 @@ export default function Profiles() {
     }
   };
 
-  const handleFilterChange = (criteria: FilterCriteria) => {
+  const handleFilterChange = () => {
     let filtered = [...profiles];
 
-    if (criteria.searchTerm) {
-      const searchLower = criteria.searchTerm.toLowerCase();
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(({ profile, preferences }) => 
         profile.full_name?.toLowerCase().includes(searchLower) ||
         profile.bio?.toLowerCase().includes(searchLower) ||
@@ -39,37 +48,67 @@ export default function Profiles() {
       );
     }
 
-    if (criteria.location) {
+    if (location) {
       filtered = filtered.filter(({ preferences }) => 
-        preferences?.location?.toLowerCase() === criteria.location?.toLowerCase()
+        preferences?.location?.toLowerCase() === location.toLowerCase()
       );
     }
 
-    if (criteria.status) {
+    if (status) {
       filtered = filtered.filter(({ profile }) => 
-        profile.status === criteria.status
+        profile.status === status
       );
     }
 
-    if (criteria.orientation) {
+    if (orientation) {
       filtered = filtered.filter(({ profile }) => 
-        profile.sexual_orientation === criteria.orientation
+        profile.sexual_orientation === orientation
       );
     }
 
-    if (criteria.membershipType && criteria.membershipType.length > 0) {
+    if (membershipTypes.length > 0) {
       filtered = filtered.filter(({ profile }) => 
-        (criteria.membershipType?.includes("love_hotel") && profile.is_love_hotel_member) ||
-        (criteria.membershipType?.includes("loolyb") && profile.is_loolyb_holder)
+        (membershipTypes.includes("love_hotel") && profile.is_love_hotel_member) ||
+        (membershipTypes.includes("loolyb") && profile.is_loolyb_holder)
       );
     }
 
-    if (criteria.openCurtains) {
-      filtered = filtered.filter(({ preferences }) => preferences?.open_curtains === true);
+    if (openCurtains) {
+      filtered = filtered.filter(({ preferences }) => 
+        preferences?.open_curtains === true
+      );
+    }
+
+    if (selectedInterest !== "all") {
+      filtered = filtered.filter(({ profile, preferences }) => {
+        if (selectedInterest === "open_curtains") {
+          return preferences?.open_curtains_interest;
+        }
+        if (selectedInterest === "speed_dating") {
+          return preferences?.speed_dating_interest;
+        }
+        if (selectedInterest === "libertine") {
+          return preferences?.libertine_party_interest;
+        }
+        return profile.relationship_type?.includes(selectedInterest);
+      });
     }
 
     setFilteredProfiles(filtered);
   };
+
+  useEffect(() => {
+    handleFilterChange();
+  }, [
+    searchTerm,
+    location,
+    status,
+    orientation,
+    membershipTypes,
+    openCurtains,
+    selectedInterest,
+    profiles
+  ]);
 
   if (loading) {
     return (
@@ -86,7 +125,22 @@ export default function Profiles() {
           Découvrez des profils
         </h1>
         
-        <ProfilesFilter onFilterChange={handleFilterChange} />
+        <MatchingFilter 
+          selectedInterest={selectedInterest}
+          onInterestChange={setSelectedInterest}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          location={location}
+          onLocationChange={setLocation}
+          status={status}
+          onStatusChange={setStatus}
+          orientation={orientation}
+          onOrientationChange={setOrientation}
+          membershipTypes={membershipTypes}
+          onMembershipTypesChange={setMembershipTypes}
+          openCurtains={openCurtains}
+          onOpenCurtainsChange={setOpenCurtains}
+        />
         <ProfilesGrid profiles={filteredProfiles} />
       </div>
     </main>
