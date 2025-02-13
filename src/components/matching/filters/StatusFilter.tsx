@@ -8,9 +8,11 @@ import {
 } from "@/components/ui/select";
 import { Users } from "lucide-react";
 
+type StatusType = "all" | "single_man" | "married_man" | "single_woman" | "married_woman" | "couple_mf" | "couple_mm" | "couple_ff";
+
 interface StatusFilterProps {
-  status: string;
-  onStatusChange: (value: string) => void;
+  status: StatusType;
+  onStatusChange: (value: StatusType) => void;
 }
 
 export function StatusFilter({ status, onStatusChange }: StatusFilterProps) {

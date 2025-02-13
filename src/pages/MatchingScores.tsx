@@ -142,7 +142,8 @@ export default function MatchingScores() {
 
       // Filtre de statut
       if (status && status !== "all") {
-        query = query.eq("status", status as string);
+        const statusValue = status as Exclude<StatusType, "all">;
+        query = query.eq("status", statusValue);
       }
 
       // Filtre d'orientation

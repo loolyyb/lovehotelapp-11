@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 type InterestType = "all" | "casual" | "serious" | "libertine" | "bdsm" | "exhibitionist" | "open_curtains" | "speed_dating";
+type StatusType = "all" | "single_man" | "married_man" | "single_woman" | "married_woman" | "couple_mf" | "couple_mm" | "couple_ff";
 
 interface MatchingFilterProps {
   selectedInterest: InterestType;
@@ -23,8 +24,8 @@ interface MatchingFilterProps {
   onSearchChange: (value: string) => void;
   location: string;
   onLocationChange: (value: string) => void;
-  status: string;
-  onStatusChange: (value: string) => void;
+  status: StatusType;
+  onStatusChange: (value: StatusType) => void;
   orientation: string;
   onOrientationChange: (value: string) => void;
   membershipTypes: string[];
