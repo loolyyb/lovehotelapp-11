@@ -1,3 +1,4 @@
+
 import { Search, ChevronDown } from "lucide-react";
 import { SearchFilter } from "./filters/SearchFilter";
 import { LocationFilter } from "./filters/LocationFilter";
@@ -66,9 +67,9 @@ export function MatchingFilter({
       <CollapsibleContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <SearchFilter searchTerm={searchTerm} onSearchChange={onSearchChange} />
-          <LocationFilter location={location} onLocationChange={onLocationChange} />
-          <StatusFilter status={status} onStatusChange={onStatusChange} />
-          <OrientationFilter orientation={orientation} onOrientationChange={onOrientationChange} />
+          <LocationFilter location={location || "all"} onLocationChange={onLocationChange} />
+          <StatusFilter status={status || "all"} onStatusChange={onStatusChange} />
+          <OrientationFilter orientation={orientation || "all"} onOrientationChange={onOrientationChange} />
         </div>
 
         <div className="flex flex-wrap items-center gap-4 pt-2">
