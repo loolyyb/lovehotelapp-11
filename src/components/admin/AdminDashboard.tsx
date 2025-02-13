@@ -289,9 +289,9 @@ export function AdminDashboard() {
                     </p>
                   </div>
                   <div className="p-4 border rounded-lg bg-card">
-                    <h3 className="font-semibold mb-2">Profils Vérifiés</h3>
+                    <h3 className="font-semibold mb-2">Profils Modérateurs</h3>
                     <p className="text-2xl">
-                      {profilesStats?.filter(p => p.role === 'verified_user').length || 0}
+                      {profilesStats?.filter(p => p.role === 'moderator').length || 0}
                     </p>
                   </div>
                 </div>
