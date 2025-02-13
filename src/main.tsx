@@ -42,8 +42,23 @@ root.render(
   </React.StrictMode>
 );
 
-// Enregistrement du Service Worker
-if ('serviceWorker' in navigator) {
+// Fonction pour détecter l'environnement de preview
+const isPreviewEnvironment = () => {
+  const hostname = window.location.hostname;
+  return hostname.includes('preview--') && hostname.endsWith('.lovable.app');
+};
+
+// Nettoyage des service workers existants en mode preview
+if (isPreviewEnvironment() && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (let registration of registrations) {
+      registration.unregister();
+      console.log('Service Worker désinscrit pour la preview');
+    }
+  });
+} 
+// Enregistrement du Service Worker uniquement en production
+else if ('serviceWorker' in navigator && !isPreviewEnvironment()) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then(registration => {
