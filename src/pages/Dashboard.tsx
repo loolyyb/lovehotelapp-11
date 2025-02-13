@@ -41,11 +41,11 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-champagne via-rose-50 to-cream">
+    <div className="min-h-screen flex flex-col bg-[linear-gradient(to_bottom,#1E1E1E_0%,#CD0067_100%)]">
       {/* Background patterns */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,228,230,0.6),transparent_40%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(255,236,213,0.6),transparent_40%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(205,0,103,0.2),transparent_40%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(30,30,30,0.3),transparent_40%)]" />
       </div>
 
       {/* Content */}
@@ -54,7 +54,7 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-2xl sm:text-3xl font-cormorant font-bold text-burgundy mt-4 mb-6"
+          className="text-2xl sm:text-3xl font-cormorant font-bold text-white mt-4 mb-6"
         >
           Bonjour {userProfile?.full_name?.split(' ')[0] || 'Lover'}
         </motion.h1>
@@ -83,3 +83,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
