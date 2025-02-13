@@ -90,7 +90,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
     >
       <CardContent className="p-6 h-full flex flex-col">
         <div className="flex flex-col items-center space-y-4 flex-grow">
-          <Avatar className={`${isMobile ? 'w-24 h-24' : 'w-32 h-32'} border-4 border-[#CE0067] shadow-lg`}>
+          <Avatar className={`${isMobile ? 'w-24 h-24' : 'w-32 h-32'} border-4 border-white shadow-lg`}>
             <AvatarImage 
               src={profile.avatar_url ?? undefined} 
               alt={profile.full_name ?? "Profile"} 
