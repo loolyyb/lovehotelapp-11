@@ -7,6 +7,7 @@ import { VersionManager } from "./versions/VersionManager";
 import { ThemeTab } from "./dashboard/ThemeTab";
 import { UsersTab } from "./dashboard/UsersTab";
 import { ConversationsTab } from "./dashboard/ConversationsTab";
+import { EventsManager } from "./events/EventsManager";
 import { Session } from "@supabase/supabase-js";
 
 interface AdminDashboardContentProps {
@@ -24,6 +25,7 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
           <TabsTrigger value="conversations">Conversations</TabsTrigger>
           <TabsTrigger value="versions">Versions</TabsTrigger>
+          <TabsTrigger value="events">Événements</TabsTrigger>
           <TabsTrigger value="ads">Publicités</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
@@ -42,6 +44,10 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
 
         <TabsContent value="versions">
           <VersionManager />
+        </TabsContent>
+
+        <TabsContent value="events">
+          <EventsManager />
         </TabsContent>
 
         <TabsContent value="ads">
