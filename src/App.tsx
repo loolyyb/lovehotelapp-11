@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+
+import React from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Header } from "./components/layout/Header";
 import { MobileNavBar } from "./components/layout/MobileNavBar";
@@ -7,9 +8,8 @@ import { Footer } from "./components/layout/Footer";
 import { useIsMobile } from "./hooks/use-mobile";
 import { useAuthSession } from "./hooks/useAuthSession";
 import { AppRoutes } from "./components/layout/AppRoutes";
-import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
+import { ThemeProvider } from "./providers/ThemeProvider";
 import { appConfig } from "./config/app.config";
-import { useToast } from "./hooks/use-toast";
 import { Loader } from "lucide-react";
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { UpdatePrompt } from './components/pwa/UpdatePrompt';
@@ -22,43 +22,34 @@ const isPreviewEnvironment = () => {
   return isPreview;
 };
 
-const getBasename = () => {
-  if (isPreviewEnvironment()) {
-    const projectName = window.location.hostname.split('--')[1].split('.')[0];
-    console.log('Preview environment detected, basename:', `/${projectName}`);
-    return `/${projectName}`;
-  }
-  console.log('Production environment detected, basename: /');
-  return '/';
-};
+function PreviewContent() {
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-white">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold mb-4">Mode Preview</h1>
+        <p className="text-lg text-gray-600">Cette page est en mode preview</p>
+      </div>
+    </div>
+  );
+}
 
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
-  const { currentThemeName } = useTheme();
 
-  useEffect(() => {
-    console.log("AppContent mounted");
-    console.log("Session:", session);
-    console.log("Loading:", loading);
-    console.log("Current theme:", currentThemeName);
-    console.log("Is preview:", isPreviewEnvironment());
-  }, [session, loading, currentThemeName]);
+  if (loading && !isPreviewEnvironment()) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div 
-      data-theme={currentThemeName} 
-      className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}
-    >
+    <div className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}>
       {!isPreviewEnvironment() && session && <Header userProfile={userProfile} />}
       <div className={`flex-grow ${!isPreviewEnvironment() && session ? "pt-[4.5rem]" : ""}`}>
-        {loading && !isPreviewEnvironment() ? (
-          <div className="min-h-screen flex items-center justify-center">
-            <Loader className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <AppRoutes session={session} />
-        )}
+        <AppRoutes session={session} />
       </div>
       <Footer />
       {appConfig.features.enablePWA && !isPreviewEnvironment() && (
@@ -75,8 +66,14 @@ function AppContent() {
 
 function App() {
   console.log("App component rendering");
-  const basename = getBasename();
-  console.log("Using basename:", basename);
+  
+  if (isPreviewEnvironment()) {
+    return <PreviewContent />;
+  }
+
+  const basename = isPreviewEnvironment() 
+    ? `/${window.location.hostname.split('--')[1].split('.')[0]}`
+    : '/';
 
   return (
     <ThemeProvider>
