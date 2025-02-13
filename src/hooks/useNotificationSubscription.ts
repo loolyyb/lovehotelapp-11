@@ -10,7 +10,14 @@ export function useNotificationSubscription() {
   const { toast } = useToast();
 
   useEffect(() => {
-    checkSubscription();
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        checkSubscription();
+      }
+    };
+    
+    checkAuth();
   }, []);
 
   const checkSubscription = async () => {
@@ -26,6 +33,17 @@ export function useNotificationSubscription() {
   };
 
   const requestNotificationPermission = async (): Promise<boolean> => {
+    // D'abord vérifier si l'utilisateur est connecté
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({
+        variant: "destructive",
+        title: "Non autorisé",
+        description: "Vous devez être connecté pour gérer les notifications.",
+      });
+      return false;
+    }
+
     // Vérifier si le navigateur supporte les notifications
     if (!('Notification' in window)) {
       toast({
@@ -73,24 +91,24 @@ export function useNotificationSubscription() {
 
   const subscribeToNotifications = async () => {
     try {
-      // Demander la permission d'abord
+      // Vérifier la session avant tout
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Non autorisé",
+          description: "Vous devez être connecté pour activer les notifications.",
+        });
+        return false;
+      }
+
+      // Demander la permission
       const permissionGranted = await requestNotificationPermission();
       if (!permissionGranted) {
         return false;
       }
 
-      const registration = await navigator.serviceWorker.ready;
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Vous devez être connecté pour recevoir les notifications.",
-        });
-        return false;
-      }
-
+      const registration = await navigator.serviceWorker.ready;      
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY
@@ -98,7 +116,7 @@ export function useNotificationSubscription() {
 
       // Enregistrer l'inscription dans la base de données
       const { error } = await supabase.from('push_subscriptions').insert([{
-        user_id: user.id,
+        user_id: session.user.id,
         endpoint: subscription.endpoint,
         auth: subscription.toJSON().keys?.auth,
         p256dh: subscription.toJSON().keys?.p256dh
@@ -129,19 +147,27 @@ export function useNotificationSubscription() {
 
   const unsubscribeFromNotifications = async () => {
     try {
+      // Vérifier la session avant tout
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          variant: "destructive",
+          title: "Non autorisé",
+          description: "Vous devez être connecté pour gérer les notifications.",
+        });
+        return;
+      }
+
       if (!subscription) return;
 
       await subscription.unsubscribe();
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { error } = await supabase
-          .from('push_subscriptions')
-          .delete()
-          .eq('endpoint', subscription.endpoint);
+      const { error } = await supabase
+        .from('push_subscriptions')
+        .delete()
+        .eq('endpoint', subscription.endpoint);
 
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       setSubscription(null);
       setIsSubscribed(false);
