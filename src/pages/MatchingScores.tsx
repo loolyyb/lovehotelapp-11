@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +7,7 @@ import { MatchingFilter } from "@/components/matching/MatchingFilter";
 import { MatchingCard } from "@/components/matching/MatchingCard";
 
 type InterestType = "all" | "casual" | "serious" | "libertine" | "bdsm" | "exhibitionist" | "open_curtains" | "speed_dating";
+type StatusType = "all" | "single_man" | "married_man" | "single_woman" | "married_woman" | "couple_mf" | "couple_mm" | "couple_ff";
 
 interface Profile {
   id: string;
@@ -18,6 +18,7 @@ interface Profile {
   compatibility_score?: number;
   relationship_type: string[];
   sexual_orientation: string;
+  status: StatusType | null;
 }
 
 interface Preferences {
@@ -32,7 +33,7 @@ export default function MatchingScores() {
   const [selectedInterest, setSelectedInterest] = useState<InterestType>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<StatusType>("all");
   const [orientation, setOrientation] = useState("");
   const [membershipTypes, setMembershipTypes] = useState<string[]>([]);
   const [openCurtains, setOpenCurtains] = useState(false);
@@ -141,7 +142,7 @@ export default function MatchingScores() {
 
       // Filtre de statut
       if (status && status !== "all") {
-        query = query.eq("status", status);
+        query = query.eq("status", status as string);
       }
 
       // Filtre d'orientation
