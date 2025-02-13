@@ -6,6 +6,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel.jpg";
+
 interface ProfileAvatarProps {
   avatarUrl?: string | null;
   fullName?: string | null;
@@ -85,7 +87,7 @@ export function ProfileAvatar({
       />
       
       <img
-        src={avatarUrl ?? "/placeholder.svg"}
+        src={avatarUrl || DEFAULT_AVATAR_URL}
         alt={fullName ?? "Profile"}
         className="w-full h-full object-cover rounded-full border-[0.25px] border-white shadow-lg relative z-10"
       />

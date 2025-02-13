@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,6 +8,8 @@ import { useConversations } from "./hooks/useConversations";
 import { LoadingState } from "./LoadingState";
 import { EmptyState } from "./EmptyState";
 import { AlertTriangle } from "lucide-react";
+
+const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel.jpg";
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
@@ -87,8 +90,14 @@ export function ConversationList({ onSelectConversation, selectedConversationId 
             >
               <div className="flex items-center space-x-3">
                 <Avatar>
-                  <AvatarImage src={otherUser.avatar_url} />
-                  <AvatarFallback>{otherUser.full_name?.[0]}</AvatarFallback>
+                  <AvatarImage src={otherUser.avatar_url || DEFAULT_AVATAR_URL} />
+                  <AvatarFallback>
+                    <img
+                      src={DEFAULT_AVATAR_URL}
+                      alt="Default Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline">

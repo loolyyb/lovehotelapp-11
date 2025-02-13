@@ -12,6 +12,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel.jpg";
+
 interface ProfileCardProps {
   profile: Tables<"profiles">;
   preferences?: Tables<"preferences"> | null;
@@ -92,12 +94,16 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
         <div className="flex flex-col items-center space-y-4 flex-grow">
           <Avatar className={`${isMobile ? 'w-24 h-24' : 'w-32 h-32'} border-4 border-white shadow-lg`}>
             <AvatarImage 
-              src={profile.avatar_url ?? undefined} 
+              src={profile.avatar_url || DEFAULT_AVATAR_URL} 
               alt={profile.full_name ?? "Profile"} 
               className="object-cover"
             />
-            <AvatarFallback className="text-2xl bg-burgundy text-rose-500">
-              {profile.full_name?.charAt(0) ?? "?"}
+            <AvatarFallback>
+              <img
+                src={DEFAULT_AVATAR_URL}
+                alt="Default Avatar"
+                className="w-full h-full object-cover"
+              />
             </AvatarFallback>
           </Avatar>
 

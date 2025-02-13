@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel.jpg";
 
 interface UserMenuProps {
   avatarUrl: string | null;
@@ -21,8 +24,14 @@ export function UserMenu({ avatarUrl, fullName, onLogout }: UserMenuProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="p-0 hover:bg-transparent">
           <Avatar className="h-10 w-10 cursor-pointer">
-            <AvatarImage src={avatarUrl} alt={fullName} />
-            <AvatarFallback>{fullName?.[0] || '?'}</AvatarFallback>
+            <AvatarImage src={avatarUrl || DEFAULT_AVATAR_URL} alt={fullName} />
+            <AvatarFallback>
+              <img
+                src={DEFAULT_AVATAR_URL}
+                alt="Default Avatar"
+                className="w-full h-full object-cover"
+              />
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
