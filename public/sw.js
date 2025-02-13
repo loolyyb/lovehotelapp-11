@@ -123,6 +123,74 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Gestion des notifications push
+self.addEventListener('push', (event) => {
+  console.log('[Service Worker] Notification push reçue:', event);
+
+  if (!event.data) {
+    console.log('[Service Worker] Pas de données dans la notification');
+    return;
+  }
+
+  try {
+    const data = event.data.json();
+    console.log('[Service Worker] Données de notification:', data);
+
+    const options = {
+      body: data.message,
+      icon: data.icon_url || '/icon-192.png',
+      badge: '/icon-192.png',
+      data: {
+        url: data.target_url
+      },
+      actions: [
+        {
+          action: 'open',
+          title: 'Ouvrir'
+        }
+      ],
+      vibrate: [200, 100, 200],
+      tag: 'love-hotel-notification',
+      renotify: true
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(data.title, options)
+    );
+  } catch (error) {
+    console.error('[Service Worker] Erreur lors du traitement de la notification:', error);
+  }
+});
+
+// Gestion du clic sur une notification
+self.addEventListener('notificationclick', (event) => {
+  console.log('[Service Worker] Clic sur la notification:', event);
+
+  event.notification.close();
+
+  if (event.action === 'open' || !event.action) {
+    const urlToOpen = event.notification.data?.url || '/';
+    
+    event.waitUntil(
+      clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      }).then((windowClients) => {
+        // Vérifier si une fenêtre est déjà ouverte
+        for (const client of windowClients) {
+          if (client.url === urlToOpen && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Si aucune fenêtre n'est ouverte, en ouvrir une nouvelle
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+    );
+  }
+});
+
 // Gestion des mises à jour
 self.addEventListener('message', (event) => {
   if (event.data === 'skipWaiting') {
