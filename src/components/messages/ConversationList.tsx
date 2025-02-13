@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,7 +8,7 @@ import { LoadingState } from "./LoadingState";
 import { EmptyState } from "./EmptyState";
 import { AlertTriangle } from "lucide-react";
 
-const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel.jpg";
+const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel-v2.jpg";
 
 interface ConversationListProps {
   onSelectConversation: (id: string) => void;
