@@ -55,10 +55,16 @@ export function useNotificationSubscription() {
         return false;
       }
 
-      // Demander la permission AVANT toute autre vérification
-      const permission = await Notification.requestPermission();
-      
-      if (permission !== 'granted') {
+      try {
+        // Demander directement la permission sans vérification préalable
+        await Notification.requestPermission();
+      } catch (error) {
+        console.error('Erreur lors de la demande de permission:', error);
+        return false;
+      }
+
+      // Ne vérifier la permission qu'APRÈS avoir fait la demande
+      if (Notification.permission !== 'granted') {
         setIsSubscribed(false);
         toast({
           variant: "destructive",
