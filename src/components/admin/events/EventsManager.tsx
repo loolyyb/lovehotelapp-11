@@ -32,12 +32,25 @@ export function EventsManager() {
   };
 
   const handleEdit = (event: Event) => {
+    // Convertir la date de l'événement
     const eventDate = new Date(event.event_date);
+    
+    // Formater l'heure de début depuis la date de l'événement
+    const startTime = eventDate.toTimeString().substring(0, 5);
+    
+    // Formater l'heure de fin (si elle existe)
+    const endTime = event.end_time ? event.end_time.substring(0, 5) : "00:00";
+
     const formattedEvent = {
       ...event,
       event_date: eventDate.toISOString().split('T')[0],
-      start_time: eventDate.toTimeString().substring(0, 5),
+      start_time: startTime,
+      end_time: endTime,
+      price: event.price || 0,
+      free_for_members: event.free_for_members === null ? true : event.free_for_members,
     };
+
+    console.log("Formatted event for editing:", formattedEvent);
     setEditingEvent(formattedEvent);
     setIsOpen(true);
   };
@@ -62,6 +75,7 @@ export function EventsManager() {
         <EventForm
           onSubmit={handleFormSubmit}
           isLoading={isLoading}
+          initialData={editingEvent}
         />
       </EventFormDialog>
 

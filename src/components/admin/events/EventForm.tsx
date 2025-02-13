@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { EventFormFields } from "./EventFormFields";
 import { EventFormValues, eventSchema } from "./types";
-import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 
 export interface EventFormProps {
@@ -44,6 +44,11 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
         <DialogTitle>
           {initialData ? "Modifier l'événement" : "Créer un nouvel événement"}
         </DialogTitle>
+        <DialogDescription>
+          {initialData
+            ? "Modifiez les informations de l'événement ci-dessous."
+            : "Remplissez les informations pour créer un nouvel événement."}
+        </DialogDescription>
       </DialogHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
