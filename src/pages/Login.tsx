@@ -177,6 +177,9 @@ export default function Login() {
             providers={[]}
             theme="dark"
           />
+          <p className="text-sm text-gray-600 text-center mt-4 italic">
+            Pour les profils déjà membre du Love Hôtel, il suffit de vous inscrire avec votre mail de compte pour récupérer vos points et avantages
+          </p>
         </Card>
       </div>
     </div>
