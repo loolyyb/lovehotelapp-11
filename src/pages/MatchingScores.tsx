@@ -97,27 +97,18 @@ export default function MatchingScores() {
         return;
       }
 
-      // Récupérer le profil et les préférences de l'utilisateur connecté
-      const { data: userProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      const { data: userPreferences, error: preferencesError } = await supabase
+      // Récupérer d'abord les préférences correspondant à la localisation
+      const { data: preferencesData, error: preferencesError } = await supabase
         .from("preferences")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .select("user_id")
+        .eq("location", location);
 
       if (preferencesError) throw preferencesError;
 
-      // Construction de la requête avec les filtres
-      let query = supabase
+      // Récupérer ensuite les profils correspondants
+      const userIds = preferencesData?.map(pref => pref.user_id) || [];
+      
+      const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select(`
           id,
@@ -128,65 +119,29 @@ export default function MatchingScores() {
           relationship_type,
           sexual_orientation,
           status,
-          is_loolyb_holder,
-          preferences!inner (
-            location,
-            open_curtains_interest,
-            speed_dating_interest,
-            libertine_party_interest
-          )
+          is_loolyb_holder
         `)
         .neq("user_id", session.user.id)
-        .eq("preferences.location", location);
+        .in("id", userIds);
 
-      // Filtre de recherche
-      if (searchTerm) {
-        query = query.or(`full_name.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`);
-      }
+      if (profilesError) throw profilesError;
 
-      // Filtre de localisation
-      if (location && location !== "all") {
-        query = query.eq("location", location);
-      }
-
-      // Filtre de statut
-      if (status && status !== "all") {
-        const statusValue = status as Exclude<StatusType, "all">;
-        query = query.eq("status", statusValue);
-      }
-
-      // Filtre d'orientation
-      if (orientation && orientation !== "all") {
-        query = query.eq("sexual_orientation", orientation);
-      }
-
-      // Filtre de type d'adhésion
-      if (membershipTypes.includes("loolyb")) {
-        query = query.eq("is_loolyb_holder", true);
-      }
-
-      const { data: otherProfiles, error: otherProfilesError } = await query;
-      if (otherProfilesError) throw otherProfilesError;
-
-      // Récupérer les préférences des autres profils
-      const { data: otherPreferences, error: otherPreferencesError } = await supabase
+      // Récupérer toutes les préférences pour ces profils
+      const { data: allPreferences, error: allPreferencesError } = await supabase
         .from("preferences")
         .select("*")
-        .order('created_at', { ascending: false });
+        .in("user_id", userIds);
 
-      if (otherPreferencesError) throw otherPreferencesError;
+      if (allPreferencesError) throw allPreferencesError;
 
       // Créer une map des préférences par user_id
-      const preferencesMap = new Map();
-      otherPreferences.forEach((pref) => {
-        if (!preferencesMap.has(pref.user_id)) {
-          preferencesMap.set(pref.user_id, pref);
-        }
-      });
+      const preferencesMap = new Map(
+        allPreferences.map(pref => [pref.user_id, pref])
+      );
 
-      // Calculer les scores de compatibilité et appliquer les filtres
-      let compatibleProfiles = otherProfiles.map((profile: Profile) => {
-        const preferences = preferencesMap.get(profile.user_id);
+      // Filtrer et traiter les profils
+      let compatibleProfiles = profilesData.map((profile: Profile) => {
+        const preferences = preferencesMap.get(profile.id);
         const score = calculateCompatibilityScore(
           userProfile,
           userPreferences,
@@ -200,30 +155,23 @@ export default function MatchingScores() {
         };
       });
 
-      // Filtre par intérêt sélectionné
-      if (selectedInterest !== "all") {
-        compatibleProfiles = compatibleProfiles.filter((profile: Profile) => {
-          const preferences = preferencesMap.get(profile.user_id);
-          
-          if (selectedInterest === "open_curtains") {
-            return preferences?.open_curtains_interest;
-          }
-          if (selectedInterest === "speed_dating") {
-            return preferences?.speed_dating_interest;
-          }
-          if (selectedInterest === "libertine") {
-            return preferences?.libertine_party_interest;
-          }
-          return profile.relationship_type?.includes(selectedInterest);
-        });
+      // Appliquer les autres filtres
+      if (status !== "all") {
+        compatibleProfiles = compatibleProfiles.filter(
+          profile => profile.status === status
+        );
       }
 
-      // Filtre rideaux ouverts
-      if (openCurtains) {
-        compatibleProfiles = compatibleProfiles.filter((profile: Profile) => {
-          const preferences = preferencesMap.get(profile.user_id);
-          return preferences?.open_curtains_interest;
-        });
+      if (orientation !== "") {
+        compatibleProfiles = compatibleProfiles.filter(
+          profile => profile.sexual_orientation === orientation
+        );
+      }
+
+      if (membershipTypes.includes("loolyb")) {
+        compatibleProfiles = compatibleProfiles.filter(
+          profile => profile.is_loolyb_holder
+        );
       }
 
       // Trier par score de compatibilité
@@ -231,7 +179,6 @@ export default function MatchingScores() {
         (b.compatibility_score || 0) - (a.compatibility_score || 0)
       );
 
-      console.log('Profiles filtrés:', compatibleProfiles);
       setProfiles(compatibleProfiles);
     } catch (error: any) {
       console.error("Error fetching profiles:", error);
