@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -215,10 +216,10 @@ export default function MatchingScores() {
     <main className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-cormorant text-burgundy text-center mb-8 animate-fadeIn">
-          Scores de Compatibilité
+          Rencontres
         </h1>
 
-        <div className="mb-12"> {/* Added more margin bottom here */}
+        <div className="mb-12">
           <MatchingFilter 
             selectedInterest={selectedInterest}
             onInterestChange={setSelectedInterest}
