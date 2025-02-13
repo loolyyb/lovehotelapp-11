@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +34,7 @@ export default function MatchingScores() {
   const [loading, setLoading] = useState(true);
   const [selectedInterest, setSelectedInterest] = useState<InterestType>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [location, setLocation] = useState<LocationType>("all");
+  const [location, setLocation] = useState<LocationType>("paris-chatelet");
   const [status, setStatus] = useState<StatusType>("all");
   const [orientation, setOrientation] = useState("");
   const [membershipTypes, setMembershipTypes] = useState<string[]>([]);
@@ -129,9 +128,16 @@ export default function MatchingScores() {
           relationship_type,
           sexual_orientation,
           status,
-          is_loolyb_holder
+          is_loolyb_holder,
+          preferences!inner (
+            location,
+            open_curtains_interest,
+            speed_dating_interest,
+            libertine_party_interest
+          )
         `)
-        .neq("user_id", session.user.id);
+        .neq("user_id", session.user.id)
+        .eq("preferences.location", location);
 
       // Filtre de recherche
       if (searchTerm) {

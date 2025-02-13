@@ -10,7 +10,6 @@ import { MapPin } from "lucide-react";
 
 // Utiliser les mêmes valeurs que dans LocationSection
 export const parisLocations = {
-  "all": "Toutes les localisations",
   "paris-chatelet": "Paris Châtelet",
   "paris-pigalle": "Paris Pigalle"
 } as const;
@@ -18,14 +17,14 @@ export const parisLocations = {
 export type LocationType = keyof typeof parisLocations;
 
 interface LocationFilterProps {
-  location: LocationType;
+  location: LocationType | null;
   onLocationChange: (value: LocationType) => void;
 }
 
 export function LocationFilter({ location, onLocationChange }: LocationFilterProps) {
   return (
     <div className="space-y-2">
-      <Select value={location} onValueChange={onLocationChange}>
+      <Select value={location || Object.keys(parisLocations)[0]} onValueChange={onLocationChange}>
         <SelectTrigger className="w-full">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4" />
