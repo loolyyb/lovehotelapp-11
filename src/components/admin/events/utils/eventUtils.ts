@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { EventFormValues } from "../types";
 import { toast } from "@/hooks/use-toast";
