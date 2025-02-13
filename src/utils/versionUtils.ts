@@ -1,3 +1,4 @@
+
 import { Version } from "@/types/version.types";
 
 export function parseVersion(version: string): Version {
