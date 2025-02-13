@@ -54,26 +54,23 @@ export function useNotificationSubscription() {
       return false;
     }
 
-    // Si la permission est refusée
-    if (Notification.permission === 'denied') {
-      toast({
-        variant: "destructive",
-        title: "Notifications bloquées",
-        description: "Vous devez autoriser les notifications dans les paramètres de votre navigateur.",
-      });
-      return false;
-    }
-
     // Si la permission est déjà accordée
     if (Notification.permission === 'granted') {
       return true;
     }
 
-    // Demander la permission
+    // Demander la permission AVANT de vérifier si elle est refusée
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         return true;
+      } else if (permission === 'denied') {
+        toast({
+          variant: "destructive",
+          title: "Notifications bloquées",
+          description: "Vous devez autoriser les notifications dans les paramètres de votre navigateur.",
+        });
+        return false;
       } else {
         toast({
           variant: "destructive",
