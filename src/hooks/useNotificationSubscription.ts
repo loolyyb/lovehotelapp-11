@@ -25,29 +25,70 @@ export function useNotificationSubscription() {
     }
   };
 
-  const subscribeToNotifications = async () => {
-    try {
-      const registration = await navigator.serviceWorker.ready;
+  const requestNotificationPermission = async (): Promise<boolean> => {
+    // Vérifier si le navigateur supporte les notifications
+    if (!('Notification' in window)) {
+      toast({
+        variant: "destructive",
+        title: "Non supporté",
+        description: "Votre navigateur ne supporte pas les notifications push.",
+      });
+      return false;
+    }
 
-      // S'assurer que les notifications sont autorisées
+    // Si la permission est déjà accordée
+    if (Notification.permission === 'granted') {
+      return true;
+    }
+
+    // Si la permission est refusée
+    if (Notification.permission === 'denied') {
+      toast({
+        variant: "destructive",
+        title: "Notifications bloquées",
+        description: "Vous devez autoriser les notifications dans les paramètres de votre navigateur.",
+      });
+      return false;
+    }
+
+    // Demander la permission
+    try {
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
+      if (permission === 'granted') {
+        return true;
+      } else {
         toast({
           variant: "destructive",
-          title: "Erreur",
-          description: "Les notifications doivent être autorisées pour recevoir les notifications push.",
+          title: "Permission refusée",
+          description: "Vous devez autoriser les notifications pour recevoir les alertes.",
         });
-        return;
+        return false;
+      }
+    } catch (error) {
+      console.error('Erreur lors de la demande de permission:', error);
+      AlertService.captureException(error as Error);
+      return false;
+    }
+  };
+
+  const subscribeToNotifications = async () => {
+    try {
+      // Demander la permission d'abord
+      const permissionGranted = await requestNotificationPermission();
+      if (!permissionGranted) {
+        return false;
       }
 
+      const registration = await navigator.serviceWorker.ready;
       const { data: { user } } = await supabase.auth.getUser();
+      
       if (!user) {
         toast({
           variant: "destructive",
           title: "Erreur",
           description: "Vous devez être connecté pour recevoir les notifications.",
         });
-        return;
+        return false;
       }
 
       const subscription = await registration.pushManager.subscribe({
@@ -72,6 +113,8 @@ export function useNotificationSubscription() {
         title: "Succès",
         description: "Vous êtes maintenant inscrit aux notifications push.",
       });
+      
+      return true;
     } catch (error) {
       console.error('Erreur lors de l\'inscription aux notifications:', error);
       AlertService.captureException(error as Error);
@@ -80,6 +123,7 @@ export function useNotificationSubscription() {
         title: "Erreur",
         description: "Une erreur est survenue lors de l'inscription aux notifications.",
       });
+      return false;
     }
   };
 
