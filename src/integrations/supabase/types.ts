@@ -102,6 +102,39 @@ export type Database = {
         }
         Relationships: []
       }
+      app_versions: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_critical: boolean | null
+          release_notes: string | null
+          updated_at: string
+          version: string
+          version_type: Database["public"]["Enums"]["app_version_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_critical?: boolean | null
+          release_notes?: string | null
+          updated_at?: string
+          version: string
+          version_type: Database["public"]["Enums"]["app_version_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_critical?: boolean | null
+          release_notes?: string | null
+          updated_at?: string
+          version?: string
+          version_type?: Database["public"]["Enums"]["app_version_type"]
+        }
+        Relationships: []
+      }
       application_logs: {
         Row: {
           context: Json | null
@@ -1030,6 +1063,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_version_type: "major" | "minor" | "patch"
       challenge_type: "quiz" | "puzzle" | "photo" | "activity"
       concierge_request_status:
         | "pending"
