@@ -5,7 +5,7 @@ const CURRENT_VERSION = '1.0.195'; // Synchronisé avec versionDb.ts
 
 // Liste des ressources statiques à mettre en cache
 const STATIC_ASSETS = [
-  '/',
+  '/.htaccess',
   '/index.html',
   '/manifest.json',
   '/favicon.ico',
