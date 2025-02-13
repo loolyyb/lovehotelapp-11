@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Shield, Globe, Users, Eye } from "lucide-react";
+import { Shield, Globe, Users, Eye, Pencil, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -15,21 +15,35 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Event } from "./types";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ParticipantsModal } from "./components/ParticipantsModal";
+import { useToast } from "@/hooks/use-toast";
 
 interface EventsTableProps {
   events?: Event[];
+  onEdit?: (event: Event) => void;
 }
 
-export function EventsTable({ events }: EventsTableProps) {
+export function EventsTable({ events, onEdit }: EventsTableProps) {
+  const { toast } = useToast();
   const [selectedEvent, setSelectedEvent] = useState<{id: string, title: string} | null>(null);
 
-  const { data: participants } = useQuery({
+  const { data: participants, refetch: refetchParticipants } = useQuery({
     queryKey: ['event-participants'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -41,6 +55,32 @@ export function EventsTable({ events }: EventsTableProps) {
       return data;
     }
   });
+
+  const handleDelete = async (eventId: string) => {
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Événement supprimé",
+        description: "L'événement a été supprimé avec succès",
+      });
+
+      // Rafraîchir la liste des événements
+      refetchParticipants();
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression de l'événement",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getParticipantsForEvent = (eventId: string) => {
     return participants?.filter(p => p.event_id === eventId) || [];
@@ -122,14 +162,47 @@ export function EventsTable({ events }: EventsTableProps) {
                   </TooltipProvider>
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedEvent({ id: event.id, title: event.title })}
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Voir participants
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEdit?.(event)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Cette action ne peut pas être annulée. Cela supprimera définitivement l'événement.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(event.id)}
+                            className="bg-red-500 hover:bg-red-600"
+                          >
+                            Supprimer
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedEvent({ id: event.id, title: event.title })}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Voir participants
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             );

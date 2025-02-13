@@ -8,6 +8,7 @@ import { EventForm } from "./EventForm";
 import { EventFormDialog } from "./components/EventFormDialog";
 import { useEventManagement } from "./hooks/useEventManagement";
 import { EventsTable } from "./EventsTable";
+import { Event } from "./types";
 
 export function EventsManager() {
   const { handleSubmit, isLoading, isOpen, setIsOpen } = useEventManagement();
@@ -28,6 +29,17 @@ export function EventsManager() {
 
   const handleFormSubmit = async (values: any) => {
     await handleSubmit(values, editingEvent?.id);
+  };
+
+  const handleEdit = (event: Event) => {
+    const eventDate = new Date(event.event_date);
+    const formattedEvent = {
+      ...event,
+      event_date: eventDate.toISOString().split('T')[0],
+      start_time: eventDate.toTimeString().substring(0, 5),
+    };
+    setEditingEvent(formattedEvent);
+    setIsOpen(true);
   };
 
   return (
@@ -53,7 +65,7 @@ export function EventsManager() {
         />
       </EventFormDialog>
 
-      <EventsTable events={events} />
+      <EventsTable events={events} onEdit={handleEdit} />
     </Card>
   );
 }
