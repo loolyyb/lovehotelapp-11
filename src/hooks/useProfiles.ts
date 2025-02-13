@@ -87,9 +87,9 @@ export function useProfiles() {
         .from("preferences")
         .select("*")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle(); // Changé de .single() à .maybeSingle()
 
-      if (userPreferencesError && userPreferencesError.code !== "PGRST116") {
+      if (userPreferencesError) {
         throw userPreferencesError;
       }
       
@@ -129,7 +129,7 @@ export function useProfiles() {
 
           const compatibilityScore = await calculateCompatibilityScore(
             userProfile,
-            userPreferences,
+            userPreferences || null,
             profile,
             preferences
           );
