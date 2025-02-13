@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -5,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ThemeName } from "@/types/theme";
-import { Loader, Users, MessageSquare } from "lucide-react";
+import { Loader, Users, MessageSquare, TagIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdvertisementManager } from "./AdvertisementManager";
 import { LogsManager } from "./LogsManager";
+import { VersionManager } from "./versions/VersionManager";
 import { Session } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 
@@ -94,6 +96,7 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
           <TabsTrigger value="theme">Thème</TabsTrigger>
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
           <TabsTrigger value="conversations">Conversations</TabsTrigger>
+          <TabsTrigger value="versions">Versions</TabsTrigger>
           <TabsTrigger value="ads">Publicités</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
@@ -195,6 +198,10 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
               </table>
             </div>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="versions">
+          <VersionManager />
         </TabsContent>
 
         <TabsContent value="ads">
