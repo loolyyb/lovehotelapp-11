@@ -48,12 +48,11 @@ export function PushNotificationsTab() {
   const { data: subscriptionCount } = useQuery({
     queryKey: ["push-subscriptions-count"],
     queryFn: async () => {
-      const { count, error } = await supabase
+      const { count } = await supabase
         .from("push_subscriptions")
-        .select("*", { count: "exact", head: true });
-
-      if (error) throw error;
-      return count ?? 0;
+        .select('*', { count: 'exact', head: true });
+      
+      return count;
     },
   });
 
@@ -61,10 +60,15 @@ export function PushNotificationsTab() {
     try {
       setIsSending(true);
 
-      // Créer la notification dans la base de données
+      // Créer la notification dans la base de données avec tous les champs requis
       const { error: dbError } = await supabase.from("push_notifications").insert({
-        ...values,
-        status: "pending",
+        title: values.title,
+        message: values.message,
+        icon_url: values.icon_url || null,
+        target_url: values.target_url || null,
+        target_motivation: values.target_motivation || null,
+        status: "pending" as const,
+        created_at: new Date().toISOString(),
       });
 
       if (dbError) throw dbError;
