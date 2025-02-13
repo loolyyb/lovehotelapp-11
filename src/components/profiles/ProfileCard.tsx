@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Heart, Award, Star, Trophy } from "lucide-react";
@@ -34,7 +35,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
         <TooltipProvider key="libertine">
           <Tooltip>
             <TooltipTrigger>
-              <Star className="w-5 h-5 text-rose-500" />
+              <Star className="w-5 h-5" color="#e0d8a7" />
             </TooltipTrigger>
             <TooltipContent>
               <p>Soirées libertines</p>
@@ -49,7 +50,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
         <TooltipProvider key="speed">
           <Tooltip>
             <TooltipTrigger>
-              <Trophy className="w-5 h-5 text-rose-500" />
+              <Trophy className="w-5 h-5" color="#e0d8a7" />
             </TooltipTrigger>
             <TooltipContent>
               <p>Speed dating</p>
@@ -64,7 +65,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
         <TooltipProvider key="curtains">
           <Tooltip>
             <TooltipTrigger>
-              <Award className="w-5 h-5 text-rose-500" />
+              <Award className="w-5 h-5" color="#e0d8a7" />
             </TooltipTrigger>
             <TooltipContent>
               <p>Rideaux ouverts</p>
@@ -127,7 +128,7 @@ export function ProfileCard({ profile, preferences }: ProfileCardProps) {
             <div className="flex items-center justify-center space-x-3 mt-auto">
               {renderMotivationIcons()}
               {profile.is_love_hotel_member && (
-                <Heart className="w-5 h-5 text-rose-500" />
+                <Heart className="w-5 h-5" color="#e0d8a7" />
               )}
             </div>
           </div>
