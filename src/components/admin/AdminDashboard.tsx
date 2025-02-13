@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuthStore } from "@/stores/adminAuthStore";
@@ -15,10 +16,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EventsManager } from "./events/EventsManager";
+import { ThemeTab } from "./dashboard/ThemeTab";
+import { VersionManager } from "./versions/VersionManager";
+import { LogsManager } from "./LogsManager";
+import { AdvertisementManager } from "./AdvertisementManager";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 export function AdminDashboard() {
   const setAdminAuthenticated = useAdminAuthStore((state) => state.setAdminAuthenticated);
   const { toast } = useToast();
+  const { session } = useAuthSession();
 
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
@@ -64,7 +71,7 @@ export function AdminDashboard() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Dashboard Administrateur </h1>
+        <h1 className="text-2xl font-semibold">Dashboard Administrateur</h1>
         <Button variant="outline" onClick={handleLogout}>
           Déconnexion Admin
         </Button>
@@ -75,6 +82,10 @@ export function AdminDashboard() {
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="events">Événements</TabsTrigger>
+          <TabsTrigger value="versions">Versions</TabsTrigger>
+          <TabsTrigger value="theme">Thème</TabsTrigger>
+          <TabsTrigger value="ads">Publicités</TabsTrigger>
+          <TabsTrigger value="logs">Logs</TabsTrigger>
           <TabsTrigger value="stats">Statistiques</TabsTrigger>
         </TabsList>
 
@@ -132,6 +143,22 @@ export function AdminDashboard() {
 
         <TabsContent value="events">
           <EventsManager />
+        </TabsContent>
+
+        <TabsContent value="versions">
+          <VersionManager />
+        </TabsContent>
+
+        <TabsContent value="theme">
+          <ThemeTab />
+        </TabsContent>
+
+        <TabsContent value="ads">
+          <AdvertisementManager session={session} />
+        </TabsContent>
+
+        <TabsContent value="logs">
+          <LogsManager />
         </TabsContent>
 
         <TabsContent value="stats">
