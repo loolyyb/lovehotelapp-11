@@ -1,8 +1,24 @@
+
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Prevent scrolling and zooming issues on mobile PWA */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  position: fixed;
+  height: 100%;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 @layer base {
     :root {
