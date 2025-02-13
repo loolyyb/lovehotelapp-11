@@ -62,7 +62,7 @@ export function ProfileDetailsContent({
         </motion.div>
 
         {profile.description && <motion.div variants={itemVariants} className="glass-card p-6 rounded-xl space-y-4">
-            <h2 className="text-2xl font-cormorant font-semibold text-burgundy">À propos</h2>
+            <h2 className="text-2xl font-cormorant font-semibold text-burgundy text-slate-950">À propos</h2>
             <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{profile.description}</p>
           </motion.div>}
 
