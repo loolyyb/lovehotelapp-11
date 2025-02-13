@@ -17,11 +17,11 @@ interface InterestFilterProps {
 export function InterestFilter({ selectedInterest, onInterestChange }: InterestFilterProps) {
   return (
     <Select value={selectedInterest} onValueChange={onInterestChange}>
-      <SelectTrigger className="h-9 bg-white/80 backdrop-blur-sm">
+      <SelectTrigger className="h-9 bg-gradient-to-b from-champagne via-rose-50 to-cream backdrop-blur-sm">
         <SelectValue placeholder="Type de relation" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all" className="bg-background">Tous les types</SelectItem>
+        <SelectItem value="all" className="bg-gradient-to-b from-champagne via-rose-50 to-cream">Tous les types</SelectItem>
         <SelectItem value="casual">D'un soir</SelectItem>
         <SelectItem value="serious">Relations sérieuses</SelectItem>
         <SelectItem value="libertine">Libertine</SelectItem>
