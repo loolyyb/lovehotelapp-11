@@ -9,22 +9,30 @@ export function UpdatePrompt() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Vérification si le service worker est disponible
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then((registration) => {
-        // Écoute des mises à jour
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
+      // Vérifie si un Service Worker est déjà enregistré
+      navigator.serviceWorker.getRegistration().then((registration) => {
+        if (registration) {
+          console.log('Service Worker actuel:', registration);
           
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              // Quand une nouvelle version est disponible et prête
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                setShowUpdatePrompt(true);
-              }
-            });
-          }
-        });
+          // Écoute des mises à jour
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            console.log('Nouveau Service Worker trouvé:', newWorker);
+            
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                console.log('État du nouveau Service Worker:', newWorker.state);
+                
+                // Quand une nouvelle version est disponible et prête
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  console.log('Nouvelle version disponible');
+                  setShowUpdatePrompt(true);
+                }
+              });
+            }
+          });
+        }
       });
     }
   }, []);
@@ -33,6 +41,8 @@ export function UpdatePrompt() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((registration) => {
         registration.update().then(() => {
+          console.log('Mise à jour du Service Worker...');
+          
           toast({
             title: "Mise à jour en cours",
             description: "L'application va se recharger pour appliquer les mises à jour."
