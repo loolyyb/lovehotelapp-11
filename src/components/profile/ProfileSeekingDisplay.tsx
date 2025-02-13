@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { User, Users } from "lucide-react";
 
@@ -35,7 +36,7 @@ export function ProfileSeekingDisplay({ seeking }: ProfileSeekingDisplayProps) {
           {seeking.map((item) => {
             const { label, icon } = getSeekingLabel(item);
             return (
-              <div key={item} className="flex items-center gap-2 text-gray-700">
+              <div key={item} className="flex items-center gap-2" style={{ color: '#e0d8a7' }}>
                 {icon}
                 <span>{label}</span>
               </div>
