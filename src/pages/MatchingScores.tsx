@@ -41,7 +41,7 @@ export default function MatchingScores() {
 
   useEffect(() => {
     fetchProfiles();
-  }, [selectedInterest]);
+  }, [selectedInterest, searchTerm, location, status, orientation, membershipTypes, openCurtains]);
 
   const calculateCompatibilityScore = (
     userProfile: any,
@@ -113,7 +113,7 @@ export default function MatchingScores() {
 
       if (preferencesError) throw preferencesError;
 
-      // Récupérer les autres profils
+      // Construction de la requête avec les filtres
       let query = supabase
         .from("profiles")
         .select(`
@@ -123,9 +123,36 @@ export default function MatchingScores() {
           avatar_url,
           bio,
           relationship_type,
-          sexual_orientation
+          sexual_orientation,
+          status,
+          is_loolyb_holder
         `)
         .neq("user_id", session.user.id);
+
+      // Filtre de recherche
+      if (searchTerm) {
+        query = query.or(`full_name.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`);
+      }
+
+      // Filtre de localisation
+      if (location && location !== "all") {
+        query = query.eq("location", location);
+      }
+
+      // Filtre de statut
+      if (status && status !== "all") {
+        query = query.eq("status", status);
+      }
+
+      // Filtre d'orientation
+      if (orientation && orientation !== "all") {
+        query = query.eq("sexual_orientation", orientation);
+      }
+
+      // Filtre de type d'adhésion
+      if (membershipTypes.includes("loolyb")) {
+        query = query.eq("is_loolyb_holder", true);
+      }
 
       const { data: otherProfiles, error: otherProfilesError } = await query;
       if (otherProfilesError) throw otherProfilesError;
@@ -138,7 +165,7 @@ export default function MatchingScores() {
 
       if (otherPreferencesError) throw otherPreferencesError;
 
-      // Créer une map des préférences par user_id en ne gardant que la plus récente
+      // Créer une map des préférences par user_id
       const preferencesMap = new Map();
       otherPreferences.forEach((pref) => {
         if (!preferencesMap.has(pref.user_id)) {
@@ -146,7 +173,7 @@ export default function MatchingScores() {
         }
       });
 
-      // Calculer les scores de compatibilité
+      // Calculer les scores de compatibilité et appliquer les filtres
       let compatibleProfiles = otherProfiles.map((profile: Profile) => {
         const preferences = preferencesMap.get(profile.user_id);
         const score = calculateCompatibilityScore(
@@ -162,19 +189,29 @@ export default function MatchingScores() {
         };
       });
 
-      // Filtrer par intérêt sélectionné
+      // Filtre par intérêt sélectionné
       if (selectedInterest !== "all") {
         compatibleProfiles = compatibleProfiles.filter((profile: Profile) => {
+          const preferences = preferencesMap.get(profile.user_id);
+          
           if (selectedInterest === "open_curtains") {
-            return preferencesMap.get(profile.user_id)?.open_curtains_interest;
+            return preferences?.open_curtains_interest;
           }
           if (selectedInterest === "speed_dating") {
-            return preferencesMap.get(profile.user_id)?.speed_dating_interest;
+            return preferences?.speed_dating_interest;
           }
           if (selectedInterest === "libertine") {
-            return preferencesMap.get(profile.user_id)?.libertine_party_interest;
+            return preferences?.libertine_party_interest;
           }
           return profile.relationship_type?.includes(selectedInterest);
+        });
+      }
+
+      // Filtre rideaux ouverts
+      if (openCurtains) {
+        compatibleProfiles = compatibleProfiles.filter((profile: Profile) => {
+          const preferences = preferencesMap.get(profile.user_id);
+          return preferences?.open_curtains_interest;
         });
       }
 
@@ -183,6 +220,7 @@ export default function MatchingScores() {
         (b.compatibility_score || 0) - (a.compatibility_score || 0)
       );
 
+      console.log('Profiles filtrés:', compatibleProfiles);
       setProfiles(compatibleProfiles);
     } catch (error: any) {
       console.error("Error fetching profiles:", error);
