@@ -18,7 +18,7 @@ export function ProfilesGrid({ profiles }: ProfilesGridProps) {
     navigate(`/messages?profile=${profileId}`);
   };
 
-  if (profiles.length === 0) {
+  if (!profiles || profiles.length === 0) {
     return (
       <div className="text-center py-12 text-burgundy">
         Aucun profil ne correspond à vos critères de recherche.

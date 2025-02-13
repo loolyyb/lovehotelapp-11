@@ -87,12 +87,13 @@ export function useProfiles() {
         .from("preferences")
         .select("*")
         .eq("user_id", session.user.id)
-        .maybeSingle(); // Changé de .single() à .maybeSingle()
+        .maybeSingle();
 
       if (userPreferencesError) {
+        console.error("Erreur lors de la récupération des préférences utilisateur:", userPreferencesError);
         throw userPreferencesError;
       }
-      
+
       console.log("Envoi de la requête pour récupérer les profils...");
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
@@ -147,6 +148,7 @@ export function useProfiles() {
         (a, b) => (b.compatibility_score || 0) - (a.compatibility_score || 0)
       );
 
+      console.log("Profils avec préférences:", profilesWithPreferences);
       setProfiles(profilesWithPreferences);
     } catch (error: any) {
       console.error("Erreur complète:", error);
@@ -155,6 +157,7 @@ export function useProfiles() {
         title: "Erreur",
         description: "Impossible de charger les profils. Veuillez réessayer.",
       });
+      setProfiles([]); // Initialiser avec un tableau vide en cas d'erreur
     } finally {
       setLoading(false);
     }

@@ -6,13 +6,14 @@ import { ProfilesGrid } from "@/components/profiles/ProfilesGrid";
 import { useProfiles } from "@/hooks/useProfiles";
 import { Loader } from "lucide-react";
 import { MatchingFilter } from "@/components/matching/MatchingFilter";
+import { ProfileWithPreferences } from "@/hooks/useProfiles";
 
 type InterestType = "all" | "casual" | "serious" | "libertine" | "bdsm" | "exhibitionist" | "open_curtains" | "speed_dating";
 
 export default function Profiles() {
   const navigate = useNavigate();
   const { profiles, loading } = useProfiles();
-  const [filteredProfiles, setFilteredProfiles] = useState(profiles);
+  const [filteredProfiles, setFilteredProfiles] = useState<ProfileWithPreferences[]>([]);
   const [selectedInterest, setSelectedInterest] = useState<InterestType>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
@@ -26,7 +27,9 @@ export default function Profiles() {
   }, []);
 
   useEffect(() => {
-    setFilteredProfiles(profiles);
+    if (profiles && profiles.length > 0) {
+      setFilteredProfiles(profiles);
+    }
   }, [profiles]);
 
   const checkAuth = async () => {
@@ -37,6 +40,8 @@ export default function Profiles() {
   };
 
   const handleFilterChange = () => {
+    if (!profiles || profiles.length === 0) return;
+    
     let filtered = [...profiles];
 
     if (searchTerm) {
