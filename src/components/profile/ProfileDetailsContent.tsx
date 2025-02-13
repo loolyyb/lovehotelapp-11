@@ -36,7 +36,7 @@ export function ProfileDetailsContent({
   };
   return <motion.div variants={containerVariants} initial="hidden" animate="visible" className="relative bg-gradient-to-br from-rose-50/80 to-burgundy-50/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8 space-y-8 overflow-hidden">
       {/* Decorative elements */}
-      <div className="absolute inset-0 -z-10 bg-gray-800 hover:bg-gray-700">
+      <div className="absolute inset-0 -z-10 bg-zinc-900 hover:bg-zinc-800">
         <div className="absolute top-0 left-1/4 w-64 h-64 bg-rose-100/30 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
         <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-burgundy-100/30 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" />
       </div>
