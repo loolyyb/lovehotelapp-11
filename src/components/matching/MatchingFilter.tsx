@@ -1,7 +1,7 @@
 
 import { Search, ChevronDown } from "lucide-react";
 import { SearchFilter } from "./filters/SearchFilter";
-import { LocationFilter } from "./filters/LocationFilter";
+import { LocationFilter, LocationType } from "./filters/LocationFilter";
 import { StatusFilter } from "./filters/StatusFilter";
 import { OrientationFilter } from "./filters/OrientationFilter";
 import { MembershipFilter } from "./filters/MembershipFilter";
@@ -22,8 +22,8 @@ interface MatchingFilterProps {
   onInterestChange: (value: InterestType) => void;
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  location: string;
-  onLocationChange: (value: string) => void;
+  location: LocationType;
+  onLocationChange: (value: LocationType) => void;
   status: StatusType;
   onStatusChange: (value: StatusType) => void;
   orientation: string;

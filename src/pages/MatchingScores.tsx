@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles } from "lucide-react";
 import { MatchingFilter } from "@/components/matching/MatchingFilter";
 import { MatchingCard } from "@/components/matching/MatchingCard";
+import { LocationType } from "@/components/matching/filters/LocationFilter";
 
 type InterestType = "all" | "casual" | "serious" | "libertine" | "bdsm" | "exhibitionist" | "open_curtains" | "speed_dating";
 type StatusType = "all" | "single_man" | "married_man" | "single_woman" | "married_woman" | "couple_mf" | "couple_mm" | "couple_ff";
@@ -25,6 +27,7 @@ interface Preferences {
   open_curtains_interest: boolean;
   speed_dating_interest: boolean;
   libertine_party_interest: boolean;
+  location: LocationType | null;
 }
 
 export default function MatchingScores() {
@@ -32,7 +35,7 @@ export default function MatchingScores() {
   const [loading, setLoading] = useState(true);
   const [selectedInterest, setSelectedInterest] = useState<InterestType>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState<LocationType>("all");
   const [status, setStatus] = useState<StatusType>("all");
   const [orientation, setOrientation] = useState("");
   const [membershipTypes, setMembershipTypes] = useState<string[]>([]);

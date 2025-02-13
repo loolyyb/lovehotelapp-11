@@ -8,9 +8,18 @@ import {
 } from "@/components/ui/select";
 import { MapPin } from "lucide-react";
 
+// Utiliser les mêmes valeurs que dans LocationSection
+export const parisLocations = {
+  "all": "Toutes les localisations",
+  "paris-chatelet": "Paris Châtelet",
+  "paris-pigalle": "Paris Pigalle"
+} as const;
+
+export type LocationType = keyof typeof parisLocations;
+
 interface LocationFilterProps {
-  location: string;
-  onLocationChange: (value: string) => void;
+  location: LocationType;
+  onLocationChange: (value: LocationType) => void;
 }
 
 export function LocationFilter({ location, onLocationChange }: LocationFilterProps) {
@@ -24,9 +33,11 @@ export function LocationFilter({ location, onLocationChange }: LocationFilterPro
           </div>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Toutes les localisations</SelectItem>
-          <SelectItem value="paris-chatelet">Paris Châtelet</SelectItem>
-          <SelectItem value="paris-pigalle">Paris Pigalle</SelectItem>
+          {Object.entries(parisLocations).map(([value, label]) => (
+            <SelectItem key={value} value={value}>
+              {label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>
