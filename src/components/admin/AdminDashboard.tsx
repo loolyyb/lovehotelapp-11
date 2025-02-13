@@ -197,7 +197,7 @@ export function AdminDashboard() {
               <div>
                 <h3 className="text-lg font-semibold mb-4">Statistiques Utilisateurs</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 border rounded-lg bg-card">
+                  <div className="p-4 border rounded-lg bg-pink-900 hover:bg-pink-800">
                     <h3 className="font-semibold mb-2">Total Utilisateurs</h3>
                     <p className="text-2xl">{users?.length || 0}</p>
                   </div>
