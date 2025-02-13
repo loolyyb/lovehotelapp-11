@@ -63,17 +63,17 @@ export function UpdatePrompt() {
     <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-lg animate-slide-in-bottom">
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex-1 mr-4">
-          <h3 className="text-lg font-semibold text-burgundy">
+          <h3 className="text-lg font-semibold text-rose-500">
             Mise à jour disponible
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-800">
             Une nouvelle version de Love Hotel est disponible
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <Button
             onClick={handleUpdate}
-            className="bg-burgundy hover:bg-burgundy/90 text-white select-none"
+            className="bg-burgundy hover:bg-burgundy/90 text-gray-800 select-none"
           >
             Mettre à jour
           </Button>
