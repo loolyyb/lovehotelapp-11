@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuthStore } from "@/stores/adminAuthStore";
@@ -54,6 +53,42 @@ export function AdminDashboard() {
         `)
         .order('created_at', { ascending: false })
         .limit(100);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: eventsStats } = useQuery({
+    queryKey: ['admin-events-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: conversationsStats } = useQuery({
+    queryKey: ['admin-conversations-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: profilesStats } = useQuery({
+    queryKey: ['admin-profiles-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
       
       if (error) throw error;
       return data;
@@ -163,24 +198,103 @@ export function AdminDashboard() {
 
         <TabsContent value="stats">
           <Card className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold mb-2">Total Utilisateurs</h3>
-                <p className="text-2xl">{users?.length || 0}</p>
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Statistiques Utilisateurs</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Total Utilisateurs</h3>
+                    <p className="text-2xl">{users?.length || 0}</p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Membres Premium</h3>
+                    <p className="text-2xl">
+                      {profilesStats?.filter(p => p.is_love_hotel_member).length || 0}
+                    </p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Nouveaux Utilisateurs (24h)</h3>
+                    <p className="text-2xl">
+                      {profilesStats?.filter(p => 
+                        new Date(p.created_at) > new Date(Date.now() - 24*60*60*1000)
+                      ).length || 0}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold mb-2">Messages Aujourd'hui</h3>
-                <p className="text-2xl">
-                  {messages?.filter(m => 
-                    new Date(m.created_at).toDateString() === new Date().toDateString()
-                  ).length || 0}
-                </p>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Statistiques Messages</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Messages Aujourd'hui</h3>
+                    <p className="text-2xl">
+                      {messages?.filter(m => 
+                        new Date(m.created_at).toDateString() === new Date().toDateString()
+                      ).length || 0}
+                    </p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Total Conversations</h3>
+                    <p className="text-2xl">{conversationsStats?.length || 0}</p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Messages cette semaine</h3>
+                    <p className="text-2xl">
+                      {messages?.filter(m => 
+                        new Date(m.created_at) > new Date(Date.now() - 7*24*60*60*1000)
+                      ).length || 0}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold mb-2">Utilisateurs Actifs</h3>
-                <p className="text-2xl">
-                  {users?.length || 0}
-                </p>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Statistiques Événements</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Total Événements</h3>
+                    <p className="text-2xl">{eventsStats?.length || 0}</p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Événements Actifs</h3>
+                    <p className="text-2xl">
+                      {eventsStats?.filter(e => 
+                        new Date(e.event_date) > new Date()
+                      ).length || 0}
+                    </p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Événements Privés</h3>
+                    <p className="text-2xl">
+                      {eventsStats?.filter(e => e.is_private).length || 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Activité Générale</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Utilisteurs avec Photo</h3>
+                    <p className="text-2xl">
+                      {profilesStats?.filter(p => p.avatar_url).length || 0}
+                    </p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Profils Complétés</h3>
+                    <p className="text-2xl">
+                      {profilesStats?.filter(p => p.bio && p.description).length || 0}
+                    </p>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-card">
+                    <h3 className="font-semibold mb-2">Profils Vérifiés</h3>
+                    <p className="text-2xl">
+                      {profilesStats?.filter(p => p.role === 'verified_user').length || 0}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </Card>
