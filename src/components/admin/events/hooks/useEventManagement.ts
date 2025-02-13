@@ -29,7 +29,7 @@ export function useEventManagement() {
         is_private: values.is_private,
         price: values.free_for_members ? null : values.price,
         free_for_members: values.free_for_members,
-        created_by: "00000000-0000-0000-0000-000000000000" // ID par défaut pour l'administration
+        created_by: "c9c1b364-9d15-44de-8013-0180cc128798" // ID de l'utilisateur admin
       };
 
       console.log("Event data to save:", eventData);
