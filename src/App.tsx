@@ -36,8 +36,7 @@ const getBasename = () => {
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
-  const { currentThemeName, switchTheme } = useTheme();
-  const { toast } = useToast();
+  const { currentThemeName } = useTheme();
 
   useEffect(() => {
     console.log("AppContent mounted");
@@ -47,14 +46,6 @@ function AppContent() {
     console.log("Is preview:", isPreviewEnvironment());
   }, [session, loading, currentThemeName]);
 
-  if (loading && !isPreviewEnvironment()) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div 
       data-theme={currentThemeName} 
@@ -62,7 +53,13 @@ function AppContent() {
     >
       {!isPreviewEnvironment() && session && <Header userProfile={userProfile} />}
       <div className={`flex-grow ${!isPreviewEnvironment() && session ? "pt-[4.5rem]" : ""}`}>
-        <AppRoutes session={session} />
+        {loading && !isPreviewEnvironment() ? (
+          <div className="min-h-screen flex items-center justify-center">
+            <Loader className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <AppRoutes session={session} />
+        )}
       </div>
       <Footer />
       {appConfig.features.enablePWA && !isPreviewEnvironment() && (
