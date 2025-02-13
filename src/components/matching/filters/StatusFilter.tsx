@@ -24,7 +24,7 @@ export function StatusFilter({ status, onStatusChange }: StatusFilterProps) {
           </div>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Tous les statuts</SelectItem>
+          <SelectItem value="all">Tous les statuts</SelectItem>
           <SelectItem value="single_man">Homme célibataire</SelectItem>
           <SelectItem value="married_man">Homme en couple</SelectItem>
           <SelectItem value="single_woman">Femme célibataire</SelectItem>

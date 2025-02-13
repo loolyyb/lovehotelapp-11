@@ -24,7 +24,7 @@ export function OrientationFilter({ orientation, onOrientationChange }: Orientat
           </div>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Toutes les orientations</SelectItem>
+          <SelectItem value="all">Toutes les orientations</SelectItem>
           <SelectItem value="hetero">Hétérosexuel(le)</SelectItem>
           <SelectItem value="gay">Homosexuel(le)</SelectItem>
           <SelectItem value="bisexual">Bisexuel(le)</SelectItem>
