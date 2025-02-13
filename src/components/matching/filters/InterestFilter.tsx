@@ -21,7 +21,7 @@ export function InterestFilter({ selectedInterest, onInterestChange }: InterestF
         <SelectValue placeholder="Type de relation" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">Tous les types</SelectItem>
+        <SelectItem value="all" className="bg-background">Tous les types</SelectItem>
         <SelectItem value="casual">D'un soir</SelectItem>
         <SelectItem value="serious">Relations sérieuses</SelectItem>
         <SelectItem value="libertine">Libertine</SelectItem>
