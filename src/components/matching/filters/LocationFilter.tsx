@@ -1,3 +1,4 @@
+
 import {
   Select,
   SelectContent,
@@ -23,6 +24,7 @@ export function LocationFilter({ location, onLocationChange }: LocationFilterPro
           </div>
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="">Toutes les localisations</SelectItem>
           <SelectItem value="paris-chatelet">Paris Châtelet</SelectItem>
           <SelectItem value="paris-pigalle">Paris Pigalle</SelectItem>
         </SelectContent>
