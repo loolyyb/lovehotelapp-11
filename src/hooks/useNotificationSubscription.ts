@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -54,28 +53,16 @@ export function useNotificationSubscription() {
       return false;
     }
 
-    // Si la permission est déjà accordée
-    if (Notification.permission === 'granted') {
-      return true;
-    }
-
-    // Demander la permission AVANT de vérifier si elle est refusée
+    // Demander la permission directement
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         return true;
-      } else if (permission === 'denied') {
+      } else {
         toast({
           variant: "destructive",
           title: "Notifications bloquées",
           description: "Vous devez autoriser les notifications dans les paramètres de votre navigateur.",
-        });
-        return false;
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Permission refusée",
-          description: "Vous devez autoriser les notifications pour recevoir les alertes.",
         });
         return false;
       }
