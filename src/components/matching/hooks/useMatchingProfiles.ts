@@ -14,6 +14,7 @@ export interface Profile {
   full_name: string;
   avatar_url: string;
   bio: string;
+  description: string;
   compatibility_score?: number;
   relationship_type: string[];
   sexual_orientation: string;
@@ -59,21 +60,25 @@ export const useMatchingProfiles = ({
     let score = 0;
     let total = 0;
 
-    if (profile.relationship_type) {
-      score += profile.relationship_type.length * 20;
-      total += profile.relationship_type.length * 20;
+    // Score basé sur le type de relation
+    if (profile.relationship_type && selectedInterest !== 'all') {
+      score += profile.relationship_type.includes(selectedInterest) ? 30 : 0;
+      total += 30;
     }
 
-    if (preferences.open_curtains_interest) {
-      score += 15;
+    // Score basé sur les préférences des rideaux ouverts
+    if (openCurtains && preferences.open_curtains_interest) {
+      score += 20;
     }
-    total += 15;
+    total += 20;
 
+    // Score basé sur les intérêts de speed dating
     if (preferences.speed_dating_interest) {
       score += 15;
     }
     total += 15;
 
+    // Score basé sur les intérêts libertins
     if (preferences.libertine_party_interest) {
       score += 15;
     }
@@ -90,13 +95,39 @@ export const useMatchingProfiles = ({
         return;
       }
 
-      const { data: profilesData, error: profilesError } = await supabase
+      console.log('Fetching profiles with filters:', {
+        selectedInterest,
+        searchTerm,
+        status,
+        orientation,
+        membershipTypes,
+        openCurtains
+      });
+
+      let query = supabase
         .from("profiles")
         .select("*")
         .neq("user_id", session.user.id);
 
+      // Appliquer les filtres
+      if (status !== "all") {
+        query = query.eq("status", status);
+      }
+
+      if (orientation !== "") {
+        query = query.eq("sexual_orientation", orientation);
+      }
+
+      if (membershipTypes.includes("loolyb")) {
+        query = query.eq("is_loolyb_holder", true);
+      }
+
+      // Récupérer les profils
+      const { data: profilesData, error: profilesError } = await query;
+
       if (profilesError) throw profilesError;
 
+      // Récupérer les préférences
       const { data: preferencesData, error: preferencesError } = await supabase
         .from("preferences")
         .select("*");
@@ -107,36 +138,41 @@ export const useMatchingProfiles = ({
         preferencesData.map(pref => [pref.user_id, pref])
       );
 
-      let compatibleProfiles = profilesData.map((profile: Profile) => {
-        const preferences = preferencesMap.get(profile.user_id) as UserPreferences;
-        return {
-          ...profile,
-          compatibility_score: calculateCompatibilityScore(profile, preferences)
-        };
-      });
+      // Filtrer et trier les profils
+      let compatibleProfiles = profilesData
+        .filter((profile: Profile) => {
+          // Filtre de recherche textuelle
+          if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            return (
+              profile.full_name?.toLowerCase().includes(searchLower) ||
+              profile.bio?.toLowerCase().includes(searchLower) ||
+              profile.description?.toLowerCase().includes(searchLower)
+            );
+          }
+          return true;
+        })
+        .filter((profile: Profile) => {
+          // Filtre de type de relation
+          if (selectedInterest !== "all") {
+            return profile.relationship_type?.includes(selectedInterest);
+          }
+          return true;
+        })
+        .map((profile: Profile) => {
+          const preferences = preferencesMap.get(profile.user_id) as UserPreferences;
+          return {
+            ...profile,
+            compatibility_score: calculateCompatibilityScore(profile, preferences)
+          };
+        });
 
-      if (status !== "all") {
-        compatibleProfiles = compatibleProfiles.filter(
-          profile => profile.status === status
-        );
-      }
-
-      if (orientation !== "") {
-        compatibleProfiles = compatibleProfiles.filter(
-          profile => profile.sexual_orientation === orientation
-        );
-      }
-
-      if (membershipTypes.includes("loolyb")) {
-        compatibleProfiles = compatibleProfiles.filter(
-          profile => profile.is_loolyb_holder
-        );
-      }
-
+      // Trier par score de compatibilité
       compatibleProfiles.sort((a, b) => 
         (b.compatibility_score || 0) - (a.compatibility_score || 0)
       );
 
+      console.log('Filtered profiles:', compatibleProfiles.length);
       setProfiles(compatibleProfiles);
     } catch (error: any) {
       console.error("Error fetching profiles:", error);

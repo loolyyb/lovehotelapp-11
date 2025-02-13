@@ -17,6 +17,9 @@ export function MatchingResults({ profiles, onProfileClick, onMessageClick }: Ma
         <p className="text-lg text-burgundy">
           Aucun profil compatible trouvé pour le moment
         </p>
+        <p className="text-sm text-gray-600 mt-2">
+          Essayez d'ajuster vos filtres pour voir plus de résultats
+        </p>
       </div>
     );
   }
