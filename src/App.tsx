@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Header } from "./components/layout/Header";
@@ -11,6 +12,17 @@ import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
 import { appConfig } from "./config/app.config";
 import { useToast } from "./hooks/use-toast";
 import { Loader } from "lucide-react";
+
+// Fonction utilitaire pour détecter l'environnement de preview
+const getBasename = () => {
+  const hostname = window.location.hostname;
+  if (hostname.includes('preview--') && hostname.endsWith('.lovable.app')) {
+    // Extrait le nom du projet de l'URL de preview (ex: preview--project-name.lovable.app)
+    const projectName = hostname.split('--')[1].split('.')[0];
+    return `/${projectName}`;
+  }
+  return '/';
+};
 
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
@@ -61,9 +73,12 @@ function AppContent() {
 }
 
 function App() {
+  const basename = getBasename();
+  console.log('Current basename:', basename); // Pour le debugging
+
   return (
     <ThemeProvider>
-      <Router>
+      <Router basename={basename}>
         <AppContent />
       </Router>
     </ThemeProvider>
