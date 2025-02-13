@@ -7,24 +7,33 @@ import { BrowserTracing } from "@sentry/tracing";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./index.css";
 
-// Initialize Sentry
-Sentry.init({
-  dsn: "https://5c08652afca264d9e6bf17808b646ea9@o4508588731924480.ingest.de.sentry.io/4508588759973968",
-  integrations: [
-    new BrowserTracing({
-      tracePropagationTargets: ["localhost", /^https:\/\/lovable\.dev/],
-    }),
-  ],
-  tracesSampleRate: 1.0,
-  environment: import.meta.env.MODE,
-});
+// Fonction pour détecter l'environnement de preview
+const isPreviewEnvironment = () => {
+  const hostname = window.location.hostname;
+  return hostname.includes('preview--') && hostname.endsWith('.lovable.app');
+};
 
-// Create a client
+// Initialize Sentry only if not in preview
+if (!isPreviewEnvironment()) {
+  Sentry.init({
+    dsn: "https://5c08652afca264d9e6bf17808b646ea9@o4508588731924480.ingest.de.sentry.io/4508588759973968",
+    integrations: [
+      new BrowserTracing({
+        tracePropagationTargets: ["localhost", /^https:\/\/lovable\.dev/],
+      }),
+    ],
+    tracesSampleRate: 1.0,
+    environment: import.meta.env.MODE,
+  });
+}
+
+// Create a client with preview-specific settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
+      retry: isPreviewEnvironment() ? 0 : 1, // Disable retries in preview
+      enabled: !isPreviewEnvironment(), // Disable automatic data fetching in preview
     },
   },
 });
@@ -41,12 +50,6 @@ root.render(
     </QueryClientProvider>
   </React.StrictMode>
 );
-
-// Fonction pour détecter l'environnement de preview
-const isPreviewEnvironment = () => {
-  const hostname = window.location.hostname;
-  return hostname.includes('preview--') && hostname.endsWith('.lovable.app');
-};
 
 // Nettoyage des service workers existants en mode preview
 if (isPreviewEnvironment() && 'serviceWorker' in navigator) {
