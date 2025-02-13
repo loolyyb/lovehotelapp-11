@@ -1,3 +1,4 @@
+
 import { Tables } from "@/integrations/supabase/types";
 import { MapPin, Heart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -34,7 +35,7 @@ export function ProfilePreferences({ preferences, profile }: ProfilePreferencesP
             </motion.div>
             <h3 className="font-semibold">Localisation</h3>
           </div>
-          <p className="text-gray-700">{getLocationLabel(preferences.location)}</p>
+          <p className="text-gray-800">{getLocationLabel(preferences.location)}</p>
         </motion.div>
       )}
       
@@ -58,7 +59,7 @@ export function ProfilePreferences({ preferences, profile }: ProfilePreferencesP
             </motion.div>
             <h3 className="font-semibold">Orientation</h3>
           </div>
-          <p className="text-gray-700">{profile.sexual_orientation}</p>
+          <p className="text-gray-800">{profile.sexual_orientation}</p>
         </motion.div>
       )}
     </div>
