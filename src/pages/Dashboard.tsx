@@ -41,7 +41,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[linear-gradient(to_bottom,#1E1E1E_0%,#CD0067_100%)]">
+    <div className="min-h-screen flex flex-col bg-[linear-gradient(45deg,#1E1E1E_0%,#CD0067_100%)]">
       {/* Background patterns */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(205,0,103,0.2),transparent_40%)]" />
