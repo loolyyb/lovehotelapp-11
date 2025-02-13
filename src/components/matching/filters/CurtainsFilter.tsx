@@ -1,3 +1,4 @@
+
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Blinds } from "lucide-react";
@@ -14,6 +15,7 @@ export function CurtainsFilter({ openCurtains, onOpenCurtainsChange }: CurtainsF
         id="open-curtains"
         checked={openCurtains}
         onCheckedChange={onOpenCurtainsChange}
+        className="data-[state=checked]:bg-[#CD0067]"
       />
       <Label htmlFor="open-curtains" className="flex items-center gap-2 cursor-pointer">
         <Blinds className="w-4 h-4" />
