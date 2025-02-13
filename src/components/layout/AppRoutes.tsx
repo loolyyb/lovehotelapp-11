@@ -1,9 +1,7 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
-import Profiles from "@/pages/Profiles";
 import ProfileDetails from "@/pages/ProfileDetails";
 import Landing from "@/pages/Landing";
 import Features from "@/pages/Features";
@@ -41,7 +39,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     if (!session?.user) return;
 
     try {
-      // On récupère la dernière préférence créée pour l'utilisateur
       const { data: preferences, error } = await supabase
         .from('preferences')
         .select('qualification_completed, created_at')
@@ -52,7 +49,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
 
       if (error) {
         console.error('Error checking qualification status:', error);
-        // Si l'erreur est qu'aucune préférence n'existe, on considère que l'utilisateur doit faire la qualification
         if (error.code === 'PGRST116') {
           setNeedsQualification(true);
           return;
@@ -97,7 +93,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       />
       <Route
         path="/profiles"
-        element={session ? <Profiles /> : <Navigate to="/login" replace />}
+        element={session ? <Navigate to="/matching-scores" replace /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/profile/:id"
