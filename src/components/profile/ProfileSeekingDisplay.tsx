@@ -29,7 +29,7 @@ export function ProfileSeekingDisplay({ seeking }: ProfileSeekingDisplayProps) {
   };
 
   return (
-    <div className="mt-8">
+    <div className="mt-4">
       <h2 className="text-xl font-semibold text-burgundy mb-4">Recherche</h2>
       <Card className="p-6">
         <div className="space-y-2">
