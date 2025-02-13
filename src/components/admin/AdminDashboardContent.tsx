@@ -8,6 +8,7 @@ import { ThemeTab } from "./dashboard/ThemeTab";
 import { UsersTab } from "./dashboard/UsersTab";
 import { ConversationsTab } from "./dashboard/ConversationsTab";
 import { EventsManager } from "./events/EventsManager";
+import { PushNotificationsManager } from "./notifications/PushNotificationsManager";
 import { Session } from "@supabase/supabase-js";
 
 interface AdminDashboardContentProps {
@@ -28,6 +29,7 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
           <TabsTrigger value="events">Événements</TabsTrigger>
           <TabsTrigger value="ads">Publicités</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications Push</TabsTrigger>
         </TabsList>
 
         <TabsContent value="theme">
@@ -56,6 +58,10 @@ export function AdminDashboardContent({ session }: AdminDashboardContentProps) {
 
         <TabsContent value="logs">
           <LogsManager />
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <PushNotificationsManager session={session} />
         </TabsContent>
       </Tabs>
     </div>
