@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";
@@ -27,15 +26,14 @@ interface AppRoutesProps {
 }
 
 const isPreviewEnvironment = () => {
-  return window.location.hostname.includes('preview--') && 
-         window.location.hostname.endsWith('.lovable.app');
+  const hostname = window.location.hostname;
+  return hostname.includes('preview--') && hostname.endsWith('.lovable.app');
 };
 
 export const AppRoutes = ({ session }: AppRoutesProps) => {
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
   const { toast } = useToast();
 
-  // Only check qualification in non-preview environments
   useEffect(() => {
     if (session?.user && !isPreviewEnvironment()) {
       checkQualificationStatus();
@@ -80,12 +78,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     }
   };
 
-  // In preview mode, we don't show the qualification journey
   if (session && needsQualification && !isPreviewEnvironment()) {
     return <QualificationJourney onComplete={() => setNeedsQualification(false)} />;
   }
 
-  // Helper function to handle protected routes in preview mode
   const ProtectedRoute = ({ element }: { element: React.ReactNode }) => {
     if (isPreviewEnvironment()) {
       return <>{element}</>;
@@ -97,7 +93,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     <Routes>
       <Route
         path="/"
-        element={session ? <Dashboard /> : <Landing />}
+        element={isPreviewEnvironment() ? <Landing /> : (session ? <Dashboard /> : <Landing />)}
       />
       <Route
         path="/login"

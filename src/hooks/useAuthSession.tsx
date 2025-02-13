@@ -1,7 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
+
+const isPreviewEnvironment = () => {
+  const hostname = window.location.hostname;
+  return hostname.includes('preview--') && hostname.endsWith('.lovable.app');
+};
 
 export const useAuthSession = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -35,7 +41,6 @@ export const useAuthSession = () => {
 
       if (createError) throw createError;
 
-      // Create initial preferences for qualification
       const { error: prefError } = await supabase
         .from('preferences')
         .insert([{
@@ -60,6 +65,11 @@ export const useAuthSession = () => {
   };
 
   const fetchUserProfile = async (userId: string) => {
+    if (isPreviewEnvironment()) {
+      console.log("Preview environment detected, skipping profile fetch");
+      return;
+    }
+
     try {
       console.log("Fetching profile for user:", userId);
       const { data: profile, error } = await supabase
@@ -73,7 +83,6 @@ export const useAuthSession = () => {
       }
 
       if (!profile) {
-        // Create profile if it doesn't exist
         const newProfile = await createProfile(userId);
         setUserProfile(newProfile);
         return;
@@ -91,25 +100,34 @@ export const useAuthSession = () => {
   };
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initSession = async () => {
+      if (isPreviewEnvironment()) {
+        console.log("Preview environment detected, bypassing session check");
+        setLoading(false);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       if (session) {
-        fetchUserProfile(session.user.id);
+        await fetchUserProfile(session.user.id);
       }
       setLoading(false);
-    });
+    };
 
-    // Listen for auth changes
+    initSession();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.id);
-      setSession(session);
-      if (session) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setUserProfile(null);
+      if (!isPreviewEnvironment()) {
+        setSession(session);
+        if (session) {
+          await fetchUserProfile(session.user.id);
+        } else {
+          setUserProfile(null);
+        }
       }
     });
 
