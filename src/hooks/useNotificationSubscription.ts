@@ -54,11 +54,6 @@ export function useNotificationSubscription() {
       return false;
     }
 
-    // Si la permission est déjà accordée
-    if (Notification.permission === 'granted') {
-      return true;
-    }
-
     // Si la permission est refusée
     if (Notification.permission === 'denied') {
       toast({
@@ -67,6 +62,11 @@ export function useNotificationSubscription() {
         description: "Vous devez autoriser les notifications dans les paramètres de votre navigateur.",
       });
       return false;
+    }
+
+    // Si la permission est déjà accordée
+    if (Notification.permission === 'granted') {
+      return true;
     }
 
     // Demander la permission
@@ -102,9 +102,11 @@ export function useNotificationSubscription() {
         return false;
       }
 
-      // Demander la permission
+      // Vérifier et demander la permission
       const permissionGranted = await requestNotificationPermission();
       if (!permissionGranted) {
+        // Réinitialiser le switch si la permission est refusée
+        setIsSubscribed(false);
         return false;
       }
 
@@ -136,6 +138,7 @@ export function useNotificationSubscription() {
     } catch (error) {
       console.error('Erreur lors de l\'inscription aux notifications:', error);
       AlertService.captureException(error as Error);
+      setIsSubscribed(false); // Réinitialiser le switch en cas d'erreur
       toast({
         variant: "destructive",
         title: "Erreur",
