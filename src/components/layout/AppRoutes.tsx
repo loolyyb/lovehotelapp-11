@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";
@@ -27,10 +28,16 @@ interface AppRoutesProps {
 
 const isPreviewEnvironment = () => {
   const hostname = window.location.hostname;
-  return hostname.includes('preview--') && hostname.endsWith('.lovable.app');
+  console.log("AppRoutes - Current hostname:", hostname);
+  const isPreview = hostname.includes('preview--') && hostname.endsWith('.lovable.app');
+  console.log("AppRoutes - Is preview environment:", isPreview);
+  return isPreview;
 };
 
 export const AppRoutes = ({ session }: AppRoutesProps) => {
+  console.log("AppRoutes rendering. Session:", session);
+  console.log("Is preview environment:", isPreviewEnvironment());
+
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
   const { toast } = useToast();
 
@@ -82,18 +89,12 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     return <QualificationJourney onComplete={() => setNeedsQualification(false)} />;
   }
 
-  const ProtectedRoute = ({ element }: { element: React.ReactNode }) => {
-    if (isPreviewEnvironment()) {
-      return <>{element}</>;
-    }
-    return session ? <>{element}</> : <Navigate to="/login" replace />;
-  };
-
+  console.log("AppRoutes - About to render routes");
   return (
     <Routes>
       <Route
         path="/"
-        element={isPreviewEnvironment() ? <Landing /> : (session ? <Dashboard /> : <Landing />)}
+        element={<Landing />}
       />
       <Route
         path="/login"
@@ -101,35 +102,43 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       />
       <Route
         path="/profile"
-        element={<ProtectedRoute element={<Profile />} />}
-      />
-      <Route
-        path="/profiles"
-        element={<ProtectedRoute element={<Navigate to="/matching-scores" replace />} />}
+        element={session ? <Profile /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/profile/:id"
-        element={<ProtectedRoute element={<ProfileDetails />} />}
-      />
-      <Route
-        path="/messages"
-        element={<ProtectedRoute element={<Messages />} />}
-      />
-      <Route
-        path="/matching-scores"
-        element={<ProtectedRoute element={<MatchingScores />} />}
-      />
-      <Route
-        path="/events"
-        element={<ProtectedRoute element={<Events />} />}
-      />
-      <Route
-        path="/challenges"
-        element={<ProtectedRoute element={<Challenges />} />}
+        element={session ? <ProfileDetails /> : <Navigate to="/login" replace />}
       />
       <Route
         path="/features"
         element={<Features />}
+      />
+      <Route
+        path="/restaurant-du-love"
+        element={<RestaurantDuLove />}
+      />
+      <Route
+        path="/messages"
+        element={session ? <Messages /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/matching-scores"
+        element={session ? <MatchingScores /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/events"
+        element={session ? <Events /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/challenges"
+        element={session ? <Challenges /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/reserver-room"
+        element={session ? <ReserverRoom /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/rideaux-ouverts"
+        element={<RideauxOuverts />}
       />
       <Route
         path="/options"
@@ -138,18 +147,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/lover-coin"
         element={<LoverCoin />}
-      />
-      <Route
-        path="/reserver-room"
-        element={<ProtectedRoute element={<ReserverRoom />} />}
-      />
-      <Route
-        path="/rideaux-ouverts"
-        element={<RideauxOuverts />}
-      />
-      <Route
-        path="/restaurant-du-love"
-        element={<RestaurantDuLove />}
       />
       <Route
         path="/admin"

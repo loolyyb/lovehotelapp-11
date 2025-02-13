@@ -15,13 +15,17 @@ import { Loader } from "lucide-react";
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 
-// Fonction utilitaire pour détecter l'environnement de preview
-const getBasename = () => {
+const isPreviewEnvironment = () => {
   const hostname = window.location.hostname;
+  console.log("Current hostname:", hostname);
   const isPreview = hostname.includes('preview--') && hostname.endsWith('.lovable.app');
-  if (isPreview) {
-    // Extrait le nom du projet de l'URL de preview (ex: preview--project-name.lovable.app)
-    const projectName = hostname.split('--')[1].split('.')[0];
+  console.log("Is preview environment:", isPreview);
+  return isPreview;
+};
+
+const getBasename = () => {
+  if (isPreviewEnvironment()) {
+    const projectName = window.location.hostname.split('--')[1].split('.')[0];
     console.log('Preview environment detected, basename:', `/${projectName}`);
     return `/${projectName}`;
   }
@@ -40,27 +44,10 @@ function AppContent() {
     console.log("Session:", session);
     console.log("Loading:", loading);
     console.log("Current theme:", currentThemeName);
+    console.log("Is preview:", isPreviewEnvironment());
   }, [session, loading, currentThemeName]);
 
-  useEffect(() => {
-    const initTheme = async () => {
-      try {
-        if (!session) return;
-        await switchTheme("lover");
-      } catch (error) {
-        console.error("Erreur lors du changement de thème:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger le thème. Veuillez vous connecter et réessayer.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    initTheme();
-  }, [session, switchTheme, toast]);
-
-  if (loading) {
+  if (loading && !isPreviewEnvironment()) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader className="w-8 h-8 animate-spin text-primary" />
@@ -73,12 +60,12 @@ function AppContent() {
       data-theme={currentThemeName} 
       className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}
     >
-      {session && <Header userProfile={userProfile} />}
-      <div className="flex-grow pt-[4.5rem]">
+      {!isPreviewEnvironment() && session && <Header userProfile={userProfile} />}
+      <div className={`flex-grow ${!isPreviewEnvironment() && session ? "pt-[4.5rem]" : ""}`}>
         <AppRoutes session={session} />
       </div>
       <Footer />
-      {appConfig.features.enablePWA && (
+      {appConfig.features.enablePWA && !isPreviewEnvironment() && (
         <>
           <MobileNavBar />
           <InstallPrompt />

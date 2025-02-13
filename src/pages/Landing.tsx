@@ -1,9 +1,11 @@
+
 import { Header } from "@/components/landing/Header";
 import { Hero } from "@/components/landing/Hero";
 import { Features } from "@/components/landing/Features";
 import { CTA } from "@/components/landing/CTA";
 
 export default function Landing() {
+  console.log("Rendering Landing page");
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
       <Header />
