@@ -6,6 +6,8 @@ import { Header } from "@/components/landing/Header";
 import { motion } from "framer-motion";
 
 const Index = () => {
+  console.log("Rendu du composant Index");
+  
   return (
     <motion.main 
       initial={{ opacity: 0 }}

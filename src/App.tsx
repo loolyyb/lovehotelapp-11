@@ -36,6 +36,13 @@ function AppContent() {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("AppContent mounted");
+    console.log("Session:", session);
+    console.log("Loading:", loading);
+    console.log("Current theme:", currentThemeName);
+  }, [session, loading, currentThemeName]);
+
+  useEffect(() => {
     const initTheme = async () => {
       try {
         if (!session) return;
@@ -84,7 +91,9 @@ function AppContent() {
 }
 
 function App() {
+  console.log("App component rendering");
   const basename = getBasename();
+  console.log("Using basename:", basename);
 
   return (
     <ThemeProvider>
