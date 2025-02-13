@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,13 +21,14 @@ interface Profile {
   relationship_type: string[];
   sexual_orientation: string;
   status: StatusType | null;
+  is_loolyb_holder: boolean;
 }
 
-interface Preferences {
+interface UserPreferences {
   open_curtains_interest: boolean;
   speed_dating_interest: boolean;
   libertine_party_interest: boolean;
-  location: LocationType | null;
+  location: LocationType;
 }
 
 export default function MatchingScores() {
@@ -47,46 +49,37 @@ export default function MatchingScores() {
   }, [selectedInterest, searchTerm, location, status, orientation, membershipTypes, openCurtains]);
 
   const calculateCompatibilityScore = (
-    userProfile: any,
-    userPreferences: any,
-    otherProfile: Profile,
-    otherPreferences: Preferences
-  ) => {
-    let matchingPoints = 0;
-    let totalPoints = 0;
+    profile: Profile,
+    preferences: UserPreferences | null
+  ): number => {
+    if (!preferences) return 0;
 
-    // Vérifier les types de relation
-    if (userProfile.relationship_type && otherProfile.relationship_type) {
-      const commonTypes = userProfile.relationship_type.filter((type: string) =>
-        otherProfile.relationship_type.includes(type)
-      );
-      matchingPoints += commonTypes.length * 20;
-      totalPoints += Math.max(userProfile.relationship_type.length, otherProfile.relationship_type.length) * 20;
+    let score = 0;
+    let total = 0;
+
+    // Vérifier les types de relation (20 points par type en commun)
+    if (profile.relationship_type) {
+      score += profile.relationship_type.length * 20;
+      total += profile.relationship_type.length * 20;
     }
 
-    // Vérifier les intérêts spécifiques
-    if (userPreferences && otherPreferences) {
-      // Rideaux ouverts
-      if (userPreferences.open_curtains_interest === otherPreferences.open_curtains_interest) {
-        matchingPoints += 15;
-      }
-      totalPoints += 15;
-
-      // Speed dating
-      if (userPreferences.speed_dating_interest === otherPreferences.speed_dating_interest) {
-        matchingPoints += 15;
-      }
-      totalPoints += 15;
-
-      // Soirées libertines
-      if (userPreferences.libertine_party_interest === otherPreferences.libertine_party_interest) {
-        matchingPoints += 15;
-      }
-      totalPoints += 15;
+    // Vérifier les intérêts spécifiques (15 points chacun)
+    if (preferences.open_curtains_interest) {
+      score += 15;
     }
+    total += 15;
 
-    // Calculer le pourcentage de compatibilité
-    return totalPoints > 0 ? Math.round((matchingPoints / totalPoints) * 100) : 0;
+    if (preferences.speed_dating_interest) {
+      score += 15;
+    }
+    total += 15;
+
+    if (preferences.libertine_party_interest) {
+      score += 15;
+    }
+    total += 15;
+
+    return total > 0 ? Math.round((score / total) * 100) : 0;
   };
 
   const fetchProfiles = async () => {
@@ -100,62 +93,42 @@ export default function MatchingScores() {
       // Récupérer d'abord les préférences correspondant à la localisation
       const { data: preferencesData, error: preferencesError } = await supabase
         .from("preferences")
-        .select("user_id")
+        .select("*")
         .eq("location", location);
 
       if (preferencesError) throw preferencesError;
 
-      // Récupérer ensuite les profils correspondants
+      // Récupérer les profils correspondants
       const userIds = preferencesData?.map(pref => pref.user_id) || [];
       
+      if (userIds.length === 0) {
+        setProfiles([]);
+        return;
+      }
+
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select(`
-          id,
-          user_id,
-          full_name,
-          avatar_url,
-          bio,
-          relationship_type,
-          sexual_orientation,
-          status,
-          is_loolyb_holder
-        `)
+        .select("*")
         .neq("user_id", session.user.id)
-        .in("id", userIds);
+        .in("user_id", userIds);
 
       if (profilesError) throw profilesError;
 
-      // Récupérer toutes les préférences pour ces profils
-      const { data: allPreferences, error: allPreferencesError } = await supabase
-        .from("preferences")
-        .select("*")
-        .in("user_id", userIds);
-
-      if (allPreferencesError) throw allPreferencesError;
-
       // Créer une map des préférences par user_id
       const preferencesMap = new Map(
-        allPreferences.map(pref => [pref.user_id, pref])
+        preferencesData.map(pref => [pref.user_id, pref])
       );
 
-      // Filtrer et traiter les profils
+      // Associer les profils avec leurs préférences et calculer les scores
       let compatibleProfiles = profilesData.map((profile: Profile) => {
-        const preferences = preferencesMap.get(profile.id);
-        const score = calculateCompatibilityScore(
-          userProfile,
-          userPreferences,
-          profile,
-          preferences
-        );
-
+        const preferences = preferencesMap.get(profile.user_id) as UserPreferences;
         return {
           ...profile,
-          compatibility_score: score,
+          compatibility_score: calculateCompatibilityScore(profile, preferences)
         };
       });
 
-      // Appliquer les autres filtres
+      // Appliquer les filtres
       if (status !== "all") {
         compatibleProfiles = compatibleProfiles.filter(
           profile => profile.status === status
@@ -224,7 +197,7 @@ export default function MatchingScores() {
             location={location}
             onLocationChange={setLocation}
             status={status}
-            onStatusChange={setStatus}
+            onStatusChange={onStatusChange}
             orientation={orientation}
             onOrientationChange={setOrientation}
             membershipTypes={membershipTypes}
