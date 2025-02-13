@@ -991,6 +991,33 @@ export type Database = {
         }
         Relationships: []
       }
+      service_worker_cache: {
+        Row: {
+          cache_name: string
+          created_at: string | null
+          id: string
+          response_data: string | null
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          cache_name: string
+          created_at?: string | null
+          id?: string
+          response_data?: string | null
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          cache_name?: string
+          created_at?: string | null
+          id?: string
+          response_data?: string | null
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       stream_viewers: {
         Row: {
           id: string
