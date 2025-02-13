@@ -4,33 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EventFormValues } from "../types";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 
 export function useEventManagement() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const handleSubmit = async (values: EventFormValues, eventId?: string) => {
     try {
       setIsLoading(true);
       console.log("Form values:", values);
-      
-      // Vérifier l'authentification de l'utilisateur
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        console.error("Authentication error:", authError);
-        toast({
-          title: "Erreur d'authentification",
-          description: "Vous devez être connecté pour créer un événement",
-          variant: "destructive",
-        });
-        navigate('/login');
-        return;
-      }
       
       // Format the event date with the start time
       const eventDate = new Date(`${values.event_date}T${values.start_time}`);
@@ -45,7 +29,7 @@ export function useEventManagement() {
         is_private: values.is_private,
         price: values.free_for_members ? null : values.price,
         free_for_members: values.free_for_members,
-        created_by: user.id // Ajout de l'ID de l'utilisateur
+        created_by: "00000000-0000-0000-0000-000000000000" // ID par défaut pour l'administration
       };
 
       console.log("Event data to save:", eventData);
