@@ -3,21 +3,43 @@
 const CACHE_NAME = 'love-hotel-cache-v2';
 const CURRENT_VERSION = '1.0.195'; // Synchronisé avec versionDb.ts
 
+// Liste des ressources à mettre en cache
+const CACHE_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/favicon.ico',
+  '/icon-192.png',
+  '/icon-512.png'
+];
+
 // Installation du Service Worker
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Installation...');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Mise en cache globale');
-      return cache.addAll([
-        '/',
-        '/index.html',
-        '/manifest.json',
-        '/favicon.ico',
-        '/icon-192.png',
-        '/icon-512.png'
-      ]);
-    })
+    (async () => {
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        console.log('[Service Worker] Mise en cache globale');
+        
+        // Vérifie chaque ressource individuellement
+        for (const asset of CACHE_ASSETS) {
+          try {
+            const response = await fetch(asset);
+            if (response.ok) {
+              await cache.put(asset, response);
+              console.log(`[Service Worker] Ressource mise en cache avec succès: ${asset}`);
+            } else {
+              console.warn(`[Service Worker] Échec de mise en cache pour: ${asset}`);
+            }
+          } catch (error) {
+            console.error(`[Service Worker] Erreur lors de la mise en cache de ${asset}:`, error);
+          }
+        }
+      } catch (error) {
+        console.error('[Service Worker] Erreur lors de l\'installation:', error);
+      }
+    })()
   );
 });
 
@@ -41,14 +63,35 @@ self.addEventListener('activate', (event) => {
 // Interception des requêtes
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        console.log('[Service Worker] Utilisation du cache pour:', event.request.url);
-        return response;
+    (async () => {
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        const cachedResponse = await cache.match(event.request);
+        
+        if (cachedResponse) {
+          console.log('[Service Worker] Utilisation du cache pour:', event.request.url);
+          return cachedResponse;
+        }
+
+        console.log('[Service Worker] Récupération depuis le réseau pour:', event.request.url);
+        const networkResponse = await fetch(event.request);
+        
+        // Met en cache uniquement les ressources statiques
+        if (event.request.method === 'GET' && 
+            (event.request.url.endsWith('.js') || 
+             event.request.url.endsWith('.css') ||
+             event.request.url.endsWith('.png') ||
+             event.request.url.endsWith('.ico') ||
+             event.request.url.endsWith('.json'))) {
+          await cache.put(event.request, networkResponse.clone());
+        }
+        
+        return networkResponse;
+      } catch (error) {
+        console.error('[Service Worker] Erreur lors de la récupération:', error);
+        throw error;
       }
-      console.log('[Service Worker] Récupération depuis le réseau pour:', event.request.url);
-      return fetch(event.request);
-    })
+    })()
   );
 });
 
