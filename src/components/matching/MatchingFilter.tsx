@@ -1,3 +1,4 @@
+
 import { Search, ChevronDown } from "lucide-react";
 import { SearchFilter } from "./filters/SearchFilter";
 import { LocationFilter } from "./filters/LocationFilter";
@@ -49,7 +50,7 @@ export function MatchingFilter({
   onOpenCurtainsChange,
 }: MatchingFilterProps) {
   return (
-    <Collapsible className="space-y-4 p-4 bg-white/20 backdrop-blur-sm rounded-lg shadow-sm">
+    <Collapsible className="space-y-4 p-4 bg-white/20 backdrop-blur-sm rounded-lg shadow-sm mb-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-burgundy flex items-center gap-2">
           <Search className="w-5 h-5" />
