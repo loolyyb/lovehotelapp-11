@@ -1,7 +1,6 @@
 
 import { Search, ChevronDown } from "lucide-react";
 import { SearchFilter } from "./filters/SearchFilter";
-import { LocationFilter, LocationType } from "./filters/LocationFilter";
 import { StatusFilter } from "./filters/StatusFilter";
 import { OrientationFilter } from "./filters/OrientationFilter";
 import { MembershipFilter } from "./filters/MembershipFilter";
@@ -22,8 +21,6 @@ interface MatchingFilterProps {
   onInterestChange: (value: InterestType) => void;
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  location: LocationType;
-  onLocationChange: (value: LocationType) => void;
   status: StatusType;
   onStatusChange: (value: StatusType) => void;
   orientation: string;
@@ -39,8 +36,6 @@ export function MatchingFilter({
   onInterestChange,
   searchTerm,
   onSearchChange,
-  location,
-  onLocationChange,
   status,
   onStatusChange,
   orientation,
@@ -66,9 +61,8 @@ export function MatchingFilter({
       </div>
 
       <CollapsibleContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <SearchFilter searchTerm={searchTerm} onSearchChange={onSearchChange} />
-          <LocationFilter location={location} onLocationChange={onLocationChange} />
           <StatusFilter status={status} onStatusChange={onStatusChange} />
           <OrientationFilter orientation={orientation} onOrientationChange={onOrientationChange} />
         </div>

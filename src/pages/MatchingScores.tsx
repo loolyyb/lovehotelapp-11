@@ -4,13 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { MatchingFilter } from "@/components/matching/MatchingFilter";
 import { MatchingResults } from "@/components/matching/MatchingResults";
-import { LocationType } from "@/components/matching/filters/LocationFilter";
 import { useMatchingProfiles, InterestType, StatusType } from "@/components/matching/hooks/useMatchingProfiles";
 
 export default function MatchingScores() {
   const [selectedInterest, setSelectedInterest] = useState<InterestType>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [location, setLocation] = useState<LocationType>("paris-chatelet");
   const [status, setStatus] = useState<StatusType>("all");
   const [orientation, setOrientation] = useState("");
   const [membershipTypes, setMembershipTypes] = useState<string[]>([]);
@@ -55,8 +53,6 @@ export default function MatchingScores() {
             onInterestChange={setSelectedInterest}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            location={location}
-            onLocationChange={setLocation}
             status={status}
             onStatusChange={setStatus}
             orientation={orientation}
