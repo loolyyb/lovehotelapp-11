@@ -879,6 +879,7 @@ export type Database = {
           is_loolyb_holder: boolean | null
           is_love_hotel_member: boolean | null
           last_login: string | null
+          location: string | null
           loolyb_tokens: number | null
           loyalty_points: number | null
           photo_urls: string[] | null
@@ -905,6 +906,7 @@ export type Database = {
           is_loolyb_holder?: boolean | null
           is_love_hotel_member?: boolean | null
           last_login?: string | null
+          location?: string | null
           loolyb_tokens?: number | null
           loyalty_points?: number | null
           photo_urls?: string[] | null
@@ -931,6 +933,7 @@ export type Database = {
           is_loolyb_holder?: boolean | null
           is_love_hotel_member?: boolean | null
           last_login?: string | null
+          location?: string | null
           loolyb_tokens?: number | null
           loyalty_points?: number | null
           photo_urls?: string[] | null
