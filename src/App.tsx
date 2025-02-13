@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Header } from "./components/layout/Header";
 import { MobileNavBar } from "./components/layout/MobileNavBar";
@@ -8,36 +8,59 @@ import { Footer } from "./components/layout/Footer";
 import { useIsMobile } from "./hooks/use-mobile";
 import { useAuthSession } from "./hooks/useAuthSession";
 import { AppRoutes } from "./components/layout/AppRoutes";
-import { ThemeProvider } from "./providers/ThemeProvider";
+import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
 import { appConfig } from "./config/app.config";
+import { useToast } from "./hooks/use-toast";
 import { Loader } from "lucide-react";
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 
-const isPreviewEnvironment = () => {
+// Fonction utilitaire pour détecter l'environnement de preview
+const getBasename = () => {
   const hostname = window.location.hostname;
-  console.log("Current hostname:", hostname);
   const isPreview = hostname.includes('preview--') && hostname.endsWith('.lovable.app');
-  console.log("Is preview environment:", isPreview);
-  return isPreview;
+  if (isPreview) {
+    // Extrait le nom du projet de l'URL de preview (ex: preview--project-name.lovable.app)
+    const projectName = hostname.split('--')[1].split('.')[0];
+    console.log('Preview environment detected, basename:', `/${projectName}`);
+    return `/${projectName}`;
+  }
+  console.log('Production environment detected, basename: /');
+  return '/';
 };
-
-function PreviewContent() {
-  return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-white">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Mode Preview</h1>
-        <p className="text-lg text-gray-600">Cette page est en mode preview</p>
-      </div>
-    </div>
-  );
-}
 
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
+  const { currentThemeName, switchTheme } = useTheme();
+  const { toast } = useToast();
 
-  if (loading && !isPreviewEnvironment()) {
+  useEffect(() => {
+    console.log("AppContent mounted");
+    console.log("Session:", session);
+    console.log("Loading:", loading);
+    console.log("Current theme:", currentThemeName);
+  }, [session, loading, currentThemeName]);
+
+  useEffect(() => {
+    const initTheme = async () => {
+      try {
+        if (!session) return;
+        await switchTheme("lover");
+      } catch (error) {
+        console.error("Erreur lors du changement de thème:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger le thème. Veuillez vous connecter et réessayer.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    initTheme();
+  }, [session, switchTheme, toast]);
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader className="w-8 h-8 animate-spin text-primary" />
@@ -46,13 +69,16 @@ function AppContent() {
   }
 
   return (
-    <div className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}>
-      {!isPreviewEnvironment() && session && <Header userProfile={userProfile} />}
-      <div className={`flex-grow ${!isPreviewEnvironment() && session ? "pt-[4.5rem]" : ""}`}>
+    <div 
+      data-theme={currentThemeName} 
+      className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}
+    >
+      {session && <Header userProfile={userProfile} />}
+      <div className="flex-grow pt-[4.5rem]">
         <AppRoutes session={session} />
       </div>
       <Footer />
-      {appConfig.features.enablePWA && !isPreviewEnvironment() && (
+      {appConfig.features.enablePWA && (
         <>
           <MobileNavBar />
           <InstallPrompt />
@@ -66,14 +92,8 @@ function AppContent() {
 
 function App() {
   console.log("App component rendering");
-  
-  if (isPreviewEnvironment()) {
-    return <PreviewContent />;
-  }
-
-  const basename = isPreviewEnvironment() 
-    ? `/${window.location.hostname.split('--')[1].split('.')[0]}`
-    : '/';
+  const basename = getBasename();
+  console.log("Using basename:", basename);
 
   return (
     <ThemeProvider>

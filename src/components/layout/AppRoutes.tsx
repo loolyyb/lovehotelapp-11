@@ -27,20 +27,15 @@ interface AppRoutesProps {
 }
 
 const isPreviewEnvironment = () => {
-  const hostname = window.location.hostname;
-  console.log("AppRoutes - Current hostname:", hostname);
-  const isPreview = hostname.includes('preview--') && hostname.endsWith('.lovable.app');
-  console.log("AppRoutes - Is preview environment:", isPreview);
-  return isPreview;
+  return window.location.hostname.includes('preview--') && 
+         window.location.hostname.endsWith('.lovable.app');
 };
 
 export const AppRoutes = ({ session }: AppRoutesProps) => {
-  console.log("AppRoutes rendering. Session:", session);
-  console.log("Is preview environment:", isPreviewEnvironment());
-
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
   const { toast } = useToast();
 
+  // Only check qualification in non-preview environments
   useEffect(() => {
     if (session?.user && !isPreviewEnvironment()) {
       checkQualificationStatus();
@@ -85,16 +80,24 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     }
   };
 
+  // In preview mode, we don't show the qualification journey
   if (session && needsQualification && !isPreviewEnvironment()) {
     return <QualificationJourney onComplete={() => setNeedsQualification(false)} />;
   }
 
-  console.log("AppRoutes - About to render routes");
+  // Helper function to handle protected routes in preview mode
+  const ProtectedRoute = ({ element }: { element: React.ReactNode }) => {
+    if (isPreviewEnvironment()) {
+      return <>{element}</>;
+    }
+    return session ? <>{element}</> : <Navigate to="/login" replace />;
+  };
+
   return (
     <Routes>
       <Route
         path="/"
-        element={<Landing />}
+        element={session ? <Dashboard /> : <Landing />}
       />
       <Route
         path="/login"
@@ -102,43 +105,35 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       />
       <Route
         path="/profile"
-        element={session ? <Profile /> : <Navigate to="/login" replace />}
+        element={<ProtectedRoute element={<Profile />} />}
+      />
+      <Route
+        path="/profiles"
+        element={<ProtectedRoute element={<Navigate to="/matching-scores" replace />} />}
       />
       <Route
         path="/profile/:id"
-        element={session ? <ProfileDetails /> : <Navigate to="/login" replace />}
+        element={<ProtectedRoute element={<ProfileDetails />} />}
+      />
+      <Route
+        path="/messages"
+        element={<ProtectedRoute element={<Messages />} />}
+      />
+      <Route
+        path="/matching-scores"
+        element={<ProtectedRoute element={<MatchingScores />} />}
+      />
+      <Route
+        path="/events"
+        element={<ProtectedRoute element={<Events />} />}
+      />
+      <Route
+        path="/challenges"
+        element={<ProtectedRoute element={<Challenges />} />}
       />
       <Route
         path="/features"
         element={<Features />}
-      />
-      <Route
-        path="/restaurant-du-love"
-        element={<RestaurantDuLove />}
-      />
-      <Route
-        path="/messages"
-        element={session ? <Messages /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/matching-scores"
-        element={session ? <MatchingScores /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/events"
-        element={session ? <Events /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/challenges"
-        element={session ? <Challenges /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/reserver-room"
-        element={session ? <ReserverRoom /> : <Navigate to="/login" replace />}
-      />
-      <Route
-        path="/rideaux-ouverts"
-        element={<RideauxOuverts />}
       />
       <Route
         path="/options"
@@ -147,6 +142,18 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/lover-coin"
         element={<LoverCoin />}
+      />
+      <Route
+        path="/reserver-room"
+        element={<ProtectedRoute element={<ReserverRoom />} />}
+      />
+      <Route
+        path="/rideaux-ouverts"
+        element={<RideauxOuverts />}
+      />
+      <Route
+        path="/restaurant-du-love"
+        element={<RestaurantDuLove />}
       />
       <Route
         path="/admin"
