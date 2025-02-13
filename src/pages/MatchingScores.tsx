@@ -46,7 +46,7 @@ export default function MatchingScores() {
 
   useEffect(() => {
     fetchProfiles();
-  }, [selectedInterest, searchTerm, location, status, orientation, membershipTypes, openCurtains]);
+  }, [selectedInterest, searchTerm, status, orientation, membershipTypes, openCurtains]);
 
   const calculateCompatibilityScore = (
     profile: Profile,
@@ -90,29 +90,20 @@ export default function MatchingScores() {
         return;
       }
 
-      // Récupérer d'abord les préférences correspondant à la localisation
-      const { data: preferencesData, error: preferencesError } = await supabase
-        .from("preferences")
-        .select("*")
-        .eq("location", location);
-
-      if (preferencesError) throw preferencesError;
-
-      // Récupérer les profils correspondants
-      const userIds = preferencesData?.map(pref => pref.user_id) || [];
-      
-      if (userIds.length === 0) {
-        setProfiles([]);
-        return;
-      }
-
+      // Récupérer tous les profils et leurs préférences
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
-        .neq("user_id", session.user.id)
-        .in("user_id", userIds);
+        .neq("user_id", session.user.id);
 
       if (profilesError) throw profilesError;
+
+      // Récupérer toutes les préférences
+      const { data: preferencesData, error: preferencesError } = await supabase
+        .from("preferences")
+        .select("*");
+
+      if (preferencesError) throw preferencesError;
 
       // Créer une map des préférences par user_id
       const preferencesMap = new Map(
@@ -197,7 +188,7 @@ export default function MatchingScores() {
             location={location}
             onLocationChange={setLocation}
             status={status}
-            onStatusChange={onStatusChange}
+            onStatusChange={setStatus}
             orientation={orientation}
             onOrientationChange={setOrientation}
             membershipTypes={membershipTypes}
