@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";
@@ -25,12 +26,18 @@ interface AppRoutesProps {
   session: Session | null;
 }
 
+const isPreviewEnvironment = () => {
+  return window.location.hostname.includes('preview--') && 
+         window.location.hostname.endsWith('.lovable.app');
+};
+
 export const AppRoutes = ({ session }: AppRoutesProps) => {
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
   const { toast } = useToast();
 
+  // Only check qualification in non-preview environments
   useEffect(() => {
-    if (session?.user) {
+    if (session?.user && !isPreviewEnvironment()) {
       checkQualificationStatus();
     }
   }, [session]);
@@ -73,9 +80,18 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     }
   };
 
-  if (session && needsQualification) {
+  // In preview mode, we don't show the qualification journey
+  if (session && needsQualification && !isPreviewEnvironment()) {
     return <QualificationJourney onComplete={() => setNeedsQualification(false)} />;
   }
+
+  // Helper function to handle protected routes in preview mode
+  const ProtectedRoute = ({ element }: { element: React.ReactNode }) => {
+    if (isPreviewEnvironment()) {
+      return <>{element}</>;
+    }
+    return session ? <>{element}</> : <Navigate to="/login" replace />;
+  };
 
   return (
     <Routes>
@@ -89,31 +105,31 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       />
       <Route
         path="/profile"
-        element={session ? <Profile /> : <Navigate to="/login" replace />}
+        element={<ProtectedRoute element={<Profile />} />}
       />
       <Route
         path="/profiles"
-        element={session ? <Navigate to="/matching-scores" replace /> : <Navigate to="/login" replace />}
+        element={<ProtectedRoute element={<Navigate to="/matching-scores" replace />} />}
       />
       <Route
         path="/profile/:id"
-        element={session ? <ProfileDetails /> : <Navigate to="/login" replace />}
+        element={<ProtectedRoute element={<ProfileDetails />} />}
       />
       <Route
         path="/messages"
-        element={session ? <Messages /> : <Navigate to="/login" replace />}
+        element={<ProtectedRoute element={<Messages />} />}
       />
       <Route
         path="/matching-scores"
-        element={session ? <MatchingScores /> : <Navigate to="/login" replace />}
+        element={<ProtectedRoute element={<MatchingScores />} />}
       />
       <Route
         path="/events"
-        element={session ? <Events /> : <Navigate to="/login" replace />}
+        element={<ProtectedRoute element={<Events />} />}
       />
       <Route
         path="/challenges"
-        element={session ? <Challenges /> : <Navigate to="/login" replace />}
+        element={<ProtectedRoute element={<Challenges />} />}
       />
       <Route
         path="/features"
@@ -129,7 +145,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       />
       <Route
         path="/reserver-room"
-        element={session ? <ReserverRoom /> : <Navigate to="/login" replace />}
+        element={<ProtectedRoute element={<ReserverRoom />} />}
       />
       <Route
         path="/rideaux-ouverts"

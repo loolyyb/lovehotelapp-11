@@ -18,11 +18,14 @@ import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 // Fonction utilitaire pour détecter l'environnement de preview
 const getBasename = () => {
   const hostname = window.location.hostname;
-  if (hostname.includes('preview--') && hostname.endsWith('.lovable.app')) {
+  const isPreview = hostname.includes('preview--') && hostname.endsWith('.lovable.app');
+  if (isPreview) {
     // Extrait le nom du projet de l'URL de preview (ex: preview--project-name.lovable.app)
     const projectName = hostname.split('--')[1].split('.')[0];
+    console.log('Preview environment detected, basename:', `/${projectName}`);
     return `/${projectName}`;
   }
+  console.log('Production environment detected, basename: /');
   return '/';
 };
 
@@ -82,7 +85,6 @@ function AppContent() {
 
 function App() {
   const basename = getBasename();
-  console.log('Current basename:', basename); // Pour le debugging
 
   return (
     <ThemeProvider>
