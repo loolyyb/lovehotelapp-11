@@ -1,4 +1,3 @@
-
 // Version du cache
 const CACHE_NAME = 'love-hotel-cache-v2';
 const CURRENT_VERSION = '1.0.195'; // Synchronisé avec versionDb.ts
@@ -123,6 +122,36 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Gérer les événements push
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  try {
+    const data = event.data.json();
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: data.icon,
+        data: data.data,
+      })
+    );
+  } catch (error) {
+    console.error('[Service Worker] Erreur lors du traitement de la notification push:', error);
+  }
+});
+
+// Gérer les clics sur les notifications
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.notification.data?.url) {
+    event.waitUntil(
+      clients.openWindow(event.notification.data.url)
+    );
+  }
+});
+
 // Gestion des mises à jour
 self.addEventListener('message', (event) => {
   if (event.data === 'skipWaiting') {
@@ -136,4 +165,3 @@ setInterval(() => {
   console.log('[Service Worker] Vérification des mises à jour...');
   self.registration.update();
 }, 60 * 60 * 1000); // Vérifie toutes les heures
-
