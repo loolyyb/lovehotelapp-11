@@ -7,6 +7,7 @@ import { EventFormFields } from "./EventFormFields";
 import { EventFormValues, eventSchema } from "./types";
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 export interface EventFormProps {
   onSubmit: (values: EventFormValues) => Promise<void>;
@@ -23,20 +24,39 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
-      title: initialData?.title || "",
-      description: initialData?.description || "",
-      event_date: initialData?.event_date || today,
-      start_time: initialData?.start_time || "00:00",
-      end_time: initialData?.end_time || "00:00",
-      event_type: initialData?.event_type || "other",
-      is_private: initialData?.is_private || false,
-      price: initialData?.price || 0,
-      free_for_members: initialData?.free_for_members ?? true,
+      title: "",
+      description: "",
+      event_date: today,
+      start_time: "00:00",
+      end_time: "00:00",
+      event_type: "other",
+      is_private: false,
+      price: 0,
+      free_for_members: true,
       image: undefined,
     },
   });
 
-  console.log("Form default values:", form.getValues());
+  // Reset form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      console.log("Resetting form with data:", initialData);
+      form.reset({
+        title: initialData.title || "",
+        description: initialData.description || "",
+        event_date: initialData.event_date || today,
+        start_time: initialData.start_time || "00:00",
+        end_time: initialData.end_time || "00:00",
+        event_type: initialData.event_type || "other",
+        is_private: initialData.is_private || false,
+        price: initialData.price || 0,
+        free_for_members: initialData.free_for_members ?? true,
+        image: undefined,
+      });
+    }
+  }, [initialData, form, today]);
+
+  console.log("Form values after potential reset:", form.getValues());
 
   return (
     <DialogContent className="sm:max-w-[600px]">
