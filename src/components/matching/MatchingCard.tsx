@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,7 @@ export function MatchingCard({
       }}
       className="h-[220px]"
     >
-      <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-white/20 backdrop-blur-sm">
+      <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-[#40192C] border border-[#f3ebad] backdrop-blur-sm">
         <div className="p-6 space-y-4 h-full flex flex-col">
           <div
             className="flex items-center space-x-4 cursor-pointer flex-grow"
@@ -59,10 +60,10 @@ export function MatchingCard({
               </div>
             </div>
             <div className="flex-grow">
-              <h3 className="text-lg font-semibold text-burgundy">
+              <h3 className="text-lg font-semibold text-white">
                 {profile.full_name}
               </h3>
-              <p className="text-sm text-gray-600 line-clamp-2">{profile.bio}</p>
+              <p className="text-sm text-gray-200 line-clamp-2">{profile.bio}</p>
             </div>
           </div>
 
@@ -70,7 +71,7 @@ export function MatchingCard({
             <Button
               variant="ghost"
               size="sm"
-              className="text-burgundy hover:text-rose-600 hover:bg-rose-50"
+              className="text-white hover:text-[#f3ebad] hover:bg-white/10"
               onClick={() => onProfileClick(profile.id)}
             >
               <Heart className="w-5 h-5 mr-2" />
@@ -79,7 +80,7 @@ export function MatchingCard({
             <Button
               variant="ghost"
               size="sm"
-              className="text-burgundy hover:text-rose-600 hover:bg-rose-50"
+              className="text-white hover:text-[#f3ebad] hover:bg-white/10"
               onClick={() => onMessageClick(profile.id)}
             >
               <MessageSquare className="w-5 h-5 mr-2" />
