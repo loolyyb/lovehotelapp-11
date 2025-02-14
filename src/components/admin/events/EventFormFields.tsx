@@ -8,12 +8,13 @@ import { SettingsFields } from "./components/form-fields/SettingsFields";
 
 interface EventFormFieldsProps {
   form: UseFormReturn<EventFormValues>;
+  initialImageUrl?: string;
 }
 
-export function EventFormFields({ form }: EventFormFieldsProps) {
+export function EventFormFields({ form, initialImageUrl }: EventFormFieldsProps) {
   return (
     <>
-      <BasicInfoFields form={form} />
+      <BasicInfoFields form={form} initialImageUrl={initialImageUrl} />
       <DateTimeFields form={form} />
       <SettingsFields form={form} />
     </>

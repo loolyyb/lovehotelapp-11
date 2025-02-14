@@ -12,7 +12,7 @@ import { useEffect } from "react";
 export interface EventFormProps {
   onSubmit: (values: EventFormValues) => Promise<void>;
   isLoading?: boolean;
-  initialData?: Partial<EventFormValues>;
+  initialData?: Partial<EventFormValues> & { image_url?: string };
 }
 
 export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) {
@@ -72,7 +72,7 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
       </DialogHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <EventFormFields form={form} />
+          <EventFormFields form={form} initialImageUrl={initialData?.image_url} />
           <Button
             type="submit"
             className="w-full"

@@ -16,10 +16,11 @@ import { ImageIcon, X } from "lucide-react";
 
 interface BasicInfoFieldsProps {
   form: UseFormReturn<EventFormValues>;
+  initialImageUrl?: string;
 }
 
-export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
-  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
+export function BasicInfoFields({ form, initialImageUrl }: BasicInfoFieldsProps) {
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(initialImageUrl || null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -87,7 +88,7 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
                     className="relative"
                     onClick={() => document.getElementById("image-upload")?.click()}
                   >
-                    <ImageIcon className="w-4 h-4 mr-2" />
+                    <ImageIcon className="h-4 w-4 mr-2" />
                     Choisir une image
                     <input
                       id="image-upload"
@@ -97,22 +98,22 @@ export function BasicInfoFields({ form }: BasicInfoFieldsProps) {
                       onChange={handleImageChange}
                     />
                   </Button>
-                  {previewUrl && (
+                  {(previewUrl || initialImageUrl) && (
                     <Button
                       type="button"
                       variant="destructive"
                       size="icon"
                       onClick={handleRemoveImage}
                     >
-                      <X className="w-4 h-4" />
+                      <X className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
                 
-                {previewUrl && (
+                {(previewUrl || initialImageUrl) && (
                   <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-gray-200">
                     <img
-                      src={previewUrl}
+                      src={previewUrl || initialImageUrl}
                       alt="Preview"
                       className="w-full h-full object-cover"
                     />
