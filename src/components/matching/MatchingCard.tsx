@@ -43,7 +43,7 @@ export function MatchingCard({
       }}
       className="h-[220px]"
     >
-      <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-[#40192C] border border-[#f3ebad] backdrop-blur-sm">
+      <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm">
         <div className="p-6 space-y-4 h-full flex flex-col">
           <div
             className="flex items-center space-x-4 cursor-pointer flex-grow"
