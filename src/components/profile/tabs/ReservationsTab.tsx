@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { useBookings } from "@/hooks/useBookings";
 import { Loader2 } from "lucide-react";
@@ -67,14 +68,18 @@ export function ReservationsTab() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-4">
-        <h3 className="font-semibold text-lg text-burgundy mb-4">Réservations Châtelet</h3>
-        <BookingsList bookings={chateletBookings} />
+      <Card className="bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+        <div className="p-4">
+          <h3 className="font-semibold text-lg text-white mb-4">Réservations Châtelet</h3>
+          <BookingsList bookings={chateletBookings} />
+        </div>
       </Card>
 
-      <Card className="p-4">
-        <h3 className="font-semibold text-lg text-burgundy mb-4">Réservations Pigalle</h3>
-        <BookingsList bookings={pigalleBookings} />
+      <Card className="bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+        <div className="p-4">
+          <h3 className="font-semibold text-lg text-white mb-4">Réservations Pigalle</h3>
+          <BookingsList bookings={pigalleBookings} />
+        </div>
       </Card>
     </div>
   );
