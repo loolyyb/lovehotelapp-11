@@ -51,7 +51,7 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
         is_private: initialData.is_private || false,
         price: initialData.price || 0,
         free_for_members: initialData.free_for_members ?? true,
-        image: undefined,
+        image: undefined, // L'image est gérée séparément car c'est un File
       });
     }
   }, [initialData, form, today]);
