@@ -46,9 +46,9 @@ export function MatchingFilter({
   onOpenCurtainsChange,
 }: MatchingFilterProps) {
   return (
-    <Collapsible className="space-y-4 p-4 bg-white/20 backdrop-blur-sm rounded-lg shadow-sm">
+    <Collapsible className="space-y-4 p-4 bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm rounded-lg hover:shadow-lg transition-all duration-300">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-burgundy flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
           <Search className="w-5 h-5" />
           Filtrer les profils
         </h2>
