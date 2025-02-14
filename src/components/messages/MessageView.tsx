@@ -29,6 +29,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     setMessages,
     setCurrentUserId,
     setOtherUser,
+    setIsLoading,
   });
 
   const { subscribeToNewMessages } = useMessageSubscription({
@@ -52,33 +53,47 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   });
 
   useEffect(() => {
-    setIsLoading(true); // Reset loading state when conversation changes
-    getCurrentUser();
+    let mounted = true;
+    
+    const initConversation = async () => {
+      setIsLoading(true);
+      await getCurrentUser();
+      if (!mounted) return;
+      
+      if (currentUserId) {
+        await fetchMessages();
+      }
+    };
+
+    initConversation();
+
     return () => {
-      setMessages([]); // Clear messages when unmounting
+      mounted = false;
+      setMessages([]);
       setCurrentUserId(null);
       setOtherUser(null);
     };
   }, [conversationId]);
 
   useEffect(() => {
-    if (currentUserId) {
-      fetchMessages();
-      const unsubscribe = subscribeToNewMessages();
-      return () => {
-        unsubscribe();
-      };
-    }
+    if (!currentUserId) return;
+
+    const unsubscribe = subscribeToNewMessages();
+    return () => {
+      unsubscribe();
+    };
   }, [currentUserId, conversationId]);
 
   useEffect(() => {
     if (messages.length > 0) {
-      setIsLoading(false);
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const timeout = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      return () => clearTimeout(timeout);
     }
   }, [messages]);
 
-  if (isLoading) {
+  if (isLoading && !messages.length) {
     return <LoadingState />;
   }
 
