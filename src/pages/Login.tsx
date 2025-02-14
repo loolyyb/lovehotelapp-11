@@ -120,10 +120,12 @@ export default function Login() {
   }, [navigate, logger, toast]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-start justify-center bg-gradient-to-b from-champagne via-rose-50 to-cream pt-12">
-      <div className="w-full max-w-md px-4">
-        <Card className="p-8 space-y-4">
-          <h1 className="text-3xl font-playfair text-center mb-6">Se Connecter</h1>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-rose-50 to-pink-100">
+      <div className="w-full max-w-md px-4 py-8">
+        <Card className="p-8 space-y-4 backdrop-blur-sm bg-white/90 shadow-xl">
+          <h1 className="text-3xl font-cormorant text-center mb-6 text-[#ce0067]">
+            Se Connecter
+          </h1>
           <Auth
             supabaseClient={supabase}
             appearance={{
@@ -133,8 +135,21 @@ export default function Login() {
                   colors: {
                     brand: '#CE0067',
                     brandAccent: '#CE0067',
+                    brandButtonText: "white",
+                    defaultButtonBackground: "white",
+                    defaultButtonBackgroundHover: "#f9f9f9",
+                    inputBackground: "white",
+                    inputBorder: "#e2e8f0",
+                    inputBorderHover: "#CE0067",
+                    inputBorderFocus: "#CE0067",
                   }
                 }
+              },
+              className: {
+                container: "space-y-4",
+                button: "w-full px-4 py-2 rounded-md transition-colors duration-200",
+                input: "w-full px-3 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-[#CE0067]",
+                label: "block text-sm font-medium text-gray-700 mb-1"
               }
             }}
             localization={{
@@ -175,7 +190,6 @@ export default function Login() {
               },
             }}
             providers={[]}
-            theme="dark"
           />
           <p className="text-sm text-gray-600 text-center mt-4 italic">
             Pour les profils déjà membre du Love Hôtel, il suffit de vous inscrire avec votre mail de compte pour récupérer vos points et avantages

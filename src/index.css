@@ -5,19 +5,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent scrolling and zooming issues on mobile PWA */
-html, body {
-  overflow-x: hidden;
-  width: 100%;
-  position: fixed;
+/* Amélioration du comportement de défilement */
+html {
   height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: none;
 }
 
 #root {
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 @layer base {
