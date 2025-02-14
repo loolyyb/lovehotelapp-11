@@ -14,6 +14,7 @@ import { useToast } from "./hooks/use-toast";
 import { Loader } from "lucide-react";
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { UpdatePrompt } from './components/pwa/UpdatePrompt';
+import { StatusBar } from '@capacitor/status-bar';
 
 // Fonction utilitaire pour détecter l'environnement de preview
 const getBasename = () => {
@@ -29,10 +30,18 @@ const getBasename = () => {
   return '/';
 };
 
+async function setStatusBarColor(color: string) {
+  try {
+    await StatusBar.setBackgroundColor({ color });
+  } catch (error) {
+    console.log('Status bar color setting failed - probably not on mobile', error);
+  }
+}
+
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
-  const { currentThemeName, switchTheme } = useTheme();
+  const { currentThemeName, theme } = useTheme();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -46,7 +55,7 @@ function AppContent() {
     const initTheme = async () => {
       try {
         if (!session) return;
-        await switchTheme("lover");
+        await setStatusBarColor(theme.colors.statusBar);
       } catch (error) {
         console.error("Erreur lors du changement de thème:", error);
         toast({
@@ -58,7 +67,7 @@ function AppContent() {
     };
 
     initTheme();
-  }, [session, switchTheme, toast]);
+  }, [session, theme.colors.statusBar, toast]);
 
   if (loading) {
     return (
