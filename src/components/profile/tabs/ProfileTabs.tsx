@@ -1,3 +1,4 @@
+
 import { CreditCard, Heart, CalendarCheck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,7 +34,7 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="mb-6">
           <Select value={activeTab} onValueChange={handleTabChange}>
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
               <SelectValue placeholder="Sélectionnez une section">
                 {tabs.find(tab => tab.id === activeTab)?.label}
               </SelectValue>
@@ -74,7 +75,11 @@ export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
     <Tabs defaultValue="account" className="w-full">
       <TabsList className="grid w-full grid-cols-4">
         {tabs.map((tab) => (
-          <TabsTrigger key={tab.id} value={tab.id} className="flex items-center gap-2">
+          <TabsTrigger 
+            key={tab.id} 
+            value={tab.id} 
+            className="flex items-center gap-2 bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 text-white data-[state=active]:text-white data-[state=active]:bg-[#ce0067]"
+          >
             <tab.icon className="h-4 w-4" />
             {tab.label}
           </TabsTrigger>
