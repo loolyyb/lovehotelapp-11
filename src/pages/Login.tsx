@@ -120,10 +120,10 @@ export default function Login() {
   }, [navigate, logger, toast]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white via-rose-50 to-pink-100">
+    <div className="flex min-h-screen items-center justify-center bg-[#40192C]">
       <div className="w-full max-w-md px-4 py-8">
-        <Card className="p-8 space-y-4 backdrop-blur-sm bg-white/90 shadow-xl">
-          <h1 className="text-3xl font-cormorant text-center mb-6 text-[#ce0067]">
+        <Card className="p-8 space-y-4 backdrop-blur-sm bg-white/10 border-[0.5px] border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300">
+          <h1 className="text-3xl font-cormorant text-center mb-6 text-[#f3ebad]">
             Se Connecter
           </h1>
           <Auth
@@ -133,23 +133,23 @@ export default function Login() {
               variables: {
                 default: {
                   colors: {
-                    brand: '#CE0067',
-                    brandAccent: '#CE0067',
-                    brandButtonText: "white",
-                    defaultButtonBackground: "white",
-                    defaultButtonBackgroundHover: "#f9f9f9",
-                    inputBackground: "white",
-                    inputBorder: "#e2e8f0",
-                    inputBorderHover: "#CE0067",
-                    inputBorderFocus: "#CE0067",
+                    brand: '#f3ebad',
+                    brandAccent: '#f3ebad',
+                    brandButtonText: "#40192C",
+                    defaultButtonBackground: "rgba(243, 235, 173, 0.1)",
+                    defaultButtonBackgroundHover: "rgba(243, 235, 173, 0.2)",
+                    inputBackground: "rgba(255, 255, 255, 0.05)",
+                    inputBorder: "rgba(243, 235, 173, 0.3)",
+                    inputBorderHover: "#f3ebad",
+                    inputBorderFocus: "#f3ebad",
                   }
                 }
               },
               className: {
                 container: "space-y-4",
                 button: "w-full px-4 py-2 rounded-md transition-colors duration-200",
-                input: "w-full px-3 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-[#CE0067]",
-                label: "block text-sm font-medium text-gray-700 mb-1"
+                input: "w-full px-3 py-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-[#f3ebad] bg-white/5 text-[#f3ebad]",
+                label: "block text-sm font-medium text-[#f3ebad] mb-1"
               }
             }}
             localization={{
@@ -191,7 +191,7 @@ export default function Login() {
             }}
             providers={[]}
           />
-          <p className="text-sm text-gray-600 text-center mt-4 italic">
+          <p className="text-sm text-[#f3ebad]/70 text-center mt-4 italic">
             Pour les profils déjà membre du Love Hôtel, il suffit de vous inscrire avec votre mail de compte pour récupérer vos points et avantages
           </p>
         </Card>
