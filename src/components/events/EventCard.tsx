@@ -60,7 +60,7 @@ export const EventCard = ({
             {title}
           </h3>
           {startTime && endTime && (
-            <p className="text-sm mt-1 text-zinc-950">
+            <p className="text-sm mt-1 text-[#f3ebad]">
               {startTime} - {endTime}
             </p>
           )}
@@ -69,7 +69,7 @@ export const EventCard = ({
           {type.replace('_', ' ')}
         </Badge>
       </div>
-      <p className="font-montserrat text-sm mb-4 text-zinc-700">{description}</p>
+      <p className="font-montserrat text-sm mb-4 text-[#f3ebad]">{description}</p>
       <Button
         onClick={() => onParticipate(id)}
         className={`w-full ${
