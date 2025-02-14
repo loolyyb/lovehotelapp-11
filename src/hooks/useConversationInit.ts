@@ -40,8 +40,8 @@ export const useConversationInit = ({
         .from('conversations')
         .select(`
           *,
-          user1:profiles!conversations_user1_id_fkey(*),
-          user2:profiles!conversations_user2_id_fkey(*)
+          user1:profiles!conversations_user1_profile_fkey(*),
+          user2:profiles!conversations_user2_profile_fkey(*)
         `)
         .eq('id', conversationId)
         .single();

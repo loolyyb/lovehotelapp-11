@@ -66,6 +66,9 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   }, [currentUserId]);
 
   useEffect(() => {
+    if (messages.length > 0) {
+      setIsLoading(false);
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
