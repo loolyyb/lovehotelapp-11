@@ -24,20 +24,31 @@ export function useEvents() {
         throw error;
       }
 
-      return data.map(event => ({
-        id: event.id,
-        title: event.title,
-        start: new Date(event.event_date),
-        end: new Date(event.event_date),
-        extendedProps: {
-          description: event.description,
-          type: event.event_type,
-          isPrivate: event.is_private,
-          price: event.price,
-          freeForMembers: event.free_for_members,
-          imageUrl: event.image_url,
+      return data.map(event => {
+        const startDate = new Date(event.event_date);
+        const endDate = new Date(event.event_date);
+        
+        // Si une heure de fin est spécifiée, l'ajouter à la date de fin
+        if (event.end_time) {
+          const [hours, minutes] = event.end_time.split(':');
+          endDate.setHours(parseInt(hours), parseInt(minutes));
         }
-      }));
+
+        return {
+          id: event.id,
+          title: event.title,
+          start: startDate,
+          end: endDate,
+          extendedProps: {
+            description: event.description,
+            type: event.event_type,
+            isPrivate: event.is_private,
+            price: event.price,
+            freeForMembers: event.free_for_members,
+            imageUrl: event.image_url,
+          }
+        };
+      });
     }
   });
 }

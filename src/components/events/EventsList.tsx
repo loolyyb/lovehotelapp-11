@@ -18,6 +18,13 @@ export const EventsList = ({ events, onParticipate, participatingEvents }: Event
     );
   }
 
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {events.map((event) => (
@@ -28,8 +35,8 @@ export const EventsList = ({ events, onParticipate, participatingEvents }: Event
           type={event.extendedProps.type}
           description={event.extendedProps.description}
           imageUrl={event.extendedProps.imageUrl}
-          startTime={event.start.toLocaleTimeString()}
-          endTime={event.end.toLocaleTimeString()}
+          startTime={formatTime(event.start)}
+          endTime={formatTime(event.end)}
           onParticipate={onParticipate}
           isParticipating={participatingEvents.includes(event.id)}
         />
