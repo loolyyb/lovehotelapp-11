@@ -15,8 +15,8 @@ export const Footer = () => {
     fetchVersion();
   }, []);
 
-  return <footer className="w-full py-4 px-6 mt-auto border-t bg-white/20 backdrop-blur-sm">
-      <div className="max-w-6xl mx-auto flex items-center justify-between text-sm text-gray-600">
+  return <footer className="w-full py-4 px-6 mt-auto bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 text-[#f3ebad]">
+      <div className="max-w-6xl mx-auto flex items-center justify-between text-sm">
         <div className="flex items-center gap-2">
           <Heart className="w-4 h-4 fill-[#CE0067]" />
         </div>
