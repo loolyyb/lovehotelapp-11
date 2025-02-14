@@ -45,18 +45,18 @@ export const EventCard = ({
 }: EventCardProps) => {
   return (
     <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="p-4 rounded-lg bg-white shadow-md"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="h-full flex flex-col p-4 rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow duration-300"
     >
       {imageUrl && (
-        <div className="mb-4 rounded-lg overflow-hidden">
-          <img src={imageUrl} alt={title} className="w-full h-48 object-cover" />
+        <div className="relative mb-4 rounded-lg overflow-hidden aspect-video">
+          <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
         </div>
       )}
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h3 className="text-xl font-cormorant font-semibold text-[#ce0067]">
+          <h3 className="text-xl font-cormorant font-semibold text-[#ce0067] line-clamp-2">
             {title}
           </h3>
           {startTime && endTime && (
@@ -65,14 +65,16 @@ export const EventCard = ({
             </p>
           )}
         </div>
-        <Badge className={getEventTypeColor(type)}>
+        <Badge className={`ml-2 shrink-0 ${getEventTypeColor(type)}`}>
           {type.replace('_', ' ')}
         </Badge>
       </div>
-      <p className="font-montserrat text-sm mb-4 text-zinc-700">{description}</p>
+      <p className="font-montserrat text-sm mb-4 text-zinc-700 flex-grow line-clamp-3">
+        {description}
+      </p>
       <Button
         onClick={() => onParticipate(id)}
-        className={`w-full ${
+        className={`w-full mt-auto ${
           isParticipating
             ? "bg-gray-500 hover:bg-gray-600"
             : "bg-burgundy hover:bg-burgundy-600 text-white bg-[#ce0067]"

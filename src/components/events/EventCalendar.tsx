@@ -3,21 +3,14 @@ import React from 'react';
 import { Event } from '@/types/events';
 import { EventModal } from './EventModal';
 import { Card } from '@/components/ui/card';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { EventsList } from './EventsList';
 import { useEvents } from './hooks/useEvents';
 import { useEventParticipation } from './hooks/useEventParticipation';
-import { FullCalendarView } from './calendar/FullCalendarView';
 
 export function EventCalendar() {
   const [selectedEvent, setSelectedEvent] = React.useState<Event | null>(null);
-  const isMobile = useIsMobile();
   const { data: events, refetch } = useEvents();
   const { participatingEvents, handleParticipate } = useEventParticipation();
-
-  const handleEventClick = (info: any) => {
-    setSelectedEvent(info.event);
-  };
 
   const handleParticipateWrapper = async (eventId: string) => {
     await handleParticipate(eventId);
@@ -30,18 +23,11 @@ export function EventCalendar() {
         <h2 className="text-2xl font-semibold text-[#f3ebad]">Calendrier des événements</h2>
       </div>
       
-      {isMobile ? (
-        <EventsList 
-          events={events || []} 
-          onParticipate={handleParticipateWrapper}
-          participatingEvents={participatingEvents}
-        />
-      ) : (
-        <FullCalendarView 
-          events={events || []} 
-          onEventClick={handleEventClick}
-        />
-      )}
+      <EventsList 
+        events={events || []} 
+        onParticipate={handleParticipateWrapper}
+        participatingEvents={participatingEvents}
+      />
 
       {selectedEvent && (
         <EventModal
