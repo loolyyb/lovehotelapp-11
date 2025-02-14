@@ -1,7 +1,9 @@
+
 import { motion } from "framer-motion";
 import { RelationshipStatusIcon } from "../RelationshipStatusIcon";
 import { Heart, User, Users } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 interface ProfileInfoProps {
   fullName?: string | null;
   bio?: string | null;
@@ -9,6 +11,7 @@ interface ProfileInfoProps {
   seeking?: string[] | null;
   relationshipType?: string[] | null;
 }
+
 export function ProfileInfo({
   fullName,
   bio,
@@ -30,40 +33,42 @@ export function ProfileInfo({
         return "Non spécifié";
     }
   };
+
   const getSeekingLabel = (value: string) => {
     switch (value) {
       case "single_man":
         return {
           label: "Un homme",
-          icon: <User className="w-4 h-4" />
+          icon: <User className="w-4 h-4 text-[#f3ebad]" />
         };
       case "single_woman":
         return {
           label: "Une femme",
-          icon: <User className="w-4 h-4" />
+          icon: <User className="w-4 h-4 text-[#f3ebad]" />
         };
       case "couple_mf":
         return {
           label: "Un couple (homme-femme)",
-          icon: <Users className="w-4 h-4" />
+          icon: <Users className="w-4 h-4 text-[#f3ebad]" />
         };
       case "couple_mm":
         return {
           label: "Un couple (homme-homme)",
-          icon: <Users className="w-4 h-4" />
+          icon: <Users className="w-4 h-4 text-[#f3ebad]" />
         };
       case "couple_ff":
         return {
           label: "Un couple (femme-femme)",
-          icon: <Users className="w-4 h-4" />
+          icon: <Users className="w-4 h-4 text-[#f3ebad]" />
         };
       default:
         return {
           label: value,
-          icon: <User className="w-4 h-4" />
+          icon: <User className="w-4 h-4 text-[#f3ebad]" />
         };
     }
   };
+
   return <motion.div className="text-center space-y-4" initial={{
     opacity: 0,
     y: 20
@@ -110,7 +115,7 @@ export function ProfileInfo({
             }} whileTap={{
               scale: 0.95
             }}>
-                  <Heart className="w-5 h-5 text-burgundy" />
+                  <Heart className="w-5 h-5 text-[#f3ebad]" />
                 </motion.div>
               </TooltipTrigger>
               <TooltipContent>
