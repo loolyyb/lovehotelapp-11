@@ -59,7 +59,7 @@ export function EventForm({ onSubmit, isLoading, initialData }: EventFormProps) 
   console.log("Form values after potential reset:", form.getValues());
 
   return (
-    <DialogContent className="sm:max-w-[600px]">
+    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>
           {initialData ? "Modifier l'événement" : "Créer un nouvel événement"}
