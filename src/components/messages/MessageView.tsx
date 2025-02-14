@@ -4,8 +4,9 @@ import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { ChevronLeft } from "lucide-react";
 import { useMessageSubscription } from "@/hooks/useMessageSubscription";
-import { useMessageHandlers } from "./hooks/useMessageHandlers";
-import { useMessageRetrieval } from "./hooks/useMessageRetrieval";
+import { useMessageHandlers } from "@/hooks/useMessageHandlers";
+import { useMessageRetrieval } from "@/hooks/useMessageRetrieval";
+import { useConversationInit } from "@/hooks/useConversationInit";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingState } from "./LoadingState";
 
@@ -101,9 +102,9 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
 
       <div className="p-4 border-t border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300">
         <MessageInput
-          value={newMessage}
-          onChange={setNewMessage}
-          onSubmit={sendMessage}
+          newMessage={newMessage}
+          setNewMessage={setNewMessage}
+          onSend={sendMessage}
         />
       </div>
     </div>
