@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -13,10 +14,10 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
   return (
     <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-[70%] p-3 rounded-lg ${
+        className={`max-w-[70%] p-3 rounded-lg backdrop-blur-sm hover:shadow-lg transition-all duration-300 ${
           isCurrentUser
-            ? 'bg-burgundy text-rose/80 rounded-br-none'
-            : 'bg-rose/20 text-gray-800 rounded-bl-none'
+            ? 'bg-[#f3ebad]/20 text-[#f3ebad] rounded-br-none border-[0.5px] border-[#f3ebad]/30'
+            : 'bg-white/10 text-[#f3ebad] rounded-bl-none border-[0.5px] border-[#f3ebad]/30'
         }`}
       >
         {isImage ? (
@@ -26,7 +27,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
         )}
         <div
           className={`text-xs mt-1 ${
-            isCurrentUser ? 'text-rose/80' : 'text-gray-500'
+            isCurrentUser ? 'text-[#f3ebad]/70' : 'text-[#f3ebad]/70'
           }`}
         >
           {format(new Date(message.created_at), 'HH:mm', { locale: fr })}

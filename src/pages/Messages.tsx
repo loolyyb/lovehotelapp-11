@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { MessageView } from "@/components/messages/MessageView";
 import { ConversationList } from "@/components/messages/ConversationList";
@@ -14,8 +15,8 @@ export default function Messages() {
   }, [location.state]);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-cream pt-12">
-      <div className={`w-full md:w-[380px] border-r border-rose/20 ${selectedConversation ? 'hidden md:block' : ''}`}>
+    <div className="flex h-[calc(100vh-4rem)] bg-[#40192C] pt-12 backdrop-blur-sm">
+      <div className={`w-full md:w-[380px] border-r border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300 ${selectedConversation ? 'hidden md:block' : ''}`}>
         <ConversationList
           onSelectConversation={setSelectedConversation}
           selectedConversationId={selectedConversation}
@@ -29,7 +30,7 @@ export default function Messages() {
             onBack={() => setSelectedConversation(null)}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500">
+          <div className="flex-1 flex items-center justify-center text-[#f3ebad]/70">
             <p>Sélectionnez une conversation pour commencer</p>
           </div>
         )}
