@@ -1,4 +1,3 @@
-
 export interface ThemeConfig {
   colors: {
     primary: string;
@@ -6,7 +5,6 @@ export interface ThemeConfig {
     accent: string;
     background: string;
     text: string;
-    statusBar: string; // Ajout de la couleur de la barre d'état
   };
   fonts: {
     heading: string;
