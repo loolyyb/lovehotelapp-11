@@ -158,9 +158,9 @@ export function EventCalendar() {
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold">Calendrier des événements</h2>
+        <h2 className="text-2xl font-semibold text-[#f3ebad]">Calendrier des événements</h2>
       </div>
       
       {isMobile ? (
