@@ -33,7 +33,7 @@ const getBasename = () => {
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
-  const { currentThemeName } = useTheme();
+  const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
   const { setStatusBarColor } = useStatusBar();
 
@@ -43,6 +43,24 @@ function AppContent() {
     console.log("Loading:", loading);
     console.log("Current theme:", currentThemeName);
   }, [session, loading, currentThemeName]);
+
+  useEffect(() => {
+    const initTheme = async () => {
+      try {
+        if (!session) return;
+        await switchTheme("lover");
+      } catch (error) {
+        console.error("Erreur lors du changement de thème:", error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger le thème. Veuillez vous connecter et réessayer.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    initTheme();
+  }, [session, switchTheme, toast]);
 
   useEffect(() => {
     if (isMobile) {
