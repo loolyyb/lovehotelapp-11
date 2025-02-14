@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileTabs } from "./tabs/ProfileTabs";
@@ -11,7 +12,7 @@ export function ProfileContainer({ profile, onUpdate }: ProfileContainerProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream">
       <div className="container mx-auto px-4 py-4">
-        <Card className="p-8 space-y-8 bg-white/20 backdrop-blur-sm shadow-xl rounded-xl animate-fadeIn">
+        <Card className="p-8 space-y-8 bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 rounded-xl animate-fadeIn">
           <ProfileHeader
             avatarUrl={profile?.avatar_url}
             fullName={profile?.full_name}
