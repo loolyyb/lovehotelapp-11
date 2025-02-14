@@ -55,7 +55,7 @@ export const EventCard = ({
         </div>
       )}
       <div className="flex items-start justify-between mb-2">
-        <div>
+        <div className="text-[#f3ebad]">
           <h3 className="text-xl font-cormorant font-semibold text-[#ce0067] line-clamp-2">
             {title}
           </h3>
