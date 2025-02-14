@@ -14,11 +14,19 @@ export default function Messages() {
     }
   }, [location.state]);
 
+  const handleSelectConversation = (conversationId: string) => {
+    // Si on clique sur la conversation déjà sélectionnée, on ne fait rien
+    if (selectedConversation === conversationId) return;
+    
+    // Sinon, on met à jour la conversation sélectionnée
+    setSelectedConversation(conversationId);
+  };
+
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-[#40192C] pt-12 backdrop-blur-sm">
       <div className={`w-full md:w-[380px] border-r border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300 ${selectedConversation ? 'hidden md:block' : ''}`}>
         <ConversationList
-          onSelectConversation={setSelectedConversation}
+          onSelectConversation={handleSelectConversation}
           selectedConversationId={selectedConversation}
         />
       </div>
@@ -26,6 +34,7 @@ export default function Messages() {
       <div className={`flex-1 ${!selectedConversation ? 'hidden md:flex' : ''}`}>
         {selectedConversation ? (
           <MessageView
+            key={selectedConversation}
             conversationId={selectedConversation}
             onBack={() => setSelectedConversation(null)}
           />

@@ -17,6 +17,8 @@ export const useConversationInit = ({
 }: UseConversationInitProps) => {
   const getCurrentUser = async () => {
     try {
+      setMessages([]); // Reset messages when changing conversation
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error("No authenticated user found");

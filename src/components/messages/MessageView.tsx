@@ -52,8 +52,14 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   });
 
   useEffect(() => {
+    setIsLoading(true); // Reset loading state when conversation changes
     getCurrentUser();
-  }, []);
+    return () => {
+      setMessages([]); // Clear messages when unmounting
+      setCurrentUserId(null);
+      setOtherUser(null);
+    };
+  }, [conversationId]);
 
   useEffect(() => {
     if (currentUserId) {
@@ -63,13 +69,13 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         unsubscribe();
       };
     }
-  }, [currentUserId]);
+  }, [currentUserId, conversationId]);
 
   useEffect(() => {
     if (messages.length > 0) {
       setIsLoading(false);
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   if (isLoading) {
