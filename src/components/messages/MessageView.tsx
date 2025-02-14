@@ -22,6 +22,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const firstLoad = useRef(true);
   const { toast } = useToast();
 
   const { getCurrentUser } = useConversationInit({
@@ -56,22 +57,23 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     let mounted = true;
     
     const initConversation = async () => {
-      setIsLoading(true);
+      if (!firstLoad.current) {
+        setIsLoading(true);
+      }
       await getCurrentUser();
+      
       if (!mounted) return;
       
       if (currentUserId) {
         await fetchMessages();
       }
+      firstLoad.current = false;
     };
 
     initConversation();
 
     return () => {
       mounted = false;
-      setMessages([]);
-      setCurrentUserId(null);
-      setOtherUser(null);
     };
   }, [conversationId]);
 
@@ -79,10 +81,16 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     if (!currentUserId) return;
 
     const unsubscribe = subscribeToNewMessages();
+
+    // Mark messages as read when the conversation is opened
+    if (messages.length > 0) {
+      markMessagesAsRead();
+    }
+
     return () => {
       unsubscribe();
     };
-  }, [currentUserId, conversationId]);
+  }, [currentUserId, conversationId, messages.length]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -93,8 +101,12 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     }
   }, [messages]);
 
-  if (isLoading && !messages.length) {
-    return <LoadingState />;
+  if (!conversationId) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-[#f3ebad]/70">
+        <p>Sélectionnez une conversation pour commencer</p>
+      </div>
+    );
   }
 
   return (
@@ -106,22 +118,30 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         >
           <ChevronLeft className="w-6 h-6 text-[#f3ebad]" />
         </button>
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold text-[#f3ebad]">
-            {otherUser?.username || otherUser?.full_name || 'Chat'}
-          </h2>
-        </div>
+        {otherUser && (
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-[#f3ebad]">
+              {otherUser?.username || otherUser?.full_name || 'Chat'}
+            </h2>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            isCurrentUser={message.sender_id === currentUserId}
-          />
-        ))}
-        <div ref={messagesEndRef} />
+        {isLoading && !messages.length ? (
+          <LoadingState />
+        ) : (
+          <>
+            {messages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isCurrentUser={message.sender_id === currentUserId}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </>
+        )}
       </div>
 
       <div className="p-4 border-t border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300">

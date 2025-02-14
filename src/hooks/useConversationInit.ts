@@ -18,10 +18,13 @@ export const useConversationInit = ({
   setIsLoading,
 }: UseConversationInitProps) => {
   const getCurrentUser = async () => {
+    if (!conversationId) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      setMessages([]); 
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
         console.error("No authenticated user found");
         setIsLoading(false);
@@ -30,8 +33,20 @@ export const useConversationInit = ({
 
       setCurrentUserId(user.id);
 
-      // Faire les deux requêtes en parallèle pour optimiser le chargement
-      const [profileResponse, conversationResponse] = await Promise.all([
+      // Get initial messages directly to show something quickly
+      const { data: initialMessages } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+        .limit(20);
+
+      if (initialMessages?.length) {
+        setMessages(initialMessages);
+      }
+
+      // Fetch user profile and conversation details in parallel
+      const [{ data: profile }, { data: conversation }] = await Promise.all([
         supabase
           .from('profiles')
           .select('id')
@@ -42,28 +57,15 @@ export const useConversationInit = ({
           .from('conversations')
           .select(`
             *,
-            user1:profiles!conversations_user1_profile_fkey(*),
-            user2:profiles!conversations_user2_profile_fkey(*)
+            user1:profiles!conversations_user1_profile_fkey(id, username, full_name, avatar_url),
+            user2:profiles!conversations_user2_profile_fkey(id, username, full_name, avatar_url)
           `)
           .eq('id', conversationId)
           .single()
       ]);
 
-      if (profileResponse.error) {
-        console.error("Error fetching profile:", profileResponse.error);
-        setIsLoading(false);
-        return;
-      }
-
-      if (conversationResponse.error) {
-        console.error("Error fetching conversation:", conversationResponse.error);
-        setIsLoading(false);
-        return;
-      }
-
-      const conversation = conversationResponse.data;
-      if (conversation) {
-        const otherUserData = conversation.user1.id === profileResponse.data.id 
+      if (conversation && profile) {
+        const otherUserData = conversation.user1.id === profile.id 
           ? conversation.user2 
           : conversation.user1;
         setOtherUser(otherUserData);
@@ -71,6 +73,7 @@ export const useConversationInit = ({
 
     } catch (error) {
       console.error("Error in getCurrentUser:", error);
+    } finally {
       setIsLoading(false);
     }
   };
