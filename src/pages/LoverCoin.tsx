@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Coins, Heart, Lock, Users, Sparkles, Crown } from "lucide-react";
@@ -104,13 +105,13 @@ const LoverCoin = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-xl bg-white/50 hover:bg-white/80 transition-colors duration-300 shadow-lg"
+                className="p-6 rounded-xl bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300"
               >
-                <feature.icon className="w-12 h-12 text-burgundy mb-4" />
-                <h3 className="text-xl font-cormorant font-bold mb-2 text-gray-900">
+                <feature.icon className="w-12 h-12 text-[#f3ebad] mb-4" />
+                <h3 className="text-xl font-cormorant font-bold mb-2 text-[#f3ebad]">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 font-montserrat">
+                <p className="text-[#f3ebad]/80 font-montserrat">
                   {feature.description}
                 </p>
               </motion.div>
