@@ -55,22 +55,22 @@ export function AccountTab({
   }
 
   return <div className="space-y-8">
-      <Card className="p-6">
-        <div className="space-y-6">
+      <Card className="bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+        <div className="p-6 space-y-6">
           <div>
-            <Label htmlFor="full-name">Nom complet</Label>
+            <Label htmlFor="full-name" className="text-white">Nom complet</Label>
             <Input id="full-name" value={profile?.full_name || ""} onChange={handleFullNameChange} placeholder="Votre nom complet" />
           </div>
 
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-white">Email</Label>
             <Input id="email" type="email" value={profile?.email || ""} disabled className="bg-gray-100" />
           </div>
 
           <div className="flex items-center justify-between space-x-2">
-            <Label htmlFor="dating-profile" className="flex-1">
+            <Label htmlFor="dating-profile" className="flex-1 text-white">
               Connecter mon profil aux sites de rencontre et rideaux ouverts
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-300 mt-1">
                 Activez cette option pour rendre votre profil visible dans la section Rencontres et accéder à l'option Rideaux ouverts
               </p>
             </Label>
@@ -78,9 +78,9 @@ export function AccountTab({
           </div>
 
           <div className="flex items-center justify-between space-x-2">
-            <Label htmlFor="push-notifications" className="flex-1">
+            <Label htmlFor="push-notifications" className="flex-1 text-white">
               Notifications push
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-300 mt-1">
                 Recevez des notifications même lorsque l'application est fermée
               </p>
             </Label>
