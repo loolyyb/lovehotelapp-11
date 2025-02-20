@@ -29,8 +29,13 @@ const RestaurantDuLove = () => {
           <h3 className="text-2xl font-cormorant font-semibold text-[#ce0067] text-center">
             Réservation
           </h3>
-          <p className="text-gray-700 text-center text-lg">
-            Pour réserver directement, contactez-nous par téléphone
+          <p className="text-gray-700 text-center text-lg space-y-2">
+            <span className="block">Pour réserver directement, contactez-nous par téléphone</span>
+            <span className="block text-base mt-4">
+              Petit déjeuner : 7h30 - 10h30<br />
+              Déjeuner et Dîner<br />
+              Brunch du Dimanche jusqu'à 16h
+            </span>
           </p>
           <Button 
             className="text-lg py-6"
