@@ -25,8 +25,8 @@ const RestaurantDuLove = () => {
             </div>
           </div>
 
-          {/* Offers section */}
-          <div className="space-y-4">
+          {/* Offers section - Stack on mobile, single line on desktop */}
+          <div className="flex flex-col md:grid md:grid-cols-2 lg:flex lg:flex-row gap-4">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/petit-dejeuner-et-love-room-V2-1.webp" 
               alt="Petit déjeuner et Love Room" 
