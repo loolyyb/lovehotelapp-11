@@ -26,41 +26,41 @@ const RestaurantDuLove = () => {
 
         {/* Offers section - Stack on mobile, single line on desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="group relative overflow-hidden rounded-xl">
+          <div className="group relative overflow-hidden rounded-xl h-72">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/petit-dejeuner-et-love-room-V2-1.webp" 
               alt="Petit déjeuner et Love Room" 
-              className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
+              className="w-full h-full object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <h3 className="text-white font-semibold">Petit déjeuner romantique</h3>
             </div>
           </div>
-          <div className="group relative overflow-hidden rounded-xl">
+          <div className="group relative overflow-hidden rounded-xl h-72">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/lunch-et-love-room-v2.jpg" 
               alt="Lunch et Love Room" 
-              className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
+              className="w-full h-full object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <h3 className="text-white font-semibold">Déjeuner en amoureux</h3>
             </div>
           </div>
-          <div className="group relative overflow-hidden rounded-xl">
+          <div className="group relative overflow-hidden rounded-xl h-72">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/drink-et-love-room-v2-1.webp" 
               alt="Drink et Love Room" 
-              className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
+              className="w-full h-full object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <h3 className="text-white font-semibold">Cocktails signature</h3>
             </div>
           </div>
-          <div className="group relative overflow-hidden rounded-xl">
+          <div className="group relative overflow-hidden rounded-xl h-72">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/eat-et-love-room-v2-1.webp" 
               alt="Eat et Love Room" 
-              className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
+              className="w-full h-full object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <h3 className="text-white font-semibold">Dîner aux chandelles</h3>
