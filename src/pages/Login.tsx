@@ -2,7 +2,7 @@
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { useLogger } from "@/hooks/useLogger";
@@ -12,6 +12,7 @@ export default function Login() {
   const navigate = useNavigate();
   const logger = useLogger('Login');
   const { toast } = useToast();
+  const processingAuthChange = useRef(false);
 
   const createProfileIfNeeded = async (userId: string) => {
     try {
@@ -72,38 +73,52 @@ export default function Login() {
 
   useEffect(() => {
     logger.debug('Composant Login monté');
+    let mounted = true;
     
     const handleAuthChange = async (event: string, session: any) => {
+      if (!mounted || processingAuthChange.current) return;
+      
+      processingAuthChange.current = true;
       logger.info('Changement d\'état d\'authentification', { event, hasSession: !!session });
       
-      if (event === 'SIGNED_UP' && session) {
-        await createProfileIfNeeded(session.user.id);
-        toast({
-          title: "Inscription réussie",
-          description: "Votre compte a été créé avec succès.",
-        });
-        navigate("/");
-      } else if (event === 'SIGNED_IN' && session) {
-        await createProfileIfNeeded(session.user.id);
-        toast({
-          title: "Connexion réussie",
-          description: "Bienvenue !",
-        });
-        navigate("/");
-      } else if (event === 'SIGNED_OUT') {
-        navigate("/login");
+      try {
+        if (event === 'SIGNED_UP' && session) {
+          await createProfileIfNeeded(session.user.id);
+          toast({
+            title: "Inscription réussie",
+            description: "Votre compte a été créé avec succès.",
+          });
+          navigate("/");
+        } else if (event === 'SIGNED_IN' && session) {
+          await createProfileIfNeeded(session.user.id);
+          toast({
+            title: "Connexion réussie",
+            description: "Bienvenue !",
+          });
+          navigate("/");
+        } else if (event === 'SIGNED_OUT') {
+          navigate("/login");
+        }
+      } catch (error) {
+        logger.error('Error handling auth change:', { error });
+      } finally {
+        processingAuthChange.current = false;
       }
     };
 
     // Check and handle initial session
     const checkInitialSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        logger.error('Error checking initial session:', { error });
-        return;
-      }
-      if (session) {
-        navigate("/");
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          logger.error('Error checking initial session:', { error });
+          return;
+        }
+        if (session && mounted) {
+          navigate("/");
+        }
+      } catch (error) {
+        logger.error('Error in checkInitialSession:', { error });
       }
     };
 
@@ -115,6 +130,7 @@ export default function Login() {
 
     return () => {
       logger.debug('Composant Login démonté');
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [navigate, logger, toast]);
