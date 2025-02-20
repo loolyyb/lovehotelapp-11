@@ -6,60 +6,46 @@ import { Phone } from "lucide-react";
 const RestaurantDuLove = () => {
   return <div className="w-full min-h-[calc(100vh-4.5rem)] bg-cream relative overflow-hidden p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-12">
-        {/* Header section */}
-        <div className="space-y-6 animate-fadeIn">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <img 
-              src="https://www.dandyhotelparis.com/_novaimg/galleria/1467864.jpg" 
-              alt="Restaurant du Love - Interior" 
-              className="w-full h-64 object-cover rounded-xl shadow-lg" 
-            />
-            <img 
-              src="https://www.dandyhotelparis.com/_novaimg/galleria/1467863.jpg" 
-              alt="Restaurant du Love - Ambiance" 
-              className="w-full h-64 object-cover rounded-xl shadow-lg" 
-            />
+        {/* Header section - Description and photos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-4">
+              <img src="https://www.dandyhotelparis.com/_novaimg/galleria/1467864.jpg" alt="Restaurant du Love - Interior" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+              <img src="https://www.dandyhotelparis.com/_novaimg/galleria/1467863.jpg" alt="Restaurant du Love - Ambiance" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+            </div>
+            <div className="backdrop-blur-sm p-6 rounded-xl shadow-lg bg-zinc-50">
+              <h2 className="text-2xl font-cormorant font-semibold mb-4 text-[#ce0067]">
+                Le Restaurant du Love
+              </h2>
+              <p className="text-gray-700 leading-relaxed">
+                Découvrez notre restaurant intimiste au cœur de Paris. Un lieu unique où la gastronomie 
+                française rencontre une ambiance romantique et raffinée. Notre chef vous propose une 
+                carte soigneusement élaborée pour une expérience culinaire inoubliable en tête-à-tête.
+              </p>
+            </div>
           </div>
-          <div className="backdrop-blur-sm p-6 rounded-xl shadow-lg bg-zinc-50 max-w-2xl mx-auto">
-            <h2 className="text-2xl font-cormorant font-semibold mb-4 text-[#ce0067] text-center">
-              Le Restaurant du Love
-            </h2>
-            <p className="text-gray-700 leading-relaxed text-center">
-              Découvrez notre restaurant intimiste au cœur de Paris. Un lieu unique où la gastronomie 
-              française rencontre une ambiance romantique et raffinée. Notre chef vous propose une 
-              carte soigneusement élaborée pour une expérience culinaire inoubliable en tête-à-tête.
-            </p>
-          </div>
-        </div>
 
-        {/* Offers section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="group rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl aspect-[4/3]">
+          {/* Offers section */}
+          <div className="space-y-4">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/petit-dejeuner-et-love-room-V2-1.webp" 
               alt="Petit déjeuner et Love Room" 
-              className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
+              className="w-full rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
             />
-          </div>
-          <div className="group rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl aspect-[4/3]">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/lunch-et-love-room-v2.jpg" 
               alt="Lunch et Love Room" 
-              className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
+              className="w-full rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
             />
-          </div>
-          <div className="group rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl aspect-[4/3]">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/drink-et-love-room-v2-1.webp" 
               alt="Drink et Love Room" 
-              className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
+              className="w-full rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
             />
-          </div>
-          <div className="group rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl aspect-[4/3]">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/eat-et-love-room-v2-1.webp" 
               alt="Eat et Love Room" 
-              className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
+              className="w-full rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
             />
           </div>
         </div>
