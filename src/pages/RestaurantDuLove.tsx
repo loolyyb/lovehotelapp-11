@@ -9,10 +9,10 @@ const RestaurantDuLove = () => {
         {/* Header section - Description and photos */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <img src="https://www.dandyhotelparis.com/_novaimg/galleria/1467864.jpg" alt="Restaurant du Love - Interior" className="w-full h-64 object-cover rounded-xl shadow-lg" />
-            <img src="https://www.dandyhotelparis.com/_novaimg/galleria/1467863.jpg" alt="Restaurant du Love - Ambiance" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+            <img src="https://www.dandyhotelparis.com/_novaimg/galleria/1467864.jpg" alt="Restaurant du Love - Interior" className="w-full h-64 object-cover rounded-xl shadow-lg hover:scale-105 transition-transform duration-300" />
+            <img src="https://www.dandyhotelparis.com/_novaimg/galleria/1467863.jpg" alt="Restaurant du Love - Ambiance" className="w-full h-64 object-cover rounded-xl shadow-lg hover:scale-105 transition-transform duration-300" />
           </div>
-          <div className="backdrop-blur-sm p-6 rounded-xl shadow-lg bg-zinc-50">
+          <div className="backdrop-blur-sm p-6 rounded-xl shadow-lg bg-zinc-50/90 hover:bg-zinc-50 transition-colors duration-300">
             <h2 className="text-2xl font-cormorant font-semibold mb-4 text-[#ce0067]">
               Le Restaurant du Love
             </h2>
@@ -25,34 +25,46 @@ const RestaurantDuLove = () => {
         </div>
 
         {/* Offers section - Stack on mobile, single line on desktop */}
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="group relative overflow-hidden rounded-xl">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/petit-dejeuner-et-love-room-V2-1.webp" 
               alt="Petit déjeuner et Love Room" 
-              className="w-full h-full object-cover rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
             />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <h3 className="text-white font-semibold">Petit déjeuner romantique</h3>
+            </div>
           </div>
-          <div className="flex-1">
+          <div className="group relative overflow-hidden rounded-xl">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/lunch-et-love-room-v2.jpg" 
               alt="Lunch et Love Room" 
-              className="w-full h-full object-cover rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
             />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <h3 className="text-white font-semibold">Déjeuner en amoureux</h3>
+            </div>
           </div>
-          <div className="flex-1">
+          <div className="group relative overflow-hidden rounded-xl">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/drink-et-love-room-v2-1.webp" 
               alt="Drink et Love Room" 
-              className="w-full h-full object-cover rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
             />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <h3 className="text-white font-semibold">Cocktails signature</h3>
+            </div>
           </div>
-          <div className="flex-1">
+          <div className="group relative overflow-hidden rounded-xl">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/eat-et-love-room-v2-1.webp" 
               alt="Eat et Love Room" 
-              className="w-full h-full object-cover rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+              className="w-full aspect-[4/3] object-cover rounded-xl shadow-lg group-hover:scale-105 transition-all duration-300"
             />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <h3 className="text-white font-semibold">Dîner aux chandelles</h3>
+            </div>
           </div>
         </div>
 
@@ -70,7 +82,7 @@ const RestaurantDuLove = () => {
             </span>
           </p>
           <Button 
-            className="text-lg py-6"
+            className="text-lg py-6 bg-[#ce0067] hover:bg-[#a80054] transition-colors duration-300"
             asChild
           >
             <a href="tel:+33144826305" className="flex items-center gap-3">
