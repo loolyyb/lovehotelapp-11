@@ -9,9 +9,9 @@ const Dashboard = () => {
   
   const widgets = [
     {
-      icon: BedDouble,
-      title: "Love Room",
-      to: "/reserver-room"
+      icon: Heart,
+      title: "Rencontre",
+      to: "/profiles"
     },
     {
       icon: Calendar,
@@ -19,9 +19,9 @@ const Dashboard = () => {
       to: "/events"
     },
     {
-      icon: Heart,
-      title: "Rencontre",
-      to: "/profiles"
+      icon: BedDouble,
+      title: "Love Room",
+      to: "/reserver-room"
     },
     {
       icon: Theater,
@@ -83,4 +83,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
