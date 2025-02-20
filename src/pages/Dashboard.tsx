@@ -10,7 +10,7 @@ const Dashboard = () => {
   const widgets = [
     {
       icon: Heart,
-      title: "Rencontre",
+      title: "Rencontres",
       to: "/profiles"
     },
     {
