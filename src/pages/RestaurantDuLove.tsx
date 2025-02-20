@@ -1,4 +1,8 @@
+
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { Button } from "@/components/ui/button";
+import { Phone } from "lucide-react";
+
 const RestaurantDuLove = () => {
   return <div className="w-full min-h-[calc(100vh-4.5rem)] bg-cream relative overflow-hidden p-4 md:p-8">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -21,11 +25,26 @@ const RestaurantDuLove = () => {
         </div>
 
         {/* Right column - Reservation module */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg h-[800px] overflow-hidden">
-          <iframe src="https://widget.thefork.com/edf8e644-6792-4d98-9c4a-5c1ea2f7057f" className="w-full h-full border-none" title="Restaurant du Love Réservation" />
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 flex flex-col justify-center items-center space-y-6">
+          <h3 className="text-2xl font-cormorant font-semibold text-[#ce0067] text-center">
+            Réservation
+          </h3>
+          <p className="text-gray-700 text-center text-lg">
+            Pour réserver directement, contactez-nous par téléphone
+          </p>
+          <Button 
+            className="text-lg py-6"
+            asChild
+          >
+            <a href="tel:+33144826305" className="flex items-center gap-3">
+              <Phone className="w-6 h-6" />
+              +33 1 44 82 63 05
+            </a>
+          </Button>
         </div>
       </div>
       <InstallPrompt />
     </div>;
 };
+
 export default RestaurantDuLove;
