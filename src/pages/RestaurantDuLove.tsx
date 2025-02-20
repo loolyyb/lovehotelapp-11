@@ -34,32 +34,32 @@ const RestaurantDuLove = () => {
 
         {/* Offers section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="group overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
+          <div className="group rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl aspect-[4/3]">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/petit-dejeuner-et-love-room-V2-1.webp" 
               alt="Petit déjeuner et Love Room" 
-              className="w-full h-48 object-cover transform transition-transform duration-300 group-hover:scale-105"
+              className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
             />
           </div>
-          <div className="group overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
+          <div className="group rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl aspect-[4/3]">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/lunch-et-love-room-v2.jpg" 
               alt="Lunch et Love Room" 
-              className="w-full h-48 object-cover transform transition-transform duration-300 group-hover:scale-105"
+              className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
             />
           </div>
-          <div className="group overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
+          <div className="group rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl aspect-[4/3]">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/drink-et-love-room-v2-1.webp" 
               alt="Drink et Love Room" 
-              className="w-full h-48 object-cover transform transition-transform duration-300 group-hover:scale-105"
+              className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
             />
           </div>
-          <div className="group overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl">
+          <div className="group rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl aspect-[4/3]">
             <img 
               src="https://lovehotelaparis.fr/wp-content/uploads/2025/01/eat-et-love-room-v2-1.webp" 
               alt="Eat et Love Room" 
-              className="w-full h-48 object-cover transform transition-transform duration-300 group-hover:scale-105"
+              className="w-full h-full object-cover rounded-xl transition-transform duration-300 group-hover:scale-105"
             />
           </div>
         </div>
