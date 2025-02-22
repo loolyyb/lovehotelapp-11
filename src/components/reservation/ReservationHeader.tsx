@@ -3,7 +3,7 @@ export const ReservationHeader = () => {
   return <div className="backdrop-blur-sm rounded-xl shadow-lg p-4">
       <div className="flex items-center gap-3 mb-4">
         <BedDouble className="h-8 w-8 text-card-foreground" />
-        <h1 className="font-cormorant font-semibold text-[ce0067] text-zinc-50">
+        <h1 className="font-cormorant font-semibold text-[ce0067] text-[#f3ebad]">
           Réserver une Love Room
         </h1>
       </div>
