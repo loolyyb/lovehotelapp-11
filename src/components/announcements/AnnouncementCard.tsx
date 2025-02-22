@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,18 @@ export function AnnouncementCard({
     setIsDeleteDialogOpen(false);
   };
 
+  const handleReaction = (type: string) => {
+    if (onReact) {
+      onReact(type);
+    }
+  };
+
+  const handleComment = () => {
+    if (onComment) {
+      onComment();
+    }
+  };
+
   return <Card className="w-full bg-white shadow-md hover:shadow-lg transition-shadow">
       <CardHeader className="flex flex-row items-center gap-4 bg-white">
         <Avatar>
@@ -91,7 +104,7 @@ export function AnnouncementCard({
             variant="ghost" 
             size="sm" 
             className={`${userReaction === 'like' ? 'text-[#ce0067]' : 'text-gray-700'} hover:text-[#ce0067]`} 
-            onClick={() => onReact('like')}
+            onClick={() => handleReaction('like')}
           >
             <ThumbsUp className="w-4 h-4 mr-2" />
             <span>{reactions.find(r => r.type === 'like')?.count || 0}</span>
@@ -100,13 +113,18 @@ export function AnnouncementCard({
             variant="ghost" 
             size="sm" 
             className={`${userReaction === 'love' ? 'text-[#ce0067]' : 'text-gray-700'} hover:text-[#ce0067]`} 
-            onClick={() => onReact('love')}
+            onClick={() => handleReaction('love')}
           >
             <Heart className="w-4 h-4 mr-2" />
             <span>{reactions.find(r => r.type === 'love')?.count || 0}</span>
           </Button>
         </div>
-        <Button variant="ghost" size="sm" className="text-gray-700 hover:text-[#ce0067]" onClick={onComment}>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-gray-700 hover:text-[#ce0067]" 
+          onClick={handleComment}
+        >
           <MessageCircle className="w-4 h-4 mr-2" />
           <span>{commentCount}</span>
         </Button>
@@ -115,9 +133,9 @@ export function AnnouncementCard({
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <EditAnnouncementForm announcement={announcement} onSubmit={async (content, imageUrl) => {
-          await onEdit(announcement.id, content, imageUrl);
-          setIsEditDialogOpen(false);
-        }} onCancel={() => setIsEditDialogOpen(false)} />
+            await onEdit(announcement.id, content, imageUrl);
+            setIsEditDialogOpen(false);
+          }} onCancel={() => setIsEditDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
