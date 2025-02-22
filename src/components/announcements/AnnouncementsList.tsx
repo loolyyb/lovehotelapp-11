@@ -11,7 +11,7 @@ interface AnnouncementType {
   image_url: string | null;
   created_at: string;
   user_id: string;
-  full_name: string | null;
+  full_name: string;  // Changed from string | null to string to ensure we always have a value
   avatar_url: string | null;
 }
 
@@ -30,11 +30,16 @@ export function AnnouncementsList() {
 
   const fetchAnnouncements = async () => {
     try {
+      console.log('Fetching announcements...');
       const { data, error } = await supabase
         .from('announcements')
         .select(`
-          *,
-          profiles:profiles!inner (
+          id,
+          content,
+          image_url,
+          created_at,
+          user_id,
+          profiles!inner (
             full_name,
             avatar_url
           )
@@ -42,25 +47,35 @@ export function AnnouncementsList() {
         .order('created_at', { ascending: false });
 
       if (error) {
+        console.error('Error in Supabase query:', error);
         throw error;
       }
 
       if (!data) {
+        console.log('No data returned from query');
         setAnnouncements([]);
         return;
       }
 
-      const transformedData: AnnouncementType[] = data.map(announcement => ({
-        id: announcement.id,
-        content: announcement.content,
-        image_url: announcement.image_url,
-        created_at: announcement.created_at,
-        user_id: announcement.user_id,
-        full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
-        avatar_url: announcement.profiles?.avatar_url ?? null
-      }));
+      console.log('Raw data from Supabase:', data);
 
-      console.log('Fetched and transformed announcements:', transformedData);
+      const transformedData: AnnouncementType[] = data.map(announcement => {
+        // Ensure we have a default value for full_name
+        const fullName = announcement.profiles?.full_name || 'Utilisateur inconnu';
+        console.log(`Processing announcement ${announcement.id}, full_name: ${fullName}`);
+        
+        return {
+          id: announcement.id,
+          content: announcement.content,
+          image_url: announcement.image_url,
+          created_at: announcement.created_at,
+          user_id: announcement.user_id,
+          full_name: fullName,
+          avatar_url: announcement.profiles?.avatar_url ?? null
+        };
+      });
+
+      console.log('Transformed announcements:', transformedData);
       setAnnouncements(transformedData);
     } catch (error) {
       console.error('Error fetching announcements:', error);
