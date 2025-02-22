@@ -40,9 +40,12 @@ export function AnnouncementCard({
 }: AnnouncementCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const isOwner = announcement.user_id === currentUserId;
+  
+  // Vérification explicite que l'utilisateur est le propriétaire de l'annonce
+  const isOwner = currentUserId && announcement.user_id === currentUserId;
 
   const handleDelete = async () => {
+    if (!isOwner) return;
     try {
       await onDelete(announcement.id);
       setIsDeleteDialogOpen(false);
@@ -52,38 +55,44 @@ export function AnnouncementCard({
   };
 
   const handleReaction = (type: string) => {
-    try {
-      onReact(type);
-    } catch (error) {
-      console.error("Erreur lors de la réaction:", error);
-    }
+    if (!currentUserId) return;
+    onReact(type);
   };
 
   const handleComment = () => {
+    if (!currentUserId) return;
+    onComment();
+  };
+
+  const handleEdit = async (content: string, imageUrl?: string) => {
+    if (!isOwner) return;
     try {
-      onComment();
+      await onEdit(announcement.id, content, imageUrl);
+      setIsEditDialogOpen(false);
     } catch (error) {
-      console.error("Erreur lors du commentaire:", error);
+      console.error("Erreur lors de la modification:", error);
     }
   };
 
-  return <Card className="w-full bg-white shadow-md hover:shadow-lg transition-shadow">
+  return (
+    <Card className="w-full bg-white shadow-md hover:shadow-lg transition-shadow">
       <CardHeader className="flex flex-row items-center gap-4 bg-white">
         <Avatar>
           <AvatarImage src={announcement.user.avatar_url} />
-          <AvatarFallback>{announcement.user.full_name[0]}</AvatarFallback>
+          <AvatarFallback>{announcement.user.full_name?.[0] || '?'}</AvatarFallback>
         </Avatar>
         <div className="flex flex-1 items-center justify-between">
           <div className="flex flex-col">
             <span className="font-semibold text-gray-900">{announcement.user.full_name}</span>
             <span className="text-sm text-gray-600">
               {formatDistanceToNow(new Date(announcement.created_at), {
-              addSuffix: true,
-              locale: fr
-            })}
+                addSuffix: true,
+                locale: fr
+              })}
             </span>
           </div>
-          {isOwner && <DropdownMenu>
+          {isOwner && (
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <MoreVertical className="h-4 w-4" />
@@ -99,12 +108,19 @@ export function AnnouncementCard({
                   Supprimer
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>}
+            </DropdownMenu>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4 bg-white">
         <p className="text-gray-900">{announcement.content}</p>
-        {announcement.image_url && <img src={announcement.image_url} alt="Contenu de l'annonce" className="rounded-lg max-h-96 w-full object-cover" />}
+        {announcement.image_url && (
+          <img 
+            src={announcement.image_url} 
+            alt="Contenu de l'annonce" 
+            className="rounded-lg max-h-96 w-full object-cover" 
+          />
+        )}
       </CardContent>
       <CardFooter className="flex justify-between items-center border-t pt-4">
         <div className="flex gap-2">
@@ -142,14 +158,7 @@ export function AnnouncementCard({
         <DialogContent className="sm:max-w-[425px]">
           <EditAnnouncementForm 
             announcement={announcement} 
-            onSubmit={async (content, imageUrl) => {
-              try {
-                await onEdit(announcement.id, content, imageUrl);
-                setIsEditDialogOpen(false);
-              } catch (error) {
-                console.error("Erreur lors de la modification:", error);
-              }
-            }} 
+            onSubmit={handleEdit}
             onCancel={() => setIsEditDialogOpen(false)} 
           />
         </DialogContent>
@@ -171,5 +180,6 @@ export function AnnouncementCard({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>;
+    </Card>
+  );
 }
