@@ -12,6 +12,7 @@ export default function Announcements() {
     handleUpdateAnnouncement,
     handleDeleteAnnouncement,
     handleReaction,
+    handleComment,
     session 
   } = useAnnouncements();
 
@@ -28,8 +29,9 @@ export default function Announcements() {
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <AnnouncementForm onSubmit={handleSubmitAnnouncement} />
         <AnnouncementsList 
-          announcements={announcements} 
+          announcements={announcements}
           onReact={handleReaction}
+          onComment={handleComment}
           onEdit={handleUpdateAnnouncement}
           onDelete={handleDeleteAnnouncement}
           session={session}

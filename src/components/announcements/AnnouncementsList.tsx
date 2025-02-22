@@ -6,6 +6,7 @@ import { Session } from "@supabase/supabase-js";
 interface AnnouncementsListProps {
   announcements: AnnouncementWithRelations[];
   onReact: (announcementId: string, type: string) => void;
+  onComment: (announcementId: string, content: string) => Promise<void>;
   onEdit: (id: string, content: string, imageUrl?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   session: Session | null;
@@ -14,6 +15,7 @@ interface AnnouncementsListProps {
 export function AnnouncementsList({ 
   announcements, 
   onReact, 
+  onComment,
   onEdit,
   onDelete,
   session 
@@ -25,7 +27,7 @@ export function AnnouncementsList({
           key={announcement.id}
           announcement={announcement}
           onReact={(type) => onReact(announcement.id, type)}
-          onComment={() => {}} 
+          onComment={(content) => onComment(announcement.id, content)}
           onEdit={(content, imageUrl) => onEdit(announcement.id, content, imageUrl)}
           onDelete={() => onDelete(announcement.id)}
           reactions={Object.entries(

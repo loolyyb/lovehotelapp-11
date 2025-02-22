@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { AnnouncementWithRelations } from "@/types/announcements.types";
 
@@ -17,7 +16,13 @@ export class AnnouncementService {
           user_id
         ),
         comments:announcement_comments (
-          id
+          id,
+          content,
+          created_at,
+          user:profiles!announcement_comments_user_id_fkey (
+            full_name,
+            avatar_url
+          )
         )
       `)
       .order('created_at', { ascending: false });
@@ -114,6 +119,34 @@ export class AnnouncementService {
       }
     } catch (error) {
       console.error("Error handling reaction:", error);
+      throw error;
+    }
+  }
+
+  static async addComment(announcementId: string, content: string, userId: string) {
+    const { error } = await supabase
+      .from('announcement_comments')
+      .insert({
+        announcement_id: announcementId,
+        user_id: userId,
+        content
+      });
+
+    if (error) {
+      console.error("Error adding comment:", error);
+      throw error;
+    }
+  }
+
+  static async deleteComment(commentId: string, userId: string) {
+    const { error } = await supabase
+      .from('announcement_comments')
+      .delete()
+      .eq('id', commentId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error("Error deleting comment:", error);
       throw error;
     }
   }

@@ -1,21 +1,22 @@
-
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, ThumbsUp, Heart, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { EditAnnouncementForm } from "./EditAnnouncementForm";
+import { CommentForm } from "./CommentForm";
+import { CommentsList } from "./CommentsList";
 import type { AnnouncementWithRelations } from "@/types/announcements.types";
 
 interface AnnouncementCardProps {
   announcement: AnnouncementWithRelations;
   onReact: (type: string) => void;
-  onComment: () => void;
+  onComment: (content: string) => Promise<void>;
   onEdit: (content: string, imageUrl?: string) => Promise<void>;
   onDelete: () => Promise<void>;
   reactions: {
@@ -40,9 +41,9 @@ export function AnnouncementCard({
 }: AnnouncementCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Correction : vérification du propriétaire en utilisant le user_id de l'annonce
   const isOwner = Boolean(currentUserId && currentUserId === announcement.user_id);
 
   const handleDelete = async () => {
@@ -150,7 +151,7 @@ export function AnnouncementCard({
           size="sm" 
           className="text-gray-700 hover:text-[#ce0067]"
           disabled={!currentUserId || isLoading}
-          onClick={onComment}
+          onClick={() => setIsCommentsOpen(true)}
         >
           <MessageCircle className="w-4 h-4 mr-2" />
           <span>{commentCount}</span>
@@ -187,6 +188,18 @@ export function AnnouncementCard({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Commentaires</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <CommentsList comments={announcement.comments} />
+            <CommentForm onSubmit={onComment} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
