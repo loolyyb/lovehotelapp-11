@@ -5,17 +5,11 @@ import { MessageCircle, ThumbsUp, Heart, MoreVertical, Pencil, Trash2 } from "lu
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { EditAnnouncementForm } from "./EditAnnouncementForm";
 import type { AnnouncementWithRelations } from "@/types/announcements.types";
-
 interface AnnouncementCardProps {
   announcement: AnnouncementWithRelations;
   onReact: (type: string) => void;
@@ -30,7 +24,6 @@ interface AnnouncementCardProps {
   userReaction?: string;
   currentUserId?: string;
 }
-
 export function AnnouncementCard({
   announcement,
   onReact,
@@ -40,20 +33,17 @@ export function AnnouncementCard({
   reactions,
   commentCount,
   userReaction,
-  currentUserId,
+  currentUserId
 }: AnnouncementCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isOwner = currentUserId === announcement.user_id;
-
   const handleDelete = async () => {
     await onDelete(announcement.id);
     setIsDeleteDialogOpen(false);
   };
-
-  return (
-    <Card className="w-full bg-white shadow-md hover:shadow-lg transition-shadow">
-      <CardHeader className="flex flex-row items-center gap-4">
+  return <Card className="w-full bg-white shadow-md hover:shadow-lg transition-shadow">
+      <CardHeader className="flex flex-row items-center gap-4 bg-primary-foreground">
         <Avatar>
           <AvatarImage src={announcement.user.avatar_url} />
           <AvatarFallback>{announcement.user.full_name[0]}</AvatarFallback>
@@ -62,11 +52,13 @@ export function AnnouncementCard({
           <div className="flex flex-col">
             <span className="font-semibold">{announcement.user.full_name}</span>
             <span className="text-sm text-muted-foreground">
-              {formatDistanceToNow(new Date(announcement.created_at), { addSuffix: true, locale: fr })}
+              {formatDistanceToNow(new Date(announcement.created_at), {
+              addSuffix: true,
+              locale: fr
+            })}
             </span>
           </div>
-          {isOwner && (
-            <DropdownMenu>
+          {isOwner && <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
                   <MoreVertical className="h-4 w-4" />
@@ -77,45 +69,25 @@ export function AnnouncementCard({
                   <Pencil className="w-4 h-4 mr-2" />
                   Modifier
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="text-red-600"
-                >
+                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-600">
                   <Trash2 className="w-4 h-4 mr-2" />
                   Supprimer
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+            </DropdownMenu>}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 bg-slate-50">
         <p className="text-gray-700">{announcement.content}</p>
-        {announcement.image_url && (
-          <img 
-            src={announcement.image_url} 
-            alt="Contenu de l'annonce" 
-            className="rounded-lg max-h-96 w-full object-cover"
-          />
-        )}
+        {announcement.image_url && <img src={announcement.image_url} alt="Contenu de l'annonce" className="rounded-lg max-h-96 w-full object-cover" />}
       </CardContent>
       <CardFooter className="flex justify-between items-center border-t pt-4">
         <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={userReaction === 'like' ? 'text-[#ce0067]' : ''}
-            onClick={() => onReact('like')}
-          >
+          <Button variant="ghost" size="sm" className={userReaction === 'like' ? 'text-[#ce0067]' : ''} onClick={() => onReact('like')}>
             <ThumbsUp className="w-4 h-4 mr-2" />
             <span>{reactions.find(r => r.type === 'like')?.count || 0}</span>
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={userReaction === 'love' ? 'text-[#ce0067]' : ''}
-            onClick={() => onReact('love')}
-          >
+          <Button variant="ghost" size="sm" className={userReaction === 'love' ? 'text-[#ce0067]' : ''} onClick={() => onReact('love')}>
             <Heart className="w-4 h-4 mr-2" />
             <span>{reactions.find(r => r.type === 'love')?.count || 0}</span>
           </Button>
@@ -128,14 +100,10 @@ export function AnnouncementCard({
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
-          <EditAnnouncementForm
-            announcement={announcement}
-            onSubmit={async (content, imageUrl) => {
-              await onEdit(announcement.id, content, imageUrl);
-              setIsEditDialogOpen(false);
-            }}
-            onCancel={() => setIsEditDialogOpen(false)}
-          />
+          <EditAnnouncementForm announcement={announcement} onSubmit={async (content, imageUrl) => {
+          await onEdit(announcement.id, content, imageUrl);
+          setIsEditDialogOpen(false);
+        }} onCancel={() => setIsEditDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
@@ -155,6 +123,5 @@ export function AnnouncementCard({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
-  );
+    </Card>;
 }
