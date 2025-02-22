@@ -2,39 +2,56 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, ThumbsUp, Heart } from "lucide-react";
+import { MessageCircle, ThumbsUp, Heart, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { EditAnnouncementForm } from "./EditAnnouncementForm";
+import type { AnnouncementWithRelations } from "@/hooks/useAnnouncements";
 
 interface AnnouncementCardProps {
-  announcement: {
-    id: string;
-    content: string;
-    image_url?: string;
-    created_at: string;
-    user: {
-      full_name: string;
-      avatar_url?: string;
-    };
-  };
+  announcement: AnnouncementWithRelations;
   onReact: (type: string) => void;
   onComment: () => void;
+  onEdit: (id: string, content: string, imageUrl?: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   reactions: {
     type: string;
     count: number;
   }[];
   commentCount: number;
   userReaction?: string;
+  currentUserId?: string;
 }
 
 export function AnnouncementCard({
   announcement,
   onReact,
   onComment,
+  onEdit,
+  onDelete,
   reactions,
   commentCount,
-  userReaction
+  userReaction,
+  currentUserId,
 }: AnnouncementCardProps) {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const isOwner = currentUserId === announcement.user_id;
+
+  const handleDelete = async () => {
+    await onDelete(announcement.id);
+    setIsDeleteDialogOpen(false);
+  };
+
   return (
     <Card className="w-full bg-white shadow-md hover:shadow-lg transition-shadow">
       <CardHeader className="flex flex-row items-center gap-4">
@@ -42,11 +59,35 @@ export function AnnouncementCard({
           <AvatarImage src={announcement.user.avatar_url} />
           <AvatarFallback>{announcement.user.full_name[0]}</AvatarFallback>
         </Avatar>
-        <div className="flex flex-col">
-          <span className="font-semibold">{announcement.user.full_name}</span>
-          <span className="text-sm text-muted-foreground">
-            {formatDistanceToNow(new Date(announcement.created_at), { addSuffix: true, locale: fr })}
-          </span>
+        <div className="flex flex-1 items-center justify-between">
+          <div className="flex flex-col">
+            <span className="font-semibold">{announcement.user.full_name}</span>
+            <span className="text-sm text-muted-foreground">
+              {formatDistanceToNow(new Date(announcement.created_at), { addSuffix: true, locale: fr })}
+            </span>
+          </div>
+          {isOwner && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Modifier
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="text-red-600"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Supprimer
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -85,6 +126,36 @@ export function AnnouncementCard({
           <span>{commentCount}</span>
         </Button>
       </CardFooter>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <EditAnnouncementForm
+            announcement={announcement}
+            onSubmit={async (content, imageUrl) => {
+              await onEdit(announcement.id, content, imageUrl);
+              setIsEditDialogOpen(false);
+            }}
+            onCancel={() => setIsEditDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cette annonce ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. L'annonce sera définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -90,6 +89,65 @@ export function useAnnouncements() {
     }
   };
 
+  const handleUpdateAnnouncement = async (id: string, content: string, imageUrl?: string) => {
+    if (!session?.user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .update({
+          content,
+          image_url: imageUrl,
+        })
+        .eq('id', id)
+        .eq('user_id', session.user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Votre annonce a été modifiée"
+      });
+      
+      await fetchAnnouncements();
+    } catch (error) {
+      console.error("Error updating announcement:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de modifier l'annonce"
+      });
+    }
+  };
+
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (!session?.user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', session.user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Succès",
+        description: "Votre annonce a été supprimée"
+      });
+      
+      await fetchAnnouncements();
+    } catch (error) {
+      console.error("Error deleting announcement:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de supprimer l'annonce"
+      });
+    }
+  };
+
   const handleReaction = async (announcementId: string, reactionType: string) => {
     if (!session?.user?.id) return;
 
@@ -160,6 +218,8 @@ export function useAnnouncements() {
     announcements,
     loading,
     handleSubmitAnnouncement,
+    handleUpdateAnnouncement,
+    handleDeleteAnnouncement,
     handleReaction,
     session
   };

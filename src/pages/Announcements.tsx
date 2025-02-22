@@ -8,7 +8,9 @@ export default function Announcements() {
   const { 
     announcements, 
     loading, 
-    handleSubmitAnnouncement, 
+    handleSubmitAnnouncement,
+    handleUpdateAnnouncement,
+    handleDeleteAnnouncement,
     handleReaction,
     session 
   } = useAnnouncements();
@@ -28,6 +30,8 @@ export default function Announcements() {
         <AnnouncementsList 
           announcements={announcements} 
           onReact={handleReaction}
+          onEdit={handleUpdateAnnouncement}
+          onDelete={handleDeleteAnnouncement}
           session={session}
         />
       </div>
