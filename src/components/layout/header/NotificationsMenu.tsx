@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import {
@@ -161,7 +160,7 @@ export function NotificationsMenu() {
               <Link
                 key={notification.id}
                 to={notification.link_url || '#'}
-                className={`block p-4 hover:bg-[#911e55]/20 transition-colors duration-200 border-b last:border-b-0 ${
+                className={`block p-4 hover:bg-gray-50 border-b last:border-b-0 ${
                   !notification.is_read ? 'bg-rose/5' : ''
                 }`}
                 onClick={() => markAsRead(notification.id)}
@@ -172,7 +171,7 @@ export function NotificationsMenu() {
                   </span>
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">{notification.title}</h4>
-                    <p className="text-sm text-gray-300 mt-1">
+                    <p className="text-sm text-gray-600 mt-1">
                       {notification.content}
                     </p>
                     <span className="text-xs text-gray-400 mt-2 block">
