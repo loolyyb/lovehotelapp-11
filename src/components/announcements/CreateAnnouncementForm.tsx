@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +30,15 @@ export function CreateAnnouncementForm() {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!session?.user) return;
+    if (!session?.user) {
+      toast({
+        variant: "destructive",
+        title: "Non autorisé",
+        description: "Vous devez être connecté pour publier une annonce"
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -91,16 +99,18 @@ export function CreateAnnouncementForm() {
         }
 
         // Insert additional images
-        const { error: imagesError } = await supabase
-          .from('announcement_images')
-          .insert(
-            additionalImageUrls.map(url => ({
-              announcement_id: announcement.id,
-              image_url: url
-            }))
-          );
+        if (additionalImageUrls.length > 0) {
+          const { error: imagesError } = await supabase
+            .from('announcement_images')
+            .insert(
+              additionalImageUrls.map(url => ({
+                announcement_id: announcement.id,
+                image_url: url
+              }))
+            );
 
-        if (imagesError) throw imagesError;
+          if (imagesError) throw imagesError;
+        }
       }
 
       form.reset();
@@ -180,7 +190,14 @@ export function CreateAnnouncementForm() {
             />
             
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Publication..." : "Publier"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Publication...
+                </>
+              ) : (
+                "Publier"
+              )}
             </Button>
           </div>
         </form>
