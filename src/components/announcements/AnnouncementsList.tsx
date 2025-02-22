@@ -11,8 +11,8 @@ interface AnnouncementType {
   image_url: string | null;
   created_at: string;
   user_id: string;
-  full_name: string;  // Changed from string | null to string to ensure we always have a value
-  avatar_url: string | null;
+  profileName: string;
+  avatarUrl: string | null;
 }
 
 export function AnnouncementsList() {
@@ -60,22 +60,21 @@ export function AnnouncementsList() {
       console.log('Raw data from Supabase:', data);
 
       const transformedData: AnnouncementType[] = data.map(announcement => {
-        // Ensure we have a default value for full_name
-        const fullName = announcement.profiles?.full_name || 'Utilisateur inconnu';
-        console.log(`Processing announcement ${announcement.id}, full_name: ${fullName}`);
-        
-        return {
+        const transformedAnnouncement = {
           id: announcement.id,
           content: announcement.content,
           image_url: announcement.image_url,
           created_at: announcement.created_at,
           user_id: announcement.user_id,
-          full_name: fullName,
-          avatar_url: announcement.profiles?.avatar_url ?? null
+          profileName: announcement.profiles?.full_name ?? "Utilisateur inconnu",
+          avatarUrl: announcement.profiles?.avatar_url ?? null
         };
+        
+        console.log('Transformed announcement:', transformedAnnouncement);
+        return transformedAnnouncement;
       });
 
-      console.log('Transformed announcements:', transformedData);
+      console.log('All transformed announcements:', transformedData);
       setAnnouncements(transformedData);
     } catch (error) {
       console.error('Error fetching announcements:', error);
