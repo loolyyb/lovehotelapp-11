@@ -4,6 +4,7 @@ import { AnnouncementForm } from "@/components/announcements/AnnouncementForm";
 import { useAnnouncements } from "@/hooks/useAnnouncements";
 import { Loader } from "lucide-react";
 
+// Ajout de l'export par défaut explicite
 export default function Announcements() {
   const { 
     announcements, 
@@ -29,7 +30,7 @@ export default function Announcements() {
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <AnnouncementForm onSubmit={handleSubmitAnnouncement} />
         <AnnouncementsList 
-          announcements={announcements}
+          announcements={announcements || []} // Ajout d'une valeur par défaut pour éviter l'erreur null
           onReact={handleReaction}
           onComment={handleComment}
           onEdit={handleUpdateAnnouncement}
