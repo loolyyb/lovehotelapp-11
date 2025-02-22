@@ -100,7 +100,7 @@ export function AnnouncementForm({ onSubmit }: AnnouncementFormProps) {
         <Button 
           type="submit" 
           disabled={isSubmitting || isUploading || !content.trim()} 
-          className="bg-[#ce0067] hover:bg-[#ce0067]/90"
+          className="bg-[#ce0067] hover:bg-[#ce0067]/90 text-white"
         >
           {(isSubmitting || isUploading) ? (
             <Loader className="w-4 h-4 animate-spin mr-2" />
