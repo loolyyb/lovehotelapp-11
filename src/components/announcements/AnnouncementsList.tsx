@@ -16,7 +16,7 @@ interface RawAnnouncementType {
   profiles: {
     full_name: string | null;
     avatar_url: string | null;
-  } | null;
+  };
 }
 
 // Type for the transformed announcement data used in components
@@ -56,7 +56,7 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles (
+          profiles:profiles!user_id(
             full_name,
             avatar_url
           )
@@ -79,7 +79,7 @@ export function AnnouncementsList() {
         sample: rawData[0] 
       });
 
-      const transformedData: TransformedAnnouncementType[] = rawData.map((announcement: RawAnnouncementType) => {
+      const transformedData: TransformedAnnouncementType[] = (rawData as unknown as RawAnnouncementType[]).map(announcement => {
         logger.debug('Transformation annonce:', { 
           id: announcement.id,
           user_id: announcement.user_id,
