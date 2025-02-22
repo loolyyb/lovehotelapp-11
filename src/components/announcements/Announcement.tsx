@@ -1,11 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/hooks/useAuthSession";
-import { MessageSquare, ThumbsUp, Heart, Smile } from "lucide-react";
+import { MessageSquare, ThumbsUp, Heart, User } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -32,6 +32,51 @@ export function Announcement({ announcement }: AnnouncementProps) {
   const [userReaction, setUserReaction] = useState<string | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+
+  useEffect(() => {
+    if (announcement.id) {
+      fetchReactions();
+      fetchUserReaction();
+    }
+  }, [announcement.id]);
+
+  const fetchReactions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('announcement_reactions')
+        .select('reaction_type')
+        .eq('announcement_id', announcement.id);
+
+      if (error) throw error;
+
+      const reactionCounts = data.reduce((acc: {[key: string]: number}, reaction) => {
+        acc[reaction.reaction_type] = (acc[reaction.reaction_type] || 0) + 1;
+        return acc;
+      }, {});
+
+      setReactions(reactionCounts);
+    } catch (error) {
+      console.error('Error fetching reactions:', error);
+    }
+  };
+
+  const fetchUserReaction = async () => {
+    if (!session?.user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('announcement_reactions')
+        .select('reaction_type')
+        .eq('announcement_id', announcement.id)
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      setUserReaction(data?.reaction_type || null);
+    } catch (error) {
+      console.error('Error fetching user reaction:', error);
+    }
+  };
 
   const handleReaction = async (type: string) => {
     if (!session?.user) return;
@@ -64,6 +109,7 @@ export function Announcement({ announcement }: AnnouncementProps) {
         }
         setUserReaction(type);
       }
+      fetchReactions();
     } catch (error) {
       console.error('Error handling reaction:', error);
       toast({
@@ -91,7 +137,7 @@ export function Announcement({ announcement }: AnnouncementProps) {
           .order('created_at', { ascending: true });
 
         if (error) throw error;
-        setComments(data);
+        setComments(data || []);
       } catch (error) {
         console.error('Error loading comments:', error);
         toast({
@@ -143,9 +189,7 @@ export function Announcement({ announcement }: AnnouncementProps) {
               className="h-full w-full object-cover"
             />
           ) : (
-            <span className="text-burgundy">
-              {announcement.profiles?.full_name?.[0] || '?'}
-            </span>
+            <User className="h-5 w-5 text-burgundy" />
           )}
         </div>
         
@@ -171,30 +215,32 @@ export function Announcement({ announcement }: AnnouncementProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 pt-4 border-t border-burgundy/10">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleReaction('like')}
-          className={userReaction === 'like' ? 'text-burgundy' : ''}
-        >
-          <ThumbsUp className="h-4 w-4 mr-2" />
-          J'aime
-        </Button>
+      <div className="flex items-center justify-between pt-4 border-t border-burgundy/10">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleReaction('like')}
+            className={`${userReaction === 'like' ? 'text-burgundy' : ''} gap-2`}
+          >
+            <ThumbsUp className="h-4 w-4" />
+            <span>J'aime {reactions['like'] ? `(${reactions['like']})` : ''}</span>
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleReaction('love')}
+            className={`${userReaction === 'love' ? 'text-burgundy' : ''} gap-2`}
+          >
+            <Heart className="h-4 w-4" />
+            <span>J'adore {reactions['love'] ? `(${reactions['love']})` : ''}</span>
+          </Button>
+        </div>
         
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleReaction('love')}
-          className={userReaction === 'love' ? 'text-burgundy' : ''}
-        >
-          <Heart className="h-4 w-4 mr-2" />
-          J'adore
-        </Button>
-        
-        <Button variant="ghost" size="sm" onClick={loadComments}>
-          <MessageSquare className="h-4 w-4 mr-2" />
-          Commenter
+        <Button variant="ghost" size="sm" onClick={loadComments} className="gap-2">
+          <MessageSquare className="h-4 w-4" />
+          <span>Commenter {comments.length > 0 ? `(${comments.length})` : ''}</span>
         </Button>
       </div>
 
@@ -210,7 +256,7 @@ export function Announcement({ announcement }: AnnouncementProps) {
             <>
               {comments.map((comment) => (
                 <div key={comment.id} className="flex items-start gap-4">
-                  <div className="h-8 w-8 rounded-full bg-burgundy/20 flex items-center justify-center">
+                  <div className="h-8 w-8 rounded-full bg-burgundy/20 flex items-center justify-center overflow-hidden">
                     {comment.profiles?.avatar_url ? (
                       <img
                         src={comment.profiles.avatar_url}
@@ -218,9 +264,7 @@ export function Announcement({ announcement }: AnnouncementProps) {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="text-burgundy text-sm">
-                        {comment.profiles?.full_name?.[0] || '?'}
-                      </span>
+                      <User className="h-4 w-4 text-burgundy" />
                     )}
                   </div>
                   <div className="flex-1 bg-burgundy/5 rounded-lg p-3">

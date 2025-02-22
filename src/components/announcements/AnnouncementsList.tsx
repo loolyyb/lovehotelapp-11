@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Announcement } from "./Announcement";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface AnnouncementType {
   id: string;
@@ -23,7 +24,10 @@ export function AnnouncementsList() {
 
   useEffect(() => {
     fetchAnnouncements();
-    subscribeToAnnouncements();
+    const unsubscribe = subscribeToAnnouncements();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const fetchAnnouncements = async () => {
@@ -76,13 +80,16 @@ export function AnnouncementsList() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div 
-            key={i}
-            className="bg-white/10 backdrop-blur-sm animate-pulse h-48 rounded-lg"
-          />
-        ))}
+      <div className="flex justify-center items-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin text-burgundy" />
+      </div>
+    );
+  }
+
+  if (announcements.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        Aucune annonce pour le moment
       </div>
     );
   }
