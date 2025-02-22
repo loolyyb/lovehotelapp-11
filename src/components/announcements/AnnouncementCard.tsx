@@ -10,6 +10,7 @@ import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { EditAnnouncementForm } from "./EditAnnouncementForm";
 import type { AnnouncementWithRelations } from "@/types/announcements.types";
+
 interface AnnouncementCardProps {
   announcement: AnnouncementWithRelations;
   onReact: (type: string) => void;
@@ -24,6 +25,7 @@ interface AnnouncementCardProps {
   userReaction?: string;
   currentUserId?: string;
 }
+
 export function AnnouncementCard({
   announcement,
   onReact,
@@ -38,20 +40,22 @@ export function AnnouncementCard({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isOwner = currentUserId === announcement.user_id;
+
   const handleDelete = async () => {
     await onDelete(announcement.id);
     setIsDeleteDialogOpen(false);
   };
+
   return <Card className="w-full bg-white shadow-md hover:shadow-lg transition-shadow">
-      <CardHeader className="flex flex-row items-center gap-4 bg-primary-foreground">
+      <CardHeader className="flex flex-row items-center gap-4 bg-white">
         <Avatar>
           <AvatarImage src={announcement.user.avatar_url} />
           <AvatarFallback>{announcement.user.full_name[0]}</AvatarFallback>
         </Avatar>
         <div className="flex flex-1 items-center justify-between">
           <div className="flex flex-col">
-            <span className="font-semibold">{announcement.user.full_name}</span>
-            <span className="text-sm text-muted-foreground">
+            <span className="font-semibold text-gray-900">{announcement.user.full_name}</span>
+            <span className="text-sm text-gray-600">
               {formatDistanceToNow(new Date(announcement.created_at), {
               addSuffix: true,
               locale: fr
@@ -77,22 +81,32 @@ export function AnnouncementCard({
             </DropdownMenu>}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 bg-slate-50">
-        <p className="text-gray-700">{announcement.content}</p>
+      <CardContent className="space-y-4 bg-white">
+        <p className="text-gray-900">{announcement.content}</p>
         {announcement.image_url && <img src={announcement.image_url} alt="Contenu de l'annonce" className="rounded-lg max-h-96 w-full object-cover" />}
       </CardContent>
       <CardFooter className="flex justify-between items-center border-t pt-4">
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" className={userReaction === 'like' ? 'text-[#ce0067]' : ''} onClick={() => onReact('like')}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={`${userReaction === 'like' ? 'text-[#ce0067]' : 'text-gray-700'} hover:text-[#ce0067]`} 
+            onClick={() => onReact('like')}
+          >
             <ThumbsUp className="w-4 h-4 mr-2" />
             <span>{reactions.find(r => r.type === 'like')?.count || 0}</span>
           </Button>
-          <Button variant="ghost" size="sm" className={userReaction === 'love' ? 'text-[#ce0067]' : ''} onClick={() => onReact('love')}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={`${userReaction === 'love' ? 'text-[#ce0067]' : 'text-gray-700'} hover:text-[#ce0067]`} 
+            onClick={() => onReact('love')}
+          >
             <Heart className="w-4 h-4 mr-2" />
             <span>{reactions.find(r => r.type === 'love')?.count || 0}</span>
           </Button>
         </div>
-        <Button variant="ghost" size="sm" onClick={onComment}>
+        <Button variant="ghost" size="sm" className="text-gray-700 hover:text-[#ce0067]" onClick={onComment}>
           <MessageCircle className="w-4 h-4 mr-2" />
           <span>{commentCount}</span>
         </Button>
