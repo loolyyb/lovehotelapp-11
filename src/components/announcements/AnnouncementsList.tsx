@@ -11,10 +11,8 @@ interface AnnouncementType {
   image_url: string | null;
   created_at: string;
   user_id: string;
-  profiles: {
-    full_name: string;
-    avatar_url: string | null;
-  } | null;
+  full_name: string | null;
+  avatar_url: string | null;
 }
 
 export function AnnouncementsList() {
@@ -36,15 +34,21 @@ export function AnnouncementsList() {
         .from('announcements')
         .select(`
           *,
-          profiles!user_id (
-            full_name,
-            avatar_url
-          )
+          full_name,
+          avatar_url
         `)
+        .from('announcements')
+        .select('*, profiles!user_id(full_name, avatar_url)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAnnouncements(data);
+      // Transforme la structure des données pour correspondre à notre interface
+      const transformedData = data.map((announcement) => ({
+        ...announcement,
+        full_name: announcement.profiles?.full_name,
+        avatar_url: announcement.profiles?.avatar_url,
+      }));
+      setAnnouncements(transformedData);
     } catch (error) {
       console.error('Error fetching announcements:', error);
       toast({
