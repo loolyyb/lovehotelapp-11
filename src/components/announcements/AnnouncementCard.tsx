@@ -72,7 +72,7 @@ export function AnnouncementCard({
     <Card className="w-full bg-white shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
         <AnnouncementHeader
-          userId={announcement.user_id}
+          user={announcement.user}
           createdAt={announcement.created_at}
           isOwner={isOwner}
           onEdit={() => setIsEditDialogOpen(true)}
