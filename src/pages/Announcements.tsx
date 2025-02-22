@@ -2,21 +2,23 @@
 import { AnnouncementsList } from "@/components/announcements/AnnouncementsList";
 import { CreateAnnouncementForm } from "@/components/announcements/CreateAnnouncementForm";
 import { useAuthSession } from "@/hooks/useAuthSession";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Loader } from "lucide-react";
 
 export default function Announcements() {
-  const { session } = useAuthSession();
-  const navigate = useNavigate();
+  const { session, loading } = useAuthSession();
 
-  useEffect(() => {
-    if (!session) {
-      navigate('/login');
-    }
-  }, [session, navigate]);
+  // Pendant le chargement, afficher un indicateur de chargement
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader className="w-8 h-8 animate-spin text-burgundy" />
+      </div>
+    );
+  }
 
-  // Si l'utilisateur n'est pas connecté, on ne rend rien pendant la redirection
+  // Une fois le chargement terminé, vérifier la session
   if (!session) {
+    window.location.href = '/login';
     return null;
   }
 
