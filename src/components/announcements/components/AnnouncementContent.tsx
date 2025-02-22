@@ -34,44 +34,42 @@ export function AnnouncementContent({
   };
 
   return (
-    <div className="mt-2">
-      <div className={`${isMobile ? 'flex flex-col space-y-4' : 'flex flex-row gap-6 items-start'}`}>
-        {allImages.length > 0 && (
-          <div className={`relative ${!isMobile ? 'w-1/3 max-w-[300px] shrink-0' : 'w-full'}`}>
-            <img 
-              src={allImages[currentImageIndex].image_url} 
-              alt={`Image ${currentImageIndex + 1} de l'annonce`} 
-              className="rounded-lg w-full object-cover"
-              style={{ maxHeight: isMobile ? '300px' : '250px' }}
-            />
-            
-            {hasMultipleImages && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full"
-                  onClick={previousImage}
-                >
-                  <ChevronLeft className="h-4 w-4 md:h-6 md:w-6" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full"
-                  onClick={nextImage}
-                >
-                  <ChevronRight className="h-4 w-4 md:h-6 md:w-6" />
-                </Button>
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 px-2 py-1 rounded-full text-white text-xs md:text-sm">
-                  {currentImageIndex + 1} / {allImages.length}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-        <p className="text-zinc-50 text-sm md:text-base flex-grow">{content}</p>
-      </div>
+    <div className="mt-2 flex flex-col space-y-4">
+      {allImages.length > 0 && (
+        <div className="relative">
+          <img 
+            src={allImages[currentImageIndex].image_url} 
+            alt={`Image ${currentImageIndex + 1} de l'annonce`} 
+            className="rounded-lg w-full object-cover"
+            style={{ maxHeight: isMobile ? '300px' : '400px' }}
+          />
+          
+          {hasMultipleImages && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full"
+                onClick={previousImage}
+              >
+                <ChevronLeft className="h-4 w-4 md:h-6 md:w-6" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full"
+                onClick={nextImage}
+              >
+                <ChevronRight className="h-4 w-4 md:h-6 md:w-6" />
+              </Button>
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 px-2 py-1 rounded-full text-white text-xs md:text-sm">
+                {currentImageIndex + 1} / {allImages.length}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      <p className="text-zinc-50 text-sm md:text-base">{content}</p>
     </div>
   );
 }

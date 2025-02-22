@@ -15,12 +15,12 @@ export function AnnouncementHeader({
   createdAt
 }: AnnouncementHeaderProps) {
   return (
-    <div className="flex items-center gap-8 flex-shrink">
+    <div className="flex items-center justify-between">
       <UserInfo 
         full_name={full_name}
         avatar_url={avatar_url}
       />
-      <time className="text-sm text-gray-500 whitespace-nowrap">
+      <time className="text-sm text-gray-500">
         {format(new Date(createdAt), 'PP à p', {
           locale: fr
         })}

@@ -14,33 +14,24 @@ import { Loader } from "lucide-react";
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 import { useStatusBar } from './hooks/useStatusBar';
-import { useLogger } from './hooks/useLogger';
 
 const getBasename = () => {
-  const logger = useLogger('Router');
   const hostname = window.location.hostname;
-  const pathname = window.location.pathname;
-  
   // Vérifie si nous sommes dans l'éditeur Lovable ou en preview
   const isLovableEnv = hostname.includes('.lovable.') || hostname === 'localhost';
   
-  logger.info('Environnement détecté', {
-    hostname,
-    pathname,
-    isLovableEnv
-  });
-
   if (isLovableEnv) {
-    // Récupère le pathname actuel et extrait le premier segment comme basename
+    // Récupère le pathname actuel
+    const pathname = window.location.pathname;
+    // Extrait le premier segment du chemin comme basename
     const firstSegment = pathname.split('/')[1];
     if (firstSegment) {
-      logger.info('Basename Lovable détecté', { basename: `/${firstSegment}` });
+      console.log('Lovable environment detected, basename:', `/${firstSegment}`);
       return `/${firstSegment}`;
     }
-    logger.warn('Aucun segment de chemin trouvé dans un environnement Lovable');
   }
   
-  logger.info('Utilisation du basename par défaut: /');
+  console.log('Production environment detected, basename: /');
   return '/';
 };
 
@@ -49,15 +40,12 @@ function Content() {
   const isMobile = useIsMobile();
   const { currentThemeName } = useTheme();
   const { setStatusBarColor } = useStatusBar();
-  const logger = useLogger('App');
 
   useEffect(() => {
-    logger.info("État de l'application", {
-      sessionExists: !!session,
-      loading,
-      theme: currentThemeName,
-      currentPath: window.location.pathname
-    });
+    console.log("Content mounted");
+    console.log("Session:", session);
+    console.log("Loading:", loading);
+    console.log("Current theme:", currentThemeName);
   }, [session, loading, currentThemeName]);
 
   useEffect(() => {
@@ -105,14 +93,9 @@ function AppContent() {
 }
 
 function App() {
-  const logger = useLogger('App');
+  console.log("App component rendering");
   const basename = getBasename();
-  
-  logger.info("Initialisation de l'application", {
-    basename,
-    fullPath: window.location.pathname,
-    currentUrl: window.location.href
-  });
+  console.log("Using basename:", basename);
 
   return (
     <Router basename={basename}>
