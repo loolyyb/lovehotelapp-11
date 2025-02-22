@@ -16,8 +16,8 @@ interface AnnouncementCardProps {
   announcement: AnnouncementWithRelations;
   onReact: (type: string) => void;
   onComment: () => void;
-  onEdit: (id: string, content: string, imageUrl?: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onEdit: (content: string, imageUrl?: string) => Promise<void>;
+  onDelete: () => Promise<void>;
   reactions: {
     type: string;
     count: number;
@@ -40,37 +40,32 @@ export function AnnouncementCard({
 }: AnnouncementCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
-  // Vérification explicite que l'utilisateur est le propriétaire de l'annonce
-  const isOwner = currentUserId && announcement.user_id === currentUserId;
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Correction : vérification du propriétaire en utilisant le user_id de l'annonce
+  const isOwner = Boolean(currentUserId && currentUserId === announcement.user_id);
 
   const handleDelete = async () => {
-    if (!isOwner) return;
     try {
-      await onDelete(announcement.id);
+      setIsLoading(true);
+      await onDelete();
       setIsDeleteDialogOpen(false);
     } catch (error) {
       console.error("Erreur lors de la suppression:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleReaction = (type: string) => {
-    if (!currentUserId) return;
-    onReact(type);
-  };
-
-  const handleComment = () => {
-    if (!currentUserId) return;
-    onComment();
-  };
-
   const handleEdit = async (content: string, imageUrl?: string) => {
-    if (!isOwner) return;
     try {
-      await onEdit(announcement.id, content, imageUrl);
+      setIsLoading(true);
+      await onEdit(content, imageUrl);
       setIsEditDialogOpen(false);
     } catch (error) {
       console.error("Erreur lors de la modification:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -103,7 +98,10 @@ export function AnnouncementCard({
                   <Pencil className="w-4 h-4 mr-2" />
                   Modifier
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-600">
+                <DropdownMenuItem 
+                  onClick={() => setIsDeleteDialogOpen(true)} 
+                  className="text-red-600"
+                >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Supprimer
                 </DropdownMenuItem>
@@ -112,6 +110,7 @@ export function AnnouncementCard({
           )}
         </div>
       </CardHeader>
+
       <CardContent className="space-y-4 bg-white">
         <p className="text-gray-900">{announcement.content}</p>
         {announcement.image_url && (
@@ -122,13 +121,15 @@ export function AnnouncementCard({
           />
         )}
       </CardContent>
+
       <CardFooter className="flex justify-between items-center border-t pt-4">
         <div className="flex gap-2">
           <Button 
             variant="ghost" 
             size="sm" 
-            className={`${userReaction === 'like' ? 'text-[#ce0067]' : 'text-gray-700'} hover:text-[#ce0067]`} 
-            onClick={() => handleReaction('like')}
+            className={`${userReaction === 'like' ? 'text-[#ce0067]' : 'text-gray-700'} hover:text-[#ce0067]`}
+            disabled={!currentUserId || isLoading}
+            onClick={() => onReact('like')}
           >
             <ThumbsUp className="w-4 h-4 mr-2" />
             <span>{reactions.find(r => r.type === 'like')?.count || 0}</span>
@@ -136,8 +137,9 @@ export function AnnouncementCard({
           <Button 
             variant="ghost" 
             size="sm" 
-            className={`${userReaction === 'love' ? 'text-[#ce0067]' : 'text-gray-700'} hover:text-[#ce0067]`} 
-            onClick={() => handleReaction('love')}
+            className={`${userReaction === 'love' ? 'text-[#ce0067]' : 'text-gray-700'} hover:text-[#ce0067]`}
+            disabled={!currentUserId || isLoading}
+            onClick={() => onReact('love')}
           >
             <Heart className="w-4 h-4 mr-2" />
             <span>{reactions.find(r => r.type === 'love')?.count || 0}</span>
@@ -146,8 +148,9 @@ export function AnnouncementCard({
         <Button 
           variant="ghost" 
           size="sm" 
-          className="text-gray-700 hover:text-[#ce0067]" 
-          onClick={handleComment}
+          className="text-gray-700 hover:text-[#ce0067]"
+          disabled={!currentUserId || isLoading}
+          onClick={onComment}
         >
           <MessageCircle className="w-4 h-4 mr-2" />
           <span>{commentCount}</span>
@@ -173,8 +176,12 @@ export function AnnouncementCard({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 text-white hover:bg-red-700">
+            <AlertDialogCancel disabled={isLoading}>Annuler</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-red-600 text-white hover:bg-red-700"
+              disabled={isLoading}
+            >
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>

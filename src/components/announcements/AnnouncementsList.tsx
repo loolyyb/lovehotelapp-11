@@ -26,8 +26,8 @@ export function AnnouncementsList({
           announcement={announcement}
           onReact={(type) => onReact(announcement.id, type)}
           onComment={() => {}} 
-          onEdit={onEdit}
-          onDelete={onDelete}
+          onEdit={(content, imageUrl) => onEdit(announcement.id, content, imageUrl)}
+          onDelete={() => onDelete(announcement.id)}
           reactions={Object.entries(
             announcement.reactions.reduce((acc: Record<string, number>, r) => {
               acc[r.type] = (acc[r.type] || 0) + 1;
