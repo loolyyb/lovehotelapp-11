@@ -8,7 +8,7 @@ import { Loader } from "lucide-react";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { Database } from "@/integrations/supabase/types/database.types";
 
-type Announcement = Database['public']['Tables']['announcements']['Row'] & {
+type AnnouncementWithRelations = Database['public']['Tables']['announcements']['Row'] & {
   user: {
     full_name: string;
     avatar_url?: string;
@@ -23,7 +23,7 @@ type Announcement = Database['public']['Tables']['announcements']['Row'] & {
 };
 
 export default function Announcements() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { session } = useAuthSession();
@@ -41,10 +41,7 @@ export default function Announcements() {
       const { data, error } = await supabase
         .from('announcements')
         .select(`
-          id,
-          content,
-          image_url,
-          created_at,
+          *,
           user:profiles!announcements_user_id_fkey (
             full_name,
             avatar_url
@@ -92,13 +89,15 @@ export default function Announcements() {
   };
 
   const handleSubmitAnnouncement = async (content: string, imageUrl?: string) => {
+    if (!session?.user?.id) return;
+
     try {
       const { error } = await supabase
         .from('announcements')
         .insert({
           content,
           image_url: imageUrl,
-          user_id: session?.user?.id
+          user_id: session.user.id
         });
 
       if (error) throw error;
