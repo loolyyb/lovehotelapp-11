@@ -14,7 +14,7 @@ export class AnnouncementService {
           avatar_url,
           username
         ),
-        reactions:announcement_reactions(type, user_id),
+        reactions:announcement_reactions(reaction_type, user_id),
         comments:announcement_comments(
           id,
           content,

@@ -22,7 +22,7 @@ export type AnnouncementWithRelations = {
   user_id: string;
   user: AnnouncementUser;
   reactions: Array<{
-    type: string;
+    reaction_type: string;
     user_id: string;
   }>;
   comments: AnnouncementComment[];

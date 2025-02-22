@@ -4,7 +4,7 @@ import { ThumbsUp, Heart } from "lucide-react";
 
 interface AnnouncementReactionsProps {
   reactions: {
-    type: string;
+    reaction_type: string;
     count: number;
   }[];
   userReaction?: string;
@@ -23,7 +23,7 @@ export function AnnouncementReactions({ reactions, userReaction, onReact, disabl
         onClick={() => onReact('like')}
       >
         <ThumbsUp className="w-4 h-4 mr-2" />
-        <span>{reactions.find(r => r.type === 'like')?.count || 0}</span>
+        <span>{reactions.find(r => r.reaction_type === 'like')?.count || 0}</span>
       </Button>
       <Button 
         variant="ghost" 
@@ -33,7 +33,7 @@ export function AnnouncementReactions({ reactions, userReaction, onReact, disabl
         onClick={() => onReact('love')}
       >
         <Heart className="w-4 h-4 mr-2" />
-        <span>{reactions.find(r => r.type === 'love')?.count || 0}</span>
+        <span>{reactions.find(r => r.reaction_type === 'love')?.count || 0}</span>
       </Button>
     </div>
   );
