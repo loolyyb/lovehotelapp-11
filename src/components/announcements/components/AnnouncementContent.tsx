@@ -1,3 +1,4 @@
+
 interface AnnouncementContentProps {
   content: string;
   imageUrl: string | null;
