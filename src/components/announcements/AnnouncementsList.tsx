@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Announcement } from "./Announcement";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useLogger } from "@/hooks/useLogger";
 
 interface AnnouncementType {
   id: string;
@@ -19,6 +20,7 @@ export function AnnouncementsList() {
   const [announcements, setAnnouncements] = useState<AnnouncementType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const logger = useLogger('AnnouncementsList');
 
   useEffect(() => {
     fetchAnnouncements();
@@ -30,12 +32,13 @@ export function AnnouncementsList() {
 
   const fetchAnnouncements = async () => {
     try {
-      console.log('Fetching announcements...');
-      const { data, error } = await supabase
+      logger.info('Début de la récupération des annonces');
+      
+      const { data: rawData, error } = await supabase
         .from('announcements')
         .select(`
           *,
-          profiles:profiles!inner (
+          profiles (
             full_name,
             avatar_url
           )
@@ -43,37 +46,52 @@ export function AnnouncementsList() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error in Supabase query:', error);
+        logger.error('Erreur dans la requête Supabase:', { error });
         throw error;
       }
 
-      if (!data) {
-        console.log('No data returned from query');
+      if (!rawData) {
+        logger.info('Aucune donnée retournée par la requête');
         setAnnouncements([]);
         return;
       }
 
-      console.log('Raw data from Supabase:', data);
+      logger.info('Données brutes reçues:', { 
+        count: rawData.length,
+        sample: rawData[0] 
+      });
 
-      const transformedData: AnnouncementType[] = data.map(announcement => {
+      const transformedData: AnnouncementType[] = rawData.map(announcement => {
+        // Log détaillé de chaque annonce avant transformation
+        logger.debug('Transformation annonce:', { 
+          id: announcement.id,
+          user_id: announcement.user_id,
+          profiles: announcement.profiles
+        });
+
         const transformedAnnouncement = {
           id: announcement.id,
           content: announcement.content,
           image_url: announcement.image_url,
           created_at: announcement.created_at,
           user_id: announcement.user_id,
+          // Utilisation des données du profil de manière sécurisée
           full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
           avatar_url: announcement.profiles?.avatar_url ?? null
         };
         
-        console.log('Transformed announcement:', transformedAnnouncement);
+        logger.debug('Annonce transformée:', transformedAnnouncement);
         return transformedAnnouncement;
       });
 
-      console.log('All transformed announcements:', transformedData);
+      logger.info('Transformation terminée:', { 
+        count: transformedData.length,
+        sample: transformedData[0] 
+      });
+
       setAnnouncements(transformedData);
     } catch (error) {
-      console.error('Error fetching announcements:', error);
+      logger.error('Erreur lors de la récupération des annonces:', { error });
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -85,7 +103,7 @@ export function AnnouncementsList() {
   };
 
   const subscribeToAnnouncements = () => {
-    console.log('Setting up realtime subscription for announcements');
+    logger.info('Configuration de la souscription temps réel');
     
     const channel = supabase
       .channel('announcements-changes')
@@ -97,16 +115,16 @@ export function AnnouncementsList() {
           table: 'announcements'
         },
         (payload) => {
-          console.log('Received realtime update:', payload);
+          logger.info('Mise à jour temps réel reçue:', { payload });
           fetchAnnouncements();
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        logger.info('Statut de la souscription:', { status });
       });
 
     return () => {
-      console.log('Cleaning up realtime subscription');
+      logger.info('Nettoyage de la souscription temps réel');
       supabase.removeChannel(channel);
     };
   };
