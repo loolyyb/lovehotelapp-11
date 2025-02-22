@@ -50,8 +50,12 @@ export function AnnouncementsList() {
       const { data: rawData, error } = await supabase
         .from('announcements')
         .select(`
-          *,
-          profiles:user_id(
+          id,
+          content,
+          image_url,
+          created_at,
+          user_id,
+          profiles (
             full_name,
             avatar_url
           )
