@@ -11,8 +11,8 @@ interface AnnouncementType {
   image_url: string | null;
   created_at: string;
   user_id: string;
-  full_name: string;    // Changé de profileName à full_name
-  avatar_url: string | null;  // Changé de avatarUrl à avatar_url
+  full_name: string | null;
+  avatar_url: string | null;
 }
 
 export function AnnouncementsList() {
@@ -34,12 +34,8 @@ export function AnnouncementsList() {
       const { data, error } = await supabase
         .from('announcements')
         .select(`
-          id,
-          content,
-          image_url,
-          created_at,
-          user_id,
-          profiles!inner (
+          *,
+          profiles:profiles!inner (
             full_name,
             avatar_url
           )
