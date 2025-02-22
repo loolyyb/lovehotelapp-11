@@ -11,10 +11,8 @@ interface AnnouncementType {
   image_url: string | null;
   created_at: string;
   user_id: string;
-  profiles: {
-    full_name: string | null;
-    avatar_url: string | null;
-  } | null;
+  full_name: string | null;
+  avatar_url: string | null;
 }
 
 export function AnnouncementsList() {
@@ -32,24 +30,17 @@ export function AnnouncementsList() {
 
   const fetchAnnouncements = async () => {
     try {
-      console.log("Fetching announcements...");
       const { data, error } = await supabase
         .from('announcements')
         .select(`
           *,
-          profiles!user_id (
-            full_name,
-            avatar_url
-          )
+          full_name:profiles!user_id(full_name),
+          avatar_url:profiles!user_id(avatar_url)
         `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Supabase error:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log("Fetched data:", data);
       setAnnouncements(data);
     } catch (error) {
       console.error('Error fetching announcements:', error);

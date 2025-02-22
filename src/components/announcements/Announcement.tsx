@@ -20,10 +20,8 @@ interface AnnouncementProps {
     image_url: string | null;
     created_at: string;
     user_id: string;
-    profiles: {
-      full_name: string;
-      avatar_url: string | null;
-    } | null;
+    full_name: string | null;
+    avatar_url: string | null;
   };
 }
 
@@ -100,8 +98,8 @@ export function Announcement({ announcement }: AnnouncementProps) {
     <div className="backdrop-blur-sm border border-burgundy/20 rounded-lg p-6 space-y-4 bg-[#40192c]">
       <div className="flex justify-between items-start">
         <AnnouncementHeader
-          profileName={announcement.profiles?.full_name || ''}
-          avatarUrl={announcement.profiles?.avatar_url}
+          profileName={announcement.full_name || 'Utilisateur inconnu'}
+          avatarUrl={announcement.avatar_url}
           createdAt={announcement.created_at}
         />
         {isOwner && (
