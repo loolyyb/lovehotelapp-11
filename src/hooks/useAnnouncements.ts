@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +23,7 @@ export function useAnnouncements() {
   const [announcements, setAnnouncements] = useState<AnnouncementWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { session } = useAuthSession();
+  const { session, userProfile } = useAuthSession();
 
   const fetchAnnouncements = async () => {
     try {
@@ -60,7 +61,14 @@ export function useAnnouncements() {
   };
 
   const handleSubmitAnnouncement = async (content: string, imageUrl?: string) => {
-    if (!session?.user?.id) return;
+    if (!userProfile?.id) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour publier une annonce"
+      });
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -68,7 +76,7 @@ export function useAnnouncements() {
         .insert({
           content,
           image_url: imageUrl,
-          user_id: session.user.id
+          user_id: userProfile.id
         });
 
       if (error) throw error;
@@ -90,7 +98,7 @@ export function useAnnouncements() {
   };
 
   const handleUpdateAnnouncement = async (id: string, content: string, imageUrl?: string) => {
-    if (!session?.user?.id) return;
+    if (!userProfile?.id) return;
 
     try {
       const { error } = await supabase
@@ -100,7 +108,7 @@ export function useAnnouncements() {
           image_url: imageUrl,
         })
         .eq('id', id)
-        .eq('user_id', session.user.id);
+        .eq('user_id', userProfile.id);
 
       if (error) throw error;
 
@@ -121,14 +129,14 @@ export function useAnnouncements() {
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
-    if (!session?.user?.id) return;
+    if (!userProfile?.id) return;
 
     try {
       const { error } = await supabase
         .from('announcements')
         .delete()
         .eq('id', id)
-        .eq('user_id', session.user.id);
+        .eq('user_id', userProfile.id);
 
       if (error) throw error;
 
@@ -149,14 +157,21 @@ export function useAnnouncements() {
   };
 
   const handleReaction = async (announcementId: string, reactionType: string) => {
-    if (!session?.user?.id) return;
+    if (!userProfile?.id) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour réagir à une annonce"
+      });
+      return;
+    }
 
     try {
       const { data: existingReaction } = await supabase
         .from('announcement_reactions')
         .select()
         .eq('announcement_id', announcementId)
-        .eq('user_id', session.user.id)
+        .eq('user_id', userProfile.id)
         .maybeSingle();
 
       if (existingReaction) {
@@ -176,7 +191,7 @@ export function useAnnouncements() {
           .from('announcement_reactions')
           .insert({
             announcement_id: announcementId,
-            user_id: session.user.id,
+            user_id: userProfile.id,
             reaction_type: reactionType
           });
       }
