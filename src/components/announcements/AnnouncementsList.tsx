@@ -36,7 +36,7 @@ export function AnnouncementsList() {
         .from('announcements')
         .select(`
           *,
-          profiles (
+          profiles:user_id (
             full_name,
             avatar_url
           )
