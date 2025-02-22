@@ -6,12 +6,9 @@ import { AnnouncementCard } from "@/components/announcements/AnnouncementCard";
 import { AnnouncementForm } from "@/components/announcements/AnnouncementForm";
 import { Loader } from "lucide-react";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { Database } from "@/integrations/supabase/types/database.types";
 
-interface Announcement {
-  id: string;
-  content: string;
-  image_url?: string;
-  created_at: string;
+type Announcement = Database['public']['Tables']['announcements']['Row'] & {
   user: {
     full_name: string;
     avatar_url?: string;
@@ -23,7 +20,7 @@ interface Announcement {
   comments: Array<{
     id: string;
   }>;
-}
+};
 
 export default function Announcements() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -126,10 +123,10 @@ export default function Announcements() {
     try {
       const { data: existingReaction } = await supabase
         .from('announcement_reactions')
-        .select('*')
+        .select()
         .eq('announcement_id', announcementId)
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (existingReaction) {
         if (existingReaction.reaction_type === reactionType) {
@@ -184,11 +181,11 @@ export default function Announcements() {
               onReact={(type) => handleReaction(announcement.id, type)}
               onComment={() => {}} // À implémenter dans la prochaine étape
               reactions={Object.entries(
-                announcement.reactions.reduce((acc: any, r: any) => {
+                announcement.reactions.reduce((acc: Record<string, number>, r) => {
                   acc[r.type] = (acc[r.type] || 0) + 1;
                   return acc;
                 }, {})
-              ).map(([type, count]) => ({ type, count: count as number }))}
+              ).map(([type, count]) => ({ type, count }))}
               commentCount={announcement.comments.length}
               userReaction={
                 announcement.reactions.find(
