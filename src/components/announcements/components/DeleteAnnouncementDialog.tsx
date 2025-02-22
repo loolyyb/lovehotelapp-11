@@ -13,34 +13,28 @@ interface DeleteAnnouncementDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  isDeleting: boolean;
 }
 
 export function DeleteAnnouncementDialog({
   isOpen,
   onClose,
   onConfirm,
-  isDeleting
 }: DeleteAnnouncementDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#911e55] text-zinc-50">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Supprimer l'annonce</DialogTitle>
-          <DialogDescription className="text-zinc-200">
+          <DialogDescription>
             Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isDeleting}>
+          <Button variant="outline" onClick={onClose}>
             Annuler
           </Button>
-          <Button 
-            variant="destructive" 
-            onClick={onConfirm}
-            disabled={isDeleting}
-          >
-            {isDeleting ? "Suppression..." : "Supprimer"}
+          <Button variant="destructive" onClick={onConfirm}>
+            Supprimer
           </Button>
         </DialogFooter>
       </DialogContent>

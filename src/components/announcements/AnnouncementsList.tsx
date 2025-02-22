@@ -6,32 +6,18 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useLogger } from "@/hooks/useLogger";
 
-// Type for the raw data from Supabase
-interface RawAnnouncementType {
+interface AnnouncementType {
   id: string;
   content: string;
   image_url: string | null;
   created_at: string;
   user_id: string;
-  profiles: {
-    full_name: string | null;
-    avatar_url: string | null;
-  };
-}
-
-// Type for the transformed announcement data used in components
-interface TransformedAnnouncementType {
-  id: string;
-  content: string;
-  image_url: string | null;
-  created_at: string;
-  user_id: string;
-  full_name: string;
+  full_name: string | null;
   avatar_url: string | null;
 }
 
 export function AnnouncementsList() {
-  const [announcements, setAnnouncements] = useState<TransformedAnnouncementType[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const logger = useLogger('AnnouncementsList');
@@ -56,7 +42,7 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles:profiles!user_id(
+          profiles!user_id(
             full_name,
             avatar_url
           )
@@ -79,14 +65,14 @@ export function AnnouncementsList() {
         sample: rawData[0] 
       });
 
-      const transformedData: TransformedAnnouncementType[] = (rawData as unknown as RawAnnouncementType[]).map(announcement => {
+      const transformedData: AnnouncementType[] = rawData.map(announcement => {
         logger.debug('Transformation annonce:', { 
           id: announcement.id,
           user_id: announcement.user_id,
           profiles: announcement.profiles
         });
 
-        return {
+        const transformedAnnouncement = {
           id: announcement.id,
           content: announcement.content,
           image_url: announcement.image_url,
@@ -95,6 +81,9 @@ export function AnnouncementsList() {
           full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
           avatar_url: announcement.profiles?.avatar_url ?? null
         };
+        
+        logger.debug('Annonce transformée:', transformedAnnouncement);
+        return transformedAnnouncement;
       });
 
       logger.info('Transformation terminée:', { 
