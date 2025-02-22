@@ -11,8 +11,8 @@ interface AnnouncementType {
   image_url: string | null;
   created_at: string;
   user_id: string;
-  profileName: string;
-  avatarUrl: string | null;
+  full_name: string;    // Changé de profileName à full_name
+  avatar_url: string | null;  // Changé de avatarUrl à avatar_url
 }
 
 export function AnnouncementsList() {
@@ -66,8 +66,8 @@ export function AnnouncementsList() {
           image_url: announcement.image_url,
           created_at: announcement.created_at,
           user_id: announcement.user_id,
-          profileName: announcement.profiles?.full_name ?? "Utilisateur inconnu",
-          avatarUrl: announcement.profiles?.avatar_url ?? null
+          full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
+          avatar_url: announcement.profiles?.avatar_url ?? null
         };
         
         console.log('Transformed announcement:', transformedAnnouncement);
