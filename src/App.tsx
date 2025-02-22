@@ -17,12 +17,20 @@ import { useStatusBar } from './hooks/useStatusBar';
 
 const getBasename = () => {
   const hostname = window.location.hostname;
-  const isPreview = hostname.includes('preview--') && hostname.endsWith('.lovable.app');
-  if (isPreview) {
-    const projectName = hostname.split('--')[1].split('.')[0];
-    console.log('Preview environment detected, basename:', `/${projectName}`);
-    return `/${projectName}`;
+  // Vérifie si nous sommes dans l'éditeur Lovable ou en preview
+  const isLovableEnv = hostname.includes('.lovable.') || hostname === 'localhost';
+  
+  if (isLovableEnv) {
+    // Récupère le pathname actuel
+    const pathname = window.location.pathname;
+    // Extrait le premier segment du chemin comme basename
+    const firstSegment = pathname.split('/')[1];
+    if (firstSegment) {
+      console.log('Lovable environment detected, basename:', `/${firstSegment}`);
+      return `/${firstSegment}`;
+    }
   }
+  
   console.log('Production environment detected, basename: /');
   return '/';
 };
