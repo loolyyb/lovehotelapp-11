@@ -13,7 +13,7 @@ interface AnnouncementsListProps {
 }
 
 export function AnnouncementsList({ 
-  announcements, 
+  announcements = [], 
   onReact, 
   onComment,
   onEdit,
@@ -22,29 +22,37 @@ export function AnnouncementsList({
 }: AnnouncementsListProps) {
   return (
     <div className="space-y-6">
-      {announcements.map((announcement) => (
-        <AnnouncementCard
-          key={announcement.id}
-          announcement={announcement}
-          onReact={(type) => onReact(announcement.id, type)}
-          onComment={(content) => onComment(announcement.id, content)}
-          onEdit={(content, imageUrl) => onEdit(announcement.id, content, imageUrl)}
-          onDelete={() => onDelete(announcement.id)}
-          reactions={Object.entries(
-            announcement.reactions.reduce((acc: Record<string, number>, r) => {
-              acc[r.reaction_type] = (acc[r.reaction_type] || 0) + 1;
-              return acc;
-            }, {})
-          ).map(([reaction_type, count]) => ({ reaction_type, count: Number(count) }))}
-          commentCount={announcement.comments.length}
-          userReaction={
-            announcement.reactions.find(
-              (r) => r.user_id === session?.user?.id
-            )?.reaction_type
-          }
-          currentUserId={session?.user?.id}
-        />
-      ))}
+      {announcements.map((announcement) => {
+        // Gérer les réactions de manière sécurisée
+        const reactionCounts = announcement.reactions?.reduce((acc: Record<string, number>, r) => {
+          acc[r.reaction_type] = (acc[r.reaction_type] || 0) + 1;
+          return acc;
+        }, {}) || {};
+
+        const reactionsList = Object.entries(reactionCounts).map(([reaction_type, count]) => ({
+          reaction_type,
+          count: Number(count)
+        }));
+
+        return (
+          <AnnouncementCard
+            key={announcement.id}
+            announcement={announcement}
+            onReact={(type) => onReact(announcement.id, type)}
+            onComment={(content) => onComment(announcement.id, content)}
+            onEdit={(content, imageUrl) => onEdit(announcement.id, content, imageUrl)}
+            onDelete={() => onDelete(announcement.id)}
+            reactions={reactionsList}
+            commentCount={announcement.comments?.length || 0}
+            userReaction={
+              announcement.reactions?.find(
+                (r) => r.user_id === session?.user?.id
+              )?.reaction_type
+            }
+            currentUserId={session?.user?.id}
+          />
+        );
+      })}
     </div>
   );
 }
