@@ -6,15 +6,15 @@ export type AnnouncementComment = {
   content: string;
   created_at: string;
   user: {
-    full_name: string;
-    avatar_url?: string;
+    full_name: string | null;
+    avatar_url?: string | null;
   };
 };
 
 export type AnnouncementWithRelations = Database['public']['Tables']['announcements']['Row'] & {
   user: {
-    full_name: string;
-    avatar_url?: string;
+    full_name: string | null;
+    avatar_url?: string | null;
   };
   reactions: Array<{
     type: string;
