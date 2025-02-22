@@ -29,14 +29,7 @@ export function useAnnouncements() {
   };
 
   const handleSubmitAnnouncement = async (content: string, imageUrl?: string) => {
-    if (!session?.user?.id) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté pour publier une annonce"
-      });
-      return;
-    }
+    if (!session?.user?.id) return;
 
     try {
       await AnnouncementService.createAnnouncement(content, imageUrl, session.user.id);
@@ -56,14 +49,7 @@ export function useAnnouncements() {
   };
 
   const handleUpdateAnnouncement = async (id: string, content: string, imageUrl?: string) => {
-    if (!session?.user?.id) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté pour modifier une annonce"
-      });
-      return;
-    }
+    if (!session?.user?.id) return;
 
     try {
       await AnnouncementService.updateAnnouncement(id, content, imageUrl, session.user.id);
@@ -83,14 +69,7 @@ export function useAnnouncements() {
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
-    if (!session?.user?.id) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté pour supprimer une annonce"
-      });
-      return;
-    }
+    if (!session?.user?.id) return;
 
     try {
       await AnnouncementService.deleteAnnouncement(id, session.user.id);
@@ -110,14 +89,7 @@ export function useAnnouncements() {
   };
 
   const handleReaction = async (announcementId: string, reactionType: string) => {
-    if (!session?.user?.id) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté pour réagir à une annonce"
-      });
-      return;
-    }
+    if (!session?.user?.id) return;
 
     try {
       await AnnouncementService.handleReaction(announcementId, session.user.id, reactionType);
