@@ -21,7 +21,7 @@ export function AnnouncementHeader({ user, createdAt, isOwner, onEdit, onDelete 
     <div className="flex flex-row items-center gap-4 bg-white">
       <Avatar>
         {user.avatar_url ? (
-          <AvatarImage src={user.avatar_url} alt={displayName} />
+          <AvatarImage src={user.avatar_url} alt={displayName} className="object-cover" />
         ) : (
           <AvatarFallback>
             <User2 className="w-4 h-4" />

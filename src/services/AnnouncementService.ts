@@ -8,19 +8,22 @@ export class AnnouncementService {
       .from('announcements')
       .select(`
         *,
-        user:profiles(
+        user:profiles!announcements_user_id_fkey(
           id,
           full_name,
           avatar_url,
           username
         ),
-        reactions:announcement_reactions(reaction_type, user_id),
+        reactions:announcement_reactions(
+          reaction_type,
+          user_id
+        ),
         comments:announcement_comments(
           id,
           content,
           created_at,
           user_id,
-          user:profiles(
+          user:profiles!announcement_comments_user_id_fkey(
             id,
             full_name,
             avatar_url,
