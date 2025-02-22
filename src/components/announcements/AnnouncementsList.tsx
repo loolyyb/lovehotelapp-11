@@ -42,7 +42,7 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles:user_id (
+          profiles(
             full_name,
             avatar_url
           )
@@ -78,8 +78,8 @@ export function AnnouncementsList() {
           image_url: announcement.image_url,
           created_at: announcement.created_at,
           user_id: announcement.user_id,
-          full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
-          avatar_url: announcement.profiles?.avatar_url ?? null
+          full_name: announcement.profiles[0]?.full_name ?? "Utilisateur inconnu",
+          avatar_url: announcement.profiles[0]?.avatar_url ?? null
         };
         
         logger.debug('Annonce transformée:', transformedAnnouncement);
