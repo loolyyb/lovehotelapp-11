@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -10,51 +11,98 @@ import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useAuthSession } from "@/hooks/useAuthSession";
+
 const formSchema = z.object({
   content: z.string().min(1, "Le contenu est requis"),
-  image: z.instanceof(File).optional()
+  images: z.instanceof(FileList).optional(),
 });
+
 export function CreateAnnouncementForm() {
-  const {
-    toast
-  } = useToast();
-  const {
-    session
-  } = useAuthSession();
+  const { toast } = useToast();
+  const { session } = useAuthSession();
   const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      content: ""
+      content: "",
     }
   });
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!session?.user) return;
     setIsLoading(true);
+
     try {
-      let imageUrl = null;
-      if (values.image) {
-        const fileExt = values.image.name.split('.').pop();
-        const filePath = `${crypto.randomUUID()}.${fileExt}`;
-        const {
-          error: uploadError
-        } = await supabase.storage.from('announcements').upload(filePath, values.image);
+      let mainImageUrl = null;
+      const additionalImageUrls = [];
+      const files = Array.from(values.images || []);
+
+      // Upload main image first if exists
+      if (files.length > 0) {
+        const mainFile = files[0];
+        const fileExt = mainFile.name.split('.').pop();
+        const mainFilePath = `${crypto.randomUUID()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('announcements')
+          .upload(mainFilePath, mainFile);
+
         if (uploadError) throw uploadError;
-        const {
-          data: {
-            publicUrl
-          }
-        } = supabase.storage.from('announcements').getPublicUrl(filePath);
-        imageUrl = publicUrl;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('announcements')
+          .getPublicUrl(mainFilePath);
+
+        mainImageUrl = publicUrl;
       }
-      const {
-        error
-      } = await supabase.from('announcements').insert({
-        content: values.content,
-        image_url: imageUrl,
-        user_id: session.user.id
-      });
-      if (error) throw error;
+
+      // Create the announcement
+      const { data: announcement, error: announcementError } = await supabase
+        .from('announcements')
+        .insert({
+          content: values.content,
+          image_url: mainImageUrl,
+          user_id: session.user.id
+        })
+        .select()
+        .single();
+
+      if (announcementError) throw announcementError;
+
+      // Upload additional images if any
+      if (files.length > 1) {
+        for (let i = 1; i < files.length; i++) {
+          const file = files[i];
+          const fileExt = file.name.split('.').pop();
+          const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('announcements')
+            .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('announcements')
+            .getPublicUrl(filePath);
+
+          additionalImageUrls.push(publicUrl);
+        }
+
+        // Insert additional images
+        const { error: imagesError } = await supabase
+          .from('announcement_images')
+          .insert(
+            additionalImageUrls.map(url => ({
+              announcement_id: announcement.id,
+              image_url: url
+            }))
+          );
+
+        if (imagesError) throw imagesError;
+      }
+
       form.reset();
       toast({
         title: "Annonce publiée",
@@ -71,38 +119,65 @@ export function CreateAnnouncementForm() {
       setIsLoading(false);
     }
   };
-  return <div className="backdrop-blur-sm border border-burgundy/20 rounded-lg p-6 bg-[#911e55]">
+
+  return (
+    <div className="backdrop-blur-sm border border-burgundy/20 rounded-lg p-6 bg-[#911e55]">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField control={form.control} name="content" render={({
-          field
-        }) => <FormItem>
+          <FormField
+            control={form.control}
+            name="content"
+            render={({ field }) => (
+              <FormItem>
                 <FormControl>
-                  <Textarea placeholder="Partagez quelque chose..." className="min-h-[100px] resize-none" {...field} />
+                  <Textarea
+                    placeholder="Partagez quelque chose..."
+                    className="min-h-[100px] resize-none"
+                    {...field}
+                  />
                 </FormControl>
-              </FormItem>} />
+              </FormItem>
+            )}
+          />
           
           <div className="flex items-center gap-4">
-            <FormField control={form.control} name="image" render={({
-            field: {
-              onChange,
-              value,
-              ...field
-            }
-          }) => <FormItem>
+            <FormField
+              control={form.control}
+              name="images"
+              render={({ field: { onChange, value, ...field } }) => (
+                <FormItem>
                   <FormControl>
                     <div className="flex items-center gap-2">
-                      <Input type="file" accept="image/*" className="hidden" id="image-upload" onChange={e => {
-                  const file = e.target.files?.[0];
-                  if (file) onChange(file);
-                }} {...field} />
-                      <Button type="button" variant="outline" onClick={() => document.getElementById('image-upload')?.click()}>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        id="image-upload"
+                        multiple
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (files) onChange(files);
+                        }}
+                        {...field}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                      >
                         <ImagePlus className="h-4 w-4 mr-2" />
-                        Ajouter une image
+                        Ajouter des images
                       </Button>
+                      {value && (
+                        <span className="text-sm text-zinc-200">
+                          {Array.from(value as FileList).length} image(s) sélectionnée(s)
+                        </span>
+                      )}
                     </div>
                   </FormControl>
-                </FormItem>} />
+                </FormItem>
+              )}
+            />
             
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Publication..." : "Publier"}
@@ -110,5 +185,6 @@ export function CreateAnnouncementForm() {
           </div>
         </form>
       </Form>
-    </div>;
+    </div>
+  );
 }
