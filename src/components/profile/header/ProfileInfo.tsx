@@ -81,7 +81,7 @@ export function ProfileInfo({
       y: 0
     }} transition={{
       delay: 0.3
-    }} className="text-3xl md:text-4xl font-bold font-cormorant text-zinc-50">
+    }} className="text-3xl md:text-4xl font-bold font-cormorant text-[#f3ebad]">
         {fullName || 'Anonyme'}
       </motion.h1>
 
