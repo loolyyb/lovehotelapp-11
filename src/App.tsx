@@ -21,6 +21,7 @@ const getBasename = () => {
   const hostname = window.location.hostname;
   const isPreview = hostname.includes('preview--') && hostname.endsWith('.lovable.app');
   if (isPreview) {
+    // Extrait le nom du projet de l'URL de preview (ex: preview--project-name.lovable.app)
     const projectName = hostname.split('--')[1].split('.')[0];
     console.log('Preview environment detected, basename:', `/${projectName}`);
     return `/${projectName}`;
@@ -80,12 +81,8 @@ function AppContent() {
       data-theme={currentThemeName} 
       className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}
     >
-      {session && userProfile ? (
-        <Header userProfile={userProfile} />
-      ) : (
-        <div className="h-16" /> // Espace réservé pour le header de la landing page
-      )}
-      <div className={session ? "flex-grow pt-[4.5rem]" : "flex-grow"}>
+      {session && <Header userProfile={userProfile} />}
+      <div className="flex-grow pt-[4.5rem]">
         <AppRoutes session={session} />
       </div>
       <Footer />
