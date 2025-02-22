@@ -8,7 +8,7 @@ export class AnnouncementService {
       .from('announcements')
       .select(`
         *,
-        user:profiles!announcements_user_id_fkey (
+        user:profiles (
           full_name,
           avatar_url
         ),
@@ -30,6 +30,10 @@ export class AnnouncementService {
   }
 
   static async createAnnouncement(content: string, imageUrl: string | undefined, userId: string) {
+    if (!userId) {
+      throw new Error("User must be authenticated to create an announcement");
+    }
+
     const { error } = await supabase
       .from('announcements')
       .insert({
@@ -45,6 +49,10 @@ export class AnnouncementService {
   }
 
   static async updateAnnouncement(id: string, content: string, imageUrl: string | undefined, userId: string) {
+    if (!userId) {
+      throw new Error("User must be authenticated to update an announcement");
+    }
+
     const { error } = await supabase
       .from('announcements')
       .update({
@@ -61,6 +69,10 @@ export class AnnouncementService {
   }
 
   static async deleteAnnouncement(id: string, userId: string) {
+    if (!userId) {
+      throw new Error("User must be authenticated to delete an announcement");
+    }
+
     const { error } = await supabase
       .from('announcements')
       .delete()
@@ -74,6 +86,10 @@ export class AnnouncementService {
   }
 
   static async handleReaction(announcementId: string, userId: string, reactionType: string) {
+    if (!userId) {
+      throw new Error("User must be authenticated to react to an announcement");
+    }
+
     try {
       const { data: existingReaction } = await supabase
         .from('announcement_reactions')
