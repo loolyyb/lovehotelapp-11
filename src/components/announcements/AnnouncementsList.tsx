@@ -12,8 +12,10 @@ interface AnnouncementType {
   image_url: string | null;
   created_at: string;
   user_id: string;
-  full_name: string | null;
-  avatar_url: string | null;
+  profiles: {
+    full_name: string | null;
+    avatar_url: string | null;
+  } | null;
 }
 
 export function AnnouncementsList() {
@@ -65,7 +67,7 @@ export function AnnouncementsList() {
         sample: rawData[0] 
       });
 
-      const transformedData: AnnouncementType[] = rawData.map(announcement => {
+      const transformedData = rawData.map(announcement => {
         logger.debug('Transformation annonce:', { 
           id: announcement.id,
           user_id: announcement.user_id,
