@@ -16,19 +16,6 @@ interface AnnouncementType {
   avatar_url: string | null;
 }
 
-// Define the exact structure that Supabase returns
-interface DatabaseAnnouncement {
-  id: string;
-  content: string;
-  image_url: string | null;
-  created_at: string;
-  user_id: string;
-  profiles: {
-    full_name: string | null;
-    avatar_url: string | null;
-  };
-}
-
 export function AnnouncementsList() {
   const [announcements, setAnnouncements] = useState<AnnouncementType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,17 +66,24 @@ export function AnnouncementsList() {
       });
 
       const transformedData: AnnouncementType[] = rawData.map(announcement => {
-        // Use type assertion since we know the structure
-        const typedAnnouncement = announcement as unknown as DatabaseAnnouncement;
-        return {
-          id: typedAnnouncement.id,
-          content: typedAnnouncement.content,
-          image_url: typedAnnouncement.image_url,
-          created_at: typedAnnouncement.created_at,
-          user_id: typedAnnouncement.user_id,
-          full_name: typedAnnouncement.profiles?.full_name ?? "Utilisateur inconnu",
-          avatar_url: typedAnnouncement.profiles?.avatar_url ?? null
+        logger.debug('Transformation annonce:', { 
+          id: announcement.id,
+          user_id: announcement.user_id,
+          profiles: announcement.profiles
+        });
+
+        const transformedAnnouncement = {
+          id: announcement.id,
+          content: announcement.content,
+          image_url: announcement.image_url,
+          created_at: announcement.created_at,
+          user_id: announcement.user_id,
+          full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
+          avatar_url: announcement.profiles?.avatar_url ?? null
         };
+        
+        logger.debug('Annonce transformée:', transformedAnnouncement);
+        return transformedAnnouncement;
       });
 
       logger.info('Transformation terminée:', { 

@@ -46,16 +46,33 @@ export function useAnnouncementComments(announcementId: string, session: Session
     if (!session?.user || !newComment.trim()) return;
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('announcement_comments')
         .insert({
           announcement_id: announcementId,
           user_id: session.user.id,
           content: newComment.trim()
-        });
+        })
+        .select(`
+          *,
+          profiles (
+            full_name,
+            avatar_url
+          )
+        `)
+        .single();
 
       if (error) throw error;
-      loadComments();
+
+      // Ajouter immédiatement le nouveau commentaire à la liste
+      if (data) {
+        setComments(prevComments => [...prevComments, data]);
+      }
+
+      toast({
+        title: "Commentaire publié",
+        description: "Votre commentaire a été ajouté avec succès"
+      });
     } catch (error) {
       console.error('Error posting comment:', error);
       toast({

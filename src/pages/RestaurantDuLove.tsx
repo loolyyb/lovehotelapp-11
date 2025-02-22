@@ -64,7 +64,7 @@ const RestaurantDuLove = () => {
             </span>
           </p>
           <Button className="text-lg py-6 bg-[#ce0067] hover:bg-[#a80054] transition-colors duration-300" asChild>
-            <a href="tel:+33144826305" className="flex items-center gap-3">
+            <a href="tel:+33144826305" className="flex items-center gap-3 text-[#f3ebad]">
               <Phone className="w-6 h-6" />
               +33 1 44 82 63 05
             </a>

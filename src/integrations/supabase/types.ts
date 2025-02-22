@@ -232,11 +232,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_announcements_profile"
+            foreignKeyName: "announcements_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
+            referencedColumns: ["id"]
           },
         ]
       }

@@ -1,129 +1,22 @@
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ImagePlus } from "lucide-react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useAuthSession } from "@/hooks/useAuthSession";
-
-const formSchema = z.object({
-  content: z.string().min(1, "Le contenu est requis"),
-  images: z.instanceof(FileList).optional(),
-});
+import { ImageUploadField } from "./components/ImageUploadField";
+import { useAnnouncementForm } from "./hooks/useAnnouncementForm";
 
 export function CreateAnnouncementForm() {
-  const { toast } = useToast();
   const { session } = useAuthSession();
-  const [isLoading, setIsLoading] = useState(false);
+  const { form, isLoading, handleSubmit } = useAnnouncementForm();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      content: "",
-    }
-  });
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!session?.user) return;
-    setIsLoading(true);
-
-    try {
-      let mainImageUrl = null;
-      const additionalImageUrls = [];
-      const files = Array.from(values.images || []);
-
-      // Upload main image first if exists
-      if (files.length > 0) {
-        const mainFile = files[0];
-        const fileExt = mainFile.name.split('.').pop();
-        const mainFilePath = `${crypto.randomUUID()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('announcements')
-          .upload(mainFilePath, mainFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('announcements')
-          .getPublicUrl(mainFilePath);
-
-        mainImageUrl = publicUrl;
-      }
-
-      // Create the announcement
-      const { data: announcement, error: announcementError } = await supabase
-        .from('announcements')
-        .insert({
-          content: values.content,
-          image_url: mainImageUrl,
-          user_id: session.user.id
-        })
-        .select()
-        .single();
-
-      if (announcementError) throw announcementError;
-
-      // Upload additional images if any
-      if (files.length > 1) {
-        for (let i = 1; i < files.length; i++) {
-          const file = files[i];
-          const fileExt = file.name.split('.').pop();
-          const filePath = `${crypto.randomUUID()}.${fileExt}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('announcements')
-            .upload(filePath, file);
-
-          if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('announcements')
-            .getPublicUrl(filePath);
-
-          additionalImageUrls.push(publicUrl);
-        }
-
-        // Insert additional images
-        const { error: imagesError } = await supabase
-          .from('announcement_images')
-          .insert(
-            additionalImageUrls.map(url => ({
-              announcement_id: announcement.id,
-              image_url: url
-            }))
-          );
-
-        if (imagesError) throw imagesError;
-      }
-
-      form.reset();
-      toast({
-        title: "Annonce publiée",
-        description: "Votre annonce a été publiée avec succès"
-      });
-    } catch (error) {
-      console.error('Error creating announcement:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la publication"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const onSubmit = form.handleSubmit((values) => handleSubmit(values, session));
 
   return (
     <div className="backdrop-blur-sm border border-burgundy/20 rounded-lg p-6 bg-[#911e55]">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <FormField
             control={form.control}
             name="content"
@@ -141,46 +34,17 @@ export function CreateAnnouncementForm() {
           />
           
           <div className="flex items-center gap-4">
-            <FormField
-              control={form.control}
-              name="images"
-              render={({ field: { onChange, value, ...field } }) => (
-                <FormItem>
-                  <FormControl>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        id="image-upload"
-                        multiple
-                        onChange={(e) => {
-                          const files = e.target.files;
-                          if (files) onChange(files);
-                        }}
-                        {...field}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => document.getElementById('image-upload')?.click()}
-                      >
-                        <ImagePlus className="h-4 w-4 mr-2" />
-                        Ajouter des images
-                      </Button>
-                      {value && (
-                        <span className="text-sm text-zinc-200">
-                          {Array.from(value as FileList).length} image(s) sélectionnée(s)
-                        </span>
-                      )}
-                    </div>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            <ImageUploadField form={form} />
             
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Publication..." : "Publier"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Publication...
+                </>
+              ) : (
+                "Publier"
+              )}
             </Button>
           </div>
         </form>
