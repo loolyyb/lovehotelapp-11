@@ -98,8 +98,8 @@ export function Announcement({ announcement }: AnnouncementProps) {
     <div className="backdrop-blur-sm border border-burgundy/20 rounded-lg p-6 space-y-4 bg-[#40192c]">
       <div className="flex justify-between items-start">
         <AnnouncementHeader
-          profileName={announcement.full_name || 'Utilisateur inconnu'}
-          avatarUrl={announcement.avatar_url}
+          full_name={announcement.full_name}
+          avatar_url={announcement.avatar_url}
           createdAt={announcement.created_at}
         />
         {isOwner && (
