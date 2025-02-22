@@ -27,5 +27,12 @@ export const themes: Record<string, CustomTheme> = {
       xl: "1280px",
     },
   },
-};
+} as const;
+
+// Validation des valeurs du thème pour empêcher les modifications accidentelles
+Object.freeze(themes["lover-rose"]);
+Object.freeze(themes["lover-rose"].colors);
+Object.freeze(themes["lover-rose"].fonts);
+Object.freeze(themes["lover-rose"].spacing);
+Object.freeze(themes["lover-rose"].breakpoints);
 

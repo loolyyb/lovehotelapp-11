@@ -69,3 +69,4 @@ function incrementVersion(version: string): string {
   const [major, minor, patch] = version.split(".").map(Number);
   return `${major}.${minor}.${patch + 1}`;
 }
+
