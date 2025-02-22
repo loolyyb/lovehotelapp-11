@@ -12,17 +12,13 @@ export default function Announcements() {
     handleUpdateAnnouncement,
     handleDeleteAnnouncement,
     handleReaction,
-    handleComment,
     session 
   } = useAnnouncements();
 
-  // Show loading state while data is being fetched
   if (loading) {
     return (
-      <div className="min-h-screen bg-[linear-gradient(135deg,#1E1E1E_0%,#CD0067_100%)]">
-        <div className="max-w-3xl mx-auto px-4 py-8 flex items-center justify-center">
-          <Loader className="w-8 h-8 animate-spin text-white" />
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader className="w-8 h-8 animate-spin text-[#ce0067]" />
       </div>
     );
   }
@@ -31,18 +27,13 @@ export default function Announcements() {
     <div className="min-h-screen bg-[linear-gradient(135deg,#1E1E1E_0%,#CD0067_100%)]">
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
         <AnnouncementForm onSubmit={handleSubmitAnnouncement} />
-        {Array.isArray(announcements) ? (
-          <AnnouncementsList 
-            announcements={announcements}
-            onReact={handleReaction}
-            onComment={handleComment}
-            onEdit={handleUpdateAnnouncement}
-            onDelete={handleDeleteAnnouncement}
-            session={session}
-          />
-        ) : (
-          <div className="text-white text-center">Aucune annonce disponible</div>
-        )}
+        <AnnouncementsList 
+          announcements={announcements} 
+          onReact={handleReaction}
+          onEdit={handleUpdateAnnouncement}
+          onDelete={handleDeleteAnnouncement}
+          session={session}
+        />
       </div>
     </div>
   );

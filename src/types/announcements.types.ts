@@ -1,29 +1,16 @@
 
-export type AnnouncementUser = {
-  id: string;
-  full_name: string | null;
-  avatar_url: string | null;
-  username: string | null;
-};
+import { Database } from "@/integrations/supabase/types/database.types";
 
-export type AnnouncementComment = {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  user: AnnouncementUser;
-};
-
-export type AnnouncementWithRelations = {
-  id: string;
-  content: string;
-  image_url: string | null;
-  created_at: string;
-  user_id: string;
-  user: AnnouncementUser;
+export type AnnouncementWithRelations = Database['public']['Tables']['announcements']['Row'] & {
+  user: {
+    full_name: string;
+    avatar_url?: string;
+  };
   reactions: Array<{
-    reaction_type: string;
+    type: string;
     user_id: string;
   }>;
-  comments: AnnouncementComment[];
+  comments: Array<{
+    id: string;
+  }>;
 };

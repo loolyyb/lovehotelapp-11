@@ -8,32 +8,24 @@ export class AnnouncementService {
       .from('announcements')
       .select(`
         *,
-        user:profiles(
-          id,
+        user:profiles!announcements_user_id_fkey (
           full_name,
-          avatar_url,
-          username
+          avatar_url
         ),
-        reactions:announcement_reactions(
-          reaction_type,
+        reactions:announcement_reactions (
+          type:reaction_type,
           user_id
         ),
-        comments:announcement_comments(
-          id,
-          content,
-          created_at,
-          user_id,
-          user:profiles(
-            id,
-            full_name,
-            avatar_url,
-            username
-          )
+        comments:announcement_comments (
+          id
         )
       `)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error fetching announcements:", error);
+      throw error;
+    }
     return data as AnnouncementWithRelations[];
   }
 
@@ -46,7 +38,10 @@ export class AnnouncementService {
         user_id: userId
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error creating announcement:", error);
+      throw error;
+    }
   }
 
   static async updateAnnouncement(id: string, content: string, imageUrl: string | undefined, userId: string) {
@@ -59,7 +54,10 @@ export class AnnouncementService {
       .eq('id', id)
       .eq('user_id', userId);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error updating announcement:", error);
+      throw error;
+    }
   }
 
   static async deleteAnnouncement(id: string, userId: string) {
@@ -69,64 +67,54 @@ export class AnnouncementService {
       .eq('id', id)
       .eq('user_id', userId);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error deleting announcement:", error);
+      throw error;
+    }
   }
 
   static async handleReaction(announcementId: string, userId: string, reactionType: string) {
     try {
-      const { data: existingReaction, error: fetchError } = await supabase
+      const { data: existingReaction } = await supabase
         .from('announcement_reactions')
         .select()
         .eq('announcement_id', announcementId)
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (fetchError) throw fetchError;
-
       if (existingReaction) {
         if (existingReaction.reaction_type === reactionType) {
-          const { error: deleteError } = await supabase
+          // Si même réaction, on la supprime
+          const { error } = await supabase
             .from('announcement_reactions')
             .delete()
-            .eq('announcement_id', announcementId)
-            .eq('user_id', userId);
-
-          if (deleteError) throw deleteError;
+            .eq('id', existingReaction.id);
+            
+          if (error) throw error;
         } else {
-          const { error: updateError } = await supabase
+          // Si réaction différente, on la met à jour
+          const { error } = await supabase
             .from('announcement_reactions')
             .update({ reaction_type: reactionType })
-            .eq('announcement_id', announcementId)
-            .eq('user_id', userId);
-
-          if (updateError) throw updateError;
+            .eq('id', existingReaction.id);
+            
+          if (error) throw error;
         }
       } else {
-        const { error: insertError } = await supabase
+        // Si pas de réaction existante, on en crée une nouvelle
+        const { error } = await supabase
           .from('announcement_reactions')
           .insert({
             announcement_id: announcementId,
             user_id: userId,
             reaction_type: reactionType
           });
-
-        if (insertError) throw insertError;
+          
+        if (error) throw error;
       }
     } catch (error) {
       console.error("Error handling reaction:", error);
       throw error;
     }
-  }
-
-  static async addComment(announcementId: string, content: string, userId: string) {
-    const { error } = await supabase
-      .from('announcement_comments')
-      .insert({
-        announcement_id: announcementId,
-        user_id: userId,
-        content
-      });
-
-    if (error) throw error;
   }
 }

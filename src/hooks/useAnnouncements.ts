@@ -118,33 +118,6 @@ export function useAnnouncements() {
     }
   };
 
-  const handleComment = async (announcementId: string, content: string) => {
-    if (!session?.user?.id) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté pour commenter"
-      });
-      return;
-    }
-
-    try {
-      await AnnouncementService.addComment(announcementId, content, session.user.id);
-      toast({
-        title: "Succès",
-        description: "Votre commentaire a été publié"
-      });
-      await fetchAnnouncements();
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible d'ajouter le commentaire"
-      });
-    }
-  };
-
   useEffect(() => {
     fetchAnnouncements();
     const channel = supabase
@@ -174,7 +147,6 @@ export function useAnnouncements() {
     handleUpdateAnnouncement,
     handleDeleteAnnouncement,
     handleReaction,
-    handleComment,
     session
   };
 }
