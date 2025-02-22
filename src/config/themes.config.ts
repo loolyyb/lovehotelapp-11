@@ -6,11 +6,11 @@ export const themes: Record<string, CustomTheme> = {
     name: "lover-rose",
     version: "1.0.0",
     colors: {
-      primary: "hsl(270 60% 50%)",      // Violet principal
-      secondary: "hsl(300 90% 60%)",     // Rose vif
-      accent: "hsl(260 40% 54%)",        // Violet doux
-      background: "hsl(251 100% 97%)",   // Fond légèrement lavande
-      text: "hsl(230 24% 14%)",          // Gris foncé bleuté
+      primary: "#CE0067",      // Rose principal (boutons, actions principales)
+      secondary: "#F3EBAD",    // Beige doré (textes actifs, accents)
+      accent: "#40192C",       // Bordeaux foncé (fonds principaux)
+      background: "#2A2726",   // Gris foncé (barre de navigation)
+      text: "#FFFFFF",         // Blanc (texte principal)
     },
     fonts: {
       heading: "'Cormorant Garamond', serif",
@@ -35,4 +35,3 @@ Object.freeze(themes["lover-rose"].colors);
 Object.freeze(themes["lover-rose"].fonts);
 Object.freeze(themes["lover-rose"].spacing);
 Object.freeze(themes["lover-rose"].breakpoints);
-
