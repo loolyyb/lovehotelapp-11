@@ -8,7 +8,7 @@ export class AnnouncementService {
       .from('announcements')
       .select(`
         *,
-        user:profiles!announcements_user_id_fkey(
+        user:profiles(
           id,
           full_name,
           avatar_url,
@@ -23,7 +23,7 @@ export class AnnouncementService {
           content,
           created_at,
           user_id,
-          user:profiles!announcement_comments_user_id_fkey(
+          user:profiles(
             id,
             full_name,
             avatar_url,
