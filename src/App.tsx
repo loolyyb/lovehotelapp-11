@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Header } from "./components/layout/Header";
@@ -16,7 +15,6 @@ import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 import { useStatusBar } from './hooks/useStatusBar';
 
-// Fonction utilitaire pour détecter l'environnement de preview
 const getBasename = () => {
   const hostname = window.location.hostname;
   const isPreview = hostname.includes('preview--') && hostname.endsWith('.lovable.app');
@@ -32,8 +30,7 @@ const getBasename = () => {
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
-  const { currentThemeName, switchTheme } = useTheme();
-  const { toast } = useToast();
+  const { currentThemeName } = useTheme();
   const { setStatusBarColor } = useStatusBar();
 
   useEffect(() => {
@@ -42,25 +39,6 @@ function AppContent() {
     console.log("Loading:", loading);
     console.log("Current theme:", currentThemeName);
   }, [session, loading, currentThemeName]);
-
-  useEffect(() => {
-    const initTheme = async () => {
-      try {
-        // Ne change le thème que si l'utilisateur est connecté
-        if (!session) return;
-        await switchTheme("lover");
-      } catch (error) {
-        console.error("Erreur lors du changement de thème:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger le thème. Veuillez vous connecter et réessayer.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    initTheme();
-  }, [session, switchTheme, toast]);
 
   useEffect(() => {
     if (isMobile) {

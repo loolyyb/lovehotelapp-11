@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { createContext, useContext, useState, useMemo } from "react";
 import { type CustomTheme, ThemeName } from "@/types/theme";
@@ -13,8 +14,9 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("default");
-  const [theme, setTheme] = useState<CustomTheme>(themes[currentThemeName]);
+  // Initialiser directement avec le thème lover-rose
+  const [currentThemeName, setCurrentThemeName] = useState<ThemeName>("lover-rose");
+  const [theme, setTheme] = useState<CustomTheme>(themes["lover-rose"]);
 
   const updateTheme = (newTheme: Partial<CustomTheme>) => {
     setTheme((current) => ({
@@ -25,6 +27,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   const switchTheme = async (themeName: ThemeName) => {
+    // Pour s'assurer que le thème lover-rose reste toujours actif
+    if (themeName !== "lover-rose") {
+      console.warn("Le thème lover-rose est le seul thème autorisé");
+      return;
+    }
+    
     if (!themes[themeName]) {
       throw new Error(`Theme "${themeName}" not found`);
     }
