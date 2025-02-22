@@ -10,7 +10,7 @@ export function useAnnouncements() {
   const [announcements, setAnnouncements] = useState<AnnouncementWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { session } = useAuthSession();
+  const { session, userProfile } = useAuthSession();
 
   const fetchAnnouncements = async () => {
     try {
@@ -29,7 +29,7 @@ export function useAnnouncements() {
   };
 
   const handleSubmitAnnouncement = async (content: string, imageUrl?: string) => {
-    if (!session?.user?.id) {
+    if (!userProfile?.id) {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -39,7 +39,7 @@ export function useAnnouncements() {
     }
 
     try {
-      await AnnouncementService.createAnnouncement(content, imageUrl, session.user.id);
+      await AnnouncementService.createAnnouncement(content, imageUrl, userProfile.id);
       toast({
         title: "Succès",
         description: "Votre annonce a été publiée"
@@ -56,10 +56,10 @@ export function useAnnouncements() {
   };
 
   const handleUpdateAnnouncement = async (id: string, content: string, imageUrl?: string) => {
-    if (!session?.user?.id) return;
+    if (!userProfile?.id) return;
 
     try {
-      await AnnouncementService.updateAnnouncement(id, content, imageUrl, session.user.id);
+      await AnnouncementService.updateAnnouncement(id, content, imageUrl, userProfile.id);
       toast({
         title: "Succès",
         description: "Votre annonce a été modifiée"
@@ -76,10 +76,10 @@ export function useAnnouncements() {
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
-    if (!session?.user?.id) return;
+    if (!userProfile?.id) return;
 
     try {
-      await AnnouncementService.deleteAnnouncement(id, session.user.id);
+      await AnnouncementService.deleteAnnouncement(id, userProfile.id);
       toast({
         title: "Succès",
         description: "Votre annonce a été supprimée"
@@ -96,7 +96,7 @@ export function useAnnouncements() {
   };
 
   const handleReaction = async (announcementId: string, reactionType: string) => {
-    if (!session?.user?.id) {
+    if (!userProfile?.id) {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -106,7 +106,7 @@ export function useAnnouncements() {
     }
 
     try {
-      await AnnouncementService.handleReaction(announcementId, session.user.id, reactionType);
+      await AnnouncementService.handleReaction(announcementId, userProfile.id, reactionType);
       await fetchAnnouncements();
     } catch (error) {
       console.error("Error handling reaction:", error);
@@ -119,7 +119,7 @@ export function useAnnouncements() {
   };
 
   const handleComment = async (announcementId: string, content: string) => {
-    if (!session?.user?.id) {
+    if (!userProfile?.id) {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -129,7 +129,7 @@ export function useAnnouncements() {
     }
 
     try {
-      await AnnouncementService.addComment(announcementId, content, session.user.id);
+      await AnnouncementService.addComment(announcementId, content, userProfile.id);
       toast({
         title: "Succès",
         description: "Votre commentaire a été publié"
