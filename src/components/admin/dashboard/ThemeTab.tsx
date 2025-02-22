@@ -21,7 +21,7 @@ export function ThemeTab() {
       const { error } = await supabase
         .from('admin_settings')
         .update({ 
-          value: { current: themeName, available: ["default", "lover"] },
+          value: { current: themeName, available: ["lover-rose"] },
           updated_at: new Date().toISOString()
         })
         .eq('key', 'theme');
@@ -50,24 +50,15 @@ export function ThemeTab() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <span>Thème actuel : {currentThemeName}</span>
-          <div className="space-x-4">
+          <div>
             <Button
-              onClick={() => handleThemeChange("default")}
-              variant={currentThemeName === "default" ? "secondary" : "outline"}
+              onClick={() => handleThemeChange("lover-rose")}
+              variant={currentThemeName === "lover-rose" ? "secondary" : "outline"}
               className="cursor-pointer hover:bg-secondary/80"
-              disabled={isLoading}
+              disabled={isLoading || currentThemeName === "lover-rose"}
             >
               {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
-              Thème par défaut
-            </Button>
-            <Button
-              onClick={() => handleThemeChange("lover")}
-              variant={currentThemeName === "lover" ? "secondary" : "outline"}
-              className="cursor-pointer hover:bg-secondary/80"
-              disabled={isLoading}
-            >
-              {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
-              Thème Lover
+              Thème Lover Rose
             </Button>
           </div>
         </div>
