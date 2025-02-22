@@ -100,19 +100,21 @@ export function Announcement({
   };
 
   return (
-    <div className="backdrop-blur-sm border border-burgundy/20 rounded-lg p-6 space-y-4 shadow-lg transition-colors bg-[#63133b]">
-      <div className="flex justify-between items-start gap-4">
-        <AnnouncementHeader 
-          full_name={announcement.full_name} 
-          avatar_url={announcement.avatar_url} 
-          createdAt={announcement.created_at} 
-        />
+    <div className="bg-background/95 border border-accent/20 rounded-lg p-6 space-y-4 shadow-lg">
+      <div className="flex items-start w-full">
+        <div className="flex-grow">
+          <AnnouncementHeader 
+            full_name={announcement.full_name} 
+            avatar_url={announcement.avatar_url} 
+            createdAt={announcement.created_at} 
+          />
+        </div>
         {isOwner && (
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsDeleteDialogOpen(true)}
-            className="text-zinc-400 hover:text-red-500 flex-shrink-0"
+            className="text-muted-foreground hover:text-destructive transition-colors ml-2"
             disabled={isDeleting}
           >
             <Trash2 className="h-5 w-5" />
@@ -135,7 +137,7 @@ export function Announcement({
       />
 
       {showComments && (
-        <div className="space-y-4 pt-4 border-t border-burgundy/10">
+        <div className="space-y-4 pt-4 border-t border-accent/10">
           <AnnouncementComments 
             comments={comments} 
             isLoading={isLoadingComments} 
