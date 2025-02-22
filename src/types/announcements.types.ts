@@ -7,14 +7,14 @@ export type AnnouncementComment = {
   created_at: string;
   user: {
     full_name: string | null;
-    avatar_url?: string | null;
+    avatar_url: string | null;
   };
 };
 
 export type AnnouncementWithRelations = Database['public']['Tables']['announcements']['Row'] & {
   user: {
     full_name: string | null;
-    avatar_url?: string | null;
+    avatar_url: string | null;
   };
   reactions: Array<{
     type: string;
