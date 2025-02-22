@@ -1,3 +1,4 @@
+
 import { CustomTheme } from "@/types/theme";
 
 export const themes: Record<string, CustomTheme> = {
@@ -30,11 +31,11 @@ export const themes: Record<string, CustomTheme> = {
     name: "lover",
     version: "1.0.0",
     colors: {
-      primary: "hsl(270 60% 50%)", // Vivid Purple (#8B5CF6)
-      secondary: "hsl(300 90% 60%)", // Magenta Pink (#D946EF)
-      accent: "hsl(260 40% 54%)", // Secondary Purple (#7E69AB)
-      background: "hsl(251 100% 97%)", // Soft Purple (#E5DEFF)
-      text: "hsl(230 24% 14%)", // Dark Purple (#1A1F2C)
+      primary: "hsl(270 60% 50%)",
+      secondary: "hsl(300 90% 60%)",
+      accent: "hsl(260 40% 54%)",
+      background: "hsl(251 100% 97%)",
+      text: "hsl(230 24% 14%)",
     },
     fonts: {
       heading: "'Cormorant Garamond', serif",
