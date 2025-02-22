@@ -42,7 +42,7 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles!user_id(
+          profiles!user_id (
             full_name,
             avatar_url
           )
@@ -65,26 +65,15 @@ export function AnnouncementsList() {
         sample: rawData[0] 
       });
 
-      const transformedData: AnnouncementType[] = rawData.map(announcement => {
-        logger.debug('Transformation annonce:', { 
-          id: announcement.id,
-          user_id: announcement.user_id,
-          profiles: announcement.profiles
-        });
-
-        const transformedAnnouncement = {
-          id: announcement.id,
-          content: announcement.content,
-          image_url: announcement.image_url,
-          created_at: announcement.created_at,
-          user_id: announcement.user_id,
-          full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
-          avatar_url: announcement.profiles?.avatar_url ?? null
-        };
-        
-        logger.debug('Annonce transformée:', transformedAnnouncement);
-        return transformedAnnouncement;
-      });
+      const transformedData: AnnouncementType[] = rawData.map(announcement => ({
+        id: announcement.id,
+        content: announcement.content,
+        image_url: announcement.image_url,
+        created_at: announcement.created_at,
+        user_id: announcement.user_id,
+        full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
+        avatar_url: announcement.profiles?.avatar_url ?? null
+      }));
 
       logger.info('Transformation terminée:', { 
         count: transformedData.length,
