@@ -14,14 +14,14 @@ export const DashboardWidget = ({ icon: Icon, title, to }: DashboardWidgetProps)
     <Link to={to} className="h-[180px]">
       <motion.div
         whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-        className="glass-card rounded-xl p-6 flex flex-col items-center justify-center h-full cursor-pointer group"
+        className="bg-black/5 hover:bg-black/10 backdrop-blur-lg rounded-xl p-6 flex flex-col items-center justify-center h-full cursor-pointer group border border-white/20 shadow-lg transition-all duration-300"
       >
         <div className="flex flex-col items-center justify-center gap-3">
           <Icon 
-            className="w-8 h-8 sm:w-10 sm:h-10 text-rose-500 transition-transform duration-300 group-hover:scale-110" 
+            className="w-8 h-8 sm:w-10 sm:h-10 text-primary transition-transform duration-300 group-hover:scale-110" 
             strokeWidth={1.5}
           />
-          <h3 className="text-base sm:text-lg font-cormorant font-semibold text-rose-500 text-center truncate w-full px-2">
+          <h3 className="text-base sm:text-lg font-cormorant font-semibold text-primary text-center truncate w-full px-2">
             {title}
           </h3>
         </div>
