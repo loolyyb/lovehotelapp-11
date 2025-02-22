@@ -1,10 +1,9 @@
 
 import { Link } from "react-router-dom";
-import { Menu, Crown, BedDouble, Utensils, Users, Gift } from "lucide-react";
+import { Menu, Crown, BedDouble, Utensils, Users, Gift, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
-import { LogOut, Home, User } from "lucide-react";
 
 export function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,6 +20,10 @@ export function SideMenu() {
           <Link to="/matching-scores" className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors" onClick={() => setIsOpen(false)}>
             <Crown className="h-5 w-5" />
             <span>Rencontres</span>
+          </Link>
+          <Link to="/announcements" className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors" onClick={() => setIsOpen(false)}>
+            <MessageSquare className="h-5 w-5" />
+            <span>Annonces</span>
           </Link>
           <Link to="/reserver-room" className="flex items-center gap-3 px-4 py-2 text-burgundy hover:bg-rose/10 rounded-lg transition-colors" onClick={() => setIsOpen(false)}>
             <BedDouble className="h-5 h-5" />
