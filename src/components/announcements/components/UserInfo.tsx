@@ -21,7 +21,7 @@ export function UserInfo({ full_name, avatar_url }: UserInfoProps) {
           <User className="h-5 w-5" />
         </AvatarFallback>
       </Avatar>
-      <h3 className="font-semibold text-[#f3ebad]">
+      <h3 className="font-semibold text-secondary">
         {displayName}
       </h3>
     </div>
