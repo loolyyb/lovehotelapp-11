@@ -1,8 +1,9 @@
 
 import { AnnouncementComment } from "@/types/announcements.types";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { User2 } from "lucide-react";
 
 interface CommentsListProps {
   comments: AnnouncementComment[];
@@ -14,12 +15,13 @@ export function CommentsList({ comments }: CommentsListProps) {
       {comments.map((comment) => (
         <div key={comment.id} className="flex gap-3">
           <Avatar className="w-8 h-8">
-            <AvatarImage src={comment.user.avatar_url} />
-            <AvatarFallback>{comment.user.full_name[0]}</AvatarFallback>
+            <AvatarFallback>
+              <User2 className="w-4 h-4" />
+            </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <div className="bg-gray-100 rounded-lg p-3">
-              <p className="font-medium text-sm">{comment.user.full_name}</p>
+              <p className="font-medium text-sm">Utilisateur {comment.user_id.slice(0, 6)}</p>
               <p className="text-sm text-gray-700">{comment.content}</p>
             </div>
             <p className="text-xs text-gray-500 mt-1">

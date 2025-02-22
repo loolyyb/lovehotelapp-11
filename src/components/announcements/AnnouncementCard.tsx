@@ -72,7 +72,7 @@ export function AnnouncementCard({
     <Card className="w-full bg-white shadow-md hover:shadow-lg transition-shadow">
       <CardHeader>
         <AnnouncementHeader
-          user={announcement.user}
+          userId={announcement.user_id}
           createdAt={announcement.created_at}
           isOwner={isOwner}
           onEdit={() => setIsEditDialogOpen(true)}
@@ -134,7 +134,7 @@ export function AnnouncementCard({
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </Dialog>
 
       <Dialog open={isCommentsOpen} onOpenChange={setIsCommentsOpen}>
         <DialogContent className="sm:max-w-[500px]">
