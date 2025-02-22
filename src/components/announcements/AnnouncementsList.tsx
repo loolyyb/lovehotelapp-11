@@ -34,14 +34,20 @@ export function AnnouncementsList() {
         .from('announcements')
         .select(`
           *,
-          full_name:profiles!user_id(full_name),
-          avatar_url:profiles!user_id(avatar_url)
+          profiles!inner(full_name, avatar_url)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setAnnouncements(data);
+      // Transform the data to match our AnnouncementType interface
+      const transformedData = data.map(announcement => ({
+        ...announcement,
+        full_name: announcement.profiles?.full_name || null,
+        avatar_url: announcement.profiles?.avatar_url || null
+      }));
+
+      setAnnouncements(transformedData);
     } catch (error) {
       console.error('Error fetching announcements:', error);
       toast({
