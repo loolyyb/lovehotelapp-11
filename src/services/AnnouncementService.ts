@@ -30,10 +30,6 @@ export class AnnouncementService {
   }
 
   static async createAnnouncement(content: string, imageUrl: string | undefined, userId: string) {
-    if (!userId) {
-      throw new Error("User must be authenticated to create an announcement");
-    }
-
     const { error } = await supabase
       .from('announcements')
       .insert({
@@ -49,10 +45,6 @@ export class AnnouncementService {
   }
 
   static async updateAnnouncement(id: string, content: string, imageUrl: string | undefined, userId: string) {
-    if (!userId) {
-      throw new Error("User must be authenticated to update an announcement");
-    }
-
     const { error } = await supabase
       .from('announcements')
       .update({
@@ -69,10 +61,6 @@ export class AnnouncementService {
   }
 
   static async deleteAnnouncement(id: string, userId: string) {
-    if (!userId) {
-      throw new Error("User must be authenticated to delete an announcement");
-    }
-
     const { error } = await supabase
       .from('announcements')
       .delete()
@@ -86,10 +74,6 @@ export class AnnouncementService {
   }
 
   static async handleReaction(announcementId: string, userId: string, reactionType: string) {
-    if (!userId) {
-      throw new Error("User must be authenticated to react to an announcement");
-    }
-
     try {
       const { data: existingReaction } = await supabase
         .from('announcement_reactions')
@@ -100,7 +84,6 @@ export class AnnouncementService {
 
       if (existingReaction) {
         if (existingReaction.reaction_type === reactionType) {
-          // Si même réaction, on la supprime
           const { error } = await supabase
             .from('announcement_reactions')
             .delete()
@@ -108,7 +91,6 @@ export class AnnouncementService {
             
           if (error) throw error;
         } else {
-          // Si réaction différente, on la met à jour
           const { error } = await supabase
             .from('announcement_reactions')
             .update({ reaction_type: reactionType })
@@ -117,7 +99,6 @@ export class AnnouncementService {
           if (error) throw error;
         }
       } else {
-        // Si pas de réaction existante, on en crée une nouvelle
         const { error } = await supabase
           .from('announcement_reactions')
           .insert({
