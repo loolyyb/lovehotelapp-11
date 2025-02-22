@@ -63,7 +63,7 @@ const RestaurantDuLove = () => {
               Brunch du Dimanche jusqu'à 16h
             </span>
           </p>
-          <Button className="text-lg py-6 bg-[#ce0067] hover:bg-[#a80054] transition-colors duration-300 text-[#f3ebad]" asChild>
+          <Button className="text-lg py-6 bg-[#ce0067] hover:bg-[#a80054] transition-colors duration-300" asChild>
             <a href="tel:+33144826305" className="flex items-center gap-3">
               <Phone className="w-6 h-6" />
               +33 1 44 82 63 05
