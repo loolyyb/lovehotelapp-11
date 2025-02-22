@@ -42,7 +42,7 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          user:user_id (
+          profiles:user_id (
             full_name,
             avatar_url
           )
@@ -69,7 +69,7 @@ export function AnnouncementsList() {
         logger.debug('Transformation annonce:', { 
           id: announcement.id,
           user_id: announcement.user_id,
-          user: announcement.user
+          profiles: announcement.profiles
         });
 
         const transformedAnnouncement = {
@@ -78,8 +78,8 @@ export function AnnouncementsList() {
           image_url: announcement.image_url,
           created_at: announcement.created_at,
           user_id: announcement.user_id,
-          full_name: announcement.user?.full_name ?? "Utilisateur inconnu",
-          avatar_url: announcement.user?.avatar_url ?? null
+          full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
+          avatar_url: announcement.profiles?.avatar_url ?? null
         };
         
         logger.debug('Annonce transformée:', transformedAnnouncement);
