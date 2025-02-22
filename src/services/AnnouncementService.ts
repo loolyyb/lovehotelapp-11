@@ -27,34 +27,18 @@ export class AnnouncementService {
   }
 
   static async createAnnouncement(content: string, imageUrl: string | undefined, userId: string) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    if (!profile) throw new Error('Profile not found');
-
     const { error } = await supabase
       .from('announcements')
       .insert({
         content,
         image_url: imageUrl,
-        user_id: profile.id // Utiliser l'ID du profil plutôt que l'ID d'authentification
+        user_id: userId
       });
 
     if (error) throw error;
   }
 
   static async updateAnnouncement(id: string, content: string, imageUrl: string | undefined, userId: string) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    if (!profile) throw new Error('Profile not found');
-
     const { error } = await supabase
       .from('announcements')
       .update({
@@ -62,25 +46,17 @@ export class AnnouncementService {
         image_url: imageUrl,
       })
       .eq('id', id)
-      .eq('user_id', profile.id); // Utiliser l'ID du profil plutôt que l'ID d'authentification
+      .eq('user_id', userId);
 
     if (error) throw error;
   }
 
   static async deleteAnnouncement(id: string, userId: string) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    if (!profile) throw new Error('Profile not found');
-
     const { error } = await supabase
       .from('announcements')
       .delete()
       .eq('id', id)
-      .eq('user_id', profile.id); // Utiliser l'ID du profil plutôt que l'ID d'authentification
+      .eq('user_id', userId);
 
     if (error) throw error;
   }
