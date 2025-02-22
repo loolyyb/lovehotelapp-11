@@ -21,7 +21,7 @@ export const MobileNavBar = () => {
         <Link
           to="/"
           className={`flex flex-col items-center p-2 transition-colors duration-200 ${
-            isActive("/") ? "text-[#ce0067]" : "text-white hover:text-rose-200"
+            isActive("/") ? "text-[#f3ebad]" : "text-white hover:text-rose-200"
           }`}
         >
           <House className="w-5 h-5 stroke-[1.5]" />
@@ -31,7 +31,7 @@ export const MobileNavBar = () => {
         <Link
           to="/profiles"
           className={`flex flex-col items-center p-2 transition-colors duration-200 ${
-            isActive("/profiles") ? "text-[#ce0067]" : "text-white hover:text-rose-200"
+            isActive("/profiles") ? "text-[#f3ebad]" : "text-white hover:text-rose-200"
           }`}
         >
           <Search className="w-5 h-5 stroke-[1.5]" />
@@ -41,7 +41,7 @@ export const MobileNavBar = () => {
         <Link
           to="/rideaux-ouverts"
           className={`flex flex-col items-center p-2 transition-colors duration-200 ${
-            isActive("/rideaux-ouverts") ? "text-[#ce0067]" : "text-white hover:text-rose-200"
+            isActive("/rideaux-ouverts") ? "text-[#f3ebad]" : "text-white hover:text-rose-200"
           }`}
         >
           <Blinds className="w-5 h-5 stroke-[1.5]" />
@@ -51,7 +51,7 @@ export const MobileNavBar = () => {
         <Link
           to="/lover-coin"
           className={`flex flex-col items-center p-2 transition-colors duration-200 ${
-            isActive("/lover-coin") ? "text-[#ce0067]" : "text-white hover:text-rose-200"
+            isActive("/lover-coin") ? "text-[#f3ebad]" : "text-white hover:text-rose-200"
           }`}
         >
           <Heart className="w-5 h-5 stroke-[1.5]" />
