@@ -16,6 +16,7 @@ import RideauxOuverts from "@/pages/RideauxOuverts";
 import Dashboard from "@/pages/Dashboard";
 import Options from "@/pages/Options";
 import LoverCoin from "@/pages/LoverCoin";
+import Announcements from "@/pages/Announcements";
 import { QualificationJourney } from "@/components/qualification/QualificationJourney";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";

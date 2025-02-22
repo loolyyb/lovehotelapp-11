@@ -7,23 +7,47 @@ import { AnnouncementForm } from "@/components/announcements/AnnouncementForm";
 import { Loader } from "lucide-react";
 import { useAuthSession } from "@/hooks/useAuthSession";
 
+interface Announcement {
+  id: string;
+  content: string;
+  image_url?: string;
+  created_at: string;
+  user: {
+    full_name: string;
+    avatar_url?: string;
+  };
+  reactions: Array<{
+    type: string;
+    user_id: string;
+  }>;
+  comments: Array<{
+    id: string;
+  }>;
+}
+
 export default function Announcements() {
-  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { session } = useAuthSession();
 
   useEffect(() => {
     fetchAnnouncements();
-    subscribeToChanges();
+    const channel = subscribeToChanges();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchAnnouncements = async () => {
     try {
       const { data, error } = await supabase
-        .from("announcements")
+        .from('announcements')
         .select(`
-          *,
+          id,
+          content,
+          image_url,
+          created_at,
           user:profiles!announcements_user_id_fkey (
             full_name,
             avatar_url
@@ -36,7 +60,7 @@ export default function Announcements() {
             id
           )
         `)
-        .order("created_at", { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
@@ -54,7 +78,7 @@ export default function Announcements() {
   };
 
   const subscribeToChanges = () => {
-    const channel = supabase
+    return supabase
       .channel("announcements-changes")
       .on(
         "postgres_changes",
@@ -68,19 +92,17 @@ export default function Announcements() {
         }
       )
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   };
 
   const handleSubmitAnnouncement = async (content: string, imageUrl?: string) => {
     try {
-      const { error } = await supabase.from("announcements").insert({
-        content,
-        image_url: imageUrl,
-        user_id: session?.user?.id
-      });
+      const { error } = await supabase
+        .from('announcements')
+        .insert({
+          content,
+          image_url: imageUrl,
+          user_id: session?.user?.id
+        });
 
       if (error) throw error;
 
@@ -103,33 +125,35 @@ export default function Announcements() {
 
     try {
       const { data: existingReaction } = await supabase
-        .from("announcement_reactions")
-        .select("*")
-        .eq("announcement_id", announcementId)
-        .eq("user_id", session.user.id)
+        .from('announcement_reactions')
+        .select('*')
+        .eq('announcement_id', announcementId)
+        .eq('user_id', session.user.id)
         .single();
 
       if (existingReaction) {
         if (existingReaction.reaction_type === reactionType) {
           await supabase
-            .from("announcement_reactions")
+            .from('announcement_reactions')
             .delete()
-            .eq("id", existingReaction.id);
+            .eq('id', existingReaction.id);
         } else {
           await supabase
-            .from("announcement_reactions")
+            .from('announcement_reactions')
             .update({ reaction_type: reactionType })
-            .eq("id", existingReaction.id);
+            .eq('id', existingReaction.id);
         }
       } else {
-        await supabase.from("announcement_reactions").insert({
-          announcement_id: announcementId,
-          user_id: session.user.id,
-          reaction_type: reactionType
-        });
+        await supabase
+          .from('announcement_reactions')
+          .insert({
+            announcement_id: announcementId,
+            user_id: session.user.id,
+            reaction_type: reactionType
+          });
       }
 
-      fetchAnnouncements();
+      await fetchAnnouncements();
     } catch (error) {
       console.error("Error handling reaction:", error);
       toast({
@@ -168,7 +192,7 @@ export default function Announcements() {
               commentCount={announcement.comments.length}
               userReaction={
                 announcement.reactions.find(
-                  (r: any) => r.user_id === session?.user?.id
+                  (r) => r.user_id === session?.user?.id
                 )?.type
               }
             />

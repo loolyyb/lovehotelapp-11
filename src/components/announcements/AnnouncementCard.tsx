@@ -2,7 +2,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, ThumbsUp, Heart, Party } from "lucide-react";
+import { MessageCircle, ThumbsUp, Heart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -78,15 +78,6 @@ export function AnnouncementCard({
           >
             <Heart className="w-4 h-4 mr-2" />
             <span>{reactions.find(r => r.type === 'love')?.count || 0}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={userReaction === 'party' ? 'text-[#ce0067]' : ''}
-            onClick={() => onReact('party')}
-          >
-            <Party className="w-4 h-4 mr-2" />
-            <span>{reactions.find(r => r.type === 'party')?.count || 0}</span>
           </Button>
         </div>
         <Button variant="ghost" size="sm" onClick={onComment}>
