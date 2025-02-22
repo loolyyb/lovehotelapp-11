@@ -1,15 +1,23 @@
 
-import { Announcement } from "@/components/announcements/Announcement";
 import { AnnouncementsList } from "@/components/announcements/AnnouncementsList";
 import { CreateAnnouncementForm } from "@/components/announcements/CreateAnnouncementForm";
 import { useAuthSession } from "@/hooks/useAuthSession";
-import { Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Announcements() {
   const { session } = useAuthSession();
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!session) {
+      navigate('/login');
+    }
+  }, [session, navigate]);
+
+  // Si l'utilisateur n'est pas connecté, on ne rend rien pendant la redirection
   if (!session) {
-    return <Navigate to="/login" replace />;
+    return null;
   }
 
   return (
