@@ -2,6 +2,7 @@
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { useAnnouncementReactions } from "./hooks/useAnnouncementReactions";
 import { useAnnouncementComments } from "./hooks/useAnnouncementComments";
+import { useAnnouncementDeletion } from "./hooks/useAnnouncementDeletion";
 import { AnnouncementHeader } from "./components/AnnouncementHeader";
 import { AnnouncementContent } from "./components/AnnouncementContent";
 import { AnnouncementReactions } from "./components/AnnouncementReactions";
@@ -31,7 +32,6 @@ export function Announcement({
   const { session } = useAuthSession();
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [additionalImages, setAdditionalImages] = useState<Array<{
     id: string;
     image_url: string;
@@ -51,6 +51,11 @@ export function Announcement({
     handleComment
   } = useAnnouncementComments(announcement.id, session);
 
+  const {
+    isDeleting,
+    handleDelete
+  } = useAnnouncementDeletion();
+
   useEffect(() => {
     const fetchAdditionalImages = async () => {
       const { data, error } = await supabase
@@ -67,41 +72,20 @@ export function Announcement({
     fetchAdditionalImages();
   }, [announcement.id]);
 
-  const isOwner = session?.user.id === announcement.user_id;
+  const isOwner = session?.user?.id === announcement.user_id;
 
-  const handleDelete = async () => {
+  const handleDeleteConfirm = async () => {
     if (!session?.user) return;
-    setIsDeleting(true);
-
-    try {
-      const { error } = await supabase
-        .from('announcements')
-        .delete()
-        .eq('id', announcement.id)
-        .eq('user_id', session.user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Annonce supprimée",
-        description: "Votre annonce a été supprimée avec succès"
-      });
-    } catch (error) {
-      console.error('Error deleting announcement:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de supprimer l'annonce"
-      });
-    } finally {
-      setIsDeleting(false);
+    
+    const success = await handleDelete(announcement.id, announcement.user_id);
+    if (success) {
       setIsDeleteDialogOpen(false);
     }
   };
 
   return (
-    <div className="bg-background/95 border border-accent/20 rounded-lg p-6 space-y-4 shadow-lg">
-      <div className="flex items-start w-full">
+    <div className="bg-background/95 border border-burgundy/20 rounded-lg p-6 space-y-4 shadow-lg">
+      <div className="flex items-start justify-between w-full">
         <div className="flex-grow">
           <AnnouncementHeader 
             full_name={announcement.full_name} 
@@ -114,7 +98,7 @@ export function Announcement({
             variant="ghost"
             size="icon"
             onClick={() => setIsDeleteDialogOpen(true)}
-            className="text-muted-foreground hover:text-destructive transition-colors ml-2"
+            className="text-zinc-400 hover:text-red-500 transition-colors"
             disabled={isDeleting}
           >
             <Trash2 className="h-5 w-5" />
@@ -137,7 +121,7 @@ export function Announcement({
       />
 
       {showComments && (
-        <div className="space-y-4 pt-4 border-t border-accent/10">
+        <div className="space-y-4 pt-4 border-t border-burgundy/10">
           <AnnouncementComments 
             comments={comments} 
             isLoading={isLoadingComments} 
@@ -149,7 +133,8 @@ export function Announcement({
       <DeleteAnnouncementDialog 
         isOpen={isDeleteDialogOpen} 
         onClose={() => setIsDeleteDialogOpen(false)} 
-        onConfirm={handleDelete} 
+        onConfirm={handleDeleteConfirm}
+        isDeleting={isDeleting}
       />
     </div>
   );
