@@ -30,6 +30,7 @@ export function AnnouncementsList() {
 
   const fetchAnnouncements = async () => {
     try {
+      // Utilisation d'une requête SQL directe pour obtenir exactement la structure dont nous avons besoin
       const { data, error } = await supabase
         .from('announcements')
         .select(`
@@ -38,26 +39,30 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles:profiles!inner (
+          profiles (
             full_name,
             avatar_url
           )
         `)
+        .returns<(Omit<AnnouncementType, 'full_name' | 'avatar_url'> & {
+          profiles: { full_name: string | null; avatar_url: string | null } | null;
+        })[]>()
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Transform the data to flatten the profiles object
-      const transformedData = data.map(announcement => ({
+      // Transformation des données pour correspondre à notre interface
+      const transformedData: AnnouncementType[] = data.map(announcement => ({
         id: announcement.id,
         content: announcement.content,
         image_url: announcement.image_url,
         created_at: announcement.created_at,
         user_id: announcement.user_id,
-        full_name: announcement.profiles?.full_name || null,
-        avatar_url: announcement.profiles?.avatar_url || null
+        full_name: announcement.profiles?.full_name ?? null,
+        avatar_url: announcement.profiles?.avatar_url ?? null
       }));
 
+      console.log('Transformed announcements:', transformedData);
       setAnnouncements(transformedData);
     } catch (error) {
       console.error('Error fetching announcements:', error);
@@ -81,7 +86,8 @@ export function AnnouncementsList() {
           schema: 'public',
           table: 'announcements'
         },
-        () => {
+        (payload) => {
+          console.log('Received realtime update:', payload);
           fetchAnnouncements();
         }
       )
