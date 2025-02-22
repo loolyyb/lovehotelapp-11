@@ -33,16 +33,27 @@ export function AnnouncementsList() {
       const { data, error } = await supabase
         .from('announcements')
         .select(`
-          *,
-          profiles!inner(full_name, avatar_url)
+          id,
+          content,
+          image_url,
+          created_at,
+          user_id,
+          profiles:profiles!inner (
+            full_name,
+            avatar_url
+          )
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Transform the data to match our AnnouncementType interface
+      // Transform the data to flatten the profiles object
       const transformedData = data.map(announcement => ({
-        ...announcement,
+        id: announcement.id,
+        content: announcement.content,
+        image_url: announcement.image_url,
+        created_at: announcement.created_at,
+        user_id: announcement.user_id,
         full_name: announcement.profiles?.full_name || null,
         avatar_url: announcement.profiles?.avatar_url || null
       }));
