@@ -32,18 +32,24 @@ export function AnnouncementsList() {
 
   const fetchAnnouncements = async () => {
     try {
+      console.log("Fetching announcements...");
       const { data, error } = await supabase
         .from('announcements')
         .select(`
           *,
-          profiles:user_id (
+          profiles!user_id (
             full_name,
             avatar_url
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+
+      console.log("Fetched data:", data);
       setAnnouncements(data);
     } catch (error) {
       console.error('Error fetching announcements:', error);
