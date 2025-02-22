@@ -8,7 +8,7 @@ import { Footer } from "./components/layout/Footer";
 import { useIsMobile } from "./hooks/use-mobile";
 import { useAuthSession } from "./hooks/useAuthSession";
 import { AppRoutes } from "./components/layout/AppRoutes";
-import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
+import { ThemeProvider } from "./providers/ThemeProvider";
 import { appConfig } from "./config/app.config";
 import { useToast } from "./hooks/use-toast";
 import { Loader } from "lucide-react";
@@ -32,7 +32,6 @@ const getBasename = () => {
 function AppContent() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
-  const { currentThemeName, switchTheme } = useTheme();
   const { toast } = useToast();
   const { setStatusBarColor } = useStatusBar();
 
@@ -40,46 +39,24 @@ function AppContent() {
     console.log("AppContent mounted");
     console.log("Session:", session);
     console.log("Loading:", loading);
-    console.log("Current theme:", currentThemeName);
-  }, [session, loading, currentThemeName]);
-
-  useEffect(() => {
-    const initTheme = async () => {
-      try {
-        if (!session) return;
-        await switchTheme("lover");
-      } catch (error) {
-        console.error("Erreur lors du changement de thème:", error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger le thème. Veuillez vous connecter et réessayer.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    initTheme();
-  }, [session, switchTheme, toast]);
+  }, [session, loading]);
 
   useEffect(() => {
     if (isMobile) {
       setStatusBarColor();
     }
-  }, [isMobile]);
+  }, [isMobile, setStatusBarColor]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div 
-      data-theme={currentThemeName} 
-      className={`min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground transition-colors duration-300 ${isMobile ? "pb-20" : ""}`}
-    >
+    <div className="min-h-screen w-full overflow-x-hidden flex flex-col bg-background text-foreground">
       {session && userProfile ? (
         <Header userProfile={userProfile} />
       ) : (
@@ -107,7 +84,7 @@ function App() {
   console.log("Using basename:", basename);
 
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="lover" forcedTheme="lover">
       <Router basename={basename}>
         <AppContent />
       </Router>
