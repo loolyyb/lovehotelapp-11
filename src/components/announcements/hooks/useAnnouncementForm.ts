@@ -36,6 +36,8 @@ export function useAnnouncementForm() {
     setIsLoading(true);
 
     try {
+      console.log('Début de la création de l\'annonce pour l\'utilisateur:', session.user.id);
+      
       let mainImageUrl = null;
       const additionalImageUrls = [];
       const files = Array.from(values.images || []);
@@ -59,18 +61,23 @@ export function useAnnouncementForm() {
         mainImageUrl = publicUrl;
       }
 
-      // Create the announcement
+      // Create the announcement with the user_id
       const { data: announcement, error: announcementError } = await supabase
         .from('announcements')
         .insert({
           content: values.content,
           image_url: mainImageUrl,
-          user_id: session.user.id
+          user_id: session.user.id // Important: on s'assure d'utiliser l'ID de l'utilisateur authentifié
         })
         .select()
         .single();
 
-      if (announcementError) throw announcementError;
+      if (announcementError) {
+        console.error('Erreur lors de la création de l\'annonce:', announcementError);
+        throw announcementError;
+      }
+
+      console.log('Annonce créée avec succès:', announcement);
 
       // Upload additional images if any
       if (files.length > 1) {
