@@ -16,6 +16,19 @@ interface AnnouncementType {
   avatar_url: string | null;
 }
 
+// Define the raw data structure from Supabase
+interface RawAnnouncementData {
+  id: string;
+  content: string;
+  image_url: string | null;
+  created_at: string;
+  user_id: string;
+  profiles: {
+    full_name: string | null;
+    avatar_url: string | null;
+  } | null;
+}
+
 export function AnnouncementsList() {
   const [announcements, setAnnouncements] = useState<AnnouncementType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +78,7 @@ export function AnnouncementsList() {
         sample: rawData[0] 
       });
 
-      const transformedData: AnnouncementType[] = rawData.map(announcement => ({
+      const transformedData: AnnouncementType[] = (rawData as RawAnnouncementData[]).map(announcement => ({
         id: announcement.id,
         content: announcement.content,
         image_url: announcement.image_url,
