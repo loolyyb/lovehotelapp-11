@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ import {
 import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { EditAnnouncementForm } from "./EditAnnouncementForm";
-import type { AnnouncementWithRelations } from "@/hooks/useAnnouncements";
+import type { AnnouncementWithRelations } from "@/types/announcements.types";
 
 interface AnnouncementCardProps {
   announcement: AnnouncementWithRelations;

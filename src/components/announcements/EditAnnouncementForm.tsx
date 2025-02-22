@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ImagePlus, Loader, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import type { AnnouncementWithRelations } from "@/hooks/useAnnouncements";
+import type { AnnouncementWithRelations } from "@/types/announcements.types";
 
 interface EditAnnouncementFormProps {
   announcement: AnnouncementWithRelations;

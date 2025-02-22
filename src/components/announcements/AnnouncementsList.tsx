@@ -1,6 +1,6 @@
 
 import { AnnouncementCard } from "./AnnouncementCard";
-import type { AnnouncementWithRelations } from "@/hooks/useAnnouncements";
+import type { AnnouncementWithRelations } from "@/types/announcements.types";
 import { Session } from "@supabase/supabase-js";
 
 interface AnnouncementsListProps {
@@ -33,7 +33,7 @@ export function AnnouncementsList({
               acc[r.type] = (acc[r.type] || 0) + 1;
               return acc;
             }, {})
-          ).map(([type, count]) => ({ type, count }))}
+          ).map(([type, count]) => ({ type, count: Number(count) }))}
           commentCount={announcement.comments.length}
           userReaction={
             announcement.reactions.find(
