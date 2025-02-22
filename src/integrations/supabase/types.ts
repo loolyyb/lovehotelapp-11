@@ -141,6 +141,38 @@ export type Database = {
           },
         ]
       }
+      announcement_images: {
+        Row: {
+          announcement_id: string
+          created_at: string
+          id: string
+          image_url: string
+          updated_at: string
+        }
+        Insert: {
+          announcement_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          updated_at?: string
+        }
+        Update: {
+          announcement_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_images_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcement_reactions: {
         Row: {
           announcement_id: string

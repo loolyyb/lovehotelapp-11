@@ -9,7 +9,7 @@ import { AnnouncementComments } from "./components/AnnouncementComments";
 import { DeleteAnnouncementDialog } from "./components/DeleteAnnouncementDialog";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,6 +32,7 @@ export function Announcement({ announcement }: AnnouncementProps) {
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [additionalImages, setAdditionalImages] = useState<Array<{ id: string; image_url: string; }>>([]);
 
   const {
     reactions,
@@ -46,6 +47,22 @@ export function Announcement({ announcement }: AnnouncementProps) {
     loadComments,
     handleComment
   } = useAnnouncementComments(announcement.id, session);
+
+  useEffect(() => {
+    const fetchAdditionalImages = async () => {
+      const { data, error } = await supabase
+        .from('announcement_images')
+        .select('id, image_url')
+        .eq('announcement_id', announcement.id)
+        .order('created_at', { ascending: true });
+
+      if (!error && data) {
+        setAdditionalImages(data);
+      }
+    };
+
+    fetchAdditionalImages();
+  }, [announcement.id]);
 
   const isOwner = session?.user.id === announcement.user_id;
 
@@ -100,7 +117,11 @@ export function Announcement({ announcement }: AnnouncementProps) {
         )}
       </div>
       
-      <AnnouncementContent content={announcement.content} imageUrl={announcement.image_url} />
+      <AnnouncementContent 
+        content={announcement.content} 
+        imageUrl={announcement.image_url}
+        additionalImages={additionalImages} 
+      />
 
       <AnnouncementReactions
         reactions={reactions}
