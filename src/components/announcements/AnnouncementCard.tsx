@@ -40,22 +40,30 @@ export function AnnouncementCard({
 }: AnnouncementCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const isOwner = currentUserId === announcement.user_id;
+  const isOwner = announcement.user_id === currentUserId;
 
   const handleDelete = async () => {
-    await onDelete(announcement.id);
-    setIsDeleteDialogOpen(false);
+    try {
+      await onDelete(announcement.id);
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+    }
   };
 
   const handleReaction = (type: string) => {
-    if (onReact) {
+    try {
       onReact(type);
+    } catch (error) {
+      console.error("Erreur lors de la réaction:", error);
     }
   };
 
   const handleComment = () => {
-    if (onComment) {
+    try {
       onComment();
+    } catch (error) {
+      console.error("Erreur lors du commentaire:", error);
     }
   };
 
@@ -132,10 +140,18 @@ export function AnnouncementCard({
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
-          <EditAnnouncementForm announcement={announcement} onSubmit={async (content, imageUrl) => {
-            await onEdit(announcement.id, content, imageUrl);
-            setIsEditDialogOpen(false);
-          }} onCancel={() => setIsEditDialogOpen(false)} />
+          <EditAnnouncementForm 
+            announcement={announcement} 
+            onSubmit={async (content, imageUrl) => {
+              try {
+                await onEdit(announcement.id, content, imageUrl);
+                setIsEditDialogOpen(false);
+              } catch (error) {
+                console.error("Erreur lors de la modification:", error);
+              }
+            }} 
+            onCancel={() => setIsEditDialogOpen(false)} 
+          />
         </DialogContent>
       </Dialog>
 
