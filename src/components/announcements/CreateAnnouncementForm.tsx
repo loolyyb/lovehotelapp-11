@@ -102,7 +102,7 @@ export function CreateAnnouncementForm() {
             <FormField
               control={form.control}
               name="image"
-              render={({ field: { onChange, ...field } }) => (
+              render={({ field: { onChange, value, ...field } }) => (
                 <FormItem>
                   <FormControl>
                     <div className="flex items-center gap-2">
