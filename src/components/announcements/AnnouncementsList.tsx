@@ -34,16 +34,15 @@ export function AnnouncementsList() {
     try {
       logger.info('Début de la récupération des annonces');
       
-      // Requête modifiée pour utiliser une jointure explicite avec user_id
       const { data: rawData, error } = await supabase
         .from('announcements')
         .select(`
-          announcements.id,
-          announcements.content,
-          announcements.image_url,
-          announcements.created_at,
-          announcements.user_id,
-          profiles!announcements_user_id_fkey (
+          id,
+          content,
+          image_url,
+          created_at,
+          user_id,
+          profiles (
             full_name,
             avatar_url
           )
@@ -67,23 +66,21 @@ export function AnnouncementsList() {
       });
 
       const transformedData: AnnouncementType[] = rawData.map(announcement => {
+        // Log détaillé de chaque annonce avant transformation
         logger.debug('Transformation annonce:', { 
           id: announcement.id,
           user_id: announcement.user_id,
           profiles: announcement.profiles
         });
 
-        // Accès direct aux données du profil via la clé foreign
-        const profile = announcement.profiles;
-        
         const transformedAnnouncement = {
           id: announcement.id,
           content: announcement.content,
           image_url: announcement.image_url,
           created_at: announcement.created_at,
           user_id: announcement.user_id,
-          full_name: profile?.full_name ?? "Utilisateur inconnu",
-          avatar_url: profile?.avatar_url ?? null
+          full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
+          avatar_url: announcement.profiles?.avatar_url ?? null
         };
         
         logger.debug('Annonce transformée:', transformedAnnouncement);
