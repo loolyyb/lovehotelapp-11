@@ -1,3 +1,4 @@
+
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -86,24 +87,24 @@ export const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-sm border-b">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div className="w-full flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-burgundy">
+          <Link to="/" className="flex items-center gap-2 text-[#ce0067]">
             <Heart className="w-8 h-8 fill-current" />
             <span className="text-xl font-playfair font-bold">LoveH</span>
           </Link>
           {isAuthenticated ? (
             <Button 
               variant="outline" 
-              className="border-burgundy text-burgundy hover:bg-burgundy/5"
+              className="border-[#ce0067] text-[#ce0067] hover:bg-[#ce0067]/5"
               onClick={handleLogout}
             >
               Se déconnecter
             </Button>
           ) : (
             <Link to="/login">
-              <Button variant="outline" className="border-burgundy text-burgundy hover:bg-burgundy/5">
+              <Button variant="outline" className="border-[#ce0067] text-[#ce0067] hover:bg-[#ce0067]/5">
                 Se connecter
               </Button>
             </Link>
@@ -113,3 +114,4 @@ export const Header = () => {
     </header>
   );
 };
+
