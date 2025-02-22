@@ -32,15 +32,15 @@ export function AnnouncementsList({
           onDelete={() => onDelete(announcement.id)}
           reactions={Object.entries(
             announcement.reactions.reduce((acc: Record<string, number>, r) => {
-              acc[r.type] = (acc[r.type] || 0) + 1;
+              acc[r.reaction_type] = (acc[r.reaction_type] || 0) + 1;
               return acc;
             }, {})
-          ).map(([type, count]) => ({ type, count: Number(count) }))}
+          ).map(([reaction_type, count]) => ({ reaction_type, count: Number(count) }))}
           commentCount={announcement.comments.length}
           userReaction={
             announcement.reactions.find(
               (r) => r.user_id === session?.user?.id
-            )?.type
+            )?.reaction_type
           }
           currentUserId={session?.user?.id}
         />

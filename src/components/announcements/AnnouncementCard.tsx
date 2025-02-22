@@ -18,7 +18,7 @@ interface AnnouncementCardProps {
   onEdit: (content: string, imageUrl?: string) => Promise<void>;
   onDelete: () => Promise<void>;
   reactions: {
-    type: string;
+    reaction_type: string;
     count: number;
   }[];
   commentCount: number;
