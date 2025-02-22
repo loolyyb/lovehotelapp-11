@@ -1,4 +1,3 @@
-import { type ThemeConfig } from "@/types/theme";
 
 export const appConfig = {
   branding: {
