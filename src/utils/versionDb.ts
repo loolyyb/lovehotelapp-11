@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { VersionData } from "@/types/version.types";
 
-const CURRENT_VERSION = '1.0.195';
+const CURRENT_VERSION = '1.1.0';
 
 export async function getCurrentVersion(): Promise<string> {
   try {
@@ -63,9 +63,9 @@ async function syncWithAppVersions(version: string): Promise<void> {
         .from('app_versions')
         .insert({
           version: version,
-          version_type: 'patch',
+          version_type: 'minor',
           is_active: true,
-          release_notes: 'Version système synchronisée depuis admin_settings'
+          release_notes: 'Améliorations significatives de l\'interface utilisateur et correction du routage'
         });
 
       if (insertError) throw insertError;
