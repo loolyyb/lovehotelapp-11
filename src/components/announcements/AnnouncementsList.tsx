@@ -26,7 +26,7 @@ interface DatabaseAnnouncement {
   profiles: {
     full_name: string | null;
     avatar_url: string | null;
-  } | null;
+  };
 }
 
 export function AnnouncementsList() {
@@ -55,7 +55,7 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles (
+          profiles!user_id(
             full_name,
             avatar_url
           )
@@ -78,15 +78,19 @@ export function AnnouncementsList() {
         sample: rawData[0] 
       });
 
-      const transformedData: AnnouncementType[] = (rawData as DatabaseAnnouncement[]).map(announcement => ({
-        id: announcement.id,
-        content: announcement.content,
-        image_url: announcement.image_url,
-        created_at: announcement.created_at,
-        user_id: announcement.user_id,
-        full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
-        avatar_url: announcement.profiles?.avatar_url ?? null
-      }));
+      const transformedData: AnnouncementType[] = rawData.map(announcement => {
+        // Use type assertion since we know the structure
+        const typedAnnouncement = announcement as unknown as DatabaseAnnouncement;
+        return {
+          id: typedAnnouncement.id,
+          content: typedAnnouncement.content,
+          image_url: typedAnnouncement.image_url,
+          created_at: typedAnnouncement.created_at,
+          user_id: typedAnnouncement.user_id,
+          full_name: typedAnnouncement.profiles?.full_name ?? "Utilisateur inconnu",
+          avatar_url: typedAnnouncement.profiles?.avatar_url ?? null
+        };
+      });
 
       logger.info('Transformation terminée:', { 
         count: transformedData.length,
