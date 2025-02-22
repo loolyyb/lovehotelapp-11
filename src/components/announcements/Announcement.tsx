@@ -95,7 +95,7 @@ export function Announcement({ announcement }: AnnouncementProps) {
   };
 
   return (
-    <div className="backdrop-blur-sm border border-burgundy/20 rounded-lg p-6 space-y-4 bg-[#40192c]">
+    <div className="bg-white/5 backdrop-blur-sm border border-burgundy/20 rounded-lg p-6 space-y-4 shadow-lg hover:bg-white/10 transition-colors">
       <div className="flex justify-between items-start">
         <AnnouncementHeader
           full_name={announcement.full_name}
