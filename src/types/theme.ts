@@ -1,4 +1,9 @@
-export interface ThemeConfig {
+
+export type ThemeName = "lover-rose";
+
+export interface CustomTheme {
+  name: ThemeName;
+  version: string;
   colors: {
     primary: string;
     secondary: string;
@@ -21,10 +26,3 @@ export interface ThemeConfig {
     xl: string;
   };
 }
-
-export interface CustomTheme extends ThemeConfig {
-  name: string;
-  version: string;
-}
-
-export type ThemeName = 'default' | 'lover';

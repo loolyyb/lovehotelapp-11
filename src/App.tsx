@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+
+import React from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Header } from "./components/layout/Header";
 import { MobileNavBar } from "./components/layout/MobileNavBar";
@@ -9,7 +10,6 @@ import { useAuthSession } from "./hooks/useAuthSession";
 import { AppRoutes } from "./components/layout/AppRoutes";
 import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
 import { appConfig } from "./config/app.config";
-import { useToast } from "./hooks/use-toast";
 import { Loader } from "lucide-react";
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { UpdatePrompt } from './components/pwa/UpdatePrompt';
@@ -27,14 +27,14 @@ const getBasename = () => {
   return '/';
 };
 
-function AppContent() {
+function Content() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
   const { currentThemeName } = useTheme();
   const { setStatusBarColor } = useStatusBar();
 
   useEffect(() => {
-    console.log("AppContent mounted");
+    console.log("Content mounted");
     console.log("Session:", session);
     console.log("Loading:", loading);
     console.log("Current theme:", currentThemeName);
@@ -76,17 +76,23 @@ function AppContent() {
   );
 }
 
+function AppContent() {
+  return (
+    <ThemeProvider>
+      <Content />
+    </ThemeProvider>
+  );
+}
+
 function App() {
   console.log("App component rendering");
   const basename = getBasename();
   console.log("Using basename:", basename);
 
   return (
-    <ThemeProvider>
-      <Router basename={basename}>
-        <AppContent />
-      </Router>
-    </ThemeProvider>
+    <Router basename={basename}>
+      <AppContent />
+    </Router>
   );
 }
 
