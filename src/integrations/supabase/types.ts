@@ -106,25 +106,22 @@ export type Database = {
         Row: {
           announcement_id: string
           content: string
-          created_at: string
+          created_at: string | null
           id: string
-          updated_at: string
           user_id: string
         }
         Insert: {
           announcement_id: string
           content: string
-          created_at?: string
+          created_at?: string | null
           id?: string
-          updated_at?: string
           user_id: string
         }
         Update: {
           announcement_id?: string
           content?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
-          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -135,33 +132,26 @@ export type Database = {
             referencedRelation: "announcements"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "announcement_comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       announcement_reactions: {
         Row: {
           announcement_id: string
-          created_at: string
+          created_at: string | null
           id: string
           reaction_type: string
           user_id: string
         }
         Insert: {
           announcement_id: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           reaction_type: string
           user_id: string
         }
         Update: {
           announcement_id?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           reaction_type?: string
           user_id?: string
@@ -174,49 +164,34 @@ export type Database = {
             referencedRelation: "announcements"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "announcement_reactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       announcements: {
         Row: {
           content: string
-          created_at: string
+          created_at: string | null
           id: string
           image_url: string | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           content: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           image_url?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           content?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           image_url?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "announcements_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       app_versions: {
         Row: {
