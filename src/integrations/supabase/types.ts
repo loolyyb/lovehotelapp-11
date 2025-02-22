@@ -135,13 +135,6 @@ export type Database = {
             referencedRelation: "announcements"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "announcement_comments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       announcement_reactions: {
@@ -172,13 +165,6 @@ export type Database = {
             columns: ["announcement_id"]
             isOneToOne: false
             referencedRelation: "announcements"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "announcement_reactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

@@ -81,42 +81,47 @@ export class AnnouncementService {
 
   static async handleReaction(announcementId: string, userId: string, reactionType: string) {
     try {
-      const { data: existingReaction } = await supabase
+      // First check if a reaction already exists
+      const { data: existingReaction, error: fetchError } = await supabase
         .from('announcement_reactions')
         .select()
         .eq('announcement_id', announcementId)
         .eq('user_id', userId)
         .maybeSingle();
 
+      if (fetchError) throw fetchError;
+
       if (existingReaction) {
         if (existingReaction.reaction_type === reactionType) {
-          // Si même réaction, on la supprime
-          const { error } = await supabase
+          // If same reaction exists, remove it
+          const { error: deleteError } = await supabase
             .from('announcement_reactions')
             .delete()
-            .eq('id', existingReaction.id);
-            
-          if (error) throw error;
+            .eq('announcement_id', announcementId)
+            .eq('user_id', userId);
+
+          if (deleteError) throw deleteError;
         } else {
-          // Si réaction différente, on la met à jour
-          const { error } = await supabase
+          // If different reaction exists, update it
+          const { error: updateError } = await supabase
             .from('announcement_reactions')
             .update({ reaction_type: reactionType })
-            .eq('id', existingReaction.id);
-            
-          if (error) throw error;
+            .eq('announcement_id', announcementId)
+            .eq('user_id', userId);
+
+          if (updateError) throw updateError;
         }
       } else {
-        // Si pas de réaction existante, on en crée une nouvelle
-        const { error } = await supabase
+        // If no reaction exists, create new one
+        const { error: insertError } = await supabase
           .from('announcement_reactions')
           .insert({
             announcement_id: announcementId,
             user_id: userId,
             reaction_type: reactionType
           });
-          
-        if (error) throw error;
+
+        if (insertError) throw insertError;
       }
     } catch (error) {
       console.error("Error handling reaction:", error);
@@ -125,28 +130,32 @@ export class AnnouncementService {
   }
 
   static async addComment(announcementId: string, content: string, userId: string) {
-    const { error } = await supabase
-      .from('announcement_comments')
-      .insert({
-        announcement_id: announcementId,
-        user_id: userId,
-        content
-      });
+    try {
+      const { error } = await supabase
+        .from('announcement_comments')
+        .insert({
+          announcement_id: announcementId,
+          user_id: userId,
+          content
+        });
 
-    if (error) {
+      if (error) throw error;
+    } catch (error) {
       console.error("Error adding comment:", error);
       throw error;
     }
   }
 
   static async deleteComment(commentId: string, userId: string) {
-    const { error } = await supabase
-      .from('announcement_comments')
-      .delete()
-      .eq('id', commentId)
-      .eq('user_id', userId);
+    try {
+      const { error } = await supabase
+        .from('announcement_comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('user_id', userId);
 
-    if (error) {
+      if (error) throw error;
+    } catch (error) {
       console.error("Error deleting comment:", error);
       throw error;
     }
