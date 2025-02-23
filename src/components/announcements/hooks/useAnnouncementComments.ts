@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -8,7 +8,26 @@ export function useAnnouncementComments(announcementId: string, session: Session
   const [comments, setComments] = useState<any[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
   const { toast } = useToast();
+
+  const fetchCommentCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('announcement_comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('announcement_id', announcementId);
+
+      if (error) throw error;
+      setCommentCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching comment count:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCommentCount();
+  }, [announcementId]);
 
   const loadComments = async () => {
     if (!showComments) {
@@ -67,6 +86,7 @@ export function useAnnouncementComments(announcementId: string, session: Session
       // Ajouter immédiatement le nouveau commentaire à la liste
       if (data) {
         setComments(prevComments => [...prevComments, data]);
+        setCommentCount(prevCount => prevCount + 1);
       }
 
       toast({
@@ -88,6 +108,7 @@ export function useAnnouncementComments(announcementId: string, session: Session
     isLoadingComments,
     showComments,
     loadComments,
-    handleComment
+    handleComment,
+    commentCount
   };
 }

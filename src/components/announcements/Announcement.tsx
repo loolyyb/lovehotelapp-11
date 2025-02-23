@@ -40,7 +40,8 @@ export function Announcement({
   const {
     reactions,
     userReaction,
-    handleReaction
+    handleReaction,
+    isSubmitting
   } = useAnnouncementReactions(announcement.id, session);
 
   const {
@@ -48,7 +49,8 @@ export function Announcement({
     isLoadingComments,
     showComments,
     loadComments,
-    handleComment
+    handleComment,
+    commentCount
   } = useAnnouncementComments(announcement.id, session);
 
   useEffect(() => {
@@ -131,9 +133,10 @@ export function Announcement({
       <AnnouncementReactions 
         reactions={reactions} 
         userReaction={userReaction} 
-        commentsCount={comments.length} 
+        commentsCount={commentCount}
         onReaction={handleReaction} 
-        onCommentClick={loadComments} 
+        onCommentClick={loadComments}
+        isSubmitting={isSubmitting}
       />
 
       {showComments && (
