@@ -9,6 +9,7 @@ export function useAnnouncementReactions(announcementId: string, session: Sessio
   const [reactions, setReactions] = useState<{[key: string]: number}>({});
   const [userReaction, setUserReaction] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const logger = useLogger('useAnnouncementReactions');
 
@@ -43,8 +44,8 @@ export function useAnnouncementReactions(announcementId: string, session: Sessio
       logger.error('Erreur lors du calcul des réactions:', { error });
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les réactions"
+        title: "Erreur de chargement",
+        description: "Impossible de charger les réactions. Veuillez réessayer."
       });
     } finally {
       setIsLoading(false);
@@ -72,8 +73,8 @@ export function useAnnouncementReactions(announcementId: string, session: Sessio
       logger.error('Erreur lors du traitement de la réaction utilisateur:', { error });
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger votre réaction"
+        title: "Erreur de synchronisation",
+        description: "Impossible de récupérer votre réaction. Veuillez réessayer."
       });
     }
   };
@@ -82,11 +83,17 @@ export function useAnnouncementReactions(announcementId: string, session: Sessio
     if (!session?.user) {
       toast({
         variant: "destructive",
-        title: "Non connecté",
-        description: "Vous devez être connecté pour réagir aux annonces"
+        title: "Action non autorisée",
+        description: "Vous devez être connecté pour réagir aux annonces."
       });
       return;
     }
+
+    if (isSubmitting) {
+      return; // Éviter les soumissions multiples
+    }
+
+    setIsSubmitting(true);
 
     try {
       if (userReaction === type) {
@@ -99,6 +106,10 @@ export function useAnnouncementReactions(announcementId: string, session: Sessio
 
         if (error) throw error;
         setUserReaction(null);
+        toast({
+          title: "Réaction supprimée",
+          description: "Votre réaction a été retirée avec succès."
+        });
       } else {
         // Mise à jour ou ajout de la réaction
         if (userReaction) {
@@ -109,6 +120,10 @@ export function useAnnouncementReactions(announcementId: string, session: Sessio
             .eq('user_id', session.user.id);
 
           if (error) throw error;
+          toast({
+            title: "Réaction modifiée",
+            description: "Votre réaction a été mise à jour avec succès."
+          });
         } else {
           const { error } = await supabase
             .from('announcement_reactions')
@@ -119,18 +134,24 @@ export function useAnnouncementReactions(announcementId: string, session: Sessio
             });
 
           if (error) throw error;
+          toast({
+            title: "Réaction ajoutée",
+            description: "Votre réaction a été enregistrée avec succès."
+          });
         }
         setUserReaction(type);
       }
       // Rafraîchir les réactions après la modification
-      fetchReactions();
+      await fetchReactions();
     } catch (error) {
       logger.error('Erreur lors de la gestion de la réaction:', { error });
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de réagir à l'annonce"
+        title: "Erreur de traitement",
+        description: "Impossible de gérer votre réaction. Veuillez réessayer."
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,6 +159,7 @@ export function useAnnouncementReactions(announcementId: string, session: Sessio
     reactions, 
     userReaction, 
     handleReaction,
-    isLoading 
+    isLoading,
+    isSubmitting
   };
 }
