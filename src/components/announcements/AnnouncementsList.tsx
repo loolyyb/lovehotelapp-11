@@ -38,7 +38,7 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles!user_id (
+          profiles!announcements_user_id_fkey (
             full_name,
             avatar_url
           )
