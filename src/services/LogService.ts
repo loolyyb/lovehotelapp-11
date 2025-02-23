@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
@@ -7,7 +8,7 @@ export interface LogEntry {
   message: string;
   context?: Record<string, any>;
   timestamp: string;
-  userId?: string;
+  user_id?: string;  // Changé de userId à user_id
   route?: string;
 }
 
@@ -50,14 +51,14 @@ class LogService {
     context?: Record<string, any>
   ): Promise<LogEntry> {
     const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id;
+    const user_id = user?.id;  // Changé de userId à user_id
 
     return {
       level,
       message,
       context,
       timestamp: new Date().toISOString(),
-      userId,
+      user_id,  // Changé de userId à user_id
       route: window.location.pathname,
     };
   }
