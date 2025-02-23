@@ -22,15 +22,13 @@ export function AnnouncementsList() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const logger = useLogger('AnnouncementsList');
-  const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 3;
 
   const fetchAnnouncements = async () => {
     try {
       setError(null);
       logger.info('Début de la récupération des annonces');
       
-      const { data: rawData, error } = await supabase
+      const { data: rawData, error: queryError } = await supabase
         .from('announcements')
         .select(`
           id,
@@ -38,16 +36,16 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles!announcements_user_id_fkey (
+          profiles (
             full_name,
             avatar_url
           )
         `)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        logger.error('Erreur dans la requête Supabase:', { error });
-        throw error;
+      if (queryError) {
+        logger.error('Erreur dans la requête Supabase:', { error: queryError });
+        throw queryError;
       }
 
       if (!rawData) {
@@ -67,28 +65,16 @@ export function AnnouncementsList() {
       }));
 
       setAnnouncements(transformedData);
-      setRetryCount(0);
       setError(null);
     } catch (error) {
       logger.error('Erreur lors de la récupération des annonces:', { error });
-      
-      if (retryCount < MAX_RETRIES) {
-        const nextRetry = retryCount + 1;
-        setRetryCount(nextRetry);
-        const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
-        setError(`Tentative de reconnexion... (${nextRetry}/${MAX_RETRIES})`);
-        setTimeout(() => {
-          fetchAnnouncements();
-        }, retryDelay);
-      } else {
-        const errorMessage = "Impossible de charger les annonces après plusieurs tentatives.";
-        setError(errorMessage);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: errorMessage
-        });
-      }
+      const errorMessage = "Une erreur est survenue lors du chargement des annonces. Veuillez réessayer plus tard.";
+      setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: errorMessage
+      });
     } finally {
       setIsLoading(false);
     }
