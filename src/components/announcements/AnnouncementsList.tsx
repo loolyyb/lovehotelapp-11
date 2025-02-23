@@ -38,7 +38,7 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles!announcements_user_id_fkey (
+          profiles!user_id (
             full_name,
             avatar_url
           )
@@ -67,7 +67,7 @@ export function AnnouncementsList() {
       }));
 
       setAnnouncements(transformedData);
-      setRetryCount(0); // Réinitialiser le compteur en cas de succès
+      setRetryCount(0);
       setError(null);
     } catch (error) {
       logger.error('Erreur lors de la récupération des annonces:', { error });
@@ -75,7 +75,6 @@ export function AnnouncementsList() {
       if (retryCount < MAX_RETRIES) {
         const nextRetry = retryCount + 1;
         setRetryCount(nextRetry);
-        // Utilisation d'un délai exponentiel plafonné pour les retries
         const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
         setError(`Tentative de reconnexion... (${nextRetry}/${MAX_RETRIES})`);
         setTimeout(() => {
@@ -98,7 +97,6 @@ export function AnnouncementsList() {
   useEffect(() => {
     fetchAnnouncements();
 
-    // Configuration de la souscription temps réel avec debounce
     let timeoutId: NodeJS.Timeout;
     const channel = supabase
       .channel('announcements-changes')
@@ -110,7 +108,6 @@ export function AnnouncementsList() {
           table: 'announcements'
         },
         () => {
-          // Debounce la mise à jour pour éviter les requêtes trop fréquentes
           clearTimeout(timeoutId);
           timeoutId = setTimeout(() => {
             fetchAnnouncements();
