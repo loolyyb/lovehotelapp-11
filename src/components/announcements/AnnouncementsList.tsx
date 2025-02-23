@@ -21,14 +21,8 @@ export function AnnouncementsList() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const logger = useLogger('AnnouncementsList');
-
-  useEffect(() => {
-    fetchAnnouncements();
-    const unsubscribe = subscribeToAnnouncements();
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
 
   const fetchAnnouncements = async () => {
     try {
@@ -42,7 +36,7 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles!user_id(
+          profiles:profiles!announcements_user_id_fkey (
             full_name,
             avatar_url
           )
@@ -60,52 +54,43 @@ export function AnnouncementsList() {
         return;
       }
 
-      logger.info('Données brutes reçues:', { 
-        count: rawData.length,
-        sample: rawData[0] 
-      });
-
-      const transformedData: AnnouncementType[] = rawData.map(announcement => {
-        logger.debug('Transformation annonce:', { 
-          id: announcement.id,
-          user_id: announcement.user_id,
-          profiles: announcement.profiles
-        });
-
-        const transformedAnnouncement = {
-          id: announcement.id,
-          content: announcement.content,
-          image_url: announcement.image_url,
-          created_at: announcement.created_at,
-          user_id: announcement.user_id,
-          full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
-          avatar_url: announcement.profiles?.avatar_url ?? null
-        };
-        
-        logger.debug('Annonce transformée:', transformedAnnouncement);
-        return transformedAnnouncement;
-      });
-
-      logger.info('Transformation terminée:', { 
-        count: transformedData.length,
-        sample: transformedData[0] 
-      });
+      const transformedData: AnnouncementType[] = rawData.map(announcement => ({
+        id: announcement.id,
+        content: announcement.content,
+        image_url: announcement.image_url,
+        created_at: announcement.created_at,
+        user_id: announcement.user_id,
+        full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
+        avatar_url: announcement.profiles?.avatar_url ?? null
+      }));
 
       setAnnouncements(transformedData);
+      setRetryCount(0); // Réinitialiser le compteur en cas de succès
     } catch (error) {
       logger.error('Erreur lors de la récupération des annonces:', { error });
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les annonces"
-      });
+      
+      if (retryCount < MAX_RETRIES) {
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => {
+          fetchAnnouncements();
+        }, Math.min(1000 * Math.pow(2, retryCount), 10000)); // Backoff exponentiel
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les annonces. Veuillez réessayer plus tard."
+        });
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const subscribeToAnnouncements = () => {
-    logger.info('Configuration de la souscription temps réel');
+  useEffect(() => {
+    fetchAnnouncements();
+
+    // Configuration de la souscription temps réel avec debounce
+    let timeoutId: NodeJS.Timeout;
     
     const channel = supabase
       .channel('announcements-changes')
@@ -116,9 +101,12 @@ export function AnnouncementsList() {
           schema: 'public',
           table: 'announcements'
         },
-        (payload) => {
-          logger.info('Mise à jour temps réel reçue:', { payload });
-          fetchAnnouncements();
+        () => {
+          // Debounce la mise à jour pour éviter les requêtes trop fréquentes
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            fetchAnnouncements();
+          }, 1000);
         }
       )
       .subscribe((status) => {
@@ -126,10 +114,10 @@ export function AnnouncementsList() {
       });
 
     return () => {
-      logger.info('Nettoyage de la souscription temps réel');
+      clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
-  };
+  }, []);
 
   if (isLoading) {
     return (
