@@ -27,7 +27,7 @@ export function AnnouncementsList() {
 
   const fetchAnnouncements = async () => {
     try {
-      setError(null); // Réinitialiser l'erreur avant chaque tentative
+      setError(null);
       logger.info('Début de la récupération des annonces');
       
       const { data: rawData, error } = await supabase
@@ -38,7 +38,7 @@ export function AnnouncementsList() {
           image_url,
           created_at,
           user_id,
-          profiles!user_id (
+          profiles!announcements_user_id_fkey (
             full_name,
             avatar_url
           )
@@ -68,14 +68,16 @@ export function AnnouncementsList() {
 
       setAnnouncements(transformedData);
       setRetryCount(0); // Réinitialiser le compteur en cas de succès
+      setError(null);
     } catch (error) {
       logger.error('Erreur lors de la récupération des annonces:', { error });
       
       if (retryCount < MAX_RETRIES) {
-        setRetryCount(prev => prev + 1);
+        const nextRetry = retryCount + 1;
+        setRetryCount(nextRetry);
         // Utilisation d'un délai exponentiel plafonné pour les retries
         const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
-        setError(`Tentative de reconnexion... (${retryCount + 1}/${MAX_RETRIES})`);
+        setError(`Tentative de reconnexion... (${nextRetry}/${MAX_RETRIES})`);
         setTimeout(() => {
           fetchAnnouncements();
         }, retryDelay);
@@ -98,7 +100,7 @@ export function AnnouncementsList() {
 
     // Configuration de la souscription temps réel avec debounce
     let timeoutId: NodeJS.Timeout;
-    let channel = supabase
+    const channel = supabase
       .channel('announcements-changes')
       .on(
         'postgres_changes',
@@ -121,7 +123,6 @@ export function AnnouncementsList() {
 
     return () => {
       clearTimeout(timeoutId);
-      // S'assurer que le canal est correctement nettoyé
       if (channel) {
         supabase.removeChannel(channel);
       }
