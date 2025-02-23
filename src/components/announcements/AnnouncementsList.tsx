@@ -71,9 +71,11 @@ export function AnnouncementsList() {
       
       if (retryCount < MAX_RETRIES) {
         setRetryCount(prev => prev + 1);
+        // Utilisation d'un délai exponentiel plafonné pour les retries
+        const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
         setTimeout(() => {
           fetchAnnouncements();
-        }, Math.min(1000 * Math.pow(2, retryCount), 10000)); // Backoff exponentiel
+        }, retryDelay);
       } else {
         toast({
           variant: "destructive",
@@ -91,8 +93,7 @@ export function AnnouncementsList() {
 
     // Configuration de la souscription temps réel avec debounce
     let timeoutId: NodeJS.Timeout;
-    
-    const channel = supabase
+    let channel = supabase
       .channel('announcements-changes')
       .on(
         'postgres_changes',
@@ -115,7 +116,10 @@ export function AnnouncementsList() {
 
     return () => {
       clearTimeout(timeoutId);
-      supabase.removeChannel(channel);
+      // S'assurer que le canal est correctement nettoyé
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 
