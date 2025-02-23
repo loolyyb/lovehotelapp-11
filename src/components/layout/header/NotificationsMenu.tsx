@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Database } from "@/integrations/supabase/types/database.types";
 import { useToast } from "@/hooks/use-toast";
+import { useLogger } from "@/hooks/useLogger";
 
 type Notification = Database['public']['Tables']['notifications']['Row'];
 
@@ -18,7 +19,9 @@ export function NotificationsMenu() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isMarkingAsRead, setIsMarkingAsRead] = useState(false);
   const { toast } = useToast();
+  const logger = useLogger('NotificationsMenu');
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
@@ -31,10 +34,11 @@ export function NotificationsMenu() {
     });
 
     fetchNotifications();
-    subscribeToNotifications();
+    const cleanupSubscription = subscribeToNotifications();
 
     return () => {
       authListener?.subscription.unsubscribe();
+      cleanupSubscription();
     };
   }, []);
 
@@ -53,11 +57,11 @@ export function NotificationsMenu() {
         .limit(5);
 
       if (error) {
-        console.error('Error fetching notifications:', error);
+        logger.error('Erreur lors de la récupération des notifications:', { error });
         toast({
           variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger les notifications.",
+          title: "Erreur de chargement",
+          description: "Impossible de charger vos notifications. Veuillez réessayer."
         });
         return;
       }
@@ -65,11 +69,11 @@ export function NotificationsMenu() {
       setNotifications(data || []);
       setUnreadCount((data || []).filter(n => !n.is_read).length);
     } catch (error) {
-      console.error('Error in fetchNotifications:', error);
+      logger.error('Erreur dans fetchNotifications:', { error });
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors du chargement des notifications.",
+        title: "Erreur inattendue",
+        description: "Une erreur est survenue lors du chargement des notifications."
       });
     } finally {
       setLoading(false);
@@ -78,7 +82,7 @@ export function NotificationsMenu() {
 
   const subscribeToNotifications = () => {
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel('notifications-changes')
       .on(
         'postgres_changes',
         {
@@ -86,11 +90,14 @@ export function NotificationsMenu() {
           schema: 'public',
           table: 'notifications'
         },
-        () => {
+        (payload) => {
+          logger.info('Changement de notification détecté:', { payload });
           fetchNotifications();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        logger.info('Statut de la souscription aux notifications:', { status });
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -98,6 +105,9 @@ export function NotificationsMenu() {
   };
 
   const markAsRead = async (notificationId: string) => {
+    if (isMarkingAsRead) return;
+
+    setIsMarkingAsRead(true);
     try {
       const { error } = await supabase
         .from('notifications')
@@ -105,15 +115,27 @@ export function NotificationsMenu() {
         .eq('id', notificationId);
 
       if (error) {
-        console.error('Error marking notification as read:', error);
+        logger.error('Erreur lors du marquage de la notification:', { error });
         toast({
           variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de marquer la notification comme lue.",
+          title: "Erreur de mise à jour",
+          description: "Impossible de marquer la notification comme lue."
         });
+        return;
       }
+
+      // Mise à jour locale optimiste
+      setNotifications(prev => 
+        prev.map(n => 
+          n.id === notificationId ? { ...n, is_read: true } : n
+        )
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      
     } catch (error) {
-      console.error('Error in markAsRead:', error);
+      logger.error('Erreur dans markAsRead:', { error });
+    } finally {
+      setIsMarkingAsRead(false);
     }
   };
 
@@ -149,8 +171,9 @@ export function NotificationsMenu() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="max-h-[70vh] overflow-y-auto">
           {loading ? (
-            <div className="p-4 text-center text-gray-500">
-              Chargement...
+            <div className="p-4 text-center text-gray-500 flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              <span>Chargement des notifications...</span>
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
