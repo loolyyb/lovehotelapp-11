@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Announcement } from "./Announcement";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useLogger } from "@/hooks/useLogger";
 
 interface AnnouncementType {
@@ -19,6 +19,7 @@ interface AnnouncementType {
 export function AnnouncementsList() {
   const [announcements, setAnnouncements] = useState<AnnouncementType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const logger = useLogger('AnnouncementsList');
   const [retryCount, setRetryCount] = useState(0);
@@ -26,6 +27,7 @@ export function AnnouncementsList() {
 
   const fetchAnnouncements = async () => {
     try {
+      setError(null); // Réinitialiser l'erreur avant chaque tentative
       logger.info('Début de la récupération des annonces');
       
       const { data: rawData, error } = await supabase
@@ -73,14 +75,17 @@ export function AnnouncementsList() {
         setRetryCount(prev => prev + 1);
         // Utilisation d'un délai exponentiel plafonné pour les retries
         const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+        setError(`Tentative de reconnexion... (${retryCount + 1}/${MAX_RETRIES})`);
         setTimeout(() => {
           fetchAnnouncements();
         }, retryDelay);
       } else {
+        const errorMessage = "Impossible de charger les annonces après plusieurs tentatives.";
+        setError(errorMessage);
         toast({
           variant: "destructive",
           title: "Erreur",
-          description: "Impossible de charger les annonces. Veuillez réessayer plus tard."
+          description: errorMessage
         });
       }
     } finally {
@@ -127,6 +132,18 @@ export function AnnouncementsList() {
     return (
       <div className="flex justify-center items-center py-8">
         <Loader2 className="h-8 w-8 animate-spin text-burgundy" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-4">
+        <AlertCircle className="h-8 w-8 text-destructive" />
+        <div className="text-center">
+          <p className="text-destructive font-semibold">Une erreur est survenue</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
+        </div>
       </div>
     );
   }
