@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -12,35 +12,56 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { motion } from "framer-motion";
 
+const MESSAGES_PER_PAGE = 10;
+
 export function MessagesManager() {
-  const { data: messages, isLoading } = useQuery({
-    queryKey: ["admin-messages"],
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-messages", currentPage],
     queryFn: async () => {
-      console.log("Fetching messages...");
+      console.log("Fetching messages for page:", currentPage);
       
-      const { data, error } = await supabase
+      // First, get total count
+      const { count } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true });
+
+      // Then get paginated data
+      const { data: messages, error } = await supabase
         .from("messages")
         .select(`
           *,
           sender:sender_id(username, full_name)
         `)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range((currentPage - 1) * MESSAGES_PER_PAGE, currentPage * MESSAGES_PER_PAGE - 1);
 
       if (error) {
         console.error("Error fetching messages:", error);
         throw error;
       }
       
-      console.log("Messages data:", data);
-      return data;
+      console.log("Messages data:", { messages, totalCount: count });
+      return { messages, totalCount: count };
     },
   });
 
-  console.log("Messages component state:", { isLoading, messagesCount: messages?.length });
+  const messages = data?.messages || [];
+  const totalCount = data?.totalCount || 0;
+  const totalPages = Math.ceil(totalCount / MESSAGES_PER_PAGE);
 
   return (
     <motion.div
@@ -54,7 +75,7 @@ export function MessagesManager() {
             <MessageCircle className="h-6 w-6 text-[#f3ebad]" />
           </div>
           <h2 className="text-2xl font-cormorant font-semibold text-[#f3ebad]">
-            Messages ({messages?.length || 0})
+            Messages ({totalCount})
           </h2>
         </div>
 
@@ -83,7 +104,7 @@ export function MessagesManager() {
                     </motion.div>
                   </TableCell>
                 </TableRow>
-              ) : messages && messages.length > 0 ? (
+              ) : messages.length > 0 ? (
                 messages.map((message: any) => (
                   <TableRow
                     key={message.id}
@@ -121,6 +142,46 @@ export function MessagesManager() {
               )}
             </TableBody>
           </Table>
+
+          {totalPages > 1 && (
+            <div className="mt-4 pb-2">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className={`text-[#f3ebad] hover:text-[#f3ebad]/80 ${
+                        currentPage === 1 ? 'pointer-events-none opacity-50' : ''
+                      }`}
+                    />
+                  </PaginationItem>
+                  
+                  {[...Array(totalPages)].map((_, i) => (
+                    <PaginationItem key={i + 1}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(i + 1)}
+                        isActive={currentPage === i + 1}
+                        className={`text-[#f3ebad] hover:text-[#f3ebad]/80 ${
+                          currentPage === i + 1 ? 'bg-[#f3ebad]/20' : ''
+                        }`}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className={`text-[#f3ebad] hover:text-[#f3ebad]/80 ${
+                        currentPage === totalPages ? 'pointer-events-none opacity-50' : ''
+                      }`}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
       </Card>
     </motion.div>
