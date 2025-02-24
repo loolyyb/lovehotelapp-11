@@ -30,29 +30,23 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-interface User {
-  id: string;
-  full_name: string;
-  user_id: string;
-  role: string;
-  created_at: string;
-  account_status: string;
-  email?: string;
-  is_love_hotel_member: boolean;
-}
+import { AdminUser } from "@/types/admin.types";
 
 interface EditUserFormData {
   full_name: string;
-  role: string;
+  role: "user" | "moderator" | "admin";
   account_status: string;
 }
 
-export function UsersManager() {
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+interface UsersManagerProps {
+  users?: AdminUser[];
+  searchTerm: string;
+}
+
+export function UsersManager({ users = [], searchTerm }: UsersManagerProps) {
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -107,12 +101,12 @@ export function UsersManager() {
     },
   });
 
-  const handleEdit = (user: User) => {
+  const handleEdit = (user: AdminUser) => {
     setSelectedUser(user);
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (user: User) => {
+  const handleDelete = (user: AdminUser) => {
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
   };
@@ -122,30 +116,22 @@ export function UsersManager() {
     if (!selectedUser) return;
 
     const formData = new FormData(e.currentTarget);
-    const updates: Partial<EditUserFormData> = {
+    const updates: EditUserFormData = {
       full_name: formData.get("full_name") as string,
-      role: formData.get("role") as string,
+      role: formData.get("role") as "user" | "moderator" | "admin",
       account_status: formData.get("account_status") as string,
     };
 
     updateUserMutation.mutate({ userId: selectedUser.id, updates });
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
+  const filteredUsers = users.filter(user => 
+    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.user_id?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <Input
-          placeholder="Rechercher un utilisateur..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          className="max-w-sm"
-        />
-      </div>
-
       <Table>
         <TableHeader>
           <TableRow>
@@ -159,7 +145,34 @@ export function UsersManager() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {/* Les données sont maintenant filtrées dans le composant parent */}
+          {filteredUsers.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell>{user.full_name}</TableCell>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>{user.role}</TableCell>
+              <TableCell>{user.account_status}</TableCell>
+              <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+              <TableCell>{user.is_love_hotel_member ? "Oui" : "Non"}</TableCell>
+              <TableCell>
+                <div className="space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(user)}
+                  >
+                    Modifier
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDelete(user)}
+                  >
+                    Désactiver
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
 
@@ -174,7 +187,7 @@ export function UsersManager() {
               <Input
                 id="full_name"
                 name="full_name"
-                defaultValue={selectedUser?.full_name}
+                defaultValue={selectedUser?.full_name || ""}
               />
             </div>
             <div className="space-y-2">
