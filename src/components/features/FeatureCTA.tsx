@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
 
 export const FeatureCTA = () => {
-  const email = "loolyyb@gmail.com";
+  const email = "eddigit@gmail.com";
   
   const handleEmailClick = () => {
     window.location.href = `mailto:${email}`;
