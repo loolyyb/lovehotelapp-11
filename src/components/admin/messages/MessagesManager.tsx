@@ -27,8 +27,8 @@ export function MessagesManager() {
           conversations!inner (
             user1_id,
             user2_id,
-            profiles!conversations_user1_id(username, full_name),
-            profiles!conversations_user2_id(username, full_name)
+            profiles!conversations_user1_id_fkey(username, full_name),
+            profiles!conversations_user2_id_fkey(username, full_name)
           )
         `)
         .order("created_at", { ascending: false });
@@ -88,12 +88,12 @@ export function MessagesManager() {
               ) : messages && messages.length > 0 ? (
                 messages.map((message) => {
                   const senderProfile = message.sender_id === message.conversations.user1_id
-                    ? message.conversations.profiles
-                    : message.conversations.profiles_2;
+                    ? message.conversations.profiles_conversations_user1_id_fkey
+                    : message.conversations.profiles_conversations_user2_id_fkey;
                   
                   const receiverProfile = message.sender_id === message.conversations.user1_id
-                    ? message.conversations.profiles_2
-                    : message.conversations.profiles;
+                    ? message.conversations.profiles_conversations_user2_id_fkey
+                    : message.conversations.profiles_conversations_user1_id_fkey;
 
                   return (
                     <TableRow
