@@ -31,10 +31,14 @@ export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileForm
   };
 
   const handleSave = () => {
-    if (Object.keys(pendingChanges).length > 0) {
+    if (hasChanges) {
       onUpdate(pendingChanges);
       setPendingChanges({});
     }
+  };
+
+  const handleCancel = () => {
+    setPendingChanges({});
   };
 
   return (
@@ -48,19 +52,16 @@ export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileForm
           
           <AboutSection 
             description={profile?.description}
-            onUpdate={(value) => handleFieldChange("description", value)}
             onChange={(value) => handleFieldChange("description", value)}
           />
           
           <StatusSection
             status={profile?.status}
-            onUpdate={(value) => handleFieldChange("status", value)}
             onChange={(value) => handleFieldChange("status", value)}
           />
 
           <OrientationSection
             orientation={profile?.sexual_orientation}
-            onUpdate={(value) => handleFieldChange("sexual_orientation", value)}
             onChange={(value) => handleFieldChange("sexual_orientation", value)}
           />
 
@@ -96,8 +97,16 @@ export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileForm
       />
 
       {hasChanges && (
-        <div className="fixed bottom-4 right-4 left-4 md:left-auto z-50 flex justify-center md:justify-end">
-          <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg shadow-lg border">
+        <div className="fixed bottom-4 right-4 left-4 md:left-auto z-50 flex justify-center md:justify-end gap-4">
+          <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg shadow-lg border flex gap-4">
+            <Button 
+              onClick={handleCancel}
+              variant="outline"
+              className="w-full md:w-auto"
+              disabled={isSaving}
+            >
+              Annuler
+            </Button>
             <Button 
               onClick={handleSave} 
               className="w-full md:w-auto bg-primary hover:bg-primary/90"
