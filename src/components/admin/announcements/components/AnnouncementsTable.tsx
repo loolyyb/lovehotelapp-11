@@ -31,7 +31,7 @@ export function AnnouncementsTable({ announcements, onEdit, onDelete }: Announce
             <TableCell className="max-w-md">
               <div className="truncate">{announcement.content}</div>
             </TableCell>
-            <TableCell>{announcement.user?.full_name || "Utilisateur inconnu"}</TableCell>
+            <TableCell>{announcement.profiles?.full_name || "Utilisateur inconnu"}</TableCell>
             <TableCell>
               {announcement.image_url && (
                 <img 

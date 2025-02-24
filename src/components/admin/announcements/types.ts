@@ -1,6 +1,4 @@
 
-import { AdminUser } from "@/types/admin.types";
-
 export interface AdminAnnouncement {
   id: string;
   content: string;
@@ -8,9 +6,8 @@ export interface AdminAnnouncement {
   created_at: string;
   updated_at: string | null;
   user_id: string;
-  user?: {
+  profiles: {
     full_name: string | null;
-    email: string | null;
   };
 }
 
