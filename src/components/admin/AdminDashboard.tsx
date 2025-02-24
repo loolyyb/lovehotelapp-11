@@ -17,9 +17,11 @@ import { UsersManager } from "./users/UsersManager";
 import { StatsContent } from "./dashboard/StatsContent";
 import { Input } from "../ui/input";
 import { AdminUser } from "@/types/admin.types";
-import { ProfilesTable } from "@/integrations/supabase/types/profiles.types";
+import type { Database } from "@/integrations/supabase/types/database.types";
 
-interface ProfileWithEmail extends ProfilesTable['Row'] {
+type Profile = Database['public']['Tables']['profiles']['Row'];
+
+interface ProfileWithEmail extends Profile {
   email?: string;
 }
 
