@@ -2,6 +2,7 @@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 interface ProfileDescriptionProps {
   initialDescription?: string | null;
@@ -10,17 +11,24 @@ interface ProfileDescriptionProps {
 
 export function ProfileDescription({ initialDescription, onSave }: ProfileDescriptionProps) {
   const [localDescription, setLocalDescription] = useState(initialDescription ?? "");
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     setLocalDescription(initialDescription ?? "");
+    setHasChanges(false);
   }, [initialDescription]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     if (newValue.length <= 300) {
       setLocalDescription(newValue);
-      onSave(newValue);
+      setHasChanges(true);
     }
+  };
+
+  const handleSave = () => {
+    onSave(localDescription);
+    setHasChanges(false);
   };
 
   return (

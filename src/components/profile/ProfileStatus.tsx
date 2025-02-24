@@ -11,14 +11,16 @@ interface ProfileStatusProps {
 
 export function ProfileStatus({ status, onStatusChange }: ProfileStatusProps) {
   const [localStatus, setLocalStatus] = useState(status ?? undefined);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     setLocalStatus(status ?? undefined);
+    setHasChanges(false);
   }, [status]);
 
   const handleStatusChange = (value: string) => {
     setLocalStatus(value);
-    onStatusChange(value);
+    onStatusChange(value); // Le select doit mettre à jour immédiatement car c'est une valeur unique
   };
 
   return (
