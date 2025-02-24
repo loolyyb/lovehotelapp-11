@@ -38,6 +38,7 @@ export function AnnouncementsList() {
           user_id,
           profiles!user_id (
             full_name,
+            username,
             avatar_url
           )
         `)
@@ -54,11 +55,11 @@ export function AnnouncementsList() {
         return;
       }
 
-      logger.info('Données reçues:', rawData);
-
       const transformedData: AnnouncementType[] = rawData.map(announcement => {
-        // Log pour déboguer la structure des données
-        logger.info('Structure annonce:', announcement);
+        // Utiliser username comme fallback si full_name n'existe pas
+        const displayName = announcement.profiles?.full_name || 
+                          announcement.profiles?.username || 
+                          "Utilisateur inconnu";
         
         return {
           id: announcement.id,
@@ -66,7 +67,7 @@ export function AnnouncementsList() {
           image_url: announcement.image_url,
           created_at: announcement.created_at,
           user_id: announcement.user_id,
-          full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
+          full_name: displayName,
           avatar_url: announcement.profiles?.avatar_url ?? null
         };
       });
