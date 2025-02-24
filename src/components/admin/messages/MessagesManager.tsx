@@ -20,11 +20,18 @@ export function MessagesManager() {
   const { data: messages, isLoading } = useQuery({
     queryKey: ["admin-messages"],
     queryFn: async () => {
+      // Afficher la requête pour le débogage
+      console.log("Fetching messages...");
+      
       const { data, error } = await supabase
         .from("messages")
         .select(`
-          *,
-          profiles(username, full_name)
+          id,
+          content,
+          created_at,
+          read_at,
+          sender_id,
+          profiles:profiles(username, full_name)
         `)
         .order("created_at", { ascending: false });
 
@@ -33,10 +40,16 @@ export function MessagesManager() {
         throw error;
       }
       
+      // Afficher les données reçues pour le débogage
       console.log("Messages data:", data);
+      
       return data;
     },
   });
+
+  // Afficher l'état du chargement et les données pour le débogage
+  console.log("isLoading:", isLoading);
+  console.log("messages:", messages);
 
   return (
     <motion.div
@@ -50,7 +63,7 @@ export function MessagesManager() {
             <MessageCircle className="h-6 w-6 text-[#f3ebad]" />
           </div>
           <h2 className="text-2xl font-cormorant font-semibold text-[#f3ebad]">
-            Messages
+            Messages ({messages?.length || 0})
           </h2>
         </div>
 
