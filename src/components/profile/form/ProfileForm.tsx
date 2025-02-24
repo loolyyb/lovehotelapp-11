@@ -71,17 +71,17 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
           
           <StatusSection
             status={profile?.status}
-            onUpdate={(value) => handleFieldChange("status", value)}
+            onUpdate={(value) => handleFieldChange("status", value.status)}
           />
 
           <OrientationSection
             orientation={profile?.sexual_orientation}
-            onUpdate={(value) => handleFieldChange("sexual_orientation", value)}
+            onUpdate={(value) => handleFieldChange("sexual_orientation", value.orientation)}
           />
 
           <TokensSection
             tokens={profile?.loolyb_tokens}
-            onUpdate={(value) => handleFieldChange("loolyb_tokens", value)}
+            onUpdate={(value) => handleFieldChange("loolyb_tokens", value.loolyb_tokens)}
           />
         </div>
 
@@ -90,7 +90,7 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
             seeking={profile?.seeking}
             status={profile?.status}
             orientation={profile?.sexual_orientation}
-            onUpdate={(value) => handleFieldChange("seeking", value)}
+            onUpdate={(value) => handleFieldChange("seeking", value.seeking)}
           />
 
           <RelationshipSection

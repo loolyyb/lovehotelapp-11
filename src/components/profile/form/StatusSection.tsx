@@ -1,9 +1,10 @@
+
 import { ProfileStatus } from "../ProfileStatus";
 import { WidgetContainer } from "./WidgetContainer";
 
 interface StatusSectionProps {
   status: string | null;
-  onUpdate: (updates: any) => Promise<void>;
+  onUpdate: (value: any) => void;  // Changed from Promise<void> to void
 }
 
 export function StatusSection({ status, onUpdate }: StatusSectionProps) {

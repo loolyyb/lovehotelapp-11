@@ -1,3 +1,4 @@
+
 import { ProfileSeeking } from "../ProfileSeeking";
 import { WidgetContainer } from "./WidgetContainer";
 
@@ -5,7 +6,7 @@ interface SeekingSectionProps {
   seeking: string[] | null;
   status: string | null;
   orientation: string | null;
-  onUpdate: (updates: any) => Promise<void>;
+  onUpdate: (value: any) => void;  // Changed from Promise<void> to void
 }
 
 export function SeekingSection({ seeking, status, orientation, onUpdate }: SeekingSectionProps) {

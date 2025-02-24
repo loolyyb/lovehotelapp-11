@@ -1,9 +1,10 @@
+
 import { ProfileOrientation } from "../ProfileOrientation";
 import { WidgetContainer } from "./WidgetContainer";
 
 interface OrientationSectionProps {
   orientation: string | null;
-  onUpdate: (updates: any) => Promise<void>;
+  onUpdate: (value: any) => void;  // Changed from Promise<void> to void
 }
 
 export function OrientationSection({ orientation, onUpdate }: OrientationSectionProps) {
@@ -11,7 +12,7 @@ export function OrientationSection({ orientation, onUpdate }: OrientationSection
     <WidgetContainer title="Orientation">
       <ProfileOrientation
         orientation={orientation}
-        onOrientationChange={(orientation) => onUpdate({ sexual_orientation: orientation })}
+        onOrientationChange={(orientation) => onUpdate({ orientation })}
       />
     </WidgetContainer>
   );
