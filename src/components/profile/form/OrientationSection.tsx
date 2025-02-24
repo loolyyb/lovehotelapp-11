@@ -4,15 +4,17 @@ import { WidgetContainer } from "./WidgetContainer";
 
 interface OrientationSectionProps {
   orientation: string | null;
-  onUpdate: (value: any) => void;  // Changed from Promise<void> to void
+  onUpdate: (value: any) => void;  
+  onChange: (value: any) => void;  // Add onChange prop to match the pattern
 }
 
-export function OrientationSection({ orientation, onUpdate }: OrientationSectionProps) {
+export function OrientationSection({ orientation, onUpdate, onChange }: OrientationSectionProps) {
   return (
     <WidgetContainer title="Orientation">
       <ProfileOrientation
         orientation={orientation}
-        onOrientationChange={(orientation) => onUpdate({ orientation })}
+        onOrientationChange={onUpdate}
+        onChange={onChange}
       />
     </WidgetContainer>
   );

@@ -40,19 +40,19 @@ export function ProfileForm({ profile, onUpdate, onChange, pendingChanges, isSav
           
           <StatusSection
             status={profile?.status}
-            onUpdate={(value) => onUpdate({ status: value.status })}
-            onChange={(value) => onChange("status", value.status)}
+            onUpdate={(value) => onUpdate({ status: value })}
+            onChange={(value) => onChange("status", value)}
           />
 
           <OrientationSection
             orientation={profile?.sexual_orientation}
-            onUpdate={(value) => onUpdate({ sexual_orientation: value.orientation })}
-            onChange={(value) => onChange("sexual_orientation", value.orientation)}
+            onUpdate={(value) => onUpdate({ sexual_orientation: value })}
+            onChange={(value) => onChange("sexual_orientation", value)}
           />
 
           <TokensSection
             tokens={profile?.loolyb_tokens}
-            onUpdate={(value) => onUpdate({ loolyb_tokens: value.loolyb_tokens })}
+            onUpdate={(value) => onUpdate({ loolyb_tokens: value })}
           />
         </div>
 
@@ -61,7 +61,7 @@ export function ProfileForm({ profile, onUpdate, onChange, pendingChanges, isSav
             seeking={profile?.seeking}
             status={profile?.status}
             orientation={profile?.sexual_orientation}
-            onUpdate={(value) => onUpdate({ seeking: value.seeking })}
+            onUpdate={(value) => onUpdate({ seeking: value })}
           />
 
           <RelationshipSection

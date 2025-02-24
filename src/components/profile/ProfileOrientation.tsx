@@ -2,19 +2,20 @@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Heart } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 
 interface ProfileOrientationProps {
   orientation?: string | null;
   onOrientationChange: (orientation: string) => void;
+  onChange: (orientation: string) => void;  // Add onChange prop
 }
 
-export function ProfileOrientation({ orientation, onOrientationChange }: ProfileOrientationProps) {
+export function ProfileOrientation({ 
+  orientation, 
+  onOrientationChange,
+  onChange 
+}: ProfileOrientationProps) {
   const [currentOrientation, setCurrentOrientation] = useState(orientation ?? undefined);
-  const [hasChanges, setHasChanges] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     setCurrentOrientation(orientation ?? undefined);
@@ -22,18 +23,7 @@ export function ProfileOrientation({ orientation, onOrientationChange }: Profile
 
   const handleOrientationChange = (value: string) => {
     setCurrentOrientation(value);
-    setHasChanges(true);
-  };
-
-  const handleSave = () => {
-    if (currentOrientation) {
-      onOrientationChange(currentOrientation);
-      setHasChanges(false);
-      toast({
-        title: "Orientation mise à jour",
-        description: "Votre orientation a été modifiée avec succès.",
-      });
-    }
+    onChange(value);
   };
 
   return (
@@ -73,11 +63,6 @@ export function ProfileOrientation({ orientation, onOrientationChange }: Profile
           </Label>
         </div>
       </RadioGroup>
-      {hasChanges && (
-        <Button onClick={handleSave} className="w-full md:w-auto bg-primary hover:bg-primary/90">
-          Enregistrer
-        </Button>
-      )}
     </div>
   );
 }
