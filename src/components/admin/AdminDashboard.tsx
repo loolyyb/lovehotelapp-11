@@ -16,6 +16,12 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 import { UsersManager } from "./users/UsersManager";
 import { StatsContent } from "./dashboard/StatsContent";
 import { Input } from "../ui/input";
+import { AdminUser } from "@/types/admin.types";
+import { ProfilesTable } from "@/integrations/supabase/types/profiles.types";
+
+interface ProfileWithEmail extends ProfilesTable['Row'] {
+  email?: string;
+}
 
 export function AdminDashboard() {
   const setAdminAuthenticated = useAdminAuthStore(state => state.setAdminAuthenticated);
@@ -26,16 +32,28 @@ export function AdminDashboard() {
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data: profiles, error } = await supabase
+      // First, get all profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*, auth.users(email)');
+        .select('*');
       
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      return profiles.map(profile => ({
-        ...profile,
-        email: (profile.auth?.users as any)?.email
-      }));
+      // Then, get corresponding emails from auth.users
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) throw authError;
+
+      // Combine the data
+      const usersWithEmail = profiles.map(profile => {
+        const authUser = authUsers.users.find(user => user.id === profile.user_id);
+        return {
+          ...profile,
+          email: authUser?.email
+        };
+      });
+
+      return usersWithEmail as AdminUser[];
     }
   });
 
@@ -46,7 +64,7 @@ export function AdminDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('messages')
-        .select(`*, conversation:conversations(user1:profiles!conversations_user1_profile_fkey(user_id), user2:profiles!conversations_user2_profile_fkey(user_id))`);
+        .select('*, conversations!inner(user1:profiles!inner(user_id), user2:profiles!inner(user_id))');
       
       if (error) throw error;
       return data;
