@@ -2,8 +2,21 @@ import { Crown, Heart, Hotel, Coins, Utensils, Calendar, Users, Lock, MessageCir
 import { FeatureHeader } from "@/components/features/FeatureHeader";
 import { FeatureCategory } from "@/components/features/FeatureCategory";
 import { FeatureCTA } from "@/components/features/FeatureCTA";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
-// Groupement des fonctionnalités par catégorie
+const formSchema = z.object({
+  name: z.string().min(2, { message: "Le nom doit contenir au moins 2 caractères" }),
+  email: z.string().email({ message: "Email invalide" }),
+  message: z.string().min(10, { message: "Le message doit contenir au moins 10 caractères" }),
+});
+
 const featureCategories = [
   {
     title: "Expériences Exclusives",
@@ -112,6 +125,37 @@ const featureCategories = [
 ];
 
 export default function Features() {
+  const { toast } = useToast();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: "",
+    },
+  });
+
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    try {
+      const subject = encodeURIComponent("Message from Features Page");
+      const body = encodeURIComponent(`Name: ${data.name}\nEmail: ${data.email}\n\nMessage:\n${data.message}`);
+      window.location.href = `mailto:loolyyb@gmail.com?subject=${subject}&body=${body}`;
+      
+      toast({
+        title: "Message envoyé !",
+        description: "Votre message a été préparé dans votre client mail.",
+      });
+      
+      form.reset();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'envoi du message.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream py-12 px-4">
       <div className="max-w-7xl mx-auto">
@@ -127,6 +171,71 @@ export default function Features() {
         ))}
 
         <FeatureCTA />
+
+        <div className="mt-16 max-w-xl mx-auto">
+          <div className="bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-lg">
+            <h2 className="text-2xl font-semibold text-[#ce0067] mb-6 text-center">
+              Contactez le développeur
+            </h2>
+            
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Votre nom" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="votre@email.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Message</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Votre message"
+                          className="min-h-[120px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-[#ce0067] hover:bg-[#a80054] text-[#F3EBAD]"
+                >
+                  Envoyer le message
+                </Button>
+              </form>
+            </Form>
+          </div>
+        </div>
       </div>
     </div>
   );
