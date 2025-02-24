@@ -74,7 +74,7 @@ export function AnnouncementsManager() {
 
   const filteredAnnouncements = announcements.filter(announcement =>
     announcement.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    announcement.user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    announcement.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredAnnouncements.length / itemsPerPage);
