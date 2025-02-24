@@ -20,11 +20,19 @@ interface ProfileFormProps {
 
 export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
   const [preferences, setPreferences] = useState<any>(null);
+  const [pendingChanges, setPendingChanges] = useState<Record<string, any>>({});
   const { toast } = useToast();
 
   useEffect(() => {
     getPreferences();
   }, []);
+
+  const handleFieldChange = (field: string, value: any) => {
+    setPendingChanges(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   const getPreferences = async () => {
     try {
@@ -74,22 +82,6 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
     }
   };
 
-  const handleLooLyybTokensChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const tokens = parseInt(event.target.value) || 0;
-    if (tokens >= 0) {
-      onUpdate({ loolyb_tokens: tokens });
-      toast({
-        title: "Tokens mis à jour",
-        description: "Le nombre de tokens LooLyyb a été mis à jour avec succès.",
-      });
-    }
-  };
-
-  const parisLocations = [
-    { value: "paris-chatelet", label: "Paris Châtelet" },
-    { value: "paris-pigalle", label: "Paris Pigalle" }
-  ];
-
   const WidgetContainer = ({ children, title }: { children: React.ReactNode; title: string }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -116,7 +108,10 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
                   <SelectValue placeholder="Sélectionnez votre quartier" />
                 </SelectTrigger>
                 <SelectContent>
-                  {parisLocations.map((location) => (
+                  {[
+                    { value: "paris-chatelet", label: "Paris Châtelet" },
+                    { value: "paris-pigalle", label: "Paris Pigalle" }
+                  ].map((location) => (
                     <SelectItem key={location.value} value={location.value}>
                       {location.label}
                     </SelectItem>
@@ -130,6 +125,7 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
             <ProfileDescription
               initialDescription={profile?.description}
               onSave={(description) => onUpdate({ description })}
+              onChange={(value) => handleFieldChange("description", value)}
             />
           </WidgetContainer>
 
@@ -137,37 +133,24 @@ export function ProfileForm({ profile, onUpdate }: ProfileFormProps) {
             <ProfileStatus
               status={profile?.status}
               onStatusChange={(status) => onUpdate({ status })}
+              onChange={(value) => handleFieldChange("status", value)}
             />
           </WidgetContainer>
 
-          <WidgetContainer title="Type de relation">
-            <ProfileRelationshipType
-              relationshipType={profile?.relationship_type}
-              onRelationshipTypeChange={(types) => onUpdate({ relationship_type: types })}
-            />
-          </WidgetContainer>
-
-          <WidgetContainer title="Tokens LooLyyb">
-            <div className="space-y-4">
-              <Label htmlFor="loolyb-tokens">Nombre de tokens en votre possession</Label>
-              <Input
-                id="loolyb-tokens"
-                type="number"
-                min="0"
-                value={profile?.loolyb_tokens || 0}
-                onChange={handleLooLyybTokensChange}
-                className="w-full"
-                placeholder="Entrez le nombre de tokens LooLyyb"
-              />
-            </div>
-          </WidgetContainer>
-        </div>
-
-        <div className="space-y-8">
           <WidgetContainer title="Orientation">
             <ProfileOrientation
               orientation={profile?.sexual_orientation}
               onOrientationChange={(orientation) => onUpdate({ sexual_orientation: orientation })}
+              onChange={(value) => handleFieldChange("sexual_orientation", value)}
+            />
+          </WidgetContainer>
+        </div>
+
+        <div className="space-y-8">
+          <WidgetContainer title="Type de relation">
+            <ProfileRelationshipType
+              relationshipType={profile?.relationship_type}
+              onRelationshipTypeChange={(types) => onUpdate({ relationship_type: types })}
             />
           </WidgetContainer>
 
