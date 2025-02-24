@@ -15,10 +15,11 @@ export function useAnnouncementsManagement() {
         .from('announcements')
         .select(`
           *,
-          profiles:user_id (
+          profiles!inner (
             full_name
           )
         `)
+        .eq('profiles.user_id', 'announcements.user_id')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
