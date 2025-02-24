@@ -21,6 +21,15 @@ import type { Database } from "@/integrations/supabase/types/database.types";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
+interface AuthUser {
+  id: string;
+  email?: string;
+}
+
+interface AdminListUsersResponse {
+  users: AuthUser[];
+}
+
 interface ProfileWithEmail extends Profile {
   email?: string;
 }
@@ -42,7 +51,10 @@ export function AdminDashboard() {
       if (profilesError) throw profilesError;
 
       // Then, get corresponding emails from auth.users
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers() as unknown as { 
+        data: AdminListUsersResponse;
+        error: any;
+      };
       
       if (authError) throw authError;
 
