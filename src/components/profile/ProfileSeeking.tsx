@@ -1,14 +1,23 @@
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { ProfileSeekingProps } from "./types/seeking.types";
 import { getAvailableOptions } from "./utils/seekingOptions";
 
 export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }: ProfileSeekingProps) {
+  const [currentSeeking, setCurrentSeeking] = useState<string[]>(seeking || []);
+  const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    setCurrentSeeking(seeking || []);
+  }, [seeking]);
+
   const handleSeekingChange = (value: string, checked: boolean) => {
-    const newSeeking = seeking ? [...seeking] : [];
+    const newSeeking = [...currentSeeking];
     if (checked) {
       newSeeking.push(value);
     } else {
@@ -17,7 +26,13 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
         newSeeking.splice(index, 1);
       }
     }
-    onSeekingChange(newSeeking);
+    setCurrentSeeking(newSeeking);
+    setHasChanges(true);
+  };
+
+  const handleSave = () => {
+    onSeekingChange(currentSeeking);
+    setHasChanges(false);
     toast({
       title: "Préférences mises à jour",
       description: "Vos préférences de recherche ont été modifiées avec succès.",
@@ -42,7 +57,7 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
           <div key={option.value} className="flex items-center space-x-2">
             <Checkbox
               id={option.value}
-              checked={seeking?.includes(option.value)}
+              checked={currentSeeking.includes(option.value)}
               onCheckedChange={(checked) => handleSeekingChange(option.value, checked as boolean)}
             />
             <Label htmlFor={option.value} className="flex items-center gap-2">
@@ -52,6 +67,11 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
           </div>
         ))}
       </div>
+      {hasChanges && (
+        <Button onClick={handleSave} className="w-full md:w-auto bg-primary hover:bg-primary/90">
+          Enregistrer
+        </Button>
+      )}
     </div>
   );
 }

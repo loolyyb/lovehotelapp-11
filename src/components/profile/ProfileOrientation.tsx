@@ -1,7 +1,10 @@
+
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 interface ProfileOrientationProps {
   orientation?: string | null;
@@ -9,21 +12,35 @@ interface ProfileOrientationProps {
 }
 
 export function ProfileOrientation({ orientation, onOrientationChange }: ProfileOrientationProps) {
+  const [currentOrientation, setCurrentOrientation] = useState(orientation ?? undefined);
+  const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    setCurrentOrientation(orientation ?? undefined);
+  }, [orientation]);
+
   const handleOrientationChange = (value: string) => {
-    onOrientationChange(value);
-    toast({
-      title: "Orientation mise à jour",
-      description: "Votre orientation a été modifiée avec succès.",
-    });
+    setCurrentOrientation(value);
+    setHasChanges(true);
+  };
+
+  const handleSave = () => {
+    if (currentOrientation) {
+      onOrientationChange(currentOrientation);
+      setHasChanges(false);
+      toast({
+        title: "Orientation mise à jour",
+        description: "Votre orientation a été modifiée avec succès.",
+      });
+    }
   };
 
   return (
     <div className="space-y-4">
       <Label className="text-gray-800">Orientation sexuelle</Label>
       <RadioGroup
-        value={orientation ?? undefined}
+        value={currentOrientation}
         onValueChange={handleOrientationChange}
         className="flex flex-col space-y-2"
       >
@@ -56,6 +73,11 @@ export function ProfileOrientation({ orientation, onOrientationChange }: Profile
           </Label>
         </div>
       </RadioGroup>
+      {hasChanges && (
+        <Button onClick={handleSave} className="w-full md:w-auto bg-primary hover:bg-primary/90">
+          Enregistrer
+        </Button>
+      )}
     </div>
   );
 }
