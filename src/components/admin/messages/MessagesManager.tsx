@@ -24,11 +24,7 @@ export function MessagesManager() {
         .from("messages")
         .select(`
           *,
-          sender:profiles!messages_sender_id_fkey(username, full_name),
-          conversation:conversations!messages_conversation_id_fkey(
-            user1_id,
-            user2_id
-          )
+          profiles!sender_id(username, full_name)
         `)
         .order("created_at", { ascending: false });
 
@@ -95,7 +91,7 @@ export function MessagesManager() {
                       })}
                     </TableCell>
                     <TableCell className="font-montserrat text-[#f3ebad]">
-                      {message.sender?.username || message.sender?.full_name || 'Utilisateur inconnu'}
+                      {message.profiles?.username || message.profiles?.full_name || 'Utilisateur inconnu'}
                     </TableCell>
                     <TableCell className="font-montserrat text-[#f3ebad]/70">
                       {message.content}
