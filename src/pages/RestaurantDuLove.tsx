@@ -1,4 +1,3 @@
-
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { Button } from "@/components/ui/button";
 import { Phone } from "lucide-react";
@@ -6,7 +5,7 @@ import { Phone } from "lucide-react";
 const RestaurantDuLove = () => {
   return <div className="w-full min-h-[calc(100vh-4.5rem)] bg-cream relative overflow-hidden p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-12">
-        {/* Header section - Description and photos */}
+        {/* Header section - Description and reservation */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="backdrop-blur-sm p-6 rounded-xl shadow-lg bg-zinc-50/90 hover:bg-zinc-50 transition-colors duration-300">
             <h2 className="text-2xl font-cormorant font-semibold mb-4 text-[#ce0067]">
@@ -17,6 +16,27 @@ const RestaurantDuLove = () => {
               française rencontre une ambiance romantique et raffinée. Notre chef vous propose une 
               carte soigneusement élaborée pour une expérience culinaire inoubliable en tête-à-tête.
             </p>
+          </div>
+          
+          {/* Reservation section moved here */}
+          <div className="backdrop-blur-sm rounded-xl shadow-lg p-8 flex flex-col items-center space-y-6 bg-zinc-50">
+            <h3 className="text-2xl font-cormorant font-semibold text-[#ce0067] text-center">
+              Réservation
+            </h3>
+            <p className="text-gray-700 text-center text-lg space-y-2">
+              <span className="block">Pour réserver directement, contactez-nous par téléphone</span>
+              <span className="block text-base mt-4">
+                Petit déjeuner : 7h30 - 10h30<br />
+                Déjeuner et Dîner<br />
+                Brunch du Dimanche jusqu'à 16h
+              </span>
+            </p>
+            <Button className="text-lg py-6 bg-[#ce0067] hover:bg-[#a80054] transition-colors duration-300">
+              <a href="tel:+33144826305" className="flex items-center gap-3" style={{color: '#F3EBAD'}}>
+                <Phone className="w-6 h-6" />
+                +33 1 44 82 63 05
+              </a>
+            </Button>
           </div>
         </div>
 
@@ -46,27 +66,6 @@ const RestaurantDuLove = () => {
               <h3 className="text-white font-semibold">Dîner aux chandelles</h3>
             </div>
           </div>
-        </div>
-
-        {/* Reservation section */}
-        <div className="max-w-2xl mx-auto backdrop-blur-sm rounded-xl shadow-lg p-8 flex flex-col items-center space-y-6 bg-zinc-50">
-          <h3 className="text-2xl font-cormorant font-semibold text-[#ce0067] text-center">
-            Réservation
-          </h3>
-          <p className="text-gray-700 text-center text-lg space-y-2">
-            <span className="block">Pour réserver directement, contactez-nous par téléphone</span>
-            <span className="block text-base mt-4">
-              Petit déjeuner : 7h30 - 10h30<br />
-              Déjeuner et Dîner<br />
-              Brunch du Dimanche jusqu'à 16h
-            </span>
-          </p>
-          <Button className="text-lg py-6 bg-[#ce0067] hover:bg-[#a80054] transition-colors duration-300">
-            <a href="tel:+33144826305" className="flex items-center gap-3" style={{color: '#F3EBAD'}}>
-              <Phone className="w-6 h-6" />
-              +33 1 44 82 63 05
-            </a>
-          </Button>
         </div>
 
         {/* Bottom images section */}
