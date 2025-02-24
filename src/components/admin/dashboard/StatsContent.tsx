@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { AdminStats } from "@/types/admin.types";
 import { ChartBarIcon, UsersIcon, MessageSquareIcon, CalendarIcon, UserIcon, ShieldCheckIcon, ImageIcon, FileTextIcon, UserCheckIcon, TrendingUpIcon, MessageCircleIcon, CalendarDaysIcon } from "lucide-react";
@@ -86,8 +85,7 @@ export function StatsContent({ stats }: { stats: Partial<AdminStats> }) {
         {trend && (
           <Progress 
             value={70} 
-            className="h-1 mt-4 bg-[#f3ebad]/10" 
-            indicatorClassName="bg-[#f3ebad]" 
+            className="mt-4 h-1 [&>div]:bg-[#f3ebad] bg-[#f3ebad]/10" 
           />
         )}
       </Card>
