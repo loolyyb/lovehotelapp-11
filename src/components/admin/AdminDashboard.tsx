@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuthStore } from "@/stores/adminAuthStore";
@@ -101,6 +100,7 @@ export function AdminDashboard() {
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList className="bg-pink-800 hover:bg-pink-700">
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+          <TabsTrigger value="announcements">Publications</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
           <TabsTrigger value="events">Événements</TabsTrigger>
           <TabsTrigger value="versions">Versions</TabsTrigger>
@@ -121,6 +121,12 @@ export function AdminDashboard() {
               />
             </div>
             <UsersManager users={users} searchTerm={searchTerm} />
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="announcements">
+          <Card className="p-6">
+            <AnnouncementsManager />
           </Card>
         </TabsContent>
 
