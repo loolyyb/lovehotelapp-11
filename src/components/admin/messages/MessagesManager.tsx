@@ -27,11 +27,11 @@ export function MessagesManager() {
           conversations!inner (
             user1_id,
             user2_id,
-            profiles!user1_id (
+            sender_profile:profiles!user1_id (
               username,
               full_name
             ),
-            profiles!user2_id (
+            receiver_profile:profiles!user2_id (
               username,
               full_name
             )
@@ -89,12 +89,12 @@ export function MessagesManager() {
               ) : messages && messages.length > 0 ? (
                 messages.map((message) => {
                   const senderProfile = message.sender_id === message.conversations.user1_id
-                    ? message.conversations.profiles
-                    : message.conversations.profiles;
+                    ? message.conversations.sender_profile
+                    : message.conversations.receiver_profile;
                   
                   const receiverProfile = message.sender_id === message.conversations.user1_id
-                    ? message.conversations.profiles
-                    : message.conversations.profiles;
+                    ? message.conversations.receiver_profile
+                    : message.conversations.sender_profile;
 
                   return (
                     <TableRow
