@@ -1,6 +1,6 @@
 
 import React, { useEffect } from "react";
-import { BrowserRouter as Router } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Header } from "./components/layout/Header";
 import { MobileNavBar } from "./components/layout/MobileNavBar";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,34 +15,6 @@ import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 import { useStatusBar } from './hooks/useStatusBar';
 import { useLogger } from './hooks/useLogger';
-
-const getBasename = () => {
-  const logger = useLogger('Router');
-  const hostname = window.location.hostname;
-  const pathname = window.location.pathname;
-  
-  // Vérifie si nous sommes dans l'éditeur Lovable ou en preview
-  const isLovableEnv = hostname.includes('.lovable.') || hostname === 'localhost';
-  
-  logger.info('Environnement détecté', {
-    hostname,
-    pathname,
-    isLovableEnv
-  });
-
-  if (isLovableEnv) {
-    // Récupère le pathname actuel et extrait le premier segment comme basename
-    const firstSegment = pathname.split('/')[1];
-    if (firstSegment) {
-      logger.info('Basename Lovable détecté', { basename: `/${firstSegment}` });
-      return `/${firstSegment}`;
-    }
-    logger.warn('Aucun segment de chemin trouvé dans un environnement Lovable');
-  }
-  
-  logger.info('Utilisation du basename par défaut: /');
-  return '/';
-};
 
 function Content() {
   const { session, loading, userProfile } = useAuthSession();
@@ -114,11 +86,42 @@ function App() {
     currentUrl: window.location.href
   });
 
-  return (
-    <Router basename={basename}>
-      <AppContent />
-    </Router>
-  );
+  const router = createBrowserRouter([
+    {
+      path: "/*",
+      element: <AppContent />,
+    }
+  ], {
+    basename
+  });
+
+  return <RouterProvider router={router} />;
 }
+
+const getBasename = () => {
+  const logger = useLogger('Router');
+  const hostname = window.location.hostname;
+  const pathname = window.location.pathname;
+  
+  const isLovableEnv = hostname.includes('.lovable.') || hostname === 'localhost';
+  
+  logger.info('Environnement détecté', {
+    hostname,
+    pathname,
+    isLovableEnv
+  });
+
+  if (isLovableEnv) {
+    const firstSegment = pathname.split('/')[1];
+    if (firstSegment) {
+      logger.info('Basename Lovable détecté', { basename: `/${firstSegment}` });
+      return `/${firstSegment}`;
+    }
+    logger.warn('Aucun segment de chemin trouvé dans un environnement Lovable');
+  }
+  
+  logger.info('Utilisation du basename par défaut: /');
+  return '/';
+};
 
 export default App;
