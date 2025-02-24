@@ -30,7 +30,7 @@ export function MessagesManager() {
           created_at,
           read_at,
           sender_id,
-          sender:profiles!messages_sender_id_fkey(username, full_name)
+          sender:profiles(username, full_name)
         `)
         .order("created_at", { ascending: false });
 
@@ -44,8 +44,7 @@ export function MessagesManager() {
     },
   });
 
-  console.log("isLoading:", isLoading);
-  console.log("messages:", messages);
+  console.log("Messages component state:", { isLoading, messagesCount: messages?.length });
 
   return (
     <motion.div
