@@ -1,6 +1,8 @@
+
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { Button } from "@/components/ui/button";
 import { Phone } from "lucide-react";
+
 const RestaurantDuLove = () => {
   return <div className="w-full min-h-[calc(100vh-4.5rem)] bg-cream relative overflow-hidden p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-12">
@@ -63,8 +65,8 @@ const RestaurantDuLove = () => {
               Brunch du Dimanche jusqu'à 16h
             </span>
           </p>
-          <Button className="text-lg py-6 bg-[#ce0067] hover:bg-[#a80054] transition-colors duration-300" asChild>
-            <a href="tel:+33144826305" className="flex items-center gap-3 text-[#f3ebad]">
+          <Button className="text-lg py-6 bg-[#ce0067] hover:bg-[#a80054] transition-colors duration-300">
+            <a href="tel:+33144826305" className="flex items-center gap-3" style={{color: '#F3EBAD'}}>
               <Phone className="w-6 h-6" />
               +33 1 44 82 63 05
             </a>
@@ -74,4 +76,5 @@ const RestaurantDuLove = () => {
       <InstallPrompt />
     </div>;
 };
+
 export default RestaurantDuLove;
