@@ -1,4 +1,3 @@
-
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { User, Users } from "lucide-react";
@@ -7,20 +6,19 @@ import { useState, useEffect } from "react";
 interface ProfileStatusProps {
   status?: string | null;
   onStatusChange: (status: string) => void;
+  onChange: (status: string) => void;
 }
 
-export function ProfileStatus({ status, onStatusChange }: ProfileStatusProps) {
+export function ProfileStatus({ status, onStatusChange, onChange }: ProfileStatusProps) {
   const [localStatus, setLocalStatus] = useState(status ?? undefined);
-  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     setLocalStatus(status ?? undefined);
-    setHasChanges(false);
   }, [status]);
 
   const handleStatusChange = (value: string) => {
     setLocalStatus(value);
-    onStatusChange(value); // Le select doit mettre à jour immédiatement car c'est une valeur unique
+    onChange(value);
   };
 
   return (

@@ -4,15 +4,17 @@ import { WidgetContainer } from "./WidgetContainer";
 
 interface StatusSectionProps {
   status: string | null;
-  onUpdate: (value: any) => void;  // Changed from Promise<void> to void
+  onUpdate: (value: any) => void;
+  onChange: (value: any) => void;
 }
 
-export function StatusSection({ status, onUpdate }: StatusSectionProps) {
+export function StatusSection({ status, onUpdate, onChange }: StatusSectionProps) {
   return (
     <WidgetContainer title="Statut">
       <ProfileStatus
         status={status}
-        onStatusChange={(status) => onUpdate({ status })}
+        onStatusChange={onUpdate}
+        onChange={onChange}
       />
     </WidgetContainer>
   );

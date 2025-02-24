@@ -2,33 +2,26 @@
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 
 interface ProfileDescriptionProps {
   initialDescription?: string | null;
   onSave: (description: string) => void;
+  onChange: (description: string) => void;
 }
 
-export function ProfileDescription({ initialDescription, onSave }: ProfileDescriptionProps) {
+export function ProfileDescription({ initialDescription, onSave, onChange }: ProfileDescriptionProps) {
   const [localDescription, setLocalDescription] = useState(initialDescription ?? "");
-  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     setLocalDescription(initialDescription ?? "");
-    setHasChanges(false);
   }, [initialDescription]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     if (newValue.length <= 300) {
       setLocalDescription(newValue);
-      setHasChanges(true);
+      onChange(newValue);
     }
-  };
-
-  const handleSave = () => {
-    onSave(localDescription);
-    setHasChanges(false);
   };
 
   return (
