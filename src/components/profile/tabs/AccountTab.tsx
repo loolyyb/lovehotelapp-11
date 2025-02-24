@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,15 +12,17 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 interface AccountTabProps {
   profile: any;
   onUpdate: (updates: any) => void;
+  setHasUnsavedChanges: (value: boolean) => void;
 }
 
 export function AccountTab({
   profile,
-  onUpdate
+  onUpdate,
+  setHasUnsavedChanges
 }: AccountTabProps) {
   const [showQualification, setShowQualification] = useState(false);
   const [fullName, setFullName] = useState(profile?.full_name || "");
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [localUnsavedChanges, setLocalUnsavedChanges] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const { toast } = useToast();
   const { isSubscribed, subscribeToNotifications, unsubscribeFromNotifications } = useNotificationSubscription();
@@ -29,21 +30,9 @@ export function AccountTab({
   // Mettre à jour le statut des modifications non sauvegardées
   useEffect(() => {
     const hasChanges = fullName !== profile?.full_name;
+    setLocalUnsavedChanges(hasChanges);
     setHasUnsavedChanges(hasChanges);
-  }, [fullName, profile?.full_name]);
-
-  // Ajouter l'avertissement avant de quitter la page
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
+  }, [fullName, profile?.full_name, setHasUnsavedChanges]);
 
   const handleFullNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
@@ -63,6 +52,7 @@ export function AccountTab({
     onUpdate({
       full_name: fullName
     });
+    setLocalUnsavedChanges(false);
     setHasUnsavedChanges(false);
     toast({
       title: "Modifications enregistrées",
@@ -89,7 +79,7 @@ export function AccountTab({
   };
 
   if (showQualification) {
-    if (hasUnsavedChanges) {
+    if (localUnsavedChanges) {
       setShowConfirmDialog(true);
       return null;
     }
@@ -141,7 +131,7 @@ export function AccountTab({
               />
             </div>
 
-            {hasUnsavedChanges && (
+            {localUnsavedChanges && (
               <div className="flex justify-end pt-4">
                 <Button onClick={handleSave} className="bg-[#ce0067] text-zinc-50">
                   Sauvegarder mes modifications
@@ -170,6 +160,7 @@ export function AccountTab({
             <AlertDialogCancel onClick={() => setShowConfirmDialog(false)}>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
               setShowConfirmDialog(false);
+              setLocalUnsavedChanges(false);
               setHasUnsavedChanges(false);
               setShowQualification(true);
             }}>
