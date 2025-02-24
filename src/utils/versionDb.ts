@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { VersionData } from "@/types/version.types";
 
-const CURRENT_VERSION = '1.1.0';
+const CURRENT_VERSION = '1.2.0';
 
 export async function getCurrentVersion(): Promise<string> {
   try {
@@ -65,7 +65,7 @@ async function syncWithAppVersions(version: string): Promise<void> {
           version: version,
           version_type: 'minor',
           is_active: true,
-          release_notes: 'Améliorations significatives de l\'interface utilisateur et correction du routage'
+          release_notes: 'Stabilisation du système d\'annonces: Affichage correct des noms d\'utilisateurs avec fallback sur username, gestion des avatars et jointures avec la table profiles'
         });
 
       if (insertError) throw insertError;
