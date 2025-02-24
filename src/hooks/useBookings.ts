@@ -40,10 +40,12 @@ export function useBookings() {
       console.log('Headers:', headers);
       console.log('Endpoint:', endpoint);
       
-      const token = await ApiService.getHeaders(headers);
-      console.log('Auth token present:', !!token.get('Authorization'));
+      const response = await ApiService.get<BookingResponse>(endpoint, headers);
       
-      const response = await ApiService.get(endpoint, headers);
+      if (!response || !Array.isArray(response["hydra:member"])) {
+        throw new Error("Invalid response format from API");
+      }
+      
       console.log(`Successfully fetched bookings for hotel ${hotelId}:`, response);
       return response;
     } catch (error: any) {
