@@ -22,9 +22,21 @@ export function MessagesManager() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("messages")
-        .select(
-          "*, conversations!inner(user1:profiles!inner(user_id, username, full_name), user2:profiles!inner(user_id, username, full_name))"
-        )
+        .select(`
+          *,
+          conversations!inner (
+            user1,
+            user2,
+            profiles!user1_profiles (
+              username,
+              full_name
+            ),
+            profiles!user2_profiles (
+              username,
+              full_name
+            )
+          )
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -76,14 +88,13 @@ export function MessagesManager() {
                 </TableRow>
               ) : messages && messages.length > 0 ? (
                 messages.map((message) => {
-                  const sender = 
-                    message.sender_id === message.conversations.user1.user_id
-                      ? message.conversations.user1
-                      : message.conversations.user2;
-                  const receiver = 
-                    message.sender_id === message.conversations.user1.user_id
-                      ? message.conversations.user2
-                      : message.conversations.user1;
+                  const senderProfile = message.sender_id === message.conversations.user1
+                    ? message.conversations.profiles!user1_profiles
+                    : message.conversations.profiles!user2_profiles;
+                  
+                  const receiverProfile = message.sender_id === message.conversations.user1
+                    ? message.conversations.profiles!user2_profiles
+                    : message.conversations.profiles!user1_profiles;
 
                   return (
                     <TableRow
@@ -96,10 +107,10 @@ export function MessagesManager() {
                         })}
                       </TableCell>
                       <TableCell className="font-montserrat text-[#f3ebad]">
-                        {sender.username || sender.full_name}
+                        {senderProfile.username || senderProfile.full_name}
                       </TableCell>
                       <TableCell className="font-montserrat text-[#f3ebad]">
-                        {receiver.username || receiver.full_name}
+                        {receiverProfile.username || receiverProfile.full_name}
                       </TableCell>
                       <TableCell className="font-montserrat text-[#f3ebad]/70">
                         {message.content}
