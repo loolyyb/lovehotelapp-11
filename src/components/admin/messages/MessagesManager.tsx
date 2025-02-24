@@ -27,19 +27,18 @@ export function MessagesManager() {
           conversations!inner (
             user1_id,
             user2_id,
-            sender_profile:profiles!user1_id (
-              username,
-              full_name
-            ),
-            receiver_profile:profiles!user2_id (
-              username,
-              full_name
-            )
+            sender:profiles(username, full_name),
+            receiver:profiles(username, full_name)
           )
         `)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching messages:", error);
+        throw error;
+      }
+      
+      console.log("Messages data:", data);
       return data;
     },
   });
@@ -89,12 +88,12 @@ export function MessagesManager() {
               ) : messages && messages.length > 0 ? (
                 messages.map((message) => {
                   const senderProfile = message.sender_id === message.conversations.user1_id
-                    ? message.conversations.sender_profile
-                    : message.conversations.receiver_profile;
+                    ? message.conversations.sender
+                    : message.conversations.receiver;
                   
                   const receiverProfile = message.sender_id === message.conversations.user1_id
-                    ? message.conversations.receiver_profile
-                    : message.conversations.sender_profile;
+                    ? message.conversations.receiver
+                    : message.conversations.sender;
 
                   return (
                     <TableRow
@@ -107,10 +106,10 @@ export function MessagesManager() {
                         })}
                       </TableCell>
                       <TableCell className="font-montserrat text-[#f3ebad]">
-                        {senderProfile.username || senderProfile.full_name}
+                        {senderProfile?.username || senderProfile?.full_name || 'Utilisateur inconnu'}
                       </TableCell>
                       <TableCell className="font-montserrat text-[#f3ebad]">
-                        {receiverProfile.username || receiverProfile.full_name}
+                        {receiverProfile?.username || receiverProfile?.full_name || 'Utilisateur inconnu'}
                       </TableCell>
                       <TableCell className="font-montserrat text-[#f3ebad]/70">
                         {message.content}
