@@ -11,6 +11,7 @@ interface EventCardProps {
   type: EventType;
   description: string;
   imageUrl?: string;
+  date?: string;
   startTime?: string;
   endTime?: string;
   onParticipate: (eventId: string) => void;
@@ -38,6 +39,7 @@ export const EventCard = ({
   type,
   description,
   imageUrl,
+  date,
   startTime,
   endTime,
   onParticipate,
@@ -59,8 +61,13 @@ export const EventCard = ({
           <h3 className="text-xl font-cormorant font-semibold text-[#ce0067] line-clamp-2">
             {title}
           </h3>
+          {date && (
+            <p className="text-sm mt-1 text-zinc-950 font-semibold capitalize">
+              {date}
+            </p>
+          )}
           {startTime && endTime && (
-            <p className="text-sm mt-1 text-zinc-950">
+            <p className="text-sm text-zinc-950">
               {startTime} - {endTime}
             </p>
           )}

@@ -1,3 +1,4 @@
+
 export type EventType = "bdsm" | "jacuzzi" | "gastronomy" | "speed_dating" | "other";
 
 export interface Event {
@@ -21,9 +22,11 @@ export interface EventCardProps {
   type: EventType;
   description: string;
   imageUrl?: string;
+  date?: string;
   startTime?: string;
   endTime?: string;
   onParticipate: (eventId: string) => void;
+  isParticipating: boolean;
 }
 
 export const sampleEvents: Event[] = [
