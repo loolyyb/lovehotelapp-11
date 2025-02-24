@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,17 +19,36 @@ export function AccountTab({
   onUpdate
 }: AccountTabProps) {
   const [showQualification, setShowQualification] = useState(false);
+  const [fullName, setFullName] = useState(profile?.full_name || "");
   const { toast } = useToast();
   const { isSubscribed, subscribeToNotifications, unsubscribeFromNotifications } = useNotificationSubscription();
 
+  // Debounce timer reference
+  const [updateTimeout, setUpdateTimeout] = useState<NodeJS.Timeout | null>(null);
+
   const handleFullNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdate({
-      full_name: event.target.value
-    });
-    toast({
-      title: "Nom mis à jour",
-      description: "Votre nom a été modifié avec succès."
-    });
+    const newValue = event.target.value;
+    setFullName(newValue);
+
+    // Clear any existing timeout
+    if (updateTimeout) {
+      clearTimeout(updateTimeout);
+    }
+
+    // Set new timeout
+    const newTimeout = setTimeout(() => {
+      if (newValue !== profile?.full_name && newValue.trim().length >= 2) {
+        onUpdate({
+          full_name: newValue
+        });
+        toast({
+          title: "Nom mis à jour",
+          description: "Votre nom a été modifié avec succès."
+        });
+      }
+    }, 1000); // Délai de 1 seconde
+
+    setUpdateTimeout(newTimeout);
   };
 
   const handleDatingProfileChange = (checked: boolean) => {
@@ -59,7 +78,13 @@ export function AccountTab({
         <div className="p-6 space-y-6">
           <div>
             <Label htmlFor="full-name" className="text-white">Nom complet</Label>
-            <Input id="full-name" value={profile?.full_name || ""} onChange={handleFullNameChange} placeholder="Votre nom complet" />
+            <Input 
+              id="full-name" 
+              value={fullName} 
+              onChange={handleFullNameChange} 
+              placeholder="Votre nom complet"
+              minLength={2}
+            />
           </div>
 
           <div>
