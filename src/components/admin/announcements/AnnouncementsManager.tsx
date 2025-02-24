@@ -7,6 +7,7 @@ import { DeleteAnnouncementDialog } from "./components/DeleteAnnouncementDialog"
 import { useAnnouncementsManagement } from "./hooks/useAnnouncementsManagement";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Pagination,
   PaginationContent,

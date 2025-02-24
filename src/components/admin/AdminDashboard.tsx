@@ -17,6 +17,7 @@ import { StatsContent } from "./dashboard/StatsContent";
 import { Input } from "../ui/input";
 import { AdminUser } from "@/types/admin.types";
 import type { Database } from "@/integrations/supabase/types/database.types";
+import { AnnouncementsManager } from "./announcements/AnnouncementsManager";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
