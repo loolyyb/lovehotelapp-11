@@ -23,8 +23,7 @@ export const FeatureHeader = () => {
       </p>
       <Button
         onClick={scrollToContact}
-        variant="link"
-        className="text-burgundy hover:text-burgundy/80"
+        className="bg-[#ce0067] text-white hover:bg-[#ce0067]/90 transition-colors duration-300"
       >
         Nous contacter
       </Button>
