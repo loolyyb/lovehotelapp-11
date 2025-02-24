@@ -54,15 +54,22 @@ export function AnnouncementsList() {
         return;
       }
 
-      const transformedData: AnnouncementType[] = rawData.map(announcement => ({
-        id: announcement.id,
-        content: announcement.content,
-        image_url: announcement.image_url,
-        created_at: announcement.created_at,
-        user_id: announcement.user_id,
-        full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
-        avatar_url: announcement.profiles?.avatar_url ?? null
-      }));
+      logger.info('Données reçues:', rawData);
+
+      const transformedData: AnnouncementType[] = rawData.map(announcement => {
+        // Log pour déboguer la structure des données
+        logger.info('Structure annonce:', announcement);
+        
+        return {
+          id: announcement.id,
+          content: announcement.content,
+          image_url: announcement.image_url,
+          created_at: announcement.created_at,
+          user_id: announcement.user_id,
+          full_name: announcement.profiles?.full_name ?? "Utilisateur inconnu",
+          avatar_url: announcement.profiles?.avatar_url ?? null
+        };
+      });
 
       setAnnouncements(transformedData);
       setError(null);
