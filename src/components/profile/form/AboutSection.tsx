@@ -1,10 +1,10 @@
+
 import { ProfileDescription } from "../ProfileDescription";
-import { motion } from "framer-motion";
 import { WidgetContainer } from "./WidgetContainer";
 
 interface AboutSectionProps {
   description: string | null;
-  onUpdate: (updates: any) => Promise<void>;
+  onUpdate: (description: string) => void;
 }
 
 export function AboutSection({ description, onUpdate }: AboutSectionProps) {
@@ -12,7 +12,7 @@ export function AboutSection({ description, onUpdate }: AboutSectionProps) {
     <WidgetContainer title="À propos de vous">
       <ProfileDescription
         initialDescription={description}
-        onSave={(description) => onUpdate({ description })}
+        onSave={onUpdate}
       />
     </WidgetContainer>
   );
