@@ -1,7 +1,9 @@
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { User, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 
 interface ProfileStatusProps {
   status?: string | null;
@@ -9,20 +11,26 @@ interface ProfileStatusProps {
 }
 
 export function ProfileStatus({ status, onStatusChange }: ProfileStatusProps) {
-  const { toast } = useToast();
+  const [localStatus, setLocalStatus] = useState(status ?? undefined);
+
+  useEffect(() => {
+    setLocalStatus(status ?? undefined);
+  }, [status]);
+
+  useEffect(() => {
+    if (localStatus !== status) {
+      onStatusChange(localStatus ?? "");
+    }
+  }, [localStatus, status, onStatusChange]);
 
   const handleStatusChange = (value: string) => {
-    onStatusChange(value);
-    toast({
-      title: "Statut mis à jour",
-      description: "Votre statut a été modifié avec succès.",
-    });
+    setLocalStatus(value);
   };
 
   return (
     <div className="space-y-4">
-      <Label  className="text-gray-800">Statut</Label>
-      <Select value={status ?? undefined} onValueChange={handleStatusChange}>
+      <Label className="text-gray-800">Statut</Label>
+      <Select value={localStatus} onValueChange={handleStatusChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Sélectionnez votre statut" />
         </SelectTrigger>
