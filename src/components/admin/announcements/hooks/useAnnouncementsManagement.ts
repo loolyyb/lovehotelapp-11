@@ -16,8 +16,7 @@ export function useAnnouncementsManagement() {
         .select(`
           *,
           profiles:user_id (
-            full_name,
-            email
+            full_name
           )
         `)
         .order('created_at', { ascending: false });
