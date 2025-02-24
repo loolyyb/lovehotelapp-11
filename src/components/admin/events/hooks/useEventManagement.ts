@@ -15,11 +15,9 @@ export function useEventManagement() {
   const handleSubmit = async (values: EventFormValues, eventId?: string) => {
     try {
       setIsLoading(true);
-      console.log("Form values:", values);
       
       // Format the event date with the start time
       const eventDate = new Date(`${values.event_date}T${values.start_time}`);
-      console.log("Formatted event date:", eventDate);
 
       // Upload image if present
       let imageUrl = null;
@@ -39,15 +37,13 @@ export function useEventManagement() {
         is_private: values.is_private,
         price: values.free_for_members ? null : values.price,
         free_for_members: values.free_for_members,
-        created_by: "c9c1b364-9d15-44de-8013-0180cc128798", // ID de l'utilisateur admin
-        image_url: imageUrl // Ajout de l'URL de l'image
+        created_by: "c9c1b364-9d15-44de-8013-0180cc128798",
+        image_url: imageUrl
       };
 
-      console.log("Event data to save:", eventData);
       let error;
       
       if (eventId) {
-        // Si pas de nouvelle image, ne pas écraser l'image existante
         if (!imageUrl) {
           delete eventData.image_url;
         }

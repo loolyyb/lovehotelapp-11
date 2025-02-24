@@ -1,12 +1,19 @@
-import { useState, useEffect } from "react";
+
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 
-export const useMessageRetrieval = (conversationId: string, currentUserId: string | null) => {
-  const [messages, setMessages] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+interface UseMessageRetrievalProps {
+  conversationId: string;
+  currentUserId: string | null;
+  setMessages: React.Dispatch<React.SetStateAction<any[]>>;
+  toast: any;
+}
 
+export const useMessageRetrieval = ({ 
+  conversationId, 
+  currentUserId, 
+  setMessages, 
+  toast 
+}: UseMessageRetrievalProps) => {
   const fetchMessages = async () => {
     try {
       const { data: messages, error } = await supabase
@@ -15,27 +22,28 @@ export const useMessageRetrieval = (conversationId: string, currentUserId: strin
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       
       setMessages(messages || []);
-      
       if (messages?.length > 0) {
-        await markMessagesAsRead();
+        markMessagesAsRead();
       }
-    } catch (error) {
-      console.error("Error fetching messages:", error);
+    } catch (error: any) {
+      console.error("Error in fetchMessages:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de charger les messages",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const markMessagesAsRead = async () => {
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -45,21 +53,13 @@ export const useMessageRetrieval = (conversationId: string, currentUserId: strin
         .neq('sender_id', currentUserId)
         .is('read_at', null);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error marking messages as read:", error);
+      }
     } catch (error) {
-      console.error("Error marking messages as read:", error);
+      console.error("Error in markMessagesAsRead:", error);
     }
   };
 
-  useEffect(() => {
-    fetchMessages();
-  }, [conversationId]);
-
-  return {
-    messages,
-    setMessages,
-    isLoading,
-    fetchMessages,
-    markMessagesAsRead
-  };
+  return { fetchMessages, markMessagesAsRead };
 };

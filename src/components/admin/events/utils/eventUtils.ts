@@ -39,38 +39,3 @@ export const combineDateTime = (date: string, time: string): Date => {
   eventDateTime.setHours(parseInt(hours), parseInt(minutes));
   return eventDateTime;
 };
-
-export const createEvent = async (values: EventFormValues, userId: string, imageUrl: string | null) => {
-  const eventDateTime = combineDateTime(values.event_date, values.start_time);
-
-  try {
-    const { error } = await supabase.from('events').insert({
-      title: values.title,
-      description: values.description,
-      event_date: eventDateTime.toISOString(),
-      event_type: values.event_type,
-      created_by: userId,
-      is_private: values.is_private,
-      price: values.free_for_members ? null : values.price,
-      free_for_members: values.free_for_members,
-      image_url: imageUrl,
-    });
-
-    if (error) throw error;
-
-    toast({
-      title: "Succès",
-      description: "L'événement a été créé avec succès",
-    });
-
-    return { error: null };
-  } catch (error) {
-    console.error('Error creating event:', error);
-    toast({
-      title: "Erreur",
-      description: "Une erreur est survenue lors de la création de l'événement",
-      variant: "destructive",
-    });
-    return { error };
-  }
-};
