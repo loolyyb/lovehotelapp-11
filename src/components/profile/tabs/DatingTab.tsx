@@ -14,23 +14,12 @@ export function DatingTab({
   onUpdate
 }: DatingTabProps) {
   const [showQualification, setShowQualification] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState<Record<string, any>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleFieldChange = (field: string, value: any) => {
-    setPendingChanges(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSaveChanges = async () => {
-    if (Object.keys(pendingChanges).length === 0) return;
-
+  const handleUpdate = async (updates: any) => {
     setIsSaving(true);
     try {
-      await onUpdate(pendingChanges);
-      setPendingChanges({});
+      await onUpdate(updates);
     } catch (error) {
       console.error('Error saving changes:', error);
     } finally {
@@ -53,9 +42,7 @@ export function DatingTab({
       <div className="w-full">
         <ProfileForm 
           profile={profile} 
-          onUpdate={handleSaveChanges}
-          onChange={handleFieldChange}
-          pendingChanges={pendingChanges}
+          onUpdate={handleUpdate}
           isSaving={isSaving}
         />
       </div>

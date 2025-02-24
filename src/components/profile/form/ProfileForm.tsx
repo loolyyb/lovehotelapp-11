@@ -14,14 +14,27 @@ import { Button } from "@/components/ui/button";
 interface ProfileFormProps {
   profile: any;
   onUpdate: (updates: any) => void;
-  onChange: (field: string, value: any) => void;
-  pendingChanges: Record<string, any>;
-  isSaving: boolean;
+  isSaving?: boolean;
 }
 
-export function ProfileForm({ profile, onUpdate, onChange, pendingChanges, isSaving }: ProfileFormProps) {
+export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileFormProps) {
   const { preferences, handlePreferenceChange } = usePreferences();
+  const [pendingChanges, setPendingChanges] = useState<Record<string, any>>({});
   const hasChanges = Object.keys(pendingChanges).length > 0;
+
+  const handleFieldChange = (field: string, value: any) => {
+    setPendingChanges(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSave = () => {
+    if (Object.keys(pendingChanges).length > 0) {
+      onUpdate(pendingChanges);
+      setPendingChanges({});
+    }
+  };
 
   return (
     <div className="space-y-8 w-full">
@@ -34,25 +47,25 @@ export function ProfileForm({ profile, onUpdate, onChange, pendingChanges, isSav
           
           <AboutSection 
             description={profile?.description}
-            onUpdate={(value) => onUpdate({ description: value })}
-            onChange={(value) => onChange("description", value)}
+            onUpdate={(value) => handleFieldChange("description", value)}
+            onChange={(value) => handleFieldChange("description", value)}
           />
           
           <StatusSection
             status={profile?.status}
-            onUpdate={(value) => onUpdate({ status: value })}
-            onChange={(value) => onChange("status", value)}
+            onUpdate={(value) => handleFieldChange("status", value)}
+            onChange={(value) => handleFieldChange("status", value)}
           />
 
           <OrientationSection
             orientation={profile?.sexual_orientation}
-            onUpdate={(value) => onUpdate({ sexual_orientation: value })}
-            onChange={(value) => onChange("sexual_orientation", value)}
+            onUpdate={(value) => handleFieldChange("sexual_orientation", value)}
+            onChange={(value) => handleFieldChange("sexual_orientation", value)}
           />
 
           <TokensSection
             tokens={profile?.loolyb_tokens}
-            onUpdate={(value) => onUpdate({ loolyb_tokens: value })}
+            onUpdate={(value) => handleFieldChange("loolyb_tokens", value)}
           />
         </div>
 
@@ -61,12 +74,12 @@ export function ProfileForm({ profile, onUpdate, onChange, pendingChanges, isSav
             seeking={profile?.seeking}
             status={profile?.status}
             orientation={profile?.sexual_orientation}
-            onUpdate={(value) => onUpdate({ seeking: value })}
+            onUpdate={(value) => handleFieldChange("seeking", value)}
           />
 
           <RelationshipSection
             relationshipType={profile?.relationship_type}
-            onUpdate={(value) => onUpdate({ relationship_type: value })}
+            onUpdate={(value) => handleFieldChange("relationship_type", value)}
           />
 
           <PreferencesSection
@@ -78,14 +91,14 @@ export function ProfileForm({ profile, onUpdate, onChange, pendingChanges, isSav
 
       <GallerySection
         photos={profile?.photo_urls}
-        onUpdate={(value) => onUpdate({ photo_urls: value })}
+        onUpdate={(value) => handleFieldChange("photo_urls", value)}
       />
 
       {hasChanges && (
         <div className="fixed bottom-4 right-4 left-4 md:left-auto z-50 flex justify-center md:justify-end">
           <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg shadow-lg border">
             <Button 
-              onClick={() => onUpdate(pendingChanges)} 
+              onClick={handleSave} 
               className="w-full md:w-auto bg-primary hover:bg-primary/90"
               disabled={isSaving}
             >
