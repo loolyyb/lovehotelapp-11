@@ -58,7 +58,7 @@ export const FeatureCTA = () => {
       
       <div className="relative z-10 max-w-xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-cormorant font-bold text-[#F3EBAD] mb-6 [text-shadow:_0_2px_4px_rgb(0_0_0_/_30%)]">
-          Contactez-nous
+          Contacter l'équipe développement
         </h2>
         
         <Form {...form}>
