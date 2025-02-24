@@ -24,11 +24,10 @@ export function MessagesManager() {
         .from("messages")
         .select(`
           *,
-          conversations!inner (
+          sender:profiles!messages_sender_id_fkey(username, full_name),
+          conversation:conversations!messages_conversation_id_fkey(
             user1_id,
-            user2_id,
-            profiles!conversations_user1_id_fkey(username, full_name),
-            profiles!conversations_user2_id_fkey(username, full_name)
+            user2_id
           )
         `)
         .order("created_at", { ascending: false });
@@ -65,7 +64,6 @@ export function MessagesManager() {
               <TableRow className="border-b border-[#f3ebad]/10">
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">Date</TableHead>
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">De</TableHead>
-                <TableHead className="text-[#f3ebad]/70 font-montserrat">À</TableHead>
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">Message</TableHead>
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">État</TableHead>
               </TableRow>
@@ -74,7 +72,7 @@ export function MessagesManager() {
               {isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={4}
                     className="text-center font-montserrat text-[#f3ebad]/50"
                   >
                     <motion.div
@@ -86,48 +84,35 @@ export function MessagesManager() {
                   </TableCell>
                 </TableRow>
               ) : messages && messages.length > 0 ? (
-                messages.map((message) => {
-                  const senderProfile = message.sender_id === message.conversations.user1_id
-                    ? message.conversations.profiles_conversations_user1_id_fkey
-                    : message.conversations.profiles_conversations_user2_id_fkey;
-                  
-                  const receiverProfile = message.sender_id === message.conversations.user1_id
-                    ? message.conversations.profiles_conversations_user2_id_fkey
-                    : message.conversations.profiles_conversations_user1_id_fkey;
-
-                  return (
-                    <TableRow
-                      key={message.id}
-                      className="border-b border-[#f3ebad]/10 hover:bg-[#f3ebad]/5 transition-colors"
-                    >
-                      <TableCell className="font-montserrat text-[#f3ebad]/70">
-                        {format(new Date(message.created_at), "Pp", {
-                          locale: fr,
-                        })}
-                      </TableCell>
-                      <TableCell className="font-montserrat text-[#f3ebad]">
-                        {senderProfile?.username || senderProfile?.full_name || 'Utilisateur inconnu'}
-                      </TableCell>
-                      <TableCell className="font-montserrat text-[#f3ebad]">
-                        {receiverProfile?.username || receiverProfile?.full_name || 'Utilisateur inconnu'}
-                      </TableCell>
-                      <TableCell className="font-montserrat text-[#f3ebad]/70">
-                        {message.content}
-                      </TableCell>
-                      <TableCell className="font-montserrat text-[#f3ebad]/70">
-                        {message.read_at ? (
-                          <span className="text-green-400">Lu</span>
-                        ) : (
-                          <span className="text-[#f3ebad]/50">Non lu</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                messages.map((message) => (
+                  <TableRow
+                    key={message.id}
+                    className="border-b border-[#f3ebad]/10 hover:bg-[#f3ebad]/5 transition-colors"
+                  >
+                    <TableCell className="font-montserrat text-[#f3ebad]/70">
+                      {format(new Date(message.created_at), "Pp", {
+                        locale: fr,
+                      })}
+                    </TableCell>
+                    <TableCell className="font-montserrat text-[#f3ebad]">
+                      {message.sender?.username || message.sender?.full_name || 'Utilisateur inconnu'}
+                    </TableCell>
+                    <TableCell className="font-montserrat text-[#f3ebad]/70">
+                      {message.content}
+                    </TableCell>
+                    <TableCell className="font-montserrat text-[#f3ebad]/70">
+                      {message.read_at ? (
+                        <span className="text-green-400">Lu</span>
+                      ) : (
+                        <span className="text-[#f3ebad]/50">Non lu</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={4}
                     className="text-center font-montserrat text-[#f3ebad]/50"
                   >
                     Aucun message
