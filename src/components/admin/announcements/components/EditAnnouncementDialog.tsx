@@ -38,7 +38,7 @@ export function EditAnnouncementDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="content">Contenu</label>
-            <textarea id="content" name="content" defaultValue={announcement?.content || ""} className="w-full min-h-[100px] p-2 border rounded bg-pink-900" />
+            <textarea id="content" name="content" defaultValue={announcement?.content || ""} className="w-full min-h-[100px] p-2 border rounded bg-pink-800" />
           </div>
           
           <div className="space-y-2">
