@@ -21,19 +21,6 @@ import type { Database } from "@/integrations/supabase/types/database.types";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 
-interface AuthUser {
-  id: string;
-  email?: string;
-}
-
-interface AdminListUsersResponse {
-  users: AuthUser[];
-}
-
-interface ProfileWithEmail extends Profile {
-  email?: string;
-}
-
 export function AdminDashboard() {
   const setAdminAuthenticated = useAdminAuthStore(state => state.setAdminAuthenticated);
   const { toast } = useToast();
@@ -43,31 +30,13 @@ export function AdminDashboard() {
   const { data: users } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      // First, get all profiles
-      const { data: profiles, error: profilesError } = await supabase
+      const { data: profiles, error } = await supabase
         .from('profiles')
         .select('*');
       
-      if (profilesError) throw profilesError;
-
-      // Then, get corresponding emails from auth.users
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers() as unknown as { 
-        data: AdminListUsersResponse;
-        error: any;
-      };
+      if (error) throw error;
       
-      if (authError) throw authError;
-
-      // Combine the data
-      const usersWithEmail = profiles.map(profile => {
-        const authUser = authUsers.users.find(user => user.id === profile.user_id);
-        return {
-          ...profile,
-          email: authUser?.email
-        };
-      });
-
-      return usersWithEmail as AdminUser[];
+      return profiles as AdminUser[];
     }
   });
 
