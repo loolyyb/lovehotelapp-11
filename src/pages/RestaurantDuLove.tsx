@@ -8,9 +8,6 @@ const RestaurantDuLove = () => {
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header section - Description and photos */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <img src="https://www.dandyhotelparis.com/_novaimg/galleria/1467863.jpg" alt="Restaurant du Love - Ambiance" className="w-full h-64 object-cover rounded-xl shadow-lg hover:scale-105 transition-transform duration-300" />
-          </div>
           <div className="backdrop-blur-sm p-6 rounded-xl shadow-lg bg-zinc-50/90 hover:bg-zinc-50 transition-colors duration-300">
             <h2 className="text-2xl font-cormorant font-semibold mb-4 text-[#ce0067]">
               Le Restaurant du Love
@@ -72,11 +69,16 @@ const RestaurantDuLove = () => {
           </Button>
         </div>
 
-        {/* Bottom image section */}
-        <div className="w-full">
+        {/* Bottom images section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <img 
             src="https://www.dandyhotelparis.com/_novaimg/galleria/1467864.jpg" 
             alt="Restaurant du Love - Interior" 
+            className="w-full h-64 object-cover rounded-xl shadow-lg hover:scale-105 transition-transform duration-300" 
+          />
+          <img 
+            src="https://www.dandyhotelparis.com/_novaimg/galleria/1467863.jpg" 
+            alt="Restaurant du Love - Ambiance" 
             className="w-full h-64 object-cover rounded-xl shadow-lg hover:scale-105 transition-transform duration-300" 
           />
         </div>
