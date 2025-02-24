@@ -52,16 +52,19 @@ export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileForm
           
           <AboutSection 
             description={profile?.description}
+            onUpdate={(value) => handleFieldChange("description", value)}
             onChange={(value) => handleFieldChange("description", value)}
           />
           
           <StatusSection
             status={profile?.status}
+            onUpdate={(value) => handleFieldChange("status", value)}
             onChange={(value) => handleFieldChange("status", value)}
           />
 
           <OrientationSection
             orientation={profile?.sexual_orientation}
+            onUpdate={(value) => handleFieldChange("sexual_orientation", value)}
             onChange={(value) => handleFieldChange("sexual_orientation", value)}
           />
 
