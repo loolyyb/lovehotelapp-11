@@ -25,12 +25,8 @@ export function MessagesManager() {
       const { data, error } = await supabase
         .from("messages")
         .select(`
-          id,
-          content,
-          created_at,
-          read_at,
-          sender_id,
-          sender:profiles(username, full_name)
+          *,
+          sender:sender_id(username, full_name)
         `)
         .order("created_at", { ascending: false });
 
