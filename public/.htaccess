@@ -8,8 +8,8 @@ RewriteRule ^ index.html [QSA,L]
 Header set Content-Security-Policy "default-src 'self'; \
   connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.supabase.in; \
   script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.supabase.co https://cdn.gpteng.co; \
-  style-src 'self' 'unsafe-inline'; \
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; \
   img-src 'self' data: blob: https://*.supabase.co https://*.lovehotelapp.com https://www.dandyhotelparis.com https://lovehotelaparis.fr; \
-  font-src 'self' data:; \
+  font-src 'self' data: https://fonts.googleapis.com; \
   frame-src 'self';"
 
