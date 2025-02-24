@@ -13,29 +13,26 @@ import { VersionManager } from "./versions/VersionManager";
 import { LogsManager } from "./LogsManager";
 import { AdvertisementManager } from "./AdvertisementManager";
 import { useAuthSession } from "@/hooks/useAuthSession";
+import { UsersManager } from "./users/UsersManager";
+
 export function AdminDashboard() {
   const setAdminAuthenticated = useAdminAuthStore(state => state.setAdminAuthenticated);
-  const {
-    toast
-  } = useToast();
-  const {
-    session
-  } = useAuthSession();
-  const {
-    data: users
-  } = useQuery({
+  const { toast } = useToast();
+  const { session } = useAuthSession();
+  
+  const { data: users } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase.from('profiles').select('*').order('created_at', {
-        ascending: false
-      });
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*, auth.users(email)')
+        .order('created_at', { ascending: false });
+      
       if (error) throw error;
       return data;
     }
   });
+
   const {
     data: messages
   } = useQuery({
@@ -103,7 +100,16 @@ export function AdminDashboard() {
       description: "Vous êtes déconnecté de l'interface administrateur"
     });
   };
-  return <div className="container mx-auto px-4 py-8">
+
+  const [searchTerm, setSearchTerm] = React.useState("");
+
+  const filteredUsers = users?.filter(user => 
+    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.user_id?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Dashboard Administrateur</h1>
         <Button variant="outline" onClick={handleLogout}>
@@ -125,26 +131,7 @@ export function AdminDashboard() {
 
         <TabsContent value="users">
           <Card className="p-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>User ID</TableHead>
-                  <TableHead>Rôle</TableHead>
-                  <TableHead>Créé le</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users?.map(user => <TableRow key={user.id}>
-                    <TableCell>{user.id}</TableCell>
-                    <TableCell>{user.full_name}</TableCell>
-                    <TableCell>{user.user_id}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                  </TableRow>)}
-              </TableBody>
-            </Table>
+            <UsersManager users={filteredUsers} searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
           </Card>
         </TabsContent>
 
@@ -287,5 +274,6 @@ export function AdminDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>;
+    </div>
+  );
 }
