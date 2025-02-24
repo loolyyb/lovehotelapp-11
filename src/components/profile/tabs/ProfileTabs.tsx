@@ -12,9 +12,10 @@ import { useState } from "react";
 interface ProfileTabsProps {
   profile: any;
   onUpdate: (updates: any) => Promise<void>;
+  isSaving?: boolean;
 }
 
-export function ProfileTabs({ profile, onUpdate }: ProfileTabsProps) {
+export function ProfileTabs({ profile, onUpdate, isSaving = false }: ProfileTabsProps) {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("account");
 
