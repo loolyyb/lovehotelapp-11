@@ -3,7 +3,7 @@ export interface AdminUser {
   id: string;
   full_name: string | null;
   user_id: string | null;
-  email: string | null;
+  email?: string | null;  // Made email optional with ?
   role: "user" | "moderator" | "admin";
   created_at: string;
   account_status: string;
