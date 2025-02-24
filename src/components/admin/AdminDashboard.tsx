@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuthStore } from "@/stores/adminAuthStore";
@@ -16,10 +17,8 @@ import { UsersManager } from "./users/UsersManager";
 import { StatsContent } from "./dashboard/StatsContent";
 import { Input } from "../ui/input";
 import { AdminUser } from "@/types/admin.types";
-import type { Database } from "@/integrations/supabase/types/database.types";
 import { AnnouncementsManager } from "./announcements/AnnouncementsManager";
-
-type Profile = Database['public']['Tables']['profiles']['Row'];
+import { MessagesManager } from "./messages/MessagesManager";
 
 export function AdminDashboard() {
   const setAdminAuthenticated = useAdminAuthStore(state => state.setAdminAuthenticated);
@@ -129,6 +128,10 @@ export function AdminDashboard() {
           <Card className="p-6">
             <AnnouncementsManager />
           </Card>
+        </TabsContent>
+
+        <TabsContent value="messages">
+          <MessagesManager />
         </TabsContent>
 
         <TabsContent value="events">
