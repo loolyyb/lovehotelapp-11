@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
@@ -32,7 +33,7 @@ export const FeatureCard = ({
               
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
-                  <Icon className="w-8 h-8 text-burgundy" />
+                  <Icon className="w-8 h-8 text-[#f3ebad]" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
