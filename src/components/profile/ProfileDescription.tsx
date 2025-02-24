@@ -9,24 +9,17 @@ interface ProfileDescriptionProps {
 }
 
 export function ProfileDescription({ initialDescription, onSave }: ProfileDescriptionProps) {
-  const [description, setDescription] = useState(initialDescription ?? "");
-  const [localDescription, setLocalDescription] = useState(description);
+  const [localDescription, setLocalDescription] = useState(initialDescription ?? "");
 
   useEffect(() => {
-    setDescription(initialDescription ?? "");
     setLocalDescription(initialDescription ?? "");
   }, [initialDescription]);
-
-  useEffect(() => {
-    if (localDescription !== description) {
-      onSave(localDescription);
-    }
-  }, [localDescription, description, onSave]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     if (newValue.length <= 300) {
       setLocalDescription(newValue);
+      onSave(newValue);
     }
   };
 

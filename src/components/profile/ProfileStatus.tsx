@@ -2,7 +2,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { User, Users } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 
 interface ProfileStatusProps {
@@ -17,14 +16,9 @@ export function ProfileStatus({ status, onStatusChange }: ProfileStatusProps) {
     setLocalStatus(status ?? undefined);
   }, [status]);
 
-  useEffect(() => {
-    if (localStatus !== status) {
-      onStatusChange(localStatus ?? "");
-    }
-  }, [localStatus, status, onStatusChange]);
-
   const handleStatusChange = (value: string) => {
     setLocalStatus(value);
+    onStatusChange(value);
   };
 
   return (
