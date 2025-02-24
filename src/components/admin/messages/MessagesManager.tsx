@@ -20,7 +20,6 @@ export function MessagesManager() {
   const { data: messages, isLoading } = useQuery({
     queryKey: ["admin-messages"],
     queryFn: async () => {
-      // Afficher la requête pour le débogage
       console.log("Fetching messages...");
       
       const { data, error } = await supabase
@@ -31,7 +30,7 @@ export function MessagesManager() {
           created_at,
           read_at,
           sender_id,
-          profiles:profiles(username, full_name)
+          sender:profiles!messages_sender_id_fkey(username, full_name)
         `)
         .order("created_at", { ascending: false });
 
@@ -40,14 +39,11 @@ export function MessagesManager() {
         throw error;
       }
       
-      // Afficher les données reçues pour le débogage
       console.log("Messages data:", data);
-      
       return data;
     },
   });
 
-  // Afficher l'état du chargement et les données pour le débogage
   console.log("isLoading:", isLoading);
   console.log("messages:", messages);
 
@@ -104,7 +100,7 @@ export function MessagesManager() {
                       })}
                     </TableCell>
                     <TableCell className="font-montserrat text-[#f3ebad]">
-                      {message.profiles?.username || message.profiles?.full_name || 'Utilisateur inconnu'}
+                      {message.sender?.username || message.sender?.full_name || 'Utilisateur inconnu'}
                     </TableCell>
                     <TableCell className="font-montserrat text-[#f3ebad]/70">
                       {message.content}
