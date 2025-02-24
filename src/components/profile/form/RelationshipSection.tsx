@@ -1,9 +1,10 @@
+
 import { ProfileRelationshipType } from "../ProfileRelationshipType";
 import { WidgetContainer } from "./WidgetContainer";
 
 interface RelationshipSectionProps {
   relationshipType: string[] | null;
-  onUpdate: (updates: any) => Promise<void>;
+  onUpdate: (updates: any) => void;  // Changed from Promise<void> to void
 }
 
 export function RelationshipSection({ relationshipType, onUpdate }: RelationshipSectionProps) {
