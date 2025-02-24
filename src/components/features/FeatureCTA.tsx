@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { AlertService } from "@/services/AlertService";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -33,18 +35,45 @@ export const FeatureCTA = () => {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      const subject = encodeURIComponent("Message from Features Page");
-      const body = encodeURIComponent(`Name: ${data.name}\nEmail: ${data.email}\n\nMessage:\n${data.message}`);
-      window.location.href = `mailto:loolyyb@gmail.com?subject=${subject}&body=${body}`;
       toast({
-        title: "Message préparé !",
-        description: "Votre client mail va s'ouvrir avec le message pré-rempli."
+        title: "Envoi en cours",
+        description: "Votre message est en cours d'envoi..."
       });
+
+      const { error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: ["loolyyb@gmail.com"],
+          subject: "Nouveau message depuis la page Features",
+          html: `
+            <h2>Nouveau message de contact</h2>
+            <p><strong>Nom:</strong> ${data.name}</p>
+            <p><strong>Email:</strong> ${data.email}</p>
+            <h3>Message:</h3>
+            <p>${data.message.replace(/\n/g, '<br/>')}</p>
+          `
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      toast({
+        title: "Message envoyé !",
+        description: "Votre message a été envoyé avec succès. Nous vous répondrons dans les plus brefs délais."
+      });
+      
       form.reset();
     } catch (error) {
+      console.error('Erreur lors de l\'envoi du message:', error);
+      AlertService.captureException(error as Error, {
+        context: 'FeatureCTA.onSubmit',
+        formData: data
+      });
+      
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de la préparation du message.",
+        description: "Une erreur est survenue lors de l'envoi du message. Veuillez réessayer plus tard.",
         variant: "destructive"
       });
     }
@@ -113,7 +142,7 @@ export const FeatureCTA = () => {
                     <Textarea 
                       placeholder="Votre message" 
                       {...field}
-                      className="min-h-[120px] border-white/20 placeholder:text-gray-500 bg-zinc-800"
+                      className="min-h-[120px] bg-white/90 border-white/20 placeholder:text-gray-500"
                     />
                   </FormControl>
                   <FormMessage className="text-[#F3EBAD]" />
