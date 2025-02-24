@@ -24,7 +24,7 @@ export function MessagesManager() {
         .from("messages")
         .select(`
           *,
-          profiles!sender_id(username, full_name)
+          profiles(username, full_name)
         `)
         .order("created_at", { ascending: false });
 
@@ -80,7 +80,7 @@ export function MessagesManager() {
                   </TableCell>
                 </TableRow>
               ) : messages && messages.length > 0 ? (
-                messages.map((message) => (
+                messages.map((message: any) => (
                   <TableRow
                     key={message.id}
                     className="border-b border-[#f3ebad]/10 hover:bg-[#f3ebad]/5 transition-colors"
