@@ -13,9 +13,10 @@ interface ProfileTabsProps {
   profile: any;
   onUpdate: (updates: any) => Promise<void>;
   isSaving?: boolean;
+  setHasUnsavedChanges: (value: boolean) => void;
 }
 
-export function ProfileTabs({ profile, onUpdate, isSaving = false }: ProfileTabsProps) {
+export function ProfileTabs({ profile, onUpdate, isSaving = false, setHasUnsavedChanges }: ProfileTabsProps) {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("account");
 
@@ -54,7 +55,7 @@ export function ProfileTabs({ profile, onUpdate, isSaving = false }: ProfileTabs
         </div>
 
         <TabsContent value="account">
-          <AccountTab profile={profile} onUpdate={onUpdate} />
+          <AccountTab profile={profile} onUpdate={onUpdate} setHasUnsavedChanges={setHasUnsavedChanges} />
         </TabsContent>
 
         <TabsContent value="fidelity">
@@ -88,7 +89,7 @@ export function ProfileTabs({ profile, onUpdate, isSaving = false }: ProfileTabs
       </TabsList>
 
       <TabsContent value="account">
-        <AccountTab profile={profile} onUpdate={onUpdate} />
+        <AccountTab profile={profile} onUpdate={onUpdate} setHasUnsavedChanges={setHasUnsavedChanges} />
       </TabsContent>
 
       <TabsContent value="fidelity">

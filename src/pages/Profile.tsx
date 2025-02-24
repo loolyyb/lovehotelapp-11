@@ -4,7 +4,7 @@ import { useProfileData } from "@/components/profile/hooks/useProfileData";
 import { ProfileLoadingState } from "@/components/profile/loading/ProfileLoadingState";
 import { ProfileContainer } from "@/components/profile/ProfileContainer";
 import { useToast } from "@/hooks/use-toast";
-import { useBeforeUnload, useLocation, useNavigate } from "react-router-dom";
+import { useBlocker, useBeforeUnload } from "react-router-dom";
 
 export default function Profile() {
   const { profile, loading, updateProfile } = useProfileData();
@@ -12,36 +12,33 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const location = useLocation();
+  
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasUnsavedChanges && currentLocation.pathname !== nextLocation.pathname
+  );
 
-  // Écouter les changements de route
   useEffect(() => {
-    const unblock = navigate((nextLocation) => {
-      if (hasUnsavedChanges && nextLocation.pathname !== location.pathname) {
-        const userConfirmed = window.confirm("Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter cette page ?");
-        if (!userConfirmed) {
-          return false;
-        }
+    if (blocker.state === "blocked" && hasUnsavedChanges) {
+      const leave = window.confirm(
+        "Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter cette page ?"
+      );
+      if (leave) {
         setHasUnsavedChanges(false);
+        blocker.proceed?.();
+      } else {
+        blocker.reset?.();
       }
-      return true;
-    });
+    }
+  }, [blocker, hasUnsavedChanges]);
 
-    return () => {
-      unblock();
-    };
-  }, [hasUnsavedChanges, navigate, location]);
-
-  // Avertissement avant de fermer la fenêtre
   useBeforeUnload(
-    (event) => {
-      if (hasUnsavedChanges) {
-        event.preventDefault();
-        return "Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter cette page ?";
-      }
-    },
-    [hasUnsavedChanges]
+    hasUnsavedChanges
+      ? (event) => {
+          event.preventDefault();
+          event.returnValue = "Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter cette page ?";
+        }
+      : undefined
   );
 
   const handleUpdate = async (updates: any) => {

@@ -7,9 +7,10 @@ interface ProfileContainerProps {
   profile: any;
   onUpdate: (updates: any) => Promise<void>;
   isSaving?: boolean;
+  setHasUnsavedChanges: (value: boolean) => void;
 }
 
-export function ProfileContainer({ profile, onUpdate, isSaving = false }: ProfileContainerProps) {
+export function ProfileContainer({ profile, onUpdate, isSaving = false, setHasUnsavedChanges }: ProfileContainerProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream">
       <div className="container mx-auto px-4 py-4">
@@ -25,7 +26,12 @@ export function ProfileContainer({ profile, onUpdate, isSaving = false }: Profil
             relationshipType={profile?.relationship_type}
           />
 
-          <ProfileTabs profile={profile} onUpdate={onUpdate} isSaving={isSaving} />
+          <ProfileTabs 
+            profile={profile} 
+            onUpdate={onUpdate} 
+            isSaving={isSaving} 
+            setHasUnsavedChanges={setHasUnsavedChanges} 
+          />
         </Card>
       </div>
     </div>
