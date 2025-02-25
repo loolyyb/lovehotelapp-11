@@ -44,7 +44,7 @@ export const useMessageRetrieval = ({
       console.log("Fetched messages:", messages);
       setMessages(messages || []);
 
-      // Ajout d'un délai avant de marquer les messages comme lus
+      // Add delay before marking messages as read
       if (messages?.length > 0) {
         setTimeout(() => markMessagesAsRead(), 1000);
       }
@@ -52,8 +52,8 @@ export const useMessageRetrieval = ({
       console.error("Error in fetchMessages:", error);
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les messages",
+        title: "Error",
+        description: "Could not load messages",
       });
     }
   };
@@ -67,7 +67,7 @@ export const useMessageRetrieval = ({
     try {
       console.log("Marking messages as read for profile:", currentProfileId);
       
-      // D'abord, vérifions s'il y a des messages non lus
+      // First check if there are any unread messages
       const { data: unreadMessages, error: checkError } = await supabase
         .from('messages')
         .select('id')
