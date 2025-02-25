@@ -19,7 +19,7 @@ export const useMessageRetrieval = ({
       console.log("Fetching messages for conversation:", conversationId);
       const { data: messages, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('*, read_at') // Explicitly select read_at
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 

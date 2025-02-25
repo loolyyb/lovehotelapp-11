@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 interface UseMessageSubscriptionProps {
@@ -16,14 +17,22 @@ export const useMessageSubscription = ({
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen to all events
           schema: 'public',
           table: 'messages',
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          console.log("New message received:", payload);
-          setMessages(current => [...current, payload.new]);
+          console.log("Message change received:", payload);
+          if (payload.eventType === 'INSERT') {
+            setMessages(current => [...current, payload.new]);
+          } else if (payload.eventType === 'UPDATE') {
+            setMessages(current => 
+              current.map(msg => 
+                msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
+              )
+            );
+          }
         }
       )
       .subscribe();

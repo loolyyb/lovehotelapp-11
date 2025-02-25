@@ -1,9 +1,14 @@
 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Check, CheckCheck } from "lucide-react";
 
 interface MessageBubbleProps {
-  message: any;
+  message: {
+    content: string;
+    created_at: string;
+    read_at: string | null;
+  };
   isCurrentUser: boolean;
 }
 
@@ -26,11 +31,22 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
           <p className="break-words whitespace-pre-wrap">{message.content}</p>
         )}
         <div
-          className={`text-xs mt-1 ${
+          className={`flex items-center gap-1 mt-1 ${
             isCurrentUser ? 'text-[#f3ebad]/70' : 'text-[#f3ebad]/70'
           }`}
         >
-          {format(new Date(message.created_at), 'HH:mm', { locale: fr })}
+          <span className="text-xs">
+            {format(new Date(message.created_at), 'HH:mm', { locale: fr })}
+          </span>
+          {isCurrentUser && (
+            <span className="ml-1">
+              {message.read_at ? (
+                <CheckCheck className="w-4 h-4" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+            </span>
+          )}
         </div>
       </div>
     </div>
