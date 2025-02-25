@@ -3,14 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface UseMessageRetrievalProps {
   conversationId: string;
-  currentUserId: string | null;
+  currentProfileId: string | null;
   setMessages: React.Dispatch<React.SetStateAction<any[]>>;
   toast: any;
 }
 
 export const useMessageRetrieval = ({ 
   conversationId, 
-  currentUserId, 
+  currentProfileId, 
   setMessages, 
   toast 
 }: UseMessageRetrievalProps) => {
@@ -19,7 +19,14 @@ export const useMessageRetrieval = ({
       console.log("Fetching messages for conversation:", conversationId);
       const { data: messages, error } = await supabase
         .from('messages')
-        .select('*, read_at') // Explicitly select read_at
+        .select(`
+          *,
+          sender:sender_id (
+            id,
+            username,
+            full_name
+          )
+        `)
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
@@ -44,18 +51,18 @@ export const useMessageRetrieval = ({
   };
 
   const markMessagesAsRead = async () => {
-    if (!currentUserId) {
-      console.log("No current user ID, skipping mark as read");
+    if (!currentProfileId) {
+      console.log("No current profile ID, skipping mark as read");
       return;
     }
 
     try {
-      console.log("Marking messages as read for user:", currentUserId);
+      console.log("Marking messages as read for profile:", currentProfileId);
       const { error } = await supabase
         .from('messages')
         .update({ read_at: new Date().toISOString() })
         .eq('conversation_id', conversationId)
-        .neq('sender_id', currentUserId)
+        .neq('sender_id', currentProfileId)
         .is('read_at', null);
 
       if (error) {

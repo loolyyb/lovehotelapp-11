@@ -8,6 +8,7 @@ interface MessageBubbleProps {
     content: string;
     created_at: string;
     read_at: string | null;
+    sender_id: string;
   };
   isCurrentUser: boolean;
 }
@@ -32,7 +33,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
         )}
         <div
           className={`flex items-center gap-1 mt-1 ${
-            isCurrentUser ? 'text-[#f3ebad]/70' : 'text-[#f3ebad]/70'
+            isCurrentUser ? 'text-[#f3ebad]' : 'text-[#f3ebad]/70'
           }`}
         >
           <span className="text-xs">
@@ -41,9 +42,9 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
           {isCurrentUser && (
             <span className="ml-1">
               {message.read_at ? (
-                <CheckCheck className="w-4 h-4" />
+                <CheckCheck className="w-4 h-4 text-green-400" />
               ) : (
-                <Check className="w-4 h-4" />
+                <Check className="w-4 h-4 text-[#f3ebad]/70" />
               )}
             </span>
           )}

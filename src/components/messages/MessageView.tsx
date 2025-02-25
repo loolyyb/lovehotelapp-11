@@ -17,7 +17,7 @@ interface MessageViewProps {
 
 export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const [messages, setMessages] = useState<any[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +28,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const { getCurrentUser } = useConversationInit({
     conversationId,
     setMessages,
-    setCurrentUserId,
+    setCurrentProfileId,
     setOtherUser,
     setIsLoading,
   });
@@ -40,13 +40,13 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
 
   const { fetchMessages, markMessagesAsRead } = useMessageRetrieval({
     conversationId,
-    currentUserId,
+    currentProfileId,
     setMessages,
     toast,
   });
 
   const { sendMessage } = useMessageHandlers({
-    currentUserId,
+    currentProfileId,
     conversationId,
     newMessage,
     setNewMessage,
@@ -64,7 +64,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       
       if (!mounted) return;
       
-      if (currentUserId) {
+      if (currentProfileId) {
         await fetchMessages();
       }
       firstLoad.current = false;
@@ -78,7 +78,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   }, [conversationId]);
 
   useEffect(() => {
-    if (!currentUserId) return;
+    if (!currentProfileId) return;
 
     const unsubscribe = subscribeToNewMessages();
 
@@ -90,7 +90,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     return () => {
       unsubscribe();
     };
-  }, [currentUserId, conversationId, messages.length]);
+  }, [currentProfileId, conversationId, messages.length]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -100,14 +100,6 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       return () => clearTimeout(timeout);
     }
   }, [messages]);
-
-  if (!conversationId) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-[#f3ebad]/70">
-        <p>Sélectionnez une conversation pour commencer</p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col h-full bg-[#40192C] backdrop-blur-sm border-[0.5px] border-[#f3ebad]/30">
@@ -136,7 +128,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
               <MessageBubble
                 key={message.id}
                 message={message}
-                isCurrentUser={message.sender_id === currentUserId}
+                isCurrentUser={message.sender_id === currentProfileId}
               />
             ))}
             <div ref={messagesEndRef} />
