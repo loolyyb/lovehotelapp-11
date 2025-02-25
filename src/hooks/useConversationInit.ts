@@ -1,11 +1,10 @@
 
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface UseConversationInitProps {
   conversationId: string;
   setMessages: React.Dispatch<React.SetStateAction<any[]>>;
-  setCurrentUserId: React.Dispatch<React.SetStateAction<string | null>>;
+  setCurrentProfileId: React.Dispatch<React.SetStateAction<string | null>>;  // Ajout de cette prop
   setOtherUser: React.Dispatch<React.SetStateAction<any>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -13,7 +12,7 @@ interface UseConversationInitProps {
 export const useConversationInit = ({
   conversationId,
   setMessages,
-  setCurrentUserId,
+  setCurrentProfileId,
   setOtherUser,
   setIsLoading,
 }: UseConversationInitProps) => {
@@ -31,7 +30,15 @@ export const useConversationInit = ({
         return;
       }
 
-      setCurrentUserId(user.id);
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profile) {
+        setCurrentProfileId(profile.id);
+      }
 
       // Get initial messages directly to show something quickly
       const { data: initialMessages } = await supabase
@@ -46,23 +53,15 @@ export const useConversationInit = ({
       }
 
       // Fetch user profile and conversation details in parallel
-      const [{ data: profile }, { data: conversation }] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .single(),
-        
-        supabase
-          .from('conversations')
-          .select(`
-            *,
-            user1:profiles!conversations_user1_profile_fkey(id, username, full_name, avatar_url),
-            user2:profiles!conversations_user2_profile_fkey(id, username, full_name, avatar_url)
-          `)
-          .eq('id', conversationId)
-          .single()
-      ]);
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select(`
+          *,
+          user1:profiles!conversations_user1_profile_fkey(id, username, full_name, avatar_url),
+          user2:profiles!conversations_user2_profile_fkey(id, username, full_name, avatar_url)
+        `)
+        .eq('id', conversationId)
+        .single();
 
       if (conversation && profile) {
         const otherUserData = conversation.user1.id === profile.id 
