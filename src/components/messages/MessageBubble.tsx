@@ -42,9 +42,9 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
           {isCurrentUser && (
             <span className="ml-1">
               {message.read_at ? (
-                <CheckCheck className="w-4 h-4 text-green-400" />
+                <CheckCheck className="w-4 h-4 text-emerald-400" />
               ) : (
-                <Check className="w-4 h-4 text-[#f3ebad]/70" />
+                <Check className="w-4 h-4 text-[#f3ebad]" />
               )}
             </span>
           )}

@@ -20,8 +20,14 @@ export const useMessageRetrieval = ({
       const { data: messages, error } = await supabase
         .from('messages')
         .select(`
-          *,
-          sender:sender_id (
+          id,
+          content,
+          created_at,
+          read_at,
+          sender_id,
+          media_type,
+          media_url,
+          sender:profiles!messages_sender_id_fkey (
             id,
             username,
             full_name
@@ -37,8 +43,10 @@ export const useMessageRetrieval = ({
       
       console.log("Fetched messages:", messages);
       setMessages(messages || []);
+
+      // Ajout d'un délai avant de marquer les messages comme lus
       if (messages?.length > 0) {
-        markMessagesAsRead();
+        setTimeout(() => markMessagesAsRead(), 1000);
       }
     } catch (error: any) {
       console.error("Error in fetchMessages:", error);
@@ -58,16 +66,41 @@ export const useMessageRetrieval = ({
 
     try {
       console.log("Marking messages as read for profile:", currentProfileId);
-      const { error } = await supabase
+      
+      // D'abord, vérifions s'il y a des messages non lus
+      const { data: unreadMessages, error: checkError } = await supabase
         .from('messages')
-        .update({ read_at: new Date().toISOString() })
+        .select('id')
         .eq('conversation_id', conversationId)
         .neq('sender_id', currentProfileId)
         .is('read_at', null);
 
-      if (error) {
-        console.error("Error marking messages as read:", error);
+      if (checkError) {
+        throw checkError;
       }
+
+      if (!unreadMessages || unreadMessages.length === 0) {
+        console.log("No unread messages to mark");
+        return;
+      }
+
+      console.log(`Found ${unreadMessages.length} unread messages`);
+
+      const { error: updateError } = await supabase
+        .from('messages')
+        .update({ 
+          read_at: new Date().toISOString()
+        })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', currentProfileId)
+        .is('read_at', null);
+
+      if (updateError) {
+        console.error("Error marking messages as read:", updateError);
+        throw updateError;
+      }
+
+      console.log("Successfully marked messages as read");
     } catch (error) {
       console.error("Error in markMessagesAsRead:", error);
     }
