@@ -1,10 +1,11 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Announcement } from "./Announcement";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useLogger } from "@/hooks/useLogger";
+import debounce from 'lodash/debounce';
 
 interface AnnouncementType {
   id: string;
@@ -22,8 +23,15 @@ export function AnnouncementsList() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const logger = useLogger('AnnouncementsList');
+  const lastFetchRef = useRef<number>(0);
 
-  const fetchAnnouncements = async () => {
+  const fetchAnnouncements = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastFetchRef.current < 1000) {
+      return; // Debounce fetch requests
+    }
+    lastFetchRef.current = now;
+
     try {
       setError(null);
       logger.info('Début de la récupération des annonces');
@@ -56,7 +64,6 @@ export function AnnouncementsList() {
       }
 
       const transformedData: AnnouncementType[] = rawData.map(announcement => {
-        // Utiliser username comme fallback si full_name n'existe pas
         const displayName = announcement.profiles?.full_name || 
                           announcement.profiles?.username || 
                           "Utilisateur inconnu";
@@ -72,7 +79,16 @@ export function AnnouncementsList() {
         };
       });
 
-      setAnnouncements(transformedData);
+      setAnnouncements(prev => {
+        // Compare les nouveaux et anciens IDs pour éviter les re-rendus inutiles
+        const prevIds = new Set(prev.map(a => a.id));
+        const newIds = new Set(transformedData.map(a => a.id));
+        if (prevIds.size === newIds.size && 
+            [...prevIds].every(id => newIds.has(id))) {
+          return prev;
+        }
+        return transformedData;
+      });
       setError(null);
     } catch (error) {
       logger.error('Erreur lors de la récupération des annonces:', { error });
@@ -86,12 +102,17 @@ export function AnnouncementsList() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Debounced version of fetchAnnouncements
+  const debouncedFetch = useCallback(
+    debounce(fetchAnnouncements, 1000, { leading: true, trailing: true }),
+    [fetchAnnouncements]
+  );
 
   useEffect(() => {
     fetchAnnouncements();
 
-    let timeoutId: NodeJS.Timeout;
     const channel = supabase
       .channel('announcements-changes')
       .on(
@@ -101,22 +122,14 @@ export function AnnouncementsList() {
           schema: 'public',
           table: 'announcements'
         },
-        () => {
-          clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => {
-            fetchAnnouncements();
-          }, 1000);
-        }
+        debouncedFetch
       )
       .subscribe((status) => {
         logger.info('Statut de la souscription:', { status });
       });
 
     return () => {
-      clearTimeout(timeoutId);
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      channel.unsubscribe();
     };
   }, []);
 

@@ -1,7 +1,8 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
+import debounce from 'lodash/debounce';
 
 interface UseMessageHandlersProps {
   currentUserId: string | null;
@@ -18,15 +19,17 @@ export const useMessageHandlers = ({
   setNewMessage,
   toast 
 }: UseMessageHandlersProps) => {
-  const sendMessage = async (e: React.FormEvent) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const sendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUserId || !newMessage.trim()) {
-      console.error("No current user ID or empty message");
+    if (!currentUserId || !newMessage.trim() || isProcessing) {
       return;
     }
 
+    setIsProcessing(true);
+
     try {
-      // First, get the profile id for the current user
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
@@ -34,27 +37,23 @@ export const useMessageHandlers = ({
         .single();
 
       if (profileError) {
-        console.error("Error fetching profile:", profileError);
         throw profileError;
       }
 
       if (!profile) {
-        console.error("No profile found for user:", currentUserId);
         throw new Error("No profile found");
       }
 
-      console.log("Sending message in conversation:", conversationId);
       const { error } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
-          sender_id: profile.id, // Using profile.id instead of currentUserId
+          sender_id: profile.id,
           content: newMessage.trim(),
           media_type: newMessage.startsWith('[Image]') ? 'image' : 'text'
         });
 
       if (error) {
-        console.error("Error sending message:", error);
         throw error;
       }
       
@@ -66,8 +65,15 @@ export const useMessageHandlers = ({
         title: "Erreur",
         description: "Impossible d'envoyer le message",
       });
+    } finally {
+      setIsProcessing(false);
     }
-  };
+  }, [currentUserId, conversationId, newMessage, isProcessing]);
 
-  return { sendMessage };
+  const debouncedSendMessage = useCallback(
+    debounce((e: React.FormEvent) => sendMessage(e), 500, { leading: true, trailing: false }),
+    [sendMessage]
+  );
+
+  return { sendMessage: debouncedSendMessage };
 };
