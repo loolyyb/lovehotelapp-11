@@ -27,7 +27,11 @@ export function StatsContent({ stats }: { stats: Partial<AdminStats> }) {
   }).length || 0;
 
   // Calculer le nombre total de messages
-  const totalMessagesCount = stats.messages?.length || 0;
+  const totalMessagesCount = Array.isArray(stats.messages) ? stats.messages.length : 0;
+
+  // Vérification supplémentaire pour le débogage
+  console.log("Stats messages:", stats.messages);
+  console.log("Total messages count:", totalMessagesCount);
 
   const StatCard = ({ 
     icon: Icon, 
