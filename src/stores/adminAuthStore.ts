@@ -18,7 +18,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
     }),
     {
       name: 'admin-auth-storage', // nom unique pour le stockage
-      getStorage: () => localStorage, // utiliser localStorage comme moteur de stockage
+      storage: localStorage, // utiliser localStorage comme moteur de stockage
     }
   )
 );
