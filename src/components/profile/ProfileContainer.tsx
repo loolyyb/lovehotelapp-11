@@ -24,6 +24,7 @@ export function ProfileContainer({ profile, onUpdate, isSaving = false, setHasUn
             sexualOrientation={profile?.sexual_orientation}
             seeking={profile?.seeking}
             relationshipType={profile?.relationship_type}
+            status={profile?.status}
           />
 
           <ProfileTabs 

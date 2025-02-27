@@ -1,3 +1,4 @@
+
 import { motion } from "framer-motion";
 import { ProfileAvatar } from "./header/ProfileAvatar";
 import { ProfileInfo } from "./header/ProfileInfo";
@@ -11,6 +12,7 @@ interface ProfileHeaderProps {
   sexualOrientation?: string | null;
   seeking?: string[] | null;
   relationshipType?: string[] | null;
+  status?: string | null;
 }
 
 export function ProfileHeader({ 
@@ -21,7 +23,8 @@ export function ProfileHeader({
   onAvatarChange,
   sexualOrientation,
   seeking,
-  relationshipType
+  relationshipType,
+  status
 }: ProfileHeaderProps) {
   return (
     <motion.div 
@@ -43,6 +46,7 @@ export function ProfileHeader({
         sexualOrientation={sexualOrientation}
         seeking={seeking}
         relationshipType={relationshipType}
+        status={status}
       />
     </motion.div>
   );
