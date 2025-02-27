@@ -3,23 +3,35 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export const MESSAGES_PER_PAGE = 10;
 
 export function useMessagesManagement() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const { toast } = useToast();
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["admin-messages", currentPage],
+    queryKey: ["admin-messages", currentPage, debouncedSearchTerm],
     queryFn: async () => {
-      console.log("Fetching messages for page:", currentPage);
+      console.log("Fetching messages for page:", currentPage, "search:", debouncedSearchTerm);
       
-      const { count } = await supabase
+      // Build the base query to get total count
+      let countQuery = supabase
         .from("messages")
         .select("*", { count: "exact", head: true });
+        
+      // Apply search filter if provided
+      if (debouncedSearchTerm) {
+        countQuery = countQuery.ilike('content', `%${debouncedSearchTerm}%`);
+      }
+      
+      const { count } = await countQuery;
 
-      const { data: messages, error } = await supabase
+      // Build the main query
+      let messagesQuery = supabase
         .from("messages")
         .select(`
           *,
@@ -31,8 +43,20 @@ export function useMessagesManagement() {
             receiver2:profiles!conversations_user2_id_fkey(username, full_name)
           )
         `)
-        .order("created_at", { ascending: false })
-        .range((currentPage - 1) * MESSAGES_PER_PAGE, currentPage * MESSAGES_PER_PAGE - 1);
+        .order("created_at", { ascending: false });
+      
+      // Apply search filter if provided
+      if (debouncedSearchTerm) {
+        messagesQuery = messagesQuery.ilike('content', `%${debouncedSearchTerm}%`);
+      }
+      
+      // Apply pagination
+      messagesQuery = messagesQuery.range(
+        (currentPage - 1) * MESSAGES_PER_PAGE, 
+        currentPage * MESSAGES_PER_PAGE - 1
+      );
+
+      const { data: messages, error } = await messagesQuery;
 
       if (error) {
         console.error("Error fetching messages:", error);
@@ -113,6 +137,16 @@ export function useMessagesManagement() {
   const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / MESSAGES_PER_PAGE);
 
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    setCurrentPage(1);
+  };
+
   return {
     messages,
     totalCount,
@@ -121,6 +155,9 @@ export function useMessagesManagement() {
     setCurrentPage,
     isLoading,
     markAsRead,
-    getConversationMessages
+    getConversationMessages,
+    searchTerm,
+    setSearchTerm: handleSearchChange,
+    clearSearch
   };
 }
