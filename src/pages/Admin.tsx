@@ -49,10 +49,9 @@ export default function Admin() {
         return;
       }
 
-      // Si l'utilisateur n'est pas authentifié en tant qu'admin, afficher le contrôle de mot de passe
-      if (!isAdminAuthenticated) {
-        console.log("Admin not authenticated, showing password check");
-      }
+      // L'utilisateur a le rôle admin, alors nous n'avons plus besoin de vérifier
+      // l'état isAdminAuthenticated car il sera persisté via localStorage
+      console.log("Admin role verified. Auth state:", isAdminAuthenticated);
     } catch (error) {
       console.error('Error checking admin auth:', error);
       setAdminAuthenticated(false);
