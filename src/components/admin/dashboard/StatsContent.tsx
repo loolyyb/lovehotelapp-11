@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { AdminStats } from "@/types/admin.types";
 import { ChartBarIcon, UsersIcon, MessageSquareIcon, CalendarIcon, UserIcon, ShieldCheckIcon, ImageIcon, FileTextIcon, UserCheckIcon, TrendingUpIcon, MessageCircleIcon, CalendarDaysIcon } from "lucide-react";
@@ -19,6 +20,14 @@ export function StatsContent({ stats }: { stats: Partial<AdminStats> }) {
     }
     return acc;
   }, []) || [];
+
+  // Calculer le nombre de conversations actives (avec au moins un message)
+  const activeConversationsCount = stats.conversations?.filter(conversation => {
+    return stats.messages?.some(message => message.conversation_id === conversation.id);
+  }).length || 0;
+
+  // Calculer le nombre total de messages
+  const totalMessagesCount = stats.messages?.length || 0;
 
   const StatCard = ({ 
     icon: Icon, 
@@ -122,7 +131,7 @@ export function StatsContent({ stats }: { stats: Partial<AdminStats> }) {
       {/* Section Messages */}
       <div>
         <h3 className="text-lg font-cormorant font-semibold mb-4 text-[#f3ebad]">Statistiques Messages</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard
             icon={MessageSquareIcon}
             title="Messages Aujourd'hui"
@@ -136,10 +145,16 @@ export function StatsContent({ stats }: { stats: Partial<AdminStats> }) {
             value={stats.conversations?.length || 0}
           />
           <StatCard
+            icon={MessageCircleIcon}
+            title="Conversations Actives"
+            value={activeConversationsCount}
+            trend={`${Math.round((activeConversationsCount / (stats.conversations?.length || 1)) * 100)}% du total`}
+          />
+          <StatCard
             icon={TrendingUpIcon}
-            title="Messages cette semaine"
-            value={stats.messages?.filter(m => new Date(m.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length || 0}
-            trend="+23%"
+            title="Total Messages"
+            value={totalMessagesCount}
+            bgClass="bg-gradient-to-br from-[#CE0067]/70 to-[#40192C]"
           />
         </div>
       </div>
