@@ -42,12 +42,18 @@ export function MessagesManager() {
         .from("messages")
         .select("*", { count: "exact", head: true });
 
-      // Then get paginated data with sender information
+      // Then get paginated data with sender and conversation information
       const { data: messages, error } = await supabase
         .from("messages")
         .select(`
           *,
-          sender:profiles!messages_sender_id_fkey(username, full_name, avatar_url)
+          sender:profiles!messages_sender_id_fkey(username, full_name, avatar_url),
+          conversation:conversations!messages_conversation_id_fkey(
+            user1_id,
+            user2_id,
+            receiver1:profiles!conversations_user1_id_fkey(username, full_name),
+            receiver2:profiles!conversations_user2_id_fkey(username, full_name)
+          )
         `)
         .order("created_at", { ascending: false })
         .range((currentPage - 1) * MESSAGES_PER_PAGE, currentPage * MESSAGES_PER_PAGE - 1);
@@ -56,9 +62,27 @@ export function MessagesManager() {
         console.error("Error fetching messages:", error);
         throw error;
       }
+
+      // Process messages to determine recipient
+      const processedMessages = messages?.map(message => {
+        const conversation = message.conversation;
+        let recipient;
+
+        // Determine recipient based on sender_id
+        if (message.sender_id === conversation.user1_id) {
+          recipient = conversation.receiver2;
+        } else {
+          recipient = conversation.receiver1;
+        }
+
+        return {
+          ...message,
+          recipient
+        };
+      });
       
-      console.log("Messages data:", { messages, totalCount: count });
-      return { messages, totalCount: count };
+      console.log("Messages data:", { messages: processedMessages, totalCount: count });
+      return { messages: processedMessages, totalCount: count };
     },
   });
 
@@ -113,6 +137,7 @@ export function MessagesManager() {
               <TableRow className="border-b border-[#f3ebad]/10">
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">Date</TableHead>
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">De</TableHead>
+                <TableHead className="text-[#f3ebad]/70 font-montserrat">À</TableHead>
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">Message</TableHead>
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">État</TableHead>
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">Actions</TableHead>
@@ -122,7 +147,7 @@ export function MessagesManager() {
               {isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="text-center font-montserrat text-[#f3ebad]/50"
                   >
                     <motion.div
@@ -146,6 +171,9 @@ export function MessagesManager() {
                     </TableCell>
                     <TableCell className="font-montserrat text-[#f3ebad]">
                       {message.sender?.username || message.sender?.full_name || 'Utilisateur inconnu'}
+                    </TableCell>
+                    <TableCell className="font-montserrat text-[#f3ebad]">
+                      {message.recipient?.username || message.recipient?.full_name || 'Utilisateur inconnu'}
                     </TableCell>
                     <TableCell className="font-montserrat text-[#f3ebad]/70">
                       {message.content}
@@ -174,7 +202,7 @@ export function MessagesManager() {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="text-center font-montserrat text-[#f3ebad]/50"
                   >
                     Aucun message
