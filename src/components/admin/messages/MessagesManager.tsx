@@ -23,13 +23,16 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const MESSAGES_PER_PAGE = 10;
 
 export function MessagesManager() {
   const [currentPage, setCurrentPage] = useState(1);
+  const { toast } = useToast();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["admin-messages", currentPage],
     queryFn: async () => {
       console.log("Fetching messages for page:", currentPage);
@@ -39,12 +42,12 @@ export function MessagesManager() {
         .from("messages")
         .select("*", { count: "exact", head: true });
 
-      // Then get paginated data
+      // Then get paginated data with sender information
       const { data: messages, error } = await supabase
         .from("messages")
         .select(`
           *,
-          sender:sender_id(username, full_name)
+          sender:profiles!messages_sender_id_fkey(username, full_name, avatar_url)
         `)
         .order("created_at", { ascending: false })
         .range((currentPage - 1) * MESSAGES_PER_PAGE, currentPage * MESSAGES_PER_PAGE - 1);
@@ -58,6 +61,31 @@ export function MessagesManager() {
       return { messages, totalCount: count };
     },
   });
+
+  const markAsRead = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', messageId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Message marqué comme lu",
+        description: "Le statut du message a été mis à jour"
+      });
+      
+      refetch();
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de marquer le message comme lu"
+      });
+    }
+  };
 
   const messages = data?.messages || [];
   const totalCount = data?.totalCount || 0;
@@ -87,13 +115,14 @@ export function MessagesManager() {
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">De</TableHead>
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">Message</TableHead>
                 <TableHead className="text-[#f3ebad]/70 font-montserrat">État</TableHead>
+                <TableHead className="text-[#f3ebad]/70 font-montserrat">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-center font-montserrat text-[#f3ebad]/50"
                   >
                     <motion.div
@@ -128,12 +157,24 @@ export function MessagesManager() {
                         <span className="text-[#f3ebad]/50">Non lu</span>
                       )}
                     </TableCell>
+                    <TableCell>
+                      {!message.read_at && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="text-[#f3ebad]/70 hover:text-[#f3ebad] border-[#f3ebad]/30"
+                          onClick={() => markAsRead(message.id)}
+                        >
+                          Marquer comme lu
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={4}
+                    colSpan={5}
                     className="text-center font-montserrat text-[#f3ebad]/50"
                   >
                     Aucun message
