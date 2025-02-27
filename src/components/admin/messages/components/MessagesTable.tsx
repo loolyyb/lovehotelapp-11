@@ -14,6 +14,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ConversationDialog } from "./ConversationDialog";
+import { KeywordAlert } from "./KeywordAlert";
+import { detectSuspiciousKeywords } from "../utils/keywordDetection";
 
 interface MessagesTableProps {
   messages: any[];
@@ -54,6 +56,7 @@ export function MessagesTable({
             <TableHead className="text-[#f3ebad]/70 font-montserrat">À</TableHead>
             <TableHead className="text-[#f3ebad]/70 font-montserrat">Message</TableHead>
             <TableHead className="text-[#f3ebad]/70 font-montserrat">État</TableHead>
+            <TableHead className="text-[#f3ebad]/70 font-montserrat">Alerte</TableHead>
             <TableHead className="text-[#f3ebad]/70 font-montserrat">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -61,7 +64,7 @@ export function MessagesTable({
           {isLoading ? (
             <TableRow>
               <TableCell
-                colSpan={6}
+                colSpan={7}
                 className="text-center font-montserrat text-[#f3ebad]/50"
               >
                 <motion.div
@@ -73,59 +76,71 @@ export function MessagesTable({
               </TableCell>
             </TableRow>
           ) : messages.length > 0 ? (
-            messages.map((message: any) => (
-              <TableRow
-                key={message.id}
-                className="border-b border-[#f3ebad]/10 hover:bg-[#f3ebad]/5 transition-colors"
-              >
-                <TableCell className="font-montserrat text-[#f3ebad]/70">
-                  {format(new Date(message.created_at), "Pp", {
-                    locale: fr,
-                  })}
-                </TableCell>
-                <TableCell className="font-montserrat text-[#f3ebad]">
-                  {message.sender?.username || message.sender?.full_name || 'Utilisateur inconnu'}
-                </TableCell>
-                <TableCell className="font-montserrat text-[#f3ebad]">
-                  {message.recipient?.username || message.recipient?.full_name || 'Utilisateur inconnu'}
-                </TableCell>
-                <TableCell className="font-montserrat text-[#f3ebad]/70">
-                  {message.content}
-                </TableCell>
-                <TableCell className="font-montserrat text-[#f3ebad]/70">
-                  {message.read_at ? (
-                    <span className="text-green-400">Lu</span>
-                  ) : (
-                    <span className="text-[#f3ebad]/50">Non lu</span>
-                  )}
-                </TableCell>
-                <TableCell className="space-x-2">
-                  {!message.read_at && (
-                    <Button 
-                      variant="outline" 
+            messages.map((message: any) => {
+              const { detectedKeywords } = detectSuspiciousKeywords(message.content);
+              const hasSuspiciousContent = detectedKeywords.length > 0;
+              
+              return (
+                <TableRow
+                  key={message.id}
+                  className={`border-b border-[#f3ebad]/10 hover:bg-[#f3ebad]/5 transition-colors ${
+                    hasSuspiciousContent ? 'bg-amber-900/20' : ''
+                  }`}
+                >
+                  <TableCell className="font-montserrat text-[#f3ebad]/70">
+                    {format(new Date(message.created_at), "Pp", {
+                      locale: fr,
+                    })}
+                  </TableCell>
+                  <TableCell className="font-montserrat text-[#f3ebad]">
+                    {message.sender?.username || message.sender?.full_name || 'Utilisateur inconnu'}
+                  </TableCell>
+                  <TableCell className="font-montserrat text-[#f3ebad]">
+                    {message.recipient?.username || message.recipient?.full_name || 'Utilisateur inconnu'}
+                  </TableCell>
+                  <TableCell className="font-montserrat text-[#f3ebad]/70">
+                    {message.content}
+                  </TableCell>
+                  <TableCell className="font-montserrat text-[#f3ebad]/70">
+                    {message.read_at ? (
+                      <span className="text-green-400">Lu</span>
+                    ) : (
+                      <span className="text-[#f3ebad]/50">Non lu</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {hasSuspiciousContent && (
+                      <KeywordAlert detectedKeywords={detectedKeywords} />
+                    )}
+                  </TableCell>
+                  <TableCell className="space-x-2">
+                    {!message.read_at && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-[#f3ebad]/70 hover:text-[#f3ebad] border-[#f3ebad]/30 mb-1"
+                        onClick={() => markAsRead(message.id)}
+                      >
+                        Marquer comme lu
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
                       size="sm"
-                      className="text-[#f3ebad]/70 hover:text-[#f3ebad] border-[#f3ebad]/30 mb-1"
-                      onClick={() => markAsRead(message.id)}
+                      className="text-[#f3ebad]/70 hover:text-[#f3ebad] border-[#f3ebad]/30"
+                      onClick={() => handleViewConversation(message)}
                     >
-                      Marquer comme lu
+                      <MessageSquare className="h-4 w-4 mr-1" />
+                      Voir conversation
                     </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-[#f3ebad]/70 hover:text-[#f3ebad] border-[#f3ebad]/30"
-                    onClick={() => handleViewConversation(message)}
-                  >
-                    <MessageSquare className="h-4 w-4 mr-1" />
-                    Voir conversation
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
+                  </TableCell>
+                </TableRow>
+              );
+            })
           ) : (
             <TableRow>
               <TableCell
-                colSpan={6}
+                colSpan={7}
                 className="text-center font-montserrat text-[#f3ebad]/50"
               >
                 Aucun message
