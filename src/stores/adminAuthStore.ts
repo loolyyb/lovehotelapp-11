@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface AdminAuthState {
   isAdminAuthenticated: boolean;
@@ -18,7 +18,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
     }),
     {
       name: 'admin-auth-storage', // nom unique pour le stockage
-      storage: localStorage, // utiliser localStorage comme moteur de stockage
+      storage: createJSONStorage(() => localStorage), // adapter le localStorage pour Zustand
     }
   )
 );
