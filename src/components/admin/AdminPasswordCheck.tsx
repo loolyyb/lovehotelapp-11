@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,10 +17,18 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Admin password submitted:", password);
+    
     if (password === "Reussite888!") {
+      console.log("Admin password correct, authenticating");
       setAdminAuthenticated(true);
       onPasswordValid();
+      toast({
+        title: "Succès",
+        description: "Vous êtes connecté en tant qu'administrateur",
+      });
     } else {
+      console.log("Admin password incorrect");
       toast({
         title: "Erreur",
         description: "Mot de passe incorrect",

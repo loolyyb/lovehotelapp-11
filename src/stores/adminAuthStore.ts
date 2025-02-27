@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -10,7 +11,10 @@ export const useAdminAuthStore = create<AdminAuthState>()(
   persist(
     (set) => ({
       isAdminAuthenticated: false,
-      setAdminAuthenticated: (state) => set({ isAdminAuthenticated: state }),
+      setAdminAuthenticated: (state) => {
+        console.log("Setting admin authentication state to:", state);
+        set({ isAdminAuthenticated: state });
+      },
     }),
     {
       name: 'admin-auth-storage',

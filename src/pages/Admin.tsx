@@ -17,7 +17,8 @@ export default function Admin() {
     const checkAdminAuth = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       
-      if (error || !session) {
+      if (error) {
+        console.error("Error checking admin auth:", error);
         setAdminAuthenticated(false);
         toast({
           variant: "destructive",
@@ -28,9 +29,25 @@ export default function Admin() {
         return;
       }
 
+      if (!session) {
+        console.log("No session found, redirecting to login");
+        setAdminAuthenticated(false);
+        toast({
+          variant: "destructive",
+          title: "Session expirée",
+          description: "Veuillez vous reconnecter pour accéder à l'administration",
+        });
+        navigate("/login");
+        return;
+      }
+
+      // Vérifier l'authentification admin dans le localStorage
       const adminAuth = localStorage.getItem('admin-auth-storage');
       if (!adminAuth || !JSON.parse(adminAuth).state.isAdminAuthenticated) {
+        console.log("Admin not authenticated, showing password check");
         setAdminAuthenticated(false);
+      } else {
+        console.log("Admin is authenticated");
       }
     };
     
