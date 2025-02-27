@@ -12,13 +12,13 @@ export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Vérifier si l'admin est toujours authentifié au chargement
-    const checkAdminAuth = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
+  const checkAdminAuth = async () => {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (error) {
-        console.error("Error checking admin auth:", error);
+      if (sessionError) throw sessionError;
+
+      if (!session) {
         setAdminAuthenticated(false);
         toast({
           variant: "destructive",
@@ -29,15 +29,23 @@ export default function Admin() {
         return;
       }
 
-      if (!session) {
-        console.log("No session found, redirecting to login");
+      // Vérifier le rôle admin dans la base de données
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profile?.role !== 'admin') {
         setAdminAuthenticated(false);
         toast({
           variant: "destructive",
-          title: "Session expirée",
-          description: "Veuillez vous reconnecter pour accéder à l'administration",
+          title: "Accès refusé",
+          description: "Vous n'avez pas les droits administrateur nécessaires",
         });
-        navigate("/login");
+        navigate("/");
         return;
       }
 
@@ -46,11 +54,20 @@ export default function Admin() {
       if (!adminAuth || !JSON.parse(adminAuth).state.isAdminAuthenticated) {
         console.log("Admin not authenticated, showing password check");
         setAdminAuthenticated(false);
-      } else {
-        console.log("Admin is authenticated");
       }
-    };
-    
+    } catch (error) {
+      console.error('Error checking admin auth:', error);
+      setAdminAuthenticated(false);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la vérification des droits administrateur",
+      });
+      navigate("/");
+    }
+  };
+
+  useEffect(() => {
     checkAdminAuth();
   }, [setAdminAuthenticated, navigate, toast]);
 
