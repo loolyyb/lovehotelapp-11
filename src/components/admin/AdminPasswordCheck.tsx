@@ -92,6 +92,7 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
               placeholder="Mot de passe administrateur"
               className="w-full"
               disabled={isLoading}
+              autoFocus
             />
           </div>
           <Button 

@@ -49,11 +49,9 @@ export default function Admin() {
         return;
       }
 
-      // Vérifier l'authentification admin dans le localStorage
-      const adminAuth = localStorage.getItem('admin-auth-storage');
-      if (!adminAuth || !JSON.parse(adminAuth).state.isAdminAuthenticated) {
+      // Si l'utilisateur n'est pas authentifié en tant qu'admin, afficher le contrôle de mot de passe
+      if (!isAdminAuthenticated) {
         console.log("Admin not authenticated, showing password check");
-        setAdminAuthenticated(false);
       }
     } catch (error) {
       console.error('Error checking admin auth:', error);
@@ -69,7 +67,7 @@ export default function Admin() {
 
   useEffect(() => {
     checkAdminAuth();
-  }, [setAdminAuthenticated, navigate, toast]);
+  }, []);
 
   if (!isAdminAuthenticated) {
     return <AdminPasswordCheck onPasswordValid={() => setAdminAuthenticated(true)} />;
