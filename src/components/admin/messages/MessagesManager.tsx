@@ -14,7 +14,8 @@ export function MessagesManager() {
     currentPage,
     setCurrentPage,
     isLoading,
-    markAsRead
+    markAsRead,
+    getConversationMessages
   } = useMessagesManagement();
 
   return (
@@ -38,6 +39,7 @@ export function MessagesManager() {
             messages={messages}
             isLoading={isLoading}
             markAsRead={markAsRead}
+            getConversationMessages={getConversationMessages}
           />
           
           <MessagesPagination

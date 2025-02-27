@@ -84,6 +84,31 @@ export function useMessagesManagement() {
     }
   };
 
+  const getConversationMessages = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select(`
+          *,
+          sender:profiles!messages_sender_id_fkey(id, username, full_name, avatar_url)
+        `)
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching conversation messages:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de récupérer la conversation complète"
+      });
+      return [];
+    }
+  };
+
   const messages = data?.messages || [];
   const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / MESSAGES_PER_PAGE);
@@ -95,6 +120,7 @@ export function useMessagesManagement() {
     currentPage,
     setCurrentPage,
     isLoading,
-    markAsRead
+    markAsRead,
+    getConversationMessages
   };
 }
