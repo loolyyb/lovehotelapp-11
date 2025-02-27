@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";
@@ -18,6 +17,7 @@ import Dashboard from "@/pages/Dashboard";
 import Options from "@/pages/Options";
 import LoverCoin from "@/pages/LoverCoin";
 import Announcements from "@/pages/Announcements";
+import PasswordReset from "@/pages/PasswordReset";
 import { QualificationJourney } from "@/components/qualification/QualificationJourney";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -100,6 +100,10 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route
         path="/login"
         element={!session ? <Login /> : <Navigate to="/" replace />}
+      />
+      <Route
+        path="/password-reset"
+        element={<PasswordReset />}
       />
       <Route
         path="/profile"

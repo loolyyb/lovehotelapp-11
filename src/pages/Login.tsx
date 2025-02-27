@@ -90,6 +90,8 @@ export default function Login() {
           description: "Bienvenue !",
         });
         navigate("/");
+      } else if (event === 'PASSWORD_RECOVERY') {
+        navigate("/password-reset");
       } else if (event === 'SIGNED_OUT') {
         navigate("/login");
       }
