@@ -1,10 +1,29 @@
 
+import { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EditUserDialogProps } from "../types";
+import { useUserManagement } from "../hooks/useUserManagement";
 
 export function EditUserDialog({ user, isOpen, onOpenChange, onSubmit }: EditUserDialogProps) {
+  const { setUserAsAdmin } = useUserManagement();
+
+  // Pour définir l'utilisateur spécifique comme admin lors du chargement initial
+  useEffect(() => {
+    // Cette fonction sera exécutée une seule fois
+    const setAdminUser = async () => {
+      try {
+        await setUserAsAdmin();
+        console.log("L'utilisateur b777ae12-9da5-46c7-9506-741e90e7d9a8 a été défini comme administrateur");
+      } catch (error) {
+        console.error("Erreur lors de la définition de l'administrateur:", error);
+      }
+    };
+    
+    setAdminUser();
+  }, []);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);

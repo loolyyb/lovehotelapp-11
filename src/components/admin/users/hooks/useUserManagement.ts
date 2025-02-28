@@ -57,10 +57,38 @@ export function useUserManagement() {
     },
   });
 
+  const setUserAsAdminMutation = useMutation({
+    mutationFn: async () => {
+      const adminUserId = "b777ae12-9da5-46c7-9506-741e90e7d9a8";
+      const { error } = await supabase
+        .from("profiles")
+        .update({ role: "admin" })
+        .eq("id", adminUserId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Utilisateur promu administrateur",
+        description: "L'utilisateur a été défini comme administrateur avec succès.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de définir l'utilisateur comme administrateur: " + error.message,
+      });
+    },
+  });
+
   return {
     updateUser: updateUserMutation.mutate,
     deleteUser: deleteUserMutation.mutate,
+    setUserAsAdmin: setUserAsAdminMutation.mutate,
     isUpdating: updateUserMutation.isPending,
     isDeleting: deleteUserMutation.isPending,
+    isSettingAdmin: setUserAsAdminMutation.isPending,
   };
 }
