@@ -50,8 +50,13 @@ export const useRealtimeMessages = ({
           });
 
           // Ensure payload.new exists and has an id property before proceeding
-          // Using type guard to validate payload.new is not empty and has id property
-          if (!payload.new || !payload.new.id) {
+          // Using type guard to validate payload.new is MessageRow type with id
+          if (
+            !payload.new || 
+            typeof payload.new !== 'object' || 
+            !('id' in payload.new) || 
+            typeof payload.new.id !== 'string'
+          ) {
             logger.warn("Received payload without valid message id");
             return;
           }
