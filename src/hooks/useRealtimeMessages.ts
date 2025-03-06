@@ -10,19 +10,16 @@ interface UseRealtimeMessagesProps {
   currentProfileId?: string | null;
 }
 
-// Define a proper type for the Supabase realtime payload
-interface RealtimePayload extends RealtimePostgresChangesPayload<{
+type MessageRow = {
+  id: string;
+  conversation_id: string;
+  content: string;
+  sender_id: string;
+  created_at: string;
   [key: string]: any;
-}> {
-  new: {
-    id: string;
-    [key: string]: any;
-  } | null;
-  old: {
-    id: string;
-    [key: string]: any;
-  } | null;
-}
+};
+
+type RealtimePayload = RealtimePostgresChangesPayload<MessageRow>;
 
 export const useRealtimeMessages = ({ 
   onNewMessage, 
@@ -41,7 +38,7 @@ export const useRealtimeMessages = ({
 
     const channel = supabase
       .channel('messages-changes')
-      .on<any>(
+      .on(
         'postgres_changes',
         {
           event: '*',
@@ -50,7 +47,7 @@ export const useRealtimeMessages = ({
         },
         async (payload: RealtimePayload) => {
           logger.info("Message change received", { 
-            eventType: payload.eventType,
+            event: payload.eventType,
             messageId: payload.new?.id 
           });
 
