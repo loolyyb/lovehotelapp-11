@@ -64,8 +64,10 @@ export function AnnouncementsList() {
       }
 
       const transformedData: AnnouncementType[] = rawData.map(announcement => {
-        const displayName = announcement.profiles?.full_name || 
-                          announcement.profiles?.username || 
+        // Fix: Access profiles as an object, not as an array
+        const profileData = announcement.profiles || {};
+        const displayName = profileData.full_name || 
+                          profileData.username || 
                           "Utilisateur inconnu";
         
         return {
@@ -75,7 +77,7 @@ export function AnnouncementsList() {
           created_at: announcement.created_at,
           user_id: announcement.user_id,
           full_name: displayName,
-          avatar_url: announcement.profiles?.avatar_url ?? null
+          avatar_url: profileData.avatar_url ?? null
         };
       });
 
