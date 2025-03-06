@@ -34,16 +34,20 @@ export const useMessageFetcher = ({
         return null;
       }
 
-      // First check if the user has access to this conversation
-      logger.info("Verifying conversation access", { 
-        conversationId, 
-        currentProfileId,
-        component: "useMessageFetcher" 
-      });
+      if (!currentProfileId) {
+        logger.error("No profile ID provided", { component: "useMessageFetcher" });
+        toast({
+          variant: "destructive",
+          title: "Erreur d'authentification",
+          description: "Vous devez être connecté pour accéder à cette conversation",
+        });
+        return null;
+      }
 
+      // Verify the conversation exists and user has access - RLS will handle permissions
       const { data: conversationData, error: conversationError } = await supabase
         .from('conversations')
-        .select('id, user1_id, user2_id')
+        .select('id')
         .eq('id', conversationId)
         .single();
         
@@ -54,48 +58,10 @@ export const useMessageFetcher = ({
           component: "useMessageFetcher" 
         });
         
-        if (conversationError.code === 'PGRST116') {
-          toast({
-            variant: "destructive",
-            title: "Conversation introuvable",
-            description: "Cette conversation n'existe pas ou vous n'y avez pas accès",
-          });
-          return null;
-        }
-        
         toast({
           variant: "destructive",
-          title: "Erreur d'accès",
-          description: "Impossible de vérifier l'accès à la conversation",
-        });
-        return null;
-      }
-      
-      if (!currentProfileId) {
-        logger.error("No profile ID provided", { component: "useMessageFetcher" });
-        toast({
-          variant: "destructive",
-          title: "Erreur d'authentification",
-          description: "Vous devez être connecté pour accéder à cette conversation",
-        });
-        return null;
-      }
-      
-      // Verify the user has access to this conversation
-      const isParticipant = 
-        conversationData.user1_id === currentProfileId || 
-        conversationData.user2_id === currentProfileId;
-        
-      if (!isParticipant) {
-        logger.error("User is not a participant in this conversation", { 
-          conversationId, 
-          profileId: currentProfileId,
-          component: "useMessageFetcher" 
-        });
-        toast({
-          variant: "destructive",
-          title: "Accès refusé",
-          description: "Vous n'êtes pas autorisé à accéder à cette conversation",
+          title: "Accès non autorisé",
+          description: "Vous n'avez pas accès à cette conversation",
         });
         return null;
       }
@@ -146,19 +112,6 @@ export const useMessageFetcher = ({
         conversationId,
         component: "useMessageFetcher" 
       });
-      
-      if (messagesData && messagesData.length > 0) {
-        logger.debug("First and last messages", { 
-          first: messagesData[0], 
-          last: messagesData[messagesData.length - 1],
-          component: "useMessageFetcher" 
-        });
-      } else {
-        logger.info("No messages found for conversation", {
-          conversationId,
-          component: "useMessageFetcher"
-        });
-      }
       
       // Make sure messages is always an array using our safe helper
       const typedMessages = safeQueryResult<any>(messagesData);

@@ -5,7 +5,7 @@ import { useToast } from "./use-toast";
 import debounce from 'lodash/debounce';
 
 interface UseMessageHandlersProps {
-  currentProfileId: string | null;  // Ajout de cette prop
+  currentProfileId: string | null;
   conversationId: string;
   newMessage: string;
   setNewMessage: (message: string) => void;
@@ -30,6 +30,19 @@ export const useMessageHandlers = ({
     setIsProcessing(true);
 
     try {
+      // First verify the user has permission to this conversation
+      const { error: verifyError } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
+        .eq('id', conversationId)
+        .single();
+        
+      if (verifyError) {
+        console.error("Error verifying conversation permission:", verifyError);
+        throw new Error("You don't have permission to send messages in this conversation");
+      }
+
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -40,6 +53,7 @@ export const useMessageHandlers = ({
         });
 
       if (error) {
+        console.error("Insert message error:", error);
         throw error;
       }
       

@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export const getCurrentUserId = async () => {
@@ -85,52 +86,27 @@ export const createOrGetConversation = async (currentUserId: string, targetUserI
       return { id: existingConversations[0].id, isNew: false };
     }
 
-    // Try the service role key if available for bypassing RLS
-    try {
-      // Create new conversation using profile IDs
-      const { data: newConversation, error: insertError } = await supabase
-        .from('conversations')
-        .insert({
-          user1_id: currentUserProfile.id,
-          user2_id: targetUserId,
-          status: 'active'
-        })
-        .select('id')
-        .single();
+    // Create new conversation using profile IDs
+    const { data: newConversation, error: insertError } = await supabase
+      .from('conversations')
+      .insert({
+        user1_id: currentUserProfile.id,
+        user2_id: targetUserId,
+        status: 'active'
+      })
+      .select('id')
+      .single();
 
-      if (insertError) {
-        console.error('Error creating conversation:', insertError);
-        
-        // If we get an RLS error, try a different approach
-        if (insertError.code === '42501') {
-          console.log('Attempting alternative approach due to RLS issue');
-          
-          // Try creating a conversation with a different structure
-          const { data: newConv, error: newConvError } = await supabase.rpc('create_conversation', {
-            user1: currentUserProfile.id,
-            user2: targetUserId
-          });
-          
-          if (newConvError) {
-            console.error('RPC method failed:', newConvError);
-            throw newConvError;
-          }
-          
-          return { id: newConv.id, isNew: true };
-        }
-        
-        throw insertError;
-      }
-
-      if (!newConversation) {
-        throw new Error("Failed to create conversation");
-      }
-
-      return { id: newConversation.id, isNew: true };
-    } catch (innerError) {
-      console.error('Error in inner conversation creation attempt:', innerError);
-      throw innerError;
+    if (insertError) {
+      console.error('Error creating conversation:', insertError);
+      throw insertError;
     }
+
+    if (!newConversation) {
+      throw new Error("Failed to create conversation");
+    }
+
+    return { id: newConversation.id, isNew: true };
   } catch (error) {
     console.error('Error in createOrGetConversation:', error);
     throw error;
@@ -164,25 +140,6 @@ export const findConversationsByProfileId = async (profileId: string) => {
       
     if (error) {
       console.error("Error fetching conversations by profile ID:", error);
-      
-      // If there's an RLS error, let's try an alternative approach
-      if (error.code === '42501') {
-        console.log('Attempting to use RPC function due to RLS issue');
-        
-        // Try using a stored procedure if available
-        const { data: rpcData, error: rpcError } = await supabase.rpc('get_user_conversations', {
-          profile_id: profileId
-        });
-        
-        if (rpcError) {
-          console.error('RPC method failed:', rpcError);
-          return [];
-        }
-        
-        console.log(`Found ${rpcData.length} conversations via RPC`);
-        return rpcData;
-      }
-      
       return [];
     }
     
@@ -248,33 +205,12 @@ export const findConversationsByProfileId = async (profileId: string) => {
   }
 };
 
-// Helper function that attempts to call the Supabase create_conversation RPC function if it exists
-export const attemptCreateConversationRPC = async (user1Id: string, user2Id: string) => {
-  try {
-    // Check if the stored procedure exists first by testing it
-    const { data, error } = await supabase.rpc('create_conversation', {
-      user1: user1Id,
-      user2: user2Id
-    });
-    
-    if (error) {
-      console.error('RPC method failed or does not exist:', error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error in attemptCreateConversationRPC:', error);
-    return null;
-  }
-};
-
-// Helper function to directly create a test conversation - for admin use
+// Helper function to create a test conversation - for admin use
 export const createTestConversation = async (profileId: string, otherProfileId: string) => {
   try {
     console.log(`Attempting to create test conversation between ${profileId} and ${otherProfileId}`);
     
-    // First try using the normal method
+    // Create test conversation
     const { data, error } = await supabase
       .from('conversations')
       .insert({
@@ -286,12 +222,6 @@ export const createTestConversation = async (profileId: string, otherProfileId: 
       .single();
       
     if (error) {
-      // If RLS blocks this, try the RPC method
-      if (error.code === '42501') {
-        console.log('RLS error, trying RPC method...');
-        return await attemptCreateConversationRPC(profileId, otherProfileId);
-      }
-      
       console.error('Error creating test conversation:', error);
       return null;
     }
