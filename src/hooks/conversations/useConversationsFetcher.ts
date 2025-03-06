@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase, safeQueryResult } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
 import { findConversationsByProfileId, getProfileByAuthId } from "@/utils/conversationUtils";
 
@@ -50,7 +50,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
 
       logger.info("Profile found", { profile: profileCheck });
       
-      // Fetch conversations with a more reliable parameterized query
+      // Use the more reliable function to fetch conversations
       const fetchedConversations = await findConversationsByProfileId(currentProfileId);
       
       if (fetchedConversations.length === 0) {
@@ -103,24 +103,34 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   const fetchProfilesForConversations = async (conversations: any[], currentUser: string) => {
     const result = await Promise.all(
       conversations.map(async (conversation) => {
-        // Determine the other user in the conversation
-        const otherUserId = 
-          conversation.user1_id === currentUser 
-            ? conversation.user2_id 
-            : conversation.user1_id;
+        // Determine the other user in the conversation - use the existing user1 and user2 objects
+        const otherUser = 
+          conversation.user1?.id === currentUser 
+            ? conversation.user2 
+            : conversation.user1;
             
-        // Fetch the other user's profile
-        const { data: otherUser, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, avatar_url')
-          .eq('id', otherUserId)
-          .maybeSingle();
+        if (!otherUser) {
+          // If for some reason we don't have the other user info, try to fetch it
+          const otherUserId = 
+            conversation.user1_id === currentUser 
+              ? conversation.user2_id 
+              : conversation.user1_id;
+              
+          const { data: fetchedUser, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .eq('id', otherUserId)
+            .maybeSingle();
+            
+          if (profileError) {
+            logger.error("Error fetching profile for conversation", { error: profileError });
+            return {...conversation, otherUser: null};
+          }
           
-        if (profileError) {
-          logger.error("Error fetching profile for conversation", { error: profileError });
-          return {...conversation, otherUser: null};
+          return {...conversation, otherUser: fetchedUser};
         }
         
+        // If we already have the other user's info from the original query
         return {...conversation, otherUser};
       })
     );

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -176,12 +177,7 @@ export function ConversationList({
       
       setHasAuthError(false);
       
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
-        
+      const profile = await getProfileByAuthId(user.id);
       if (!profile) {
         toast({
           variant: "destructive",
@@ -240,6 +236,7 @@ export function ConversationList({
     return () => clearInterval(interval);
   }, [refetch, logger, hasAuthError]);
 
+  // Handle authentication error state
   if (hasAuthError) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
@@ -326,7 +323,7 @@ export function ConversationList({
 
       <div className="flex-1 overflow-y-auto">
         {conversations.map(conversation => {
-          const otherUser = conversation.user1?.id === currentUserProfileId ? conversation.user2 : conversation.user1;
+          const otherUser = conversation.otherUser;
           const lastMessage = conversation.messages?.[0];
           
           logger.debug("Rendering conversation", { 

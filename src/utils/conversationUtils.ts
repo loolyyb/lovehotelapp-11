@@ -137,7 +137,9 @@ export const findConversationsByProfileId = async (profileId: string) => {
   }
   
   try {
-    // Use a clean parameterized query with explicit parameters
+    console.log(`Finding conversations for profile: ${profileId}`);
+    
+    // Use a simple, direct query with explicit equals comparison
     const { data, error } = await supabase
       .from('conversations')
       .select(`
@@ -147,10 +149,19 @@ export const findConversationsByProfileId = async (profileId: string) => {
         user1_id,
         user2_id,
         created_at,
-        updated_at
+        updated_at,
+        user1:profiles!conversations_user1_id_fkey(id, username, full_name, avatar_url),
+        user2:profiles!conversations_user2_id_fkey(id, username, full_name, avatar_url),
+        messages:messages(
+          id,
+          content,
+          created_at,
+          sender_id,
+          read_at
+        )
       `)
       .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
-      .neq('status', 'deleted')
+      .eq('status', 'active')
       .order('updated_at', { ascending: false });
       
     if (error) {
@@ -158,8 +169,18 @@ export const findConversationsByProfileId = async (profileId: string) => {
       return [];
     }
     
-    console.log(`Found ${data?.length || 0} conversations for profile ${profileId}`);
-    return data || [];
+    const processedData = data?.map(conversation => {
+      // Add a messages array sorted by creation date, with the most recent first
+      if (conversation.messages) {
+        conversation.messages.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      }
+      return conversation;
+    }) || [];
+    
+    console.log(`Found ${processedData.length} conversations for profile ${profileId}`);
+    return processedData;
   } catch (error) {
     console.error("Exception in findConversationsByProfileId:", error);
     return [];
