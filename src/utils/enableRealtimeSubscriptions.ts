@@ -12,14 +12,34 @@ export const enableRealtimeSubscriptions = async () => {
   try {
     logger.info("Setting up channel for realtime subscriptions");
     
-    // Create a channel for conversations table
-    const channel = supabase.channel('public:conversations')
+    // Vérifier d'abord si l'utilisateur est authentifié
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      logger.error("No authenticated session, skipping realtime subscriptions");
+      return null;
+    }
+    
+    // Créer un canal unique pour éviter les doublons de souscriptions
+    const channelId = `public-conversations-${Date.now()}`;
+    logger.info(`Creating channel with ID: ${channelId}`);
+    
+    // Créer un canal pour les tables conversations et messages
+    const channel = supabase.channel(channelId)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'conversations'
+        table: 'conversations',
+        filter: `user1_id=eq.${session.user.id}` 
       }, (payload) => {
-        logger.info("Received conversation change", { payload });
+        logger.info("Received conversation change - user1", { payload });
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'conversations',
+        filter: `user2_id=eq.${session.user.id}`
+      }, (payload) => {
+        logger.info("Received conversation change - user2", { payload });
       })
       .on('postgres_changes', {
         event: '*',
@@ -29,7 +49,7 @@ export const enableRealtimeSubscriptions = async () => {
         logger.info("Received message change", { payload });
       })
       .subscribe((status) => {
-        logger.info("Subscription status", { status });
+        logger.info("Subscription status", { status, channelId });
         
         if (status === 'SUBSCRIBED') {
           logger.info("Successfully subscribed to realtime changes");
@@ -38,7 +58,7 @@ export const enableRealtimeSubscriptions = async () => {
         }
       });
       
-    // We'll return the channel so it can be unsubscribed if needed
+    // Nous retournons le canal pour pouvoir se désinscrire si nécessaire
     return channel;
   } catch (error) {
     logger.error("Error setting up realtime subscriptions", { error });

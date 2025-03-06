@@ -1,184 +1,87 @@
 
 import { useEffect, useRef } from 'react';
-import { supabase } from "@/integrations/supabase/client";
-import { useLogger } from "@/hooks/useLogger";
-import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { useLogger } from '@/hooks/useLogger';
 
 interface UseRealtimeMessagesProps {
+  currentProfileId: string | null;
   onNewMessage?: (message: any) => void;
   onMessageUpdate?: (message: any) => void;
-  currentProfileId?: string | null;
 }
 
-type MessageRow = {
-  id: string;
-  conversation_id: string;
-  content: string;
-  sender_id: string;
-  created_at: string;
-  [key: string]: any;
-};
-
-export const useRealtimeMessages = ({ 
-  onNewMessage, 
-  onMessageUpdate,
-  currentProfileId 
+export const useRealtimeMessages = ({
+  currentProfileId,
+  onNewMessage,
+  onMessageUpdate
 }: UseRealtimeMessagesProps) => {
-  const logger = useLogger("useRealtimeMessages");
+  const logger = useLogger('useRealtimeMessages');
   const channelRef = useRef<any>(null);
-  const messageHandlersRef = useRef({ onNewMessage, onMessageUpdate });
-  
-  // Update refs when handlers change
-  useEffect(() => {
-    messageHandlersRef.current = { onNewMessage, onMessageUpdate };
-  }, [onNewMessage, onMessageUpdate]);
 
   useEffect(() => {
+    // Ne pas s'abonner si aucun ID de profil n'est disponible
     if (!currentProfileId) {
       logger.info("No current profile ID, skipping realtime subscription");
       return;
     }
 
-    logger.info("Setting up realtime messages subscription", { currentProfileId });
+    // Créer un identifiant unique pour le canal
+    const channelId = `messages-updates-${currentProfileId}-${Date.now()}`;
+    logger.info(`Setting up message realtime subscription: ${channelId}`);
 
-    // Clean up previous subscription if it exists
-    if (channelRef.current) {
-      logger.info("Removing existing channel subscription");
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-
-    const channelId = `messages-changes-${currentProfileId}-${Date.now()}`;
-    logger.info(`Creating new channel: ${channelId}`);
-    
+    // Créer le canal pour les messages
     const channel = supabase
       .channel(channelId)
-      .on<MessageRow>(
+      .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
-          table: 'messages'
+          table: 'messages',
         },
-        async (payload: RealtimePostgresChangesPayload<MessageRow>) => {
-          // First check if payload.new exists and has required properties
-          if (!payload.new || typeof payload.new !== 'object') {
-            logger.warn("Received invalid payload", { payload });
-            return;
-          }
-          
-          // Type guard to ensure payload.new has an id property
-          if (!('id' in payload.new) || typeof payload.new.id !== 'string') {
-            logger.warn("Received payload without valid message id", { payload });
-            return;
-          }
-
-          if (!('conversation_id' in payload.new)) {
-            logger.warn("Received payload without conversation_id", { payload });
-            return;
-          }
-
-          const messageId = payload.new.id;
-          const conversationId = payload.new.conversation_id;
-          
-          logger.info("Message change received", { 
-            event: payload.eventType,
-            messageId,
-            conversationId,
-            timestamp: new Date().toISOString()
-          });
-
-          // Update the conversation in the database to trigger the subscription in useConversations
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            try {
-              const now = new Date().toISOString();
-              const { data, error } = await supabase
-                .from('conversations')
-                .update({ updated_at: now })
-                .eq('id', conversationId)
-                .select();
-              
-              if (error) {
-                logger.error("Error updating conversation timestamp", { 
-                  error,
-                  conversationId 
-                });
-              } else {
-                logger.info("Successfully updated conversation timestamp", { 
-                  conversationId,
-                  timestamp: now,
-                  success: !!data 
-                });
-              }
-            } catch (err) {
-              logger.error("Exception updating conversation timestamp", { 
-                error: err,
-                conversationId 
-              });
-            }
-          }
-
-          // Fetch complete message data with sender details
-          const { data: message, error } = await supabase
-            .from('messages')
-            .select(`
-              *,
-              sender:profiles!messages_sender_id_fkey (
-                id,
-                username,
-                full_name,
-                avatar_url
-              )
-            `)
-            .eq('id', messageId)
-            .maybeSingle();
-
-          if (error) {
-            logger.error("Error fetching message details", { 
-              error,
-              messageId,
-              conversationId
+        (payload) => {
+          if (payload.new) {
+            logger.info("New message received via realtime", { 
+              messageId: payload.new.id,
+              conversation: payload.new.conversation_id 
             });
-            return;
+            if (onNewMessage) onNewMessage(payload.new);
           }
-
-          if (!message) {
-            logger.warn("No message found after change", { 
-              messageId,
-              conversationId 
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          if (payload.new) {
+            logger.info("Message update received via realtime", { 
+              messageId: payload.new.id,
+              conversation: payload.new.conversation_id 
             });
-            return;
-          }
-
-          // Notify appropriate handler based on event type
-          if (payload.eventType === 'INSERT') {
-            logger.info("Calling onNewMessage handler with message", { 
-              messageId,
-              conversationId 
-            });
-            messageHandlersRef.current.onNewMessage?.(message);
-          } else if (payload.eventType === 'UPDATE') {
-            logger.info("Calling onMessageUpdate handler with message", { 
-              messageId,
-              conversationId 
-            });
-            messageHandlersRef.current.onMessageUpdate?.(message);
+            if (onMessageUpdate) onMessageUpdate(payload.new);
           }
         }
       )
       .subscribe((status) => {
-        logger.info("Realtime subscription status", { status, channelId });
+        logger.info("Message subscription status", { status, channelId });
       });
 
-    // Store channel reference for cleanup
+    // Sauvegarder la référence du canal pour pouvoir le désabonner plus tard
     channelRef.current = channel;
 
+    // Nettoyer l'abonnement lorsque le composant est démonté
     return () => {
-      logger.info("Cleaning up realtime messages subscription", { channelId });
+      logger.info(`Removing message subscription: ${channelId}`);
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [currentProfileId, logger]);
+  }, [currentProfileId, onNewMessage, onMessageUpdate, logger]);
+
+  // Ce hook ne renvoie rien car il gère uniquement les abonnements
+  return null;
 };
