@@ -1,7 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 import { AlertService } from "@/services/AlertService";
+import { useEffect, useState } from "react";
 
 interface UseConversationDataProps {
   conversationId: string;
@@ -14,11 +14,27 @@ export const useConversationData = ({
   currentProfileId,
   setOtherUser
 }: UseConversationDataProps) => {
+  const [localProfileId, setLocalProfileId] = useState<string | null>(currentProfileId);
+
+  useEffect(() => {
+    if (currentProfileId && currentProfileId !== localProfileId) {
+      setLocalProfileId(currentProfileId);
+    }
+  }, [currentProfileId]);
+
   const fetchConversationDetails = async () => {
-    if (!conversationId || !currentProfileId) {
-      logger.info("Missing required data for fetchConversationDetails", {
+    const effectiveProfileId = localProfileId || currentProfileId;
+    
+    if (!conversationId) {
+      logger.info("Missing conversationId for fetchConversationDetails", {
+        component: "useConversationData"
+      });
+      return null;
+    }
+
+    if (!effectiveProfileId) {
+      logger.info("Missing currentProfileId for fetchConversationDetails, will retry when available", {
         conversationId,
-        currentProfileId,
         component: "useConversationData"
       });
       return null;
@@ -27,6 +43,7 @@ export const useConversationData = ({
     try {
       logger.info("Fetching conversation details", { 
         conversationId,
+        profileId: effectiveProfileId,
         component: "useConversationData" 
       });
       
@@ -59,20 +76,17 @@ export const useConversationData = ({
           component: "useConversationData" 
         });
         
-        if (currentProfileId) {
-          const otherUserData = conversation.user1.id === currentProfileId 
-            ? conversation.user2 
-            : conversation.user1;
-            
-          logger.info("Setting other user data", { 
-            otherUserId: otherUserData.id,
-            otherUsername: otherUserData.username,
-            component: "useConversationData" 
-          });
+        const otherUserData = conversation.user1.id === effectiveProfileId 
+          ? conversation.user2 
+          : conversation.user1;
           
-          setOtherUser(otherUserData);
-        }
+        logger.info("Setting other user data", { 
+          otherUserId: otherUserData.id,
+          otherUsername: otherUserData.username,
+          component: "useConversationData" 
+        });
         
+        setOtherUser(otherUserData);
         return conversation;
       } else {
         logger.error("Conversation not found", { 

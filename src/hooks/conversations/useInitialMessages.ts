@@ -68,6 +68,8 @@ export const useInitialMessages = ({
           conversationId,
           component: "useInitialMessages"
         });
+        // Even when no messages are found, set an empty array to clear any previous messages
+        setMessages([]);
         return [];
       }
     } catch (error: any) {

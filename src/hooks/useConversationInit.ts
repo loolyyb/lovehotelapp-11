@@ -4,6 +4,7 @@ import { AlertService } from "@/services/AlertService";
 import { useProfileRetrieval } from "./conversations/useProfileRetrieval";
 import { useConversationData } from "./conversations/useConversationData";
 import { useInitialMessages } from "./conversations/useInitialMessages";
+import { useEffect, useState } from "react";
 
 interface UseConversationInitProps {
   conversationId: string;
@@ -20,13 +21,18 @@ export const useConversationInit = ({
   setOtherUser,
   setIsLoading,
 }: UseConversationInitProps) => {
+  const [internalProfileId, setInternalProfileId] = useState<string | null>(null);
+  
   const { getCurrentUserProfile } = useProfileRetrieval({
-    setCurrentProfileId
+    setCurrentProfileId: (profileId) => {
+      setInternalProfileId(profileId);
+      setCurrentProfileId(profileId);
+    }
   });
   
   const { fetchConversationDetails } = useConversationData({
     conversationId,
-    currentProfileId: null, // Will be set during execution
+    currentProfileId: internalProfileId,
     setOtherUser
   });
   
@@ -34,6 +40,26 @@ export const useConversationInit = ({
     conversationId,
     setMessages
   });
+
+  // Effect to update internalProfileId when the external one changes
+  useEffect(() => {
+    const initConversation = async () => {
+      try {
+        const profileId = await getCurrentUserProfile();
+        if (profileId) {
+          setInternalProfileId(profileId);
+          setCurrentProfileId(profileId);
+        }
+      } catch (error) {
+        logger.error("Error getting user profile", { 
+          error, 
+          component: "useConversationInit" 
+        });
+      }
+    };
+    
+    initConversation();
+  }, []);
 
   const getCurrentUser = async () => {
     if (!conversationId) {
@@ -61,6 +87,9 @@ export const useConversationInit = ({
         setIsLoading(false);
         return;
       }
+      
+      // Update our internal state as well
+      setInternalProfileId(profileId);
       
       // Fetch initial messages and conversation details in parallel
       await Promise.all([
