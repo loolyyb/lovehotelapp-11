@@ -143,14 +143,19 @@ export function Header({ userProfile }: { userProfile?: any }) {
 
   const handleLogout = async () => {
     try {
-      // Redirection immédiate
-      window.location.href = "https://lovehotelaparis.fr/";
-      // Déconnexion en arrière-plan
       await supabase.auth.signOut();
       localStorage.removeItem('supabase.auth.token');
+      toast({
+        title: "Déconnexion réussie",
+        description: "À bientôt !",
+      });
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
-      // On ne montre pas de toast d'erreur car l'utilisateur sera déjà redirigé
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la déconnexion.",
+      });
     }
   };
 
@@ -210,4 +215,3 @@ export function Header({ userProfile }: { userProfile?: any }) {
     </header>
   );
 }
-

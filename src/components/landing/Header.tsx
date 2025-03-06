@@ -1,3 +1,4 @@
+
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -73,8 +74,6 @@ export const Header = () => {
         title: "Déconnexion réussie",
         description: "À bientôt !",
       });
-      
-      navigate("/");
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       toast({
@@ -112,4 +111,4 @@ export const Header = () => {
       </div>
     </header>
   );
-};
+}

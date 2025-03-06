@@ -30,9 +30,8 @@ export const useAuthChangeHandler = () => {
       navigate("/");
     } else if (event === 'PASSWORD_RECOVERY') {
       navigate("/password-reset");
-    } else if (event === 'SIGNED_OUT') {
-      navigate("/login");
     }
+    // Removed the SIGNED_OUT redirection
   };
 
   return { handleAuthChange };
