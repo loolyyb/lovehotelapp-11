@@ -1,11 +1,19 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase, safeQueryResult } from "@/integrations/supabase/client";
 
 export function useConversationsFetcher(currentProfileId: string | null) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-fetch when profile ID changes
+  useEffect(() => {
+    if (currentProfileId) {
+      console.log("Profile ID changed, fetching conversations", { profileId: currentProfileId });
+      fetchConversations();
+    }
+  }, [currentProfileId]);
 
   const fetchConversations = async () => {
     if (!currentProfileId) {
@@ -20,6 +28,24 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     try {
       console.log("Fetching conversations for profile ID:", currentProfileId);
       
+      // First, check if the profile exists
+      const { data: profileCheck, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', currentProfileId)
+        .maybeSingle();
+        
+      if (profileError) {
+        console.error("Error checking profile:", profileError);
+        throw new Error("Erreur lors de la vérification du profil");
+      }
+      
+      if (!profileCheck) {
+        console.warn("Profile not found in database:", currentProfileId);
+        throw new Error("Profil introuvable. Veuillez vous reconnecter.");
+      }
+      
+      // Now fetch conversations with better OR condition syntax
       const { data, error: conversationsError } = await supabase
         .from('conversations')
         .select(`
@@ -43,7 +69,18 @@ export function useConversationsFetcher(currentProfileId: string | null) {
 
       // Ensure type safety
       const typedData = safeQueryResult<any>(data);
-      console.log("Fetched conversations:", typedData);
+      console.info("Fetched conversations", { 
+        component: "useConversationsFetcher",
+        count: typedData.length,
+        conversationIds: typedData.map(c => c.id)
+      });
+      
+      if (typedData.length === 0) {
+        console.info("Fetched conversations", { 
+          component: "useConversations",
+          count: 0
+        });
+      }
       
       setConversations(typedData);
       setError(null);
