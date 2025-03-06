@@ -47,6 +47,27 @@ export function useConversationsFetcher(currentProfileId: string | null) {
 
       console.log("Profile found:", profileCheck);
       
+      // First fetch ALL conversations regardless of status to debug
+      const { data: allStatusConvs, error: allStatusError } = await supabase
+        .from('conversations')
+        .select(`
+          id, 
+          status,
+          blocked_by,
+          user1_id,
+          user2_id
+        `)
+        .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`);
+      
+      if (allStatusError) {
+        console.error("Error fetching all status conversations:", allStatusError);
+      } else {
+        console.log("All conversations (any status):", {
+          count: allStatusConvs?.length || 0,
+          conversations: allStatusConvs
+        });
+      }
+      
       // Now fetch conversations with unique aliases for the profiles to avoid the duplicate table error
       const { data, error: conversationsError } = await supabase
         .from('conversations')
@@ -71,8 +92,8 @@ export function useConversationsFetcher(currentProfileId: string | null) {
             avatar_url
           )
         `)
-        .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
-        .eq('status', 'active');
+        .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`);
+        // Note: Status filter removed to see ALL conversations
 
       if (conversationsError) {
         console.error("Error fetching conversations:", conversationsError);
@@ -81,7 +102,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
 
       // Ensure type safety and log detailed results
       const typedData = safeQueryResult<any>(data);
-      console.log("Conversations fetch result:", {
+      console.log("All fetched conversations:", {
         success: true,
         count: typedData.length,
         profileId: currentProfileId,
@@ -89,83 +110,60 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           id: c.id, 
           user1_id: c.user1_id, 
           user2_id: c.user2_id,
-          status: c.status
+          status: c.status,
+          blocked_by: c.blocked_by
         }))
       });
       
-      // Log more detailed info if no conversations found
-      if (typedData.length === 0) {
-        console.log("No conversations found for profile:", currentProfileId);
-        
-        // Additional debug: Check if there are any conversations at all for this user without the status filter
-        const { data: allConvs, error: allConvsError } = await supabase
-          .from('conversations')
-          .select('id, status, user1_id, user2_id, blocked_by')
-          .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`);
-          
-        if (!allConvsError && allConvs) {
-          console.log("All conversations (including inactive):", {
-            count: allConvs.length,
-            conversations: allConvs
-          });
-          
-          // If we found conversations but they're not active, we should show them
-          if (allConvs.length > 0) {
-            const inactiveConversations = allConvs.filter(c => c.status !== 'active');
-            if (inactiveConversations.length > 0) {
-              console.log("Found inactive conversations:", inactiveConversations);
-              
-              // Include inactive conversations in the results if that's all we have
-              if (typedData.length === 0 && inactiveConversations.length > 0) {
-                // Fetch full details for these conversations
-                const { data: inactiveWithDetails } = await supabase
-                  .from('conversations')
-                  .select(`
-                    id, 
-                    created_at,
-                    updated_at,
-                    status,
-                    blocked_by,
-                    user1_id,
-                    user2_id,
-                    user1:profiles!conversations_user1_id_fkey (
-                      id, 
-                      full_name,
-                      username,
-                      avatar_url
-                    ),
-                    user2:profiles!conversations_user2_id_fkey (
-                      id,
-                      full_name,
-                      username,
-                      avatar_url
-                    )
-                  `)
-                  .in('id', inactiveConversations.map(c => c.id));
-                  
-                if (inactiveWithDetails) {
-                  console.log("Adding inactive conversations to results");
-                  const allData = [...typedData, ...safeQueryResult<any>(inactiveWithDetails)];
-                  setConversations(allData);
-                  setError(null);
-                  setIsLoading(false);
-                  return allData;
-                }
-              }
-            }
-          }
-        }
-      }
+      // Filter active conversations
+      const activeConversations = typedData.filter(c => c.status === 'active');
+      console.log("Active conversations:", {
+        count: activeConversations.length,
+        conversations: activeConversations.map(c => ({ 
+          id: c.id, 
+          user1_id: c.user1_id, 
+          user2_id: c.user2_id
+        }))
+      });
       
-      setConversations(typedData);
-      setError(null);
-      return typedData;
+      // Filter inactive conversations
+      const inactiveConversations = typedData.filter(c => c.status !== 'active');
+      console.log("Inactive conversations:", {
+        count: inactiveConversations.length,
+        conversations: inactiveConversations.map(c => ({ 
+          id: c.id, 
+          status: c.status,
+          user1_id: c.user1_id, 
+          user2_id: c.user2_id,
+          blocked_by: c.blocked_by
+        }))
+      });
+      
+      // Use active conversations if available, otherwise use all conversations
+      // This ensures the user can see conversations even if they're not active
+      if (activeConversations.length > 0) {
+        setConversations(activeConversations);
+        setError(null);
+        setIsLoading(false);
+        return activeConversations;
+      } else {
+        console.log("No active conversations found, using all conversations instead");
+        setConversations(typedData);
+        if (typedData.length > 0) {
+          // If we have inactive conversations, show a warning
+          console.log("Warning: Only inactive conversations found");
+        } else {
+          console.log("No conversations found for profile:", currentProfileId);
+        }
+        setError(null);
+        setIsLoading(false);
+        return typedData;
+      }
     } catch (error: any) {
       console.error("Error in fetchConversations:", error);
       setError(error.message || "Erreur lors du chargement des conversations");
-      return [];
-    } finally {
       setIsLoading(false);
+      return [];
     }
   };
 
