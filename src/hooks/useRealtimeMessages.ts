@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface UseRealtimeMessagesProps {
   onNewMessage?: (message: any) => void;
@@ -9,7 +10,9 @@ interface UseRealtimeMessagesProps {
   currentProfileId?: string | null;
 }
 
-interface RealtimePayload {
+interface RealtimePayload extends RealtimePostgresChangesPayload<{
+  [key: string]: any;
+}> {
   new: {
     id: string;
     [key: string]: any;
@@ -18,7 +21,6 @@ interface RealtimePayload {
     id: string;
     [key: string]: any;
   } | null;
-  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
 }
 
 export const useRealtimeMessages = ({ 
@@ -38,7 +40,7 @@ export const useRealtimeMessages = ({
 
     const channel = supabase
       .channel('messages-changes')
-      .on(
+      .on<any>(
         'postgres_changes',
         {
           event: '*',
