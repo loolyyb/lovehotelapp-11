@@ -19,8 +19,10 @@ export const enableRealtimeSubscriptions = async () => {
       return null;
     }
     
+    const userId = session.user.id;
+    
     // Créer un canal unique pour éviter les doublons de souscriptions
-    const channelId = `public-conversations-${Date.now()}`;
+    const channelId = `public-conversations-${userId}-${Date.now()}`;
     logger.info(`Creating channel with ID: ${channelId}`);
     
     // Créer un canal pour les tables conversations et messages
@@ -29,7 +31,7 @@ export const enableRealtimeSubscriptions = async () => {
         event: '*',
         schema: 'public',
         table: 'conversations',
-        filter: `user1_id=eq.${session.user.id}` 
+        filter: `user1_id=eq.${userId}` 
       }, (payload) => {
         logger.info("Received conversation change - user1", { payload });
       })
@@ -37,16 +39,17 @@ export const enableRealtimeSubscriptions = async () => {
         event: '*',
         schema: 'public',
         table: 'conversations',
-        filter: `user2_id=eq.${session.user.id}`
+        filter: `user2_id=eq.${userId}`
       }, (payload) => {
         logger.info("Received conversation change - user2", { payload });
       })
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'messages'
+        table: 'messages',
+        filter: `sender_id=eq.${userId}`
       }, (payload) => {
-        logger.info("Received message change", { payload });
+        logger.info("Received message change - sent by user", { payload });
       })
       .subscribe((status) => {
         logger.info("Subscription status", { status, channelId });
