@@ -17,6 +17,9 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
   const isImage = message.content.startsWith('[Image]');
   const imageUrl = isImage ? message.content.match(/\((.*?)\)/)?.[1] : null;
 
+  // Ajouter un log pour vérifier les valeurs de read_at
+  console.log(`Message ${message.content.substring(0, 15)}... - read_at:`, message.read_at);
+
   return (
     <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
       <div

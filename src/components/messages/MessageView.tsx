@@ -82,8 +82,15 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
 
     const unsubscribe = subscribeToNewMessages();
 
-    // Mark messages as read when the conversation is opened
+    // Ajout de logs de débuggage
+    console.log("Setting up message subscription with profile ID:", currentProfileId);
+    console.log("Current conversation ID:", conversationId);
+    console.log("Current messages count:", messages.length);
+
+    // Marquer les messages comme lus lorsque la conversation est ouverte
+    // ET chaque fois qu'un nouveau message est reçu
     if (messages.length > 0) {
+      console.log("Calling markMessagesAsRead from subscription effect");
       markMessagesAsRead();
     }
 
@@ -91,6 +98,22 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       unsubscribe();
     };
   }, [currentProfileId, conversationId, messages.length]);
+
+  // Ajouter un nouvel useEffect pour garantir que les messages sont marqués comme lus
+  // lors d'un changement dans la liste des messages
+  useEffect(() => {
+    if (currentProfileId && messages.length > 0 && !isLoading) {
+      console.log("Messages changed, checking for unread messages...");
+      const hasUnreadMessages = messages.some(
+        msg => msg.sender_id !== currentProfileId && !msg.read_at
+      );
+      
+      if (hasUnreadMessages) {
+        console.log("Found unread messages, marking as read");
+        setTimeout(() => markMessagesAsRead(), 500);
+      }
+    }
+  }, [messages, currentProfileId, isLoading]);
 
   useEffect(() => {
     if (messages.length > 0) {

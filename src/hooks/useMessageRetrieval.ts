@@ -86,6 +86,9 @@ export const useMessageRetrieval = ({
 
       console.log(`Found ${unreadMessages.length} unread messages`);
 
+      // Correction ici : ajouter un log pour voir les IDs des messages non lus
+      console.log("Messages non lus:", unreadMessages.map(msg => msg.id));
+
       const { error: updateError } = await supabase
         .from('messages')
         .update({ 

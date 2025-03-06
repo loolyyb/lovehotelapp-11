@@ -25,19 +25,28 @@ export const useMessageSubscription = ({
         (payload) => {
           console.log("Message change received:", payload);
           if (payload.eventType === 'INSERT') {
+            // Pour les nouveaux messages, on les ajoute à la liste
             setMessages(current => [...current, payload.new]);
           } else if (payload.eventType === 'UPDATE') {
+            // Pour les messages mis à jour (comme lorsqu'ils sont marqués comme lus),
+            // on met à jour la liste des messages
             setMessages(current => 
               current.map(msg => 
                 msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
               )
             );
+            
+            // Ajouter un log pour voir les mises à jour
+            console.log("Message updated:", payload.new);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Channel subscription status:", status);
+      });
 
     return () => {
+      console.log("Cleaning up message subscription");
       supabase.removeChannel(channel);
     };
   };
