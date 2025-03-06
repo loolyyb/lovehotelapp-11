@@ -1,210 +1,111 @@
 
 // Version du cache
-const CACHE_NAME = 'love-hotel-cache-v2';
-const CURRENT_VERSION = '1.0.195'; // Synchronisé avec versionDb.ts
+const CACHE_VERSION = 'v1.0.1';
 
-// Liste des ressources statiques à mettre en cache
-const STATIC_ASSETS = [
-  '/.htaccess',
+// Liste des ressources à mettre en cache
+const STATIC_CACHE = `static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
+const STATIC_FILES = [
+  '/',
   '/index.html',
   '/manifest.json',
   '/favicon.ico',
-  '/icon-192.png',
-  '/icon-512.png'
 ];
 
 // Installation du Service Worker
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installation...');
+  console.log('[Service Worker] Installation');
   event.waitUntil(
-    (async () => {
-      try {
-        const cache = await caches.open(CACHE_NAME);
-        console.log('[Service Worker] Mise en cache des ressources statiques');
-        
-        for (const asset of STATIC_ASSETS) {
-          try {
-            const response = await fetch(asset);
-            if (response.ok) {
-              await cache.put(asset, response);
-              console.log(`[Service Worker] Ressource mise en cache avec succès: ${asset}`);
-            } else {
-              console.warn(`[Service Worker] Échec de mise en cache pour: ${asset}`);
-            }
-          } catch (error) {
-            console.error(`[Service Worker] Erreur lors de la mise en cache de ${asset}:`, error);
-          }
-        }
-      } catch (error) {
-        console.error('[Service Worker] Erreur lors de l\'installation:', error);
-      }
-    })()
+    caches.open(STATIC_CACHE)
+      .then(cache => {
+        console.log('[Service Worker] Mise en cache globale');
+        return cache.addAll(STATIC_FILES);
+      })
   );
 });
 
 // Activation du Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activation...');
+  console.log('[Service Worker] Activation');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('[Service Worker] Suppression de l\'ancien cache:', cacheName);
-            return caches.delete(cacheName);
+    caches.keys()
+      .then(keyList => {
+        return Promise.all(keyList.map(key => {
+          if (key !== STATIC_CACHE && key !== DYNAMIC_CACHE) {
+            console.log('[Service Worker] Suppression de l\'ancien cache', key);
+            return caches.delete(key);
           }
-        })
-      );
-    })
+        }));
+      })
   );
+  return self.clients.claim();
 });
 
 // Interception des requêtes
 self.addEventListener('fetch', (event) => {
-  // Ne pas intercepter les requêtes d'API ou de supabase
   const url = new URL(event.request.url);
-  if (url.pathname.includes('/api/') || 
-      url.hostname.includes('supabase') || 
-      url.pathname.includes('/rest/') ||
-      url.pathname.includes('auth/')) {
+  
+  // Ne pas intercepter les requêtes suivantes
+  if (url.hostname.includes('supabase.co') || // Supabase requests
+      url.pathname.startsWith('/rest/') ||    // REST API
+      url.pathname.includes('/auth/') ||      // Auth requests
+      url.pathname.includes('/realtime/') ||  // Realtime/WebSocket
+      url.searchParams.has('apikey')) {       // Supabase API key requests
     return;
   }
-  
+
   event.respondWith(
     (async () => {
       try {
-        // Ne pas mettre en cache les requêtes non GET
+        // Pour les requêtes non-GET, aller directement au réseau
         if (event.request.method !== 'GET') {
           return fetch(event.request);
         }
         
         // Pour les fichiers JS, toujours aller chercher la dernière version
         if (url.pathname.endsWith('.js')) {
-          try {
-            console.log('[Service Worker] Récupération du fichier JS depuis le réseau:', url.pathname);
-            const response = await fetch(event.request);
-            if (!response || response.status !== 200) {
-              throw new Error('Fichier JS non trouvé');
-            }
-            return response;
-          } catch (error) {
-            console.error('[Service Worker] Erreur lors de la récupération du fichier JS:', error);
-            // En cas d'erreur, essayer de retourner la version en cache
-            const cache = await caches.open(CACHE_NAME);
-            const cachedResponse = await cache.match(event.request);
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            throw error;
-          }
+          const networkResponse = await fetch(event.request);
+          // Mettre en cache la nouvelle version
+          const cache = await caches.open(DYNAMIC_CACHE);
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
         }
 
-        // Pour les autres ressources, vérifier d'abord le cache
-        const cache = await caches.open(CACHE_NAME);
-        const cachedResponse = await cache.match(event.request);
-        
+        // Stratégie Cache First pour les autres ressources
+        const cachedResponse = await caches.match(event.request);
         if (cachedResponse) {
-          console.log('[Service Worker] Utilisation du cache pour:', event.request.url);
           return cachedResponse;
         }
 
-        // Si pas en cache, récupérer depuis le réseau
-        console.log('[Service Worker] Récupération depuis le réseau pour:', event.request.url);
+        // Si pas en cache, aller chercher sur le réseau
         const networkResponse = await fetch(event.request);
-        
-        // Mettre en cache uniquement les ressources statiques
-        if (STATIC_ASSETS.includes(url.pathname) || 
-            url.pathname.endsWith('.css') ||
-            url.pathname.endsWith('.png') ||
-            url.pathname.endsWith('.ico') ||
-            url.pathname.endsWith('.json')) {
-          await cache.put(event.request, networkResponse.clone());
-        }
-        
+        // Mettre en cache la réponse
+        const cache = await caches.open(DYNAMIC_CACHE);
+        cache.put(event.request, networkResponse.clone());
         return networkResponse;
       } catch (error) {
-        console.error('[Service Worker] Erreur lors de la récupération:', error);
-        throw error;
+        console.error('[Service Worker] Erreur:', error);
+        
+        // Retourner la version en cache si disponible
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        
+        // Si pas de cache, retourner une erreur
+        return new Response('Network error happened', {
+          status: 408,
+          headers: { 'Content-Type': 'text/plain' },
+        });
       }
     })()
   );
 });
 
-// Gestion des notifications push
-self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Notification push reçue:', event);
-
-  if (!event.data) {
-    console.log('[Service Worker] Pas de données dans la notification');
-    return;
-  }
-
-  try {
-    const data = event.data.json();
-    console.log('[Service Worker] Données de notification:', data);
-
-    const options = {
-      body: data.message,
-      icon: data.icon_url || '/icon-192.png',
-      badge: '/icon-192.png',
-      data: {
-        url: data.target_url
-      },
-      actions: [
-        {
-          action: 'open',
-          title: 'Ouvrir'
-        }
-      ],
-      vibrate: [200, 100, 200],
-      tag: 'love-hotel-notification',
-      renotify: true
-    };
-
-    event.waitUntil(
-      self.registration.showNotification(data.title, options)
-    );
-  } catch (error) {
-    console.error('[Service Worker] Erreur lors du traitement de la notification:', error);
-  }
-});
-
-// Gestion du clic sur une notification
-self.addEventListener('notificationclick', (event) => {
-  console.log('[Service Worker] Clic sur la notification:', event);
-
-  event.notification.close();
-
-  if (event.action === 'open' || !event.action) {
-    const urlToOpen = event.notification.data?.url || '/';
-    
-    event.waitUntil(
-      clients.matchAll({
-        type: 'window',
-        includeUncontrolled: true
-      }).then((windowClients) => {
-        // Vérifier si une fenêtre est déjà ouverte
-        for (const client of windowClients) {
-          if (client.url === urlToOpen && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        // Si aucune fenêtre n'est ouverte, en ouvrir une nouvelle
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
-    );
-  }
-});
-
-// Gestion des mises à jour
+// Message handler
 self.addEventListener('message', (event) => {
-  if (event.data === 'skipWaiting') {
-    console.log('[Service Worker] Skip waiting...');
+  if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
 
-// Limiter la fréquence de vérification des mises à jour (une fois toutes les 12 heures au lieu de toutes les heures)
-// Supprimer l'intervalle persistant qui cause trop de requêtes

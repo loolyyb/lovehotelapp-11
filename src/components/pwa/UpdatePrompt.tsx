@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -9,47 +8,46 @@ export function UpdatePrompt() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Variable pour éviter les doubles contrôles
     let hasCheckedForUpdates = false;
+    let updateFoundHandler: ((event: Event) => void) | null = null;
 
     if ('serviceWorker' in navigator) {
-      // Vérifie si un Service Worker est déjà enregistré
       navigator.serviceWorker.getRegistration().then((registration) => {
         if (registration && !hasCheckedForUpdates) {
           console.log('Service Worker actuel:', registration);
           hasCheckedForUpdates = true;
           
-          // Écoute des mises à jour une seule fois
-          const onUpdateFound = () => {
+          // Définir le handler
+          updateFoundHandler = () => {
             const newWorker = registration.installing;
-            console.log('Nouveau Service Worker trouvé:', newWorker);
-            
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
-                console.log('État du nouveau Service Worker:', newWorker.state);
-                
-                // Quand une nouvelle version est disponible et prête
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('Nouvelle version disponible');
                   setShowUpdatePrompt(true);
                 }
               });
             }
           };
           
-          // Si une mise à jour est déjà en cours
+          // Vérifier si une mise à jour est déjà en cours
           if (registration.installing) {
-            onUpdateFound();
+            updateFoundHandler(new Event('updatefound'));
           } else {
-            // Configurer l'écoute une seule fois
-            registration.addEventListener('updatefound', onUpdateFound);
+            registration.addEventListener('updatefound', updateFoundHandler);
           }
         }
       });
     }
     
-    // Nettoyer l'effet quand le composant est démonté
+    // Cleanup
     return () => {
+      if (updateFoundHandler) {
+        navigator.serviceWorker.getRegistration().then((registration) => {
+          if (registration) {
+            registration.removeEventListener('updatefound', updateFoundHandler!);
+          }
+        });
+      }
       hasCheckedForUpdates = false;
     };
   }, []);
