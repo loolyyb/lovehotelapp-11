@@ -22,9 +22,9 @@ export function MessageContent({
 }: MessageContentProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Défilement automatique vers le dernier message
+  // Automatic scroll to last message
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages && messages.length > 0) {
       const timeout = setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -32,7 +32,17 @@ export function MessageContent({
     }
   }, [messages]);
 
-  if (isLoading && !messages.length) {
+  // Add logging to help debug
+  useEffect(() => {
+    console.log("MessageContent state:", { 
+      isLoading, 
+      isError, 
+      messagesCount: messages?.length || 0,
+      currentProfileId
+    });
+  }, [isLoading, isError, messages, currentProfileId]);
+
+  if (isLoading && !messages?.length) {
     return <LoadingState />;
   }
 
@@ -40,7 +50,7 @@ export function MessageContent({
     return <ErrorState retryLoad={retryLoad} />;
   }
 
-  if (messages.length === 0) {
+  if (!Array.isArray(messages) || messages.length === 0) {
     return <EmptyConversation />;
   }
 

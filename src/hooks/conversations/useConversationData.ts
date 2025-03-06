@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 import { AlertService } from "@/services/AlertService";
@@ -19,8 +20,12 @@ export const useConversationData = ({
   useEffect(() => {
     if (currentProfileId && currentProfileId !== localProfileId) {
       setLocalProfileId(currentProfileId);
+      // If we get a new profile ID, fetch the conversation details
+      if (conversationId) {
+        fetchConversationDetails();
+      }
     }
-  }, [currentProfileId]);
+  }, [currentProfileId, conversationId]);
 
   const fetchConversationDetails = async () => {
     const effectiveProfileId = localProfileId || currentProfileId;

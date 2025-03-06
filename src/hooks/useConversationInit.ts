@@ -47,8 +47,16 @@ export const useConversationInit = ({
       try {
         const profileId = await getCurrentUserProfile();
         if (profileId) {
+          logger.info("User profile retrieved successfully", {
+            profileId,
+            component: "useConversationInit"
+          });
           setInternalProfileId(profileId);
           setCurrentProfileId(profileId);
+        } else {
+          logger.warn("No user profile found", {
+            component: "useConversationInit"
+          });
         }
       } catch (error) {
         logger.error("Error getting user profile", { 
@@ -84,6 +92,7 @@ export const useConversationInit = ({
           conversationId,
           component: "useConversationInit"
         });
+        setMessages([]);
         setIsLoading(false);
         return;
       }
@@ -92,10 +101,25 @@ export const useConversationInit = ({
       setInternalProfileId(profileId);
       
       // Fetch initial messages and conversation details in parallel
-      await Promise.all([
+      const results = await Promise.allSettled([
         fetchInitialMessages(),
         fetchConversationDetails()
       ]);
+      
+      if (results[0].status === 'rejected') {
+        logger.error("Failed to fetch initial messages", {
+          error: results[0].reason,
+          component: "useConversationInit"
+        });
+        setMessages([]);
+      }
+      
+      if (results[1].status === 'rejected') {
+        logger.error("Failed to fetch conversation details", {
+          error: results[1].reason,
+          component: "useConversationInit"
+        });
+      }
       
     } catch (error: any) {
       logger.error("Error in getCurrentUser", { 
@@ -108,6 +132,7 @@ export const useConversationInit = ({
         conversationId,
         component: "useConversationInit"
       });
+      setMessages([]);
     } finally {
       setIsLoading(false);
     }

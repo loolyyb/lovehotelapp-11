@@ -17,6 +17,7 @@ export const useInitialMessages = ({
       logger.info("No conversation ID provided for initial messages", {
         component: "useInitialMessages"
       });
+      setMessages([]);
       return null;
     }
 
@@ -52,10 +53,11 @@ export const useInitialMessages = ({
           conversationId,
           component: "useInitialMessages" 
         });
+        setMessages([]);
         throw messagesError;
       }
       
-      if (initialMessages?.length) {
+      if (initialMessages && initialMessages.length > 0) {
         logger.info("Loaded initial messages", { 
           count: initialMessages.length,
           conversationId,
@@ -68,7 +70,7 @@ export const useInitialMessages = ({
           conversationId,
           component: "useInitialMessages"
         });
-        // Even when no messages are found, set an empty array to clear any previous messages
+        // Always set empty array to clear any previous messages
         setMessages([]);
         return [];
       }
@@ -79,6 +81,8 @@ export const useInitialMessages = ({
         conversationId,
         component: "useInitialMessages" 
       });
+      // Always set empty array on error
+      setMessages([]);
       AlertService.captureException(error, {
         conversationId,
         component: "useInitialMessages"
