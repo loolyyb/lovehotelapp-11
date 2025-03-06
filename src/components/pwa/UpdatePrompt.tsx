@@ -9,14 +9,18 @@ export function UpdatePrompt() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Variable pour éviter les doubles contrôles
+    let hasCheckedForUpdates = false;
+
     if ('serviceWorker' in navigator) {
       // Vérifie si un Service Worker est déjà enregistré
       navigator.serviceWorker.getRegistration().then((registration) => {
-        if (registration) {
+        if (registration && !hasCheckedForUpdates) {
           console.log('Service Worker actuel:', registration);
+          hasCheckedForUpdates = true;
           
-          // Écoute des mises à jour
-          registration.addEventListener('updatefound', () => {
+          // Écoute des mises à jour une seule fois
+          const onUpdateFound = () => {
             const newWorker = registration.installing;
             console.log('Nouveau Service Worker trouvé:', newWorker);
             
@@ -31,10 +35,23 @@ export function UpdatePrompt() {
                 }
               });
             }
-          });
+          };
+          
+          // Si une mise à jour est déjà en cours
+          if (registration.installing) {
+            onUpdateFound();
+          } else {
+            // Configurer l'écoute une seule fois
+            registration.addEventListener('updatefound', onUpdateFound);
+          }
         }
       });
     }
+    
+    // Nettoyer l'effet quand le composant est démonté
+    return () => {
+      hasCheckedForUpdates = false;
+    };
   }, []);
 
   const handleUpdate = () => {

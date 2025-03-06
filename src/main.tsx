@@ -42,15 +42,25 @@ root.render(
   </React.StrictMode>
 );
 
-// Enregistrement du Service Worker
+// Enregistrement du Service Worker avec options de mise en cache améliorées
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('Service Worker enregistré avec succès:', registration);
+    // Attendre que l'application soit chargée pour enregistrer le service worker
+    setTimeout(() => {
+      navigator.serviceWorker.register('/sw.js', {
+        // Limiter la portée du service worker
+        scope: '/'
       })
-      .catch(error => {
-        console.error('Erreur lors de l\'enregistrement du Service Worker:', error);
-      });
+        .then(registration => {
+          console.log('Service Worker enregistré avec succès:', registration);
+          
+          // Limiter les mises à jour automatiques
+          // Vérifier uniquement au démarrage, pas en continu
+          registration.update();
+        })
+        .catch(error => {
+          console.error('Erreur lors de l\'enregistrement du Service Worker:', error);
+        });
+    }, 3000); // Attendre 3 secondes après le chargement
   });
 }

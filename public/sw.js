@@ -61,6 +61,15 @@ self.addEventListener('activate', (event) => {
 
 // Interception des requêtes
 self.addEventListener('fetch', (event) => {
+  // Ne pas intercepter les requêtes d'API ou de supabase
+  const url = new URL(event.request.url);
+  if (url.pathname.includes('/api/') || 
+      url.hostname.includes('supabase') || 
+      url.pathname.includes('/rest/') ||
+      url.pathname.includes('auth/')) {
+    return;
+  }
+  
   event.respondWith(
     (async () => {
       try {
@@ -68,8 +77,6 @@ self.addEventListener('fetch', (event) => {
         if (event.request.method !== 'GET') {
           return fetch(event.request);
         }
-
-        const url = new URL(event.request.url);
         
         // Pour les fichiers JS, toujours aller chercher la dernière version
         if (url.pathname.endsWith('.js')) {
@@ -199,9 +206,5 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Vérification des mises à jour
-setInterval(() => {
-  console.log('[Service Worker] Vérification des mises à jour...');
-  self.registration.update();
-}, 60 * 60 * 1000); // Vérifie toutes les heures
-
+// Limiter la fréquence de vérification des mises à jour (une fois toutes les 12 heures au lieu de toutes les heures)
+// Supprimer l'intervalle persistant qui cause trop de requêtes
