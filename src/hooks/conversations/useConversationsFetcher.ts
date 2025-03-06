@@ -45,7 +45,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         throw new Error("Profil introuvable. Veuillez vous reconnecter.");
       }
       
-      // Now fetch conversations with explicit joins and table references
+      // Now fetch conversations with unique aliases for the profiles to avoid the duplicate table error
       const { data, error: conversationsError } = await supabase
         .from('conversations')
         .select(`
@@ -56,13 +56,13 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           blocked_by,
           user1_id,
           user2_id,
-          profiles!conversations_user1_id_fkey (
+          user1:profiles!conversations_user1_id_fkey (
             id, 
             full_name,
             username,
             avatar_url
           ),
-          profiles!conversations_user2_id_fkey (
+          user2:profiles!conversations_user2_id_fkey (
             id,
             full_name,
             username,
@@ -77,13 +77,19 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         throw new Error(conversationsError.message);
       }
 
-      // Ensure type safety and log results
+      // Ensure type safety and log detailed results
       const typedData = safeQueryResult<any>(data);
       console.log("Conversations fetch result:", {
         success: true,
         count: typedData.length,
-        conversations: typedData
+        profileId: currentProfileId,
+        conversations: typedData.map(c => ({ id: c.id, user1_id: c.user1_id, user2_id: c.user2_id }))
       });
+      
+      // Log more detailed info if no conversations found
+      if (typedData.length === 0) {
+        console.log("No conversations found for profile:", currentProfileId);
+      }
       
       setConversations(typedData);
       setError(null);
