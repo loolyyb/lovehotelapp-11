@@ -44,10 +44,22 @@ export const useMessageFetcher = ({
         return null;
       }
 
+      // Check if profile is valid and get the current auth user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        logger.error("No authenticated user", { component: "useMessageFetcher" });
+        toast({
+          variant: "destructive",
+          title: "Erreur d'authentification",
+          description: "Votre session a expiré. Veuillez vous reconnecter.",
+        });
+        return null;
+      }
+
       // Verify the conversation exists and user has access - RLS will handle permissions
       const { data: conversationData, error: conversationError } = await supabase
         .from('conversations')
-        .select('id')
+        .select('id, user1_id, user2_id')
         .eq('id', conversationId)
         .single();
         
@@ -62,6 +74,23 @@ export const useMessageFetcher = ({
           variant: "destructive",
           title: "Accès non autorisé",
           description: "Vous n'avez pas accès à cette conversation",
+        });
+        return null;
+      }
+
+      // Verify current user is part of this conversation
+      if (conversationData && conversationData.user1_id !== currentProfileId && conversationData.user2_id !== currentProfileId) {
+        logger.error("User not part of conversation", {
+          conversationId,
+          currentProfileId,
+          conversation: conversationData,
+          component: "useMessageFetcher"
+        });
+        
+        toast({
+          variant: "destructive",
+          title: "Accès non autorisé",
+          description: "Vous n'êtes pas autorisé à accéder à cette conversation",
         });
         return null;
       }

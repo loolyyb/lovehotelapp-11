@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
 import debounce from 'lodash/debounce';
+import { logger } from "@/services/LogService";
 
 interface UseMessageHandlersProps {
   currentProfileId: string | null;
@@ -30,17 +31,38 @@ export const useMessageHandlers = ({
     setIsProcessing(true);
 
     try {
+      // First check if user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        logger.error("Authentication error", { error: authError, component: "useMessageHandlers" });
+        throw new Error("Vous devez être connecté pour envoyer des messages");
+      }
+
       // First verify the user has permission to this conversation
-      const { error: verifyError } = await supabase
+      const { data: conversation, error: verifyError } = await supabase
         .from('conversations')
-        .select('id')
-        .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
+        .select('id, user1_id, user2_id')
         .eq('id', conversationId)
         .single();
         
       if (verifyError) {
-        console.error("Error verifying conversation permission:", verifyError);
-        throw new Error("You don't have permission to send messages in this conversation");
+        logger.error("Error verifying conversation permission:", { 
+          error: verifyError, 
+          component: "useMessageHandlers" 
+        });
+        throw new Error("Vous n'avez pas l'autorisation d'envoyer des messages dans cette conversation");
+      }
+      
+      // Verify user is part of this conversation
+      if (conversation.user1_id !== currentProfileId && conversation.user2_id !== currentProfileId) {
+        logger.error("User not part of conversation", {
+          conversationId,
+          currentProfileId,
+          conversation,
+          component: "useMessageHandlers"
+        });
+        throw new Error("Vous n'êtes pas autorisé à envoyer des messages dans cette conversation");
       }
 
       const { error } = await supabase
@@ -53,22 +75,34 @@ export const useMessageHandlers = ({
         });
 
       if (error) {
-        console.error("Insert message error:", error);
+        logger.error("Insert message error:", { 
+          error,
+          component: "useMessageHandlers" 
+        });
         throw error;
       }
       
+      logger.info("Message sent successfully", {
+        conversationId,
+        component: "useMessageHandlers"
+      });
+      
       setNewMessage("");
     } catch (error: any) {
-      console.error("Error in sendMessage:", error);
+      logger.error("Error in sendMessage:", { 
+        error: error.message,
+        stack: error.stack,
+        component: "useMessageHandlers" 
+      });
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible d'envoyer le message",
+        description: error.message || "Impossible d'envoyer le message",
       });
     } finally {
       setIsProcessing(false);
     }
-  }, [currentProfileId, conversationId, newMessage, isProcessing]);
+  }, [currentProfileId, conversationId, newMessage, isProcessing, toast, setNewMessage]);
 
   const debouncedSendMessage = useCallback(
     debounce((e: React.FormEvent) => sendMessage(e), 500, { leading: true, trailing: false }),
