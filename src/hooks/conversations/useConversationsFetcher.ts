@@ -3,12 +3,14 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
 import { findConversationsByProfileId, getProfileByAuthId } from "@/utils/conversationUtils";
+import { useToast } from "@/hooks/use-toast";
 
 export function useConversationsFetcher(currentProfileId: string | null) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const logger = useLogger("useConversationsFetcher");
+  const { toast } = useToast();
   
   // Auto-fetch when profile ID changes
   useEffect(() => {
@@ -31,7 +33,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     try {
       logger.info("Fetching conversations for profile ID", { profileId: currentProfileId });
       
-      // First, check if the profile exists
+      // Verify profile exists
       const { data: profileCheck, error: profileError } = await supabase
         .from('profiles')
         .select('id, username, full_name, user_id')
@@ -45,12 +47,34 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       
       if (!profileCheck) {
         logger.warn("Profile not found in database", { profileId: currentProfileId });
+        
+        // Try to get profile from auth user as fallback
+        const { data } = await supabase.auth.getUser();
+        if (data?.user) {
+          logger.info("Attempting to use auth user to find profile", { authId: data.user.id });
+          const profile = await getProfileByAuthId(data.user.id);
+          
+          if (profile && profile.id !== currentProfileId) {
+            logger.warn("Found a different profile for this auth user - using that instead", {
+              requestedProfileId: currentProfileId,
+              foundProfileId: profile.id
+            });
+            
+            // Important: We'll use the correct profile ID we found
+            const fetchedConversations = await findConversationsByProfileId(profile.id);
+            setConversations(fetchedConversations);
+            setIsLoading(false);
+            return fetchedConversations;
+          }
+        }
+        
+        // If we still don't have a valid profile
         throw new Error("Profil introuvable. Veuillez vous reconnecter.");
       }
 
-      logger.info("Profile found", { profile: profileCheck });
+      logger.info("Profile found, proceeding to fetch conversations", { profile: profileCheck });
       
-      // Use the more reliable function to fetch conversations
+      // Use the improved findConversationsByProfileId function
       const fetchedConversations = await findConversationsByProfileId(currentProfileId);
       
       if (fetchedConversations.length === 0) {
@@ -59,29 +83,24 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           authUserId: profileCheck.user_id
         });
         
-        // Try to fetch auth user information for additional diagnostics
-        const { data: authData } = await supabase.auth.getUser();
-        if (authData?.user) {
-          logger.info("Auth user found", { 
-            authUserId: authData.user.id, 
-            email: authData.user.email,
-            profileId: currentProfileId
-          });
+        // Check if there are any conversations in the database at all
+        const { data: allConversations, error: allConvError } = await supabase
+          .from('conversations')
+          .select('id, user1_id, user2_id, status')
+          .limit(5);
           
-          // Double-check profile with auth user ID
-          const userProfile = await getProfileByAuthId(authData.user.id);
-          if (userProfile && userProfile.id !== currentProfileId) {
-            logger.warn("Profile ID mismatch - found another profile for this auth user", {
-              currentProfileId,
-              foundProfileId: userProfile.id
-            });
-          }
+        if (allConvError) {
+          logger.error("Error checking conversations table", { error: allConvError });
+        } else {
+          logger.info("Database check - found conversations", { 
+            count: allConversations?.length || 0,
+            samples: allConversations?.map(c => ({ id: c.id, user1: c.user1_id, user2: c.user2_id }))
+          });
         }
       } else {
         logger.info("Found conversations", { count: fetchedConversations.length });
       }
       
-      // Fetch profiles for conversations we found
       const conversationsWithProfiles = 
         fetchedConversations.length > 0 ? 
         await fetchProfilesForConversations(fetchedConversations, currentProfileId) : 
@@ -97,7 +116,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       setIsLoading(false);
       return [];
     }
-  }, [currentProfileId, logger]);
+  }, [currentProfileId, logger, toast]);
   
   // Helper function to fetch profiles for each conversation
   const fetchProfilesForConversations = async (conversations: any[], currentUser: string) => {

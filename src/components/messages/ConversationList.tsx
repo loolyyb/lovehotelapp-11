@@ -96,11 +96,7 @@ export function ConversationList({
   const getCurrentUserProfile = async () => {
     try {
       logger.info("Fetching current user profile");
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         logger.warn("No authenticated user found");
         toast({
@@ -118,12 +114,16 @@ export function ConversationList({
         setCurrentUserProfileId(profile.id);
         logger.info("Current user profile fetched", { profileId: profile.id });
       } else {
+        // Attempt to create a profile if none exists
+        logger.warn("No profile found for user, creating one", { userId: user.id });
+        
         const { data: newProfile, error } = await supabase
           .from('profiles')
           .insert({
             id: crypto.randomUUID(),
             user_id: user.id,
             full_name: user.email?.split('@')[0] || 'Utilisateur',
+            username: user.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 1000),
             role: 'user'
           })
           .select('id')
@@ -191,6 +191,7 @@ export function ConversationList({
             id: crypto.randomUUID(),
             user_id: user.id,
             full_name: user.email?.split('@')[0] || 'Utilisateur',
+            username: user.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 1000),
             role: 'user'
           }]);
           
@@ -343,7 +344,7 @@ export function ConversationList({
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-medium text-[#f3ebad] truncate">
-                        {otherUser?.full_name || "Utilisateur"}
+                        {otherUser?.full_name || otherUser?.username || "Utilisateur"}
                       </h3>
                       {lastMessage && <span className="text-xs text-[#f3ebad]/50">
                           {format(new Date(lastMessage.created_at), 'HH:mm', {
