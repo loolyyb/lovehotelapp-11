@@ -13,10 +13,10 @@ export function EmptyState({ onRefresh, isRefreshing = false }: EmptyStateProps)
       <div className="w-16 h-16 rounded-full bg-[#f3ebad]/10 flex items-center justify-center">
         <MessageSquare className="w-8 h-8 text-[#f3ebad]/70" />
       </div>
-      <h3 className="text-lg font-medium text-[#f3ebad]">Aucun message</h3>
+      <h3 className="text-lg font-medium text-[#f3ebad]">Pas de messages</h3>
       <p className="text-sm text-[#f3ebad]/70 max-w-sm">
-        Vous n'avez pas encore de conversations actives. 
-        Commencez à discuter avec d'autres membres pour les voir apparaître ici.
+        Cette conversation ne contient pas encore de messages. 
+        Envoyez un message pour démarrer la conversation.
       </p>
       <Button 
         onClick={onRefresh} 

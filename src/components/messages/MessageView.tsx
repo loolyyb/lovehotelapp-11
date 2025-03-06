@@ -9,6 +9,7 @@ import { useConversationInit } from "@/hooks/useConversationInit";
 import { useMessageRefresh } from "@/hooks/useMessageRefresh";
 import { useLogger } from "@/hooks/useLogger";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
+import { EmptyState } from "./EmptyState";
 
 interface MessageViewProps {
   conversationId: string;
@@ -81,6 +82,11 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     }
   });
 
+  const handleRefresh = async () => {
+    logger.info("Manually refreshing messages", { conversationId });
+    await refreshMessages();
+  };
+
   useEffect(() => {
     let mounted = true;
     setIsError(false);
@@ -151,19 +157,27 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     <div className="flex flex-col h-full bg-[#40192C] backdrop-blur-sm border-[0.5px] border-[#f3ebad]/30">
       <MessageHeader 
         onBack={onBack} 
-        refreshMessages={refreshMessages} 
+        refreshMessages={handleRefresh} 
         isRefreshing={isRefreshing}
         otherUser={otherUser}
       />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <MessageContent 
-          isLoading={isLoading}
-          isError={isError}
-          messages={messages}
-          currentProfileId={currentProfileId}
-          retryLoad={retryLoad}
-        />
+        {isLoading ? (
+          <div>Loading...</div>
+        ) : isError ? (
+          <div>Error loading messages</div>
+        ) : messages.length === 0 ? (
+          <EmptyState onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+        ) : (
+          <MessageContent 
+            isLoading={isLoading}
+            isError={isError}
+            messages={messages}
+            currentProfileId={currentProfileId}
+            retryLoad={retryLoad}
+          />
+        )}
       </div>
 
       <div className="p-4 border-t border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300">

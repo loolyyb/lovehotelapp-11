@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { MessageView } from "@/components/messages/MessageView";
@@ -8,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { EmptyState } from "@/components/messages/EmptyState";
 
 // Memoized MessageView to prevent unnecessary re-renders
 const MemoizedMessageView = memo(({ conversationId, onBack }: { conversationId: string, onBack: () => void }) => {
@@ -110,6 +110,20 @@ export default function Messages() {
     setSelectedConversation(null);
   }, [logger]);
 
+  const handleRefreshConversations = useCallback(() => {
+    logger.info("Manually refreshing conversations");
+    checkConnectionStatus().then(() => {
+      if (!connectionError) {
+        // If we have a profile, refresh conversations
+        const { data: { user } } = supabase.auth.getUser();
+        if (user) {
+          // Force refresh conversations
+          logger.info("Forcing conversation refresh", { userId: user.id });
+        }
+      }
+    });
+  }, [connectionError, logger]);
+
   if (connectionError) {
     return (
       <div className="flex h-[calc(100vh-4rem)] bg-[#40192C] pt-12 backdrop-blur-sm justify-center items-center">
@@ -155,8 +169,11 @@ export default function Messages() {
             onBack={handleBack}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center text-[#f3ebad]/70">
-            <p>Sélectionnez une conversation pour commencer</p>
+          <div className="flex-1 flex items-center justify-center">
+            <EmptyState 
+              onRefresh={handleRefreshConversations}
+              isRefreshing={isCheckingConnection}
+            />
           </div>
         )}
       </div>
