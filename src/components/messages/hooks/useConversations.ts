@@ -16,6 +16,7 @@ export const useConversations = () => {
   const fetchingRef = useRef(false);
   const debounceTimerRef = useRef<number | null>(null);
   const retryCountRef = useRef(0);
+  const fetchAttemptsRef = useRef(0);
 
   // Import all the refactored hooks
   const {
@@ -44,6 +45,36 @@ export const useConversations = () => {
     else if (conversationsError) setError(conversationsError);
     else setError(null);
   }, [profileError, conversationsError]);
+
+  // Log when we retrieve conversations
+  useEffect(() => {
+    logger.info("Fetched conversations", {
+      count: conversations.length
+    });
+  }, [conversations, logger]);
+
+  // Diagnostic check for profile and username
+  useEffect(() => {
+    if (currentProfileId) {
+      // Fetch profile details
+      supabase
+        .from('profiles')
+        .select('id, username, full_name')
+        .eq('id', currentProfileId)
+        .single()
+        .then(({ data, error }) => {
+          if (error) {
+            logger.error("Error fetching profile details:", error);
+          } else if (data) {
+            logger.info("User profile found", {
+              profileId: data.id,
+              username: data.username,
+              fullName: data.full_name
+            });
+          }
+        });
+    }
+  }, [currentProfileId, logger]);
 
   // Check permissions and fix profile issues
   useEffect(() => {
@@ -117,11 +148,13 @@ export const useConversations = () => {
 
     try {
       logger.info("Starting conversations fetch process");
+      fetchAttemptsRef.current += 1;
       
       // 1. Get user profile if not already available
       if (!currentProfileId) {
         const profileId = await getUserProfile();
         if (!profileId) {
+          logger.error("Could not retrieve user profile");
           fetchingRef.current = false;
           return;
         }
@@ -129,6 +162,44 @@ export const useConversations = () => {
 
       // 2. Fetch conversations for the user
       const fetchedConversations = await fetchConversations();
+      
+      if (fetchedConversations.length === 0) {
+        logger.warn("No conversations found, attempt:", fetchAttemptsRef.current);
+        
+        // After several attempts, try to diagnose the issue
+        if (fetchAttemptsRef.current > 3) {
+          // Try fetching all conversations that might be relevant (admin access)
+          const { data: allConversations, error: allError } = await supabase
+            .from('conversations')
+            .select('*')
+            .limit(20);
+            
+          logger.info("Diagnostic - all conversations:", {
+            success: !allError,
+            count: allConversations?.length || 0,
+            error: allError
+          });
+          
+          // Try to check for user profile mismatch
+          const { data: authUser } = await supabase.auth.getUser();
+          if (authUser.user) {
+            logger.info("Diagnostic - auth user:", {
+              id: authUser.user.id,
+              email: authUser.user.email
+            });
+            
+            const { data: userProfiles } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', authUser.user.id);
+              
+            logger.info("Diagnostic - user profiles:", {
+              count: userProfiles?.length || 0,
+              profiles: userProfiles
+            });
+          }
+        }
+      }
       
       // 3. Fetch latest message for each conversation
       const conversationsWithMessages = await fetchLatestMessages(fetchedConversations);

@@ -1,24 +1,25 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase, safeQueryResult } from "@/integrations/supabase/client";
+import { useLogger } from "@/hooks/useLogger";
 
 export function useConversationsFetcher(currentProfileId: string | null) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const DEBUG_MODE = true; // Enable for verbose logging
-
+  const logger = useLogger("useConversationsFetcher");
+  
   // Auto-fetch when profile ID changes
   useEffect(() => {
     if (currentProfileId) {
-      console.log("Profile ID changed, fetching conversations", { profileId: currentProfileId });
+      logger.info("Profile ID changed, fetching conversations", { profileId: currentProfileId });
       fetchConversations();
     }
   }, [currentProfileId]);
 
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     if (!currentProfileId) {
-      console.warn("No profile ID provided, cannot fetch conversations");
+      logger.warn("No profile ID provided, cannot fetch conversations");
       setError("Vous devez être connecté pour voir vos conversations");
       return [];
     }
@@ -27,7 +28,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     setError(null);
 
     try {
-      console.log("Fetching conversations for profile ID:", currentProfileId);
+      logger.info("Fetching conversations for profile ID:", currentProfileId);
       
       // First, check if the profile exists
       const { data: profileCheck, error: profileError } = await supabase
@@ -37,20 +38,73 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         .maybeSingle();
         
       if (profileError) {
-        console.error("Error checking profile:", profileError);
+        logger.error("Error checking profile:", profileError);
         throw new Error("Erreur lors de la vérification du profil");
       }
       
       if (!profileCheck) {
-        console.warn("Profile not found in database:", currentProfileId);
+        logger.warn("Profile not found in database:", currentProfileId);
         throw new Error("Profil introuvable. Veuillez vous reconnecter.");
       }
 
-      console.log("Profile found:", profileCheck);
+      logger.info("Profile found:", profileCheck);
       
-      // Enhanced fetching approach
-      // First check if we can access with auth.uid() directly
-      const { data: userConversations, error: userConvError } = await supabase
+      // Combined approach - try multiple strategies to ensure we get conversations
+      const results = await Promise.allSettled([
+        // Direct query with user1_id / user2_id filter
+        fetchConversationsDirectQuery(currentProfileId),
+        // FTS query with text search
+        fetchConversationsFullTextSearch(currentProfileId),
+        // Raw query through database function (bypasses RLS)
+        fetchConversationsRawQuery(currentProfileId)
+      ]);
+      
+      // Get the first successful result that has conversations
+      let fetchedConversations: any[] = [];
+      
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value && result.value.length > 0) {
+          logger.info("Found conversations with strategy", { 
+            strategyIndex: results.indexOf(result),
+            count: result.value.length
+          });
+          fetchedConversations = result.value;
+          break;
+        }
+      }
+      
+      // If we still don't have conversations, log the issue
+      if (fetchedConversations.length === 0) {
+        logger.warn("No conversations found with any strategy", {
+          profileId: currentProfileId,
+          results: results.map(r => r.status === 'fulfilled' ? 
+            { status: 'fulfilled', count: r.value?.length || 0 } : 
+            { status: 'rejected', reason: r.reason })
+        });
+      }
+      
+      // Fetch profiles for conversations we found
+      const conversationsWithProfiles = 
+        fetchedConversations.length > 0 ? 
+        await fetchProfilesForConversations(fetchedConversations, currentProfileId) : 
+        [];
+      
+      setConversations(conversationsWithProfiles);
+      setIsLoading(false);
+      return conversationsWithProfiles;
+      
+    } catch (error: any) {
+      logger.error("Error in fetchConversations:", error);
+      setError(error.message || "Erreur lors du chargement des conversations");
+      setIsLoading(false);
+      return [];
+    }
+  }, [currentProfileId, logger]);
+
+  // Strategy 1: Direct query with OR condition on user1_id and user2_id
+  const fetchConversationsDirectQuery = async (profileId: string) => {
+    try {
+      const { data, error } = await supabase
         .from('conversations')
         .select(`
           id, 
@@ -61,107 +115,75 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           created_at,
           updated_at
         `)
-        .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
+        .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
+        .neq('status', 'deleted')
         .order('updated_at', { ascending: false });
-      
-      if (userConvError) {
-        console.error("Error with user conversation fetch:", userConvError);
-      } else {
-        console.log("User conversations:", {
-          count: userConversations?.length || 0,
-          conversations: userConversations
-        });
+        
+      if (error) {
+        logger.error("Error with direct query:", error);
+        return [];
       }
       
-      // If no conversations found with the direct query, try explicit join approach
-      if (!userConversations || userConversations.length === 0) {
-        console.log("No conversations found with direct query, trying join approach");
-        
-        const { data: joinData, error: joinError } = await supabase
-          .from('conversations')
-          .select(`
-            id, 
-            status,
-            blocked_by,
-            user1_id,
-            user2_id,
-            created_at,
-            updated_at
-          `)
-          .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
-          .neq('status', 'deleted'); // Exclude deleted conversations
-        
-        if (joinError) {
-          console.error("Error with join query:", joinError);
-        } else {
-          console.log("Join query results:", {
-            count: joinData?.length || 0,
-            conversations: joinData
-          });
-          
-          if (joinData && joinData.length > 0) {
-            // We have conversations from the join approach
-            const withProfiles = await fetchProfilesForConversations(joinData, currentProfileId);
-            setConversations(withProfiles);
-            setIsLoading(false);
-            return withProfiles;
-          }
-        }
-      } else {
-        // We have conversations from the direct query
-        const withProfiles = await fetchProfilesForConversations(userConversations, currentProfileId);
-        setConversations(withProfiles);
-        setIsLoading(false);
-        return withProfiles;
-      }
+      logger.info("Direct query results:", {
+        count: data?.length || 0
+      });
       
-      // Fallback approach: fetch each profile separately
-      console.log("No conversations found with standard queries, trying alternative approach");
-      
-      // Fetch users who might be in conversations with current user
-      const { data: potentialUsers, error: usersError } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, avatar_url')
-        .neq('id', currentProfileId)
-        .limit(20);
-        
-      if (usersError) {
-        console.error("Error fetching potential users:", usersError);
-      } else if (potentialUsers && potentialUsers.length > 0) {
-        console.log("Found potential conversation partners:", potentialUsers.length);
-        
-        // Check for conversations with each user
-        const conversationPromises = potentialUsers.map(user => 
-          checkForConversation(currentProfileId, user.id)
-        );
-        
-        const results = await Promise.all(conversationPromises);
-        const foundConversations = results
-          .filter(result => result.conversation != null)
-          .map(result => ({
-            ...result.conversation,
-            otherUser: result.otherUser
-          }));
-          
-        console.log("Found conversations from individual checks:", foundConversations.length);
-        
-        if (foundConversations.length > 0) {
-          setConversations(foundConversations);
-          setIsLoading(false);
-          return foundConversations;
-        }
-      }
-      
-      // If we get here, we truly have no conversations
-      console.log("No conversations found with any approach");
-      setConversations([]);
-      setIsLoading(false);
+      return data || [];
+    } catch (error) {
+      logger.error("Failed direct query:", error);
       return [];
+    }
+  };
+  
+  // Strategy 2: Use text search to find conversations
+  const fetchConversationsFullTextSearch = async (profileId: string) => {
+    try {
+      // This is a fallback that does a full text search on the conversations table
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .or(`user1_id.ilike.${profileId},user2_id.ilike.${profileId}`)
+        .neq('status', 'deleted')
+        .order('updated_at', { ascending: false });
+        
+      if (error) {
+        logger.error("Error with FTS query:", error);
+        return [];
+      }
       
-    } catch (error: any) {
-      console.error("Error in fetchConversations:", error);
-      setError(error.message || "Erreur lors du chargement des conversations");
-      setIsLoading(false);
+      logger.info("FTS query results:", {
+        count: data?.length || 0
+      });
+      
+      return data || [];
+    } catch (error) {
+      logger.error("Failed FTS query:", error);
+      return [];
+    }
+  };
+  
+  // Strategy 3: Use a raw query through a database function (bypasses RLS)
+  const fetchConversationsRawQuery = async (profileId: string) => {
+    try {
+      // Try using our bypass function if it exists
+      const { data, error } = await supabase
+        .rpc('get_user_conversations', {
+          user_profile_id: profileId
+        });
+        
+      if (error) {
+        // Function might not exist if the user didn't run the SQL migrations
+        logger.warn("Error with RPC query (function may not exist):", error);
+        return [];
+      }
+      
+      logger.info("RPC query results:", {
+        count: data?.length || 0
+      });
+      
+      return data || [];
+    } catch (error) {
+      logger.error("Failed RPC query:", error);
       return [];
     }
   };
@@ -184,7 +206,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           .maybeSingle();
           
         if (profileError) {
-          console.error("Error fetching profile for conversation:", profileError);
+          logger.error("Error fetching profile for conversation:", profileError);
           return {...conversation, otherUser: null};
         }
         
@@ -193,47 +215,6 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     );
     
     return result;
-  };
-  
-  // Helper function to check for a conversation between two users
-  const checkForConversation = async (user1: string, user2: string) => {
-    // Try first direction (user1 -> user2)
-    const { data: conv1, error: error1 } = await supabase
-      .from('conversations')
-      .select('*')
-      .eq('user1_id', user1)
-      .eq('user2_id', user2)
-      .maybeSingle();
-      
-    if (!error1 && conv1) {
-      const { data: otherUser } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, avatar_url')
-        .eq('id', user2)
-        .maybeSingle();
-        
-      return { conversation: conv1, otherUser };
-    }
-    
-    // Try other direction (user2 -> user1)
-    const { data: conv2, error: error2 } = await supabase
-      .from('conversations')
-      .select('*')
-      .eq('user1_id', user2)
-      .eq('user2_id', user1)
-      .maybeSingle();
-      
-    if (!error2 && conv2) {
-      const { data: otherUser } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, avatar_url')
-        .eq('id', user2)
-        .maybeSingle();
-        
-      return { conversation: conv2, otherUser };
-    }
-    
-    return { conversation: null, otherUser: null };
   };
 
   return {

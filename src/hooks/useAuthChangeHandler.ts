@@ -23,18 +23,21 @@ export const useAuthChangeHandler = () => {
       });
       navigate("/");
     } else if (event === 'SIGNED_IN' && session) {
-      await createProfileIfNeeded(session.user.id);
-      
       // Verify or fix RLS profile access by checking and creating a profile if needed
       try {
-        const { data: profile, error } = await supabase
+        // First make sure the profile exists
+        await createProfileIfNeeded(session.user.id);
+        
+        // Then verify that the profile has the correct user_id for RLS permissions
+        const { data: profiles, error } = await supabase
           .from('profiles')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
+          .select('id, user_id')
+          .eq('user_id', session.user.id);
           
-        if (error || !profile) {
-          logger.warn('Profile not found for user, creating one', { userId: session.user.id });
+        if (error) {
+          logger.error('Error verifying user profiles', { error });
+        } else if (!profiles || profiles.length === 0) {
+          logger.warn('No profiles found for user, creating one', { userId: session.user.id });
           
           const newProfileId = crypto.randomUUID();
           await supabase.from('profiles').insert({
@@ -45,6 +48,12 @@ export const useAuthChangeHandler = () => {
           });
           
           logger.info('Created new profile for user', { userId: session.user.id, profileId: newProfileId });
+        } else {
+          logger.info('User has profiles', { 
+            userId: session.user.id, 
+            profileCount: profiles.length,
+            profiles: profiles.map(p => ({ id: p.id, user_id: p.user_id }))
+          });
         }
       } catch (error) {
         logger.error('Error verifying user profile', { error });
