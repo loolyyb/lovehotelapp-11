@@ -90,8 +90,10 @@ export const useRealtimeMessages = ({
 
           // Notify appropriate handler based on event type
           if (payload.eventType === 'INSERT') {
+            logger.info("Calling onNewMessage handler with message", { messageId });
             onNewMessage?.(message);
           } else if (payload.eventType === 'UPDATE') {
+            logger.info("Calling onMessageUpdate handler with message", { messageId });
             onMessageUpdate?.(message);
           }
         }
