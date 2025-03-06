@@ -7,10 +7,11 @@ import { fr } from "date-fns/locale";
 import { useConversations } from "./hooks/useConversations";
 import { LoadingState } from "./LoadingState";
 import { EmptyState } from "./EmptyState";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw, UserX } from "lucide-react";
 import { useLogger } from "@/hooks/useLogger";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel-v2.jpg";
 
@@ -25,8 +26,11 @@ export function ConversationList({
 }: ConversationListProps) {
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [hasAuthError, setHasAuthError] = useState(false);
   const logger = useLogger("ConversationList");
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const {
     conversations,
@@ -36,15 +40,57 @@ export function ConversationList({
     currentProfileId
   } = useConversations();
 
+  // First check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        logger.info("Checking authentication status");
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          logger.error("Session check error", { error });
+          setHasAuthError(true);
+          toast({
+            variant: "destructive",
+            title: "Erreur d'authentification",
+            description: "Votre session a expiré. Veuillez vous reconnecter."
+          });
+          return;
+        }
+        
+        if (!data.session) {
+          logger.warn("No active session found");
+          setHasAuthError(true);
+          toast({
+            variant: "destructive",
+            title: "Non connecté",
+            description: "Veuillez vous connecter pour accéder à vos messages."
+          });
+          return;
+        }
+        
+        logger.info("Authentication check successful", { userId: data.session.user.id });
+        setHasAuthError(false);
+      } catch (e) {
+        logger.error("Error checking auth status", { error: e });
+        setHasAuthError(true);
+      } finally {
+        setAuthChecked(true);
+      }
+    };
+    
+    checkAuth();
+  }, []);
+
   // Use the currentProfileId from useConversations when available
   useEffect(() => {
     if (currentProfileId) {
       setCurrentUserProfileId(currentProfileId);
       logger.info("Using profile ID from conversations hook", { profileId: currentProfileId });
-    } else {
+    } else if (authChecked && !hasAuthError) {
       getCurrentUserProfile();
     }
-  }, [currentProfileId, logger]);
+  }, [currentProfileId, authChecked, hasAuthError, logger]);
 
   const getCurrentUserProfile = async () => {
     try {
@@ -56,6 +102,12 @@ export function ConversationList({
       } = await supabase.auth.getUser();
       if (!user) {
         logger.warn("No authenticated user found");
+        toast({
+          variant: "destructive",
+          title: "Non connecté",
+          description: "Veuillez vous connecter pour accéder à vos messages."
+        });
+        setHasAuthError(true);
         return;
       }
       
@@ -98,6 +150,11 @@ export function ConversationList({
     }
   };
 
+  const handleLogin = () => {
+    logger.info("Redirecting to login page");
+    navigate("/login", { state: { returnUrl: "/messages" } });
+  };
+
   const handleRetry = useCallback(async () => {
     logger.info("Manually retrying conversation fetch");
     setIsRetrying(true);
@@ -111,8 +168,11 @@ export function ConversationList({
           title: "Non connecté",
           description: "Vous n'êtes pas connecté. Veuillez vous reconnecter."
         });
+        setHasAuthError(true);
         return;
       }
+      
+      setHasAuthError(false);
       
       // Try to fix profile issues
       const { data: profile } = await supabase
@@ -169,17 +229,52 @@ export function ConversationList({
     } finally {
       setIsRetrying(false);
     }
-  }, [refetch, logger, toast]);
+  }, [refetch, logger, toast, navigate]);
 
   // Effect to periodically refresh conversations as a fallback
   useEffect(() => {
     const interval = setInterval(() => {
-      logger.info("Periodic conversation refresh");
-      refetch();
+      if (!hasAuthError) {
+        logger.info("Periodic conversation refresh");
+        refetch();
+      }
     }, 60000); // Every minute
     
     return () => clearInterval(interval);
-  }, [refetch, logger]);
+  }, [refetch, logger, hasAuthError]);
+
+  if (hasAuthError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
+        <UserX className="w-12 h-12 text-[#f3ebad]" />
+        <h3 className="text-lg font-medium text-[#f3ebad]">Connexion requise</h3>
+        <p className="text-sm text-[#f3ebad]/70">Vous devez être connecté pour accéder à vos messages.</p>
+        <div className="flex space-x-3">
+          <Button 
+            onClick={handleLogin}
+            className="px-4 py-2 text-sm font-medium text-burgundy bg-[#f3ebad] rounded-md hover:bg-[#f3ebad]/90 transition-colors"
+          >
+            Se connecter
+          </Button>
+          <Button 
+            onClick={handleRetry} 
+            variant="outline"
+            className="px-4 py-2 text-sm font-medium text-[#f3ebad] border-[#f3ebad]/30 rounded-md hover:bg-[#f3ebad]/10 transition-colors"
+            disabled={isRetrying}
+          >
+            {isRetrying ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Vérification...
+              </>
+            ) : (
+              "Vérifier à nouveau"
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <LoadingState />;
@@ -213,7 +308,7 @@ export function ConversationList({
   });
 
   if (conversations.length === 0) {
-    return <EmptyState onRefresh={handleRetry} />;
+    return <EmptyState onRefresh={handleRetry} isRefreshing={isRetrying} />;
   }
 
   return <div className="h-full flex flex-col">

@@ -13,7 +13,10 @@ export const useConversationsRealtime = (
 
   // Setup channel subscription
   useEffect(() => {
-    if (!currentProfileId) return;
+    if (!currentProfileId) {
+      logger.info("No profile ID available for realtime subscription");
+      return;
+    }
     
     // Clean up any existing channel
     if (channelRef.current) {
@@ -23,53 +26,57 @@ export const useConversationsRealtime = (
     const channelId = `conversations-updates-${currentProfileId}-${Date.now()}`;
     logger.info(`Setting up conversation realtime subscription: ${channelId}`);
     
-    const channel = supabase
-      .channel(channelId)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',  // Listen for all events (INSERT, UPDATE, DELETE)
-          schema: 'public',
-          table: 'conversations',
-          filter: `user1_id=eq.${currentProfileId}`, 
-        },
-        (payload) => {
-          // Ensure payload.new is defined and has an id
-          if (payload.new && typeof payload.new === 'object' && 'id' in payload.new) {
-            logger.info("Conversation change detected", { 
-              event: payload.eventType,
-              conversationId: payload.new.id,
-              timestamp: new Date().toISOString()
-            });
-            onConversationChange();
+    try {
+      const channel = supabase
+        .channel(channelId)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',  // Listen for all events (INSERT, UPDATE, DELETE)
+            schema: 'public',
+            table: 'conversations',
+            filter: `user1_id=eq.${currentProfileId}`, 
+          },
+          (payload) => {
+            // Ensure payload.new is defined and has an id
+            if (payload.new && typeof payload.new === 'object' && 'id' in payload.new) {
+              logger.info("Conversation change detected", { 
+                event: payload.eventType,
+                conversationId: payload.new.id,
+                timestamp: new Date().toISOString()
+              });
+              onConversationChange();
+            }
           }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',  // Listen for all events (INSERT, UPDATE, DELETE)
-          schema: 'public',
-          table: 'conversations',
-          filter: `user2_id=eq.${currentProfileId}`, 
-        },
-        (payload) => {
-          // Ensure payload.new is defined and has an id
-          if (payload.new && typeof payload.new === 'object' && 'id' in payload.new) {
-            logger.info("Conversation change detected", { 
-              event: payload.eventType,
-              conversationId: payload.new.id,
-              timestamp: new Date().toISOString()
-            });
-            onConversationChange();
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',  // Listen for all events (INSERT, UPDATE, DELETE)
+            schema: 'public',
+            table: 'conversations',
+            filter: `user2_id=eq.${currentProfileId}`, 
+          },
+          (payload) => {
+            // Ensure payload.new is defined and has an id
+            if (payload.new && typeof payload.new === 'object' && 'id' in payload.new) {
+              logger.info("Conversation change detected", { 
+                event: payload.eventType,
+                conversationId: payload.new.id,
+                timestamp: new Date().toISOString()
+              });
+              onConversationChange();
+            }
           }
-        }
-      )
-      .subscribe((status) => {
-        logger.info("Conversation subscription status", { status, channelId });
-      });
-      
-    channelRef.current = channel;
+        )
+        .subscribe((status) => {
+          logger.info("Conversation subscription status", { status, channelId });
+        });
+        
+      channelRef.current = channel;
+    } catch (error) {
+      logger.error("Error setting up conversation realtime subscription", { error, channelId });
+    }
     
     return () => {
       logger.info(`Removing conversation subscription: ${channelId}`);
