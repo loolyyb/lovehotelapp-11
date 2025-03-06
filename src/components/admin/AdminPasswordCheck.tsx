@@ -21,18 +21,29 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user?.id) return false;
 
-    const { data: profile, error } = await supabase
+    // Check both profile.id and profile.user_id fields
+    const { data: profileById, error: idError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (!idError && profileById?.role === 'admin') {
+      return true;
+    }
+
+    const { data: profileByUserId, error: userIdError } = await supabase
       .from('profiles')
       .select('role')
       .eq('user_id', session.user.id)
       .single();
 
-    if (error) {
-      console.error("Error checking admin role:", error);
+    if (userIdError) {
+      console.error("Error checking admin role:", userIdError);
       return false;
     }
 
-    return profile?.role === 'admin';
+    return profileByUserId?.role === 'admin';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,6 +59,7 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
           description: "Vous n'avez pas les droits administrateur nécessaires.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 

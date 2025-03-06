@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -60,12 +59,25 @@ export function useUserManagement() {
   const setUserAsAdminMutation = useMutation({
     mutationFn: async () => {
       const adminUserId = "b777ae12-9da5-46c7-9506-741e90e7d9a8";
-      const { error } = await supabase
+      
+      let { error: idError } = await supabase
         .from("profiles")
         .update({ role: "admin" })
         .eq("id", adminUserId);
       
-      if (error) throw error;
+      if (idError) {
+        console.error("Error updating with id:", idError);
+        
+        const { error: userIdError } = await supabase
+          .from("profiles")
+          .update({ role: "admin" })
+          .eq("user_id", adminUserId);
+        
+        if (userIdError) {
+          console.error("Error updating with user_id:", userIdError);
+          throw userIdError;
+        }
+      }
     },
     onSuccess: () => {
       toast({

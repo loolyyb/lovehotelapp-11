@@ -12,8 +12,35 @@ export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const makeUserAdmin = async () => {
+    try {
+      // Hard-coded user ID to set as admin (this is the ID specified in the code)
+      const adminUserId = "b777ae12-9da5-46c7-9506-741e90e7d9a8";
+      
+      // Update the profile to set role as admin
+      const { error } = await supabase
+        .from("profiles")
+        .update({ role: "admin" })
+        .eq("id", adminUserId);
+      
+      if (error) {
+        console.error("Error setting user as admin:", error);
+        return false;
+      }
+      
+      console.log("Admin user role set successfully");
+      return true;
+    } catch (error) {
+      console.error("Exception when setting admin role:", error);
+      return false;
+    }
+  };
+
   const checkAdminAuth = async () => {
     try {
+      // Ensure the designated user is set as admin first
+      await makeUserAdmin();
+      
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) throw sessionError;
@@ -33,25 +60,34 @@ export default function Admin() {
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
-        .eq('user_id', session.user.id)
+        .eq('id', session.user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        // Try again but with user_id
+        const { data: profileByUserId, error: userIdError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
 
-      if (profile?.role !== 'admin') {
-        setAdminAuthenticated(false);
-        toast({
-          variant: "destructive",
-          title: "Accès refusé",
-          description: "Vous n'avez pas les droits administrateur nécessaires",
-        });
-        navigate("/");
+        if (userIdError) {
+          console.error("Error fetching profile by user_id:", userIdError);
+          throw userIdError;
+        }
+
+        if (profileByUserId?.role !== 'admin') {
+          console.log("User is not admin, role:", profileByUserId?.role);
+          return;
+        }
+      } else if (profile?.role !== 'admin') {
+        console.log("User is not admin, role:", profile?.role);
         return;
       }
 
-      // L'utilisateur a le rôle admin, alors nous n'avons plus besoin de vérifier
-      // l'état isAdminAuthenticated car il sera persisté via localStorage
-      console.log("Admin role verified. Auth state:", isAdminAuthenticated);
+      // L'utilisateur a le rôle admin, on le définit comme authentifié
+      setAdminAuthenticated(true);
+      console.log("Admin role verified. Auth state set to true");
     } catch (error) {
       console.error('Error checking admin auth:', error);
       setAdminAuthenticated(false);
