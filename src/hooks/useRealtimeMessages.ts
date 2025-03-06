@@ -84,8 +84,37 @@ export const useRealtimeMessages = ({
           logger.info("Message change received", { 
             event: payload.eventType,
             messageId,
-            conversationId
+            conversationId,
+            timestamp: new Date().toISOString()
           });
+
+          // Update the conversation in the database to trigger the subscription in useConversations
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            try {
+              const { data, error } = await supabase
+                .from('conversations')
+                .update({ updated_at: new Date().toISOString() })
+                .eq('id', conversationId)
+                .select();
+              
+              if (error) {
+                logger.error("Error updating conversation timestamp", { 
+                  error,
+                  conversationId 
+                });
+              } else {
+                logger.info("Successfully updated conversation timestamp", { 
+                  conversationId,
+                  success: !!data 
+                });
+              }
+            } catch (err) {
+              logger.error("Exception updating conversation timestamp", { 
+                error: err,
+                conversationId 
+              });
+            }
+          }
 
           // Fetch complete message data with sender details
           const { data: message, error } = await supabase

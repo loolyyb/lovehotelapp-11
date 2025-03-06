@@ -14,6 +14,7 @@ export const useConversations = () => {
   const logger = useLogger("useConversations");
   const fetchingRef = useRef(false);
   const debounceTimerRef = useRef<number | null>(null);
+  const channelRef = useRef<any>(null);
 
   const fetchConversations = useCallback(async () => {
     // Use ref to prevent multiple simultaneous fetches
@@ -22,6 +23,7 @@ export const useConversations = () => {
 
     try {
       setError(null);
+      logger.info("Fetching conversations", { timestamp: new Date().toISOString() });
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -92,11 +94,56 @@ export const useConversations = () => {
     fetchConversations();
   }, [fetchConversations]);
 
+  // Set up direct subscription for conversation updates
+  useEffect(() => {
+    if (!currentProfileId) return;
+    
+    // Clean up any existing channel
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    const channelId = `conversations-updates-${currentProfileId}-${Date.now()}`;
+    logger.info(`Setting up conversation realtime subscription: ${channelId}`);
+    
+    const channel = supabase
+      .channel(channelId)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'conversations',
+        },
+        (payload) => {
+          logger.info("Conversation update detected", { 
+            conversationId: payload.new.id,
+            timestamp: new Date().toISOString()
+          });
+          fetchConversations();
+        }
+      )
+      .subscribe((status) => {
+        logger.info("Conversation subscription status", { status, channelId });
+      });
+      
+    channelRef.current = channel;
+    
+    return () => {
+      logger.info(`Removing conversation subscription: ${channelId}`);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [currentProfileId, logger, fetchConversations]);
+
   // Handler for new messages with debounce to prevent excessive updates
   const handleNewMessage = useCallback((message) => {
     logger.info("New message received, triggering conversation update", { 
       messageId: message.id, 
-      conversationId: message.conversation_id 
+      conversationId: message.conversation_id,
+      timestamp: new Date().toISOString()
     });
     
     // Clear any existing debounce timer
@@ -115,7 +162,8 @@ export const useConversations = () => {
   const handleMessageUpdate = useCallback((message) => {
     logger.info("Message updated, triggering conversation update", { 
       messageId: message.id, 
-      conversationId: message.conversation_id 
+      conversationId: message.conversation_id,
+      timestamp: new Date().toISOString()
     });
     
     // Clear any existing debounce timer
@@ -146,5 +194,5 @@ export const useConversations = () => {
     onMessageUpdate: handleMessageUpdate
   });
 
-  return { conversations, isLoading, error, refetch: fetchConversations };
+  return { conversations, isLoading, error, refetch: fetchConversations, currentProfileId };
 };
