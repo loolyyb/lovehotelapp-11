@@ -64,7 +64,7 @@ export const useConversations = () => {
         .single()
         .then(({ data, error }) => {
           if (error) {
-            logger.error("Error fetching profile details:", error);
+            logger.error("Error fetching profile details", { error });
           } else if (data) {
             logger.info("User profile found", {
               profileId: data.id,
@@ -98,7 +98,7 @@ export const useConversations = () => {
           .maybeSingle();
           
         if (profileError) {
-          logger.error("Error checking profile:", profileError);
+          logger.error("Error checking profile", { error: profileError });
           return;
         }
         
@@ -127,13 +127,13 @@ export const useConversations = () => {
             .eq('id', currentProfileId);
             
           if (updateError) {
-            logger.error("Failed to update profile user_id:", updateError);
+            logger.error("Failed to update profile user_id", { error: updateError });
           } else {
             logger.info("Successfully updated profile user_id");
           }
         }
       } catch (error) {
-        logger.error("Error in permissions check:", error);
+        logger.error("Error in permissions check", { error });
       }
     };
     
@@ -164,7 +164,7 @@ export const useConversations = () => {
       const fetchedConversations = await fetchConversations();
       
       if (fetchedConversations.length === 0) {
-        logger.warn("No conversations found, attempt:", fetchAttemptsRef.current);
+        logger.warn("No conversations found, attempt", { attemptNumber: fetchAttemptsRef.current });
         
         // After several attempts, try to diagnose the issue
         if (fetchAttemptsRef.current > 3) {
@@ -174,7 +174,7 @@ export const useConversations = () => {
             .select('*')
             .limit(20);
             
-          logger.info("Diagnostic - all conversations:", {
+          logger.info("Diagnostic - all conversations", {
             success: !allError,
             count: allConversations?.length || 0,
             error: allError
@@ -183,7 +183,7 @@ export const useConversations = () => {
           // Try to check for user profile mismatch
           const { data: authUser } = await supabase.auth.getUser();
           if (authUser.user) {
-            logger.info("Diagnostic - auth user:", {
+            logger.info("Diagnostic - auth user", {
               id: authUser.user.id,
               email: authUser.user.email
             });
@@ -193,7 +193,7 @@ export const useConversations = () => {
               .select('*')
               .eq('user_id', authUser.user.id);
               
-            logger.info("Diagnostic - user profiles:", {
+            logger.info("Diagnostic - user profiles", {
               count: userProfiles?.length || 0,
               profiles: userProfiles
             });

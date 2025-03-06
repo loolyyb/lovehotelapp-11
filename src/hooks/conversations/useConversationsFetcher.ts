@@ -28,7 +28,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     setError(null);
 
     try {
-      logger.info("Fetching conversations for profile ID:", currentProfileId);
+      logger.info("Fetching conversations for profile ID", { profileId: currentProfileId });
       
       // First, check if the profile exists
       const { data: profileCheck, error: profileError } = await supabase
@@ -38,16 +38,16 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         .maybeSingle();
         
       if (profileError) {
-        logger.error("Error checking profile:", profileError);
+        logger.error("Error checking profile", { error: profileError });
         throw new Error("Erreur lors de la vérification du profil");
       }
       
       if (!profileCheck) {
-        logger.warn("Profile not found in database:", currentProfileId);
+        logger.warn("Profile not found in database", { profileId: currentProfileId });
         throw new Error("Profil introuvable. Veuillez vous reconnecter.");
       }
 
-      logger.info("Profile found:", profileCheck);
+      logger.info("Profile found", { profile: profileCheck });
       
       // Combined approach - try multiple strategies to ensure we get conversations
       const results = await Promise.allSettled([
@@ -94,7 +94,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       return conversationsWithProfiles;
       
     } catch (error: any) {
-      logger.error("Error in fetchConversations:", error);
+      logger.error("Error in fetchConversations", { error: error.message });
       setError(error.message || "Erreur lors du chargement des conversations");
       setIsLoading(false);
       return [];
@@ -120,17 +120,17 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         .order('updated_at', { ascending: false });
         
       if (error) {
-        logger.error("Error with direct query:", error);
+        logger.error("Error with direct query", { error });
         return [];
       }
       
-      logger.info("Direct query results:", {
+      logger.info("Direct query results", {
         count: data?.length || 0
       });
       
       return data || [];
     } catch (error) {
-      logger.error("Failed direct query:", error);
+      logger.error("Failed direct query", { error });
       return [];
     }
   };
@@ -147,17 +147,17 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         .order('updated_at', { ascending: false });
         
       if (error) {
-        logger.error("Error with FTS query:", error);
+        logger.error("Error with FTS query", { error });
         return [];
       }
       
-      logger.info("FTS query results:", {
+      logger.info("FTS query results", {
         count: data?.length || 0
       });
       
       return data || [];
     } catch (error) {
-      logger.error("Failed FTS query:", error);
+      logger.error("Failed FTS query", { error });
       return [];
     }
   };
@@ -173,17 +173,17 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         
       if (error) {
         // Function might not exist if the user didn't run the SQL migrations
-        logger.warn("Error with RPC query (function may not exist):", error);
+        logger.warn("Error with RPC query (function may not exist)", { error });
         return [];
       }
       
-      logger.info("RPC query results:", {
+      logger.info("RPC query results", {
         count: data?.length || 0
       });
       
       return data || [];
     } catch (error) {
-      logger.error("Failed RPC query:", error);
+      logger.error("Failed RPC query", { error });
       return [];
     }
   };
@@ -206,7 +206,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           .maybeSingle();
           
         if (profileError) {
-          logger.error("Error fetching profile for conversation:", profileError);
+          logger.error("Error fetching profile for conversation", { error: profileError });
           return {...conversation, otherUser: null};
         }
         
