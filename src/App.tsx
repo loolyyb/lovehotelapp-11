@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Header } from "./components/layout/Header";
@@ -15,6 +14,7 @@ import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 import { useStatusBar } from './hooks/useStatusBar';
 import { useLogger } from './hooks/useLogger';
+import { enableRealtimeSubscriptions } from "./utils/enableRealtimeSubscriptions";
 
 function Content() {
   const { session, loading, userProfile } = useAuthSession();
@@ -123,5 +123,7 @@ const getBasename = () => {
   logger.info('Utilisation du basename par défaut: /');
   return '/';
 };
+
+enableRealtimeSubscriptions();
 
 export default App;

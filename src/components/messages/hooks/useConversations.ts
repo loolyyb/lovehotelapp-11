@@ -41,6 +41,7 @@ export const useConversations = () => {
         .maybeSingle();
 
       if (!userProfile) {
+        logger.warn("No profile found for user", { userId: user.id });
         setConversations([]);
         setIsLoading(false);
         fetchingRef.current = false;
@@ -49,26 +50,38 @@ export const useConversations = () => {
 
       setCurrentProfileId(userProfile.id);
       
-      // First fetch conversations with basic details
-      const { data, error } = await supabase
+      // Récupération des conversations avec jointure des profils
+      const { data: conversationsData, error: conversationsError } = await supabase
         .from('conversations')
         .select(`
           *,
-          user1:profiles!conversations_user1_profile_fkey(*),
-          user2:profiles!conversations_user2_profile_fkey(*)
+          user1:profiles!conversations_user1_profile_fkey(id, username, full_name, avatar_url),
+          user2:profiles!conversations_user2_profile_fkey(id, username, full_name, avatar_url)
         `)
         .or(`user1_id.eq.${userProfile.id},user2_id.eq.${userProfile.id}`)
         .eq('status', 'active')
         .order('updated_at', { ascending: false });
 
-      if (error) throw error;
+      if (conversationsError) {
+        logger.error("Error fetching conversations", {
+          error: conversationsError.message,
+          code: conversationsError.code,
+          details: conversationsError.details
+        });
+        throw conversationsError;
+      }
       
-      // Filter out self-conversations
-      const filteredData = data?.filter(conversation => 
+      // Filtre pour exclure les conversations avec soi-même
+      const filteredData = conversationsData?.filter(conversation => 
         conversation.user1_id !== conversation.user2_id
       ) || [];
       
-      // For each conversation, fetch the most recent message separately
+      logger.info("Fetched conversations before messages", { 
+        count: filteredData.length,
+        conversationIds: filteredData.map(c => c.id)
+      });
+      
+      // Pour chaque conversation, récupérer le message le plus récent
       const conversationsWithMessages = await Promise.all(
         filteredData.map(async (conversation) => {
           const { data: messages, error: messagesError } = await supabase
@@ -99,9 +112,10 @@ export const useConversations = () => {
         })
       );
       
-      logger.info("Fetched conversations", { 
+      logger.info("Fetched conversations with messages", { 
         count: conversationsWithMessages.length,
-        timestamp: new Date().toISOString() 
+        timestamp: new Date().toISOString(),
+        hasMessages: conversationsWithMessages.filter(c => c.messages?.length > 0).length
       });
       
       setConversations(conversationsWithMessages);

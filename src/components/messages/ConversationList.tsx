@@ -50,7 +50,10 @@ export function ConversationList({
           user
         }
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        logger.warn("No authenticated user found");
+        return;
+      }
       
       const {
         data: profile
@@ -59,6 +62,8 @@ export function ConversationList({
       if (profile) {
         setCurrentUserProfileId(profile.id);
         logger.info("Current user profile fetched", { profileId: profile.id });
+      } else {
+        logger.warn("No profile found for current user", { userId: user.id });
       }
     } catch (error) {
       logger.error("Error fetching current user profile:", error);
@@ -95,6 +100,11 @@ export function ConversationList({
       </div>;
   }
 
+  logger.info("Rendering conversation list", { 
+    conversationsCount: conversations.length,
+    currentUserProfileId
+  });
+
   if (conversations.length === 0) {
     return <EmptyState />;
   }
@@ -108,6 +118,13 @@ export function ConversationList({
         {conversations.map(conversation => {
           const otherUser = conversation.user1?.id === currentUserProfileId ? conversation.user2 : conversation.user1;
           const lastMessage = conversation.messages?.[0];
+          
+          logger.debug("Rendering conversation", { 
+            conversationId: conversation.id, 
+            otherUserId: otherUser?.id,
+            hasMessages: conversation.messages?.length > 0
+          });
+          
           return <div key={conversation.id} className={`p-4 border-b border-rose/20 cursor-pointer hover:bg-rose/5 transition-colors ${selectedConversationId === conversation.id ? 'bg-rose/10' : ''}`} onClick={() => onSelectConversation(conversation.id)}>
                 <div className="flex items-center space-x-3">
                   <Avatar>

@@ -25,6 +25,8 @@ export default function Messages() {
   const previousConversationRef = useRef<string | null>(null);
 
   useEffect(() => {
+    logger.info("Messages page mounted");
+    
     if (location.state?.conversationId) {
       logger.info("Setting conversation from location state", { conversationId: location.state.conversationId });
       setSelectedConversation(location.state.conversationId);
