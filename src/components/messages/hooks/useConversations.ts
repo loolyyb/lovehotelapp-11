@@ -17,7 +17,7 @@ export const useConversations = () => {
   const debounceTimerRef = useRef<number | null>(null);
   const channelRef = useRef<any>(null);
   const retryCountRef = useRef(0);
-  const maxRetries = 3;
+  const maxRetries = 5; // Increase retry attempts
 
   const fetchConversations = useCallback(async () => {
     // Use ref to prevent multiple simultaneous fetches
@@ -30,7 +30,16 @@ export const useConversations = () => {
       
       // Get current user
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+          logger.error("Auth error getting user", { 
+            error: authError,
+            component: "useConversations" 
+          });
+          throw new Error("Erreur d'authentification. Veuillez vous reconnecter.");
+        }
+        
         if (!user) {
           logger.error("No authenticated user found", { component: "useConversations" });
           setError("Vous devez être connecté pour accéder aux messages");
@@ -45,46 +54,85 @@ export const useConversations = () => {
           component: "useConversations" 
         });
 
-        // Get user's profile id
-        const { data: userProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, username, full_name')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        // Get user's profile id with retry mechanism
+        const getUserProfile = async (attempts = 0): Promise<any> => {
+          try {
+            const { data: userProfile, error: profileError } = await supabase
+              .from('profiles')
+              .select('id, username, full_name')
+              .eq('user_id', user.id)
+              .maybeSingle();
 
-        if (profileError) {
-          logger.error("Error fetching user profile", { 
-            error: profileError,
-            userId: user.id,
-            component: "useConversations" 
-          });
-          
-          if (retryCountRef.current < maxRetries) {
-            retryCountRef.current++;
-            logger.info("Retrying profile fetch", { 
-              attempt: retryCountRef.current,
-              component: "useConversations"
+            if (profileError) {
+              throw profileError;
+            }
+
+            return userProfile;
+          } catch (error: any) {
+            logger.error("Error fetching user profile (attempt " + (attempts + 1) + ")", { 
+              error,
+              userId: user.id,
+              component: "useConversations" 
             });
-            fetchingRef.current = false;
-            setTimeout(fetchConversations, 1000);
-            return;
+            
+            if (attempts < maxRetries) {
+              logger.info(`Retrying profile fetch (${attempts + 1}/${maxRetries})`, { 
+                userId: user.id,
+                component: "useConversations"
+              });
+              
+              // Wait with exponential backoff before retrying
+              await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempts), 10000)));
+              return getUserProfile(attempts + 1);
+            }
+            
+            throw error;
           }
-          
-          setError("Erreur lors de la récupération du profil");
-          setIsLoading(false);
-          fetchingRef.current = false;
-          return;
-        }
+        };
+        
+        const userProfile = await getUserProfile();
 
         if (!userProfile) {
-          logger.warn("No profile found for user", { 
+          logger.warn("No profile found for user, attempting to create one", { 
             userId: user.id,
             component: "useConversations" 
           });
-          setConversations([]);
-          setIsLoading(false);
-          fetchingRef.current = false;
-          return;
+          
+          // Try to create a profile if none exists
+          try {
+            const newProfileId = crypto.randomUUID();
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert([{
+                id: newProfileId,
+                user_id: user.id,
+                full_name: user.email?.split('@')[0] || 'Nouvel utilisateur',
+                role: 'user'
+              }]);
+              
+            if (insertError) {
+              throw insertError;
+            }
+            
+            logger.info("Created new profile for user", {
+              userId: user.id,
+              profileId: newProfileId,
+              component: "useConversations"
+            });
+            
+            setCurrentProfileId(newProfileId);
+            setConversations([]);
+            setIsLoading(false);
+            fetchingRef.current = false;
+            return;
+          } catch (createError) {
+            logger.error("Failed to create profile", {
+              error: createError,
+              userId: user.id,
+              component: "useConversations"
+            });
+            throw new Error("Impossible de créer un profil. Veuillez contacter le support.");
+          }
         }
 
         logger.info("User profile found", { 
@@ -96,34 +144,54 @@ export const useConversations = () => {
 
         setCurrentProfileId(userProfile.id);
         
-        // Récupération des conversations avec jointure des profils
-        const { data: conversationsData, error: conversationsError } = await supabase
-          .from('conversations')
-          .select(`
-            *,
-            user1:profiles!conversations_user1_id_fkey(id, username, full_name, avatar_url),
-            user2:profiles!conversations_user2_id_fkey(id, username, full_name, avatar_url)
-          `)
-          .or(`user1_id.eq.${userProfile.id},user2_id.eq.${userProfile.id}`)
-          .eq('status', 'active')
-          .order('updated_at', { ascending: false });
+        // Get conversations with retries
+        const getConversations = async (attempts = 0): Promise<any[]> => {
+          try {
+            const { data: conversationsData, error: conversationsError } = await supabase
+              .from('conversations')
+              .select(`
+                *,
+                user1:profiles!conversations_user1_id_fkey(id, username, full_name, avatar_url),
+                user2:profiles!conversations_user2_id_fkey(id, username, full_name, avatar_url)
+              `)
+              .or(`user1_id.eq.${userProfile.id},user2_id.eq.${userProfile.id}`)
+              .eq('status', 'active')
+              .order('updated_at', { ascending: false });
 
-        if (conversationsError) {
-          logger.error("Error fetching conversations", {
-            error: conversationsError.message,
-            code: conversationsError.code,
-            details: conversationsError.details,
-            component: "useConversations"
-          });
-          throw conversationsError;
-        }
+            if (conversationsError) {
+              throw conversationsError;
+            }
+            
+            return conversationsData || [];
+          } catch (error: any) {
+            logger.error(`Error fetching conversations (attempt ${attempts + 1})`, {
+              error: error.message,
+              code: error.code,
+              component: "useConversations"
+            });
+            
+            if (attempts < maxRetries) {
+              logger.info(`Retrying conversations fetch (${attempts + 1}/${maxRetries})`, { 
+                component: "useConversations"
+              });
+              
+              // Wait with exponential backoff before retrying
+              await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempts), 10000)));
+              return getConversations(attempts + 1);
+            }
+            
+            throw error;
+          }
+        };
+        
+        const conversationsData = await getConversations();
         
         logger.info("Fetched conversations", { 
           count: conversationsData?.length || 0,
           component: "useConversations" 
         });
         
-        // Filtre pour exclure les conversations avec soi-même
+        // Filter to exclude conversations with self
         const filteredData = conversationsData?.filter(conversation => 
           conversation.user1_id !== conversation.user2_id
         ) || [];
@@ -134,31 +202,54 @@ export const useConversations = () => {
           component: "useConversations"
         });
         
-        // Pour chaque conversation, récupérer le message le plus récent
+        // For each conversation, get the most recent message with retries
+        const getMessagesForConversation = async (conversationId: string, attempts = 0) => {
+          try {
+            const { data: messages, error: messagesError } = await supabase
+              .from('messages')
+              .select(`
+                id,
+                content,
+                created_at,
+                sender_id,
+                read_at
+              `)
+              .eq('conversation_id', conversationId)
+              .order('created_at', { ascending: false })
+              .limit(1);
+              
+            if (messagesError) {
+              throw messagesError;
+            }
+            
+            return messages || [];
+          } catch (error: any) {
+            logger.error(`Error fetching messages for conversation (attempt ${attempts + 1})`, {
+              error: error.message,
+              conversationId,
+              component: "useConversations"
+            });
+            
+            if (attempts < maxRetries) {
+              logger.info(`Retrying messages fetch (${attempts + 1}/${maxRetries})`, { 
+                conversationId,
+                component: "useConversations"
+              });
+              
+              // Wait with exponential backoff before retrying
+              await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempts), 10000)));
+              return getMessagesForConversation(conversationId, attempts + 1);
+            }
+            
+            // Return empty array on final failure
+            return [];
+          }
+        };
+        
         const conversationsWithMessages = await Promise.all(
           filteredData.map(async (conversation) => {
             try {
-              const { data: messages, error: messagesError } = await supabase
-                .from('messages')
-                .select(`
-                  id,
-                  content,
-                  created_at,
-                  sender_id,
-                  read_at
-                `)
-                .eq('conversation_id', conversation.id)
-                .order('created_at', { ascending: false })
-                .limit(1);
-                
-              if (messagesError) {
-                logger.error("Error fetching messages for conversation", {
-                  error: messagesError,
-                  conversationId: conversation.id,
-                  component: "useConversations"
-                });
-                return { ...conversation, messages: [] };
-              }
+              const messages = await getMessagesForConversation(conversation.id);
               
               logger.info("Messages for conversation", {
                 conversationId: conversation.id,
@@ -168,18 +259,16 @@ export const useConversations = () => {
               
               return {
                 ...conversation,
-                messages: messages || []
+                messages: messages
               };
             } catch (error: any) {
-              logger.error("Error fetching messages for conversation", {
+              logger.error("Error processing messages for conversation", {
                 error: error.message,
-                stack: error.stack,
                 conversationId: conversation.id,
                 component: "useConversations"
               });
-              AlertService.captureException(error, {
-                conversationId: conversation.id
-              });
+              
+              // Continue with empty messages array
               return { ...conversation, messages: [] };
             }
           })
@@ -204,7 +293,7 @@ export const useConversations = () => {
           component: "useConversations"
         });
         AlertService.captureException(authError);
-        setError("Erreur d'authentification");
+        setError("Erreur d'authentification ou de connexion. Veuillez vous reconnecter ou réessayer plus tard.");
         toast({
           variant: "destructive",
           title: "Erreur d'authentification",
@@ -218,7 +307,7 @@ export const useConversations = () => {
         component: "useConversations" 
       });
       AlertService.captureException(error);
-      setError("Impossible de charger les conversations");
+      setError("Impossible de charger les conversations. Veuillez vérifier votre connexion et réessayer.");
       toast({
         variant: "destructive",
         title: "Erreur",

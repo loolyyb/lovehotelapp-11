@@ -85,6 +85,32 @@ export interface Database {
           media_type?: string | null;
         };
       };
+      announcements: {
+        Row: {
+          id: string;
+          content: string;
+          image_url: string | null;
+          created_at: string;
+          updated_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          id?: string;
+          content: string;
+          image_url?: string | null;
+          created_at?: string;
+          updated_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          id?: string;
+          content?: string;
+          image_url?: string | null;
+          created_at?: string;
+          updated_at?: string | null;
+          user_id?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
