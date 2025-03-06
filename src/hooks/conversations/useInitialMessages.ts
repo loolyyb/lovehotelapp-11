@@ -27,36 +27,7 @@ export const useInitialMessages = ({
         component: "useInitialMessages" 
       });
       
-      // Get the current authenticated user session
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        logger.error("Error getting user session", { 
-          error: sessionError,
-          component: "useInitialMessages" 
-        });
-        setMessages([]);
-        return null;
-      }
-      
-      if (!sessionData?.session?.user) {
-        logger.error("No authenticated user found", { 
-          component: "useInitialMessages" 
-        });
-        setMessages([]);
-        return null;
-      }
-      
-      const userId = sessionData.session.user.id;
-      
-      // For debugging
-      logger.info("Authenticated user found", { 
-        userId,
-        conversationId,
-        component: "useInitialMessages" 
-      });
-      
-      // Now fetch the messages - RLS policies should handle access control
+      // Get messages - RLS policies will handle access control automatically
       const { data: initialMessages, error: messagesError } = await supabase
         .from('messages')
         .select(`
@@ -81,7 +52,6 @@ export const useInitialMessages = ({
         logger.error("Error fetching initial messages", { 
           error: messagesError,
           conversationId,
-          userId,
           component: "useInitialMessages" 
         });
         setMessages([]);
@@ -94,12 +64,20 @@ export const useInitialMessages = ({
           conversationId,
           component: "useInitialMessages" 
         });
+        
+        // Log first message to help debug
+        if (initialMessages.length > 0) {
+          logger.debug("First message:", {
+            message: initialMessages[0],
+            component: "useInitialMessages"
+          });
+        }
+        
         setMessages(initialMessages);
         return initialMessages;
       } else {
         logger.info("No initial messages found", {
           conversationId,
-          userId,
           component: "useInitialMessages"
         });
         // Always set empty array to clear any previous messages

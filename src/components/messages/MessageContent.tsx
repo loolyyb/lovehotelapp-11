@@ -32,19 +32,37 @@ export function MessageContent({
     }
   }, [messages]);
 
-  // Add logging to help debug
+  // Add enhanced logging to help debug
   useEffect(() => {
-    console.log("MessageContent state:", { 
+    console.log("MessageContent render state:", { 
       isLoading, 
       isError, 
       messagesCount: messages?.length || 0,
       currentProfileId,
+      hasCurrentProfile: Boolean(currentProfileId),
       messagesArray: messages
     });
     
     if (messages?.length > 0) {
       console.log("First message:", messages[0]);
       console.log("Last message:", messages[messages.length - 1]);
+      
+      // Count messages by sender to help debug
+      const messageBySender = {};
+      messages.forEach(msg => {
+        const senderId = msg.sender_id;
+        if (!messageBySender[senderId]) {
+          messageBySender[senderId] = 0;
+        }
+        messageBySender[senderId]++;
+      });
+      console.log("Messages by sender:", messageBySender);
+      
+      // Check if current user is a sender
+      if (currentProfileId) {
+        const currentUserMessages = messages.filter(m => m.sender_id === currentProfileId);
+        console.log("Current user messages count:", currentUserMessages.length);
+      }
     }
   }, [isLoading, isError, messages, currentProfileId]);
 

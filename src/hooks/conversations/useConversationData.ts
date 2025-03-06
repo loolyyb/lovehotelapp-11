@@ -52,25 +52,7 @@ export const useConversationData = ({
         component: "useConversationData" 
       });
       
-      // First make sure we have a valid session
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        logger.error("Session error when fetching conversation", {
-          error: sessionError,
-          component: "useConversationData"
-        });
-        return null;
-      }
-      
-      if (!sessionData?.session?.user) {
-        logger.error("No authenticated session available", {
-          component: "useConversationData"
-        });
-        return null;
-      }
-      
-      // Let the RLS policies handle access control
+      // Let the RLS policies handle access control - this simplifies the code
       const { data: conversation, error: convError } = await supabase
         .from('conversations')
         .select(`
