@@ -6,6 +6,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const DEBUG_MODE = true; // Enable for verbose logging
 
   // Auto-fetch when profile ID changes
   useEffect(() => {
@@ -47,6 +48,24 @@ export function useConversationsFetcher(currentProfileId: string | null) {
 
       console.log("Profile found:", profileCheck);
       
+      // Test RLS access with a direct query
+      if (DEBUG_MODE) {
+        console.log("Testing direct access to conversations table...");
+        const { data: directConvs, error: directError } = await supabase
+          .from('conversations')
+          .select('id, user1_id, user2_id, status')
+          .limit(100);
+          
+        if (directError) {
+          console.error("RLS Error - Cannot access conversations directly:", directError);
+        } else {
+          console.log("Direct conversations access successful:", {
+            count: directConvs?.length || 0,
+            conversations: directConvs
+          });
+        }
+      }
+      
       // First fetch ALL conversations regardless of status to debug
       const { data: allStatusConvs, error: allStatusError } = await supabase
         .from('conversations')
@@ -66,6 +85,21 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           count: allStatusConvs?.length || 0,
           conversations: allStatusConvs
         });
+      }
+      
+      // Try a raw query with both user IDs to verify data exists and isn't filtered by RLS
+      if (DEBUG_MODE) {
+        const { data: rawData, error: rawError } = await supabase
+          .rpc('get_user_conversations', { user_profile_id: currentProfileId });
+          
+        if (rawError) {
+          console.error("Error with raw function query:", rawError);
+        } else {
+          console.log("Raw function query result:", {
+            count: rawData?.length || 0, 
+            conversations: rawData
+          });
+        }
       }
       
       // Now fetch conversations with unique aliases for the profiles to avoid the duplicate table error
