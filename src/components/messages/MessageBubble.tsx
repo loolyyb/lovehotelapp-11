@@ -9,16 +9,19 @@ interface MessageBubbleProps {
     created_at: string;
     read_at: string | null;
     sender_id: string;
+    media_url?: string;
+    media_type?: string;
   };
   isCurrentUser: boolean;
 }
 
 export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
-  const isImage = message.content.startsWith('[Image]');
-  const imageUrl = isImage ? message.content.match(/\((.*?)\)/)?.[1] : null;
-
-  // Ajouter un log pour vérifier les valeurs de read_at
-  console.log(`Message ${message.content.substring(0, 15)}... - read_at:`, message.read_at);
+  const isImage = message.media_type === 'image' || 
+                 (message.content && message.content.startsWith('[Image]'));
+  
+  const imageUrl = isImage 
+    ? (message.media_url || (message.content && message.content.match(/\((.*?)\)/)?.[1])) 
+    : null;
 
   return (
     <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
@@ -29,7 +32,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
             : 'bg-white/10 text-[#f3ebad] rounded-bl-none border-[0.5px] border-[#f3ebad]/30'
         }`}
       >
-        {isImage ? (
+        {isImage && imageUrl ? (
           <img src={imageUrl} alt="Message" className="max-w-full rounded" />
         ) : (
           <p className="break-words whitespace-pre-wrap">{message.content}</p>

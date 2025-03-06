@@ -2,13 +2,14 @@
 import { useState, useEffect, useRef } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, RefreshCw } from "lucide-react";
 import { useMessageSubscription } from "@/hooks/useMessageSubscription";
 import { useMessageHandlers } from "@/hooks/useMessageHandlers";
 import { useMessageRetrieval } from "@/hooks/useMessageRetrieval";
 import { useConversationInit } from "@/hooks/useConversationInit";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingState } from "./LoadingState";
+import { useLogger } from "@/hooks/useLogger";
 
 interface MessageViewProps {
   conversationId: string;
@@ -22,9 +23,11 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const firstLoad = useRef(true);
   const { toast } = useToast();
+  const logger = useLogger("MessageView");
 
   const { getCurrentUser } = useConversationInit({
     conversationId,
@@ -65,15 +68,26 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       }
       
       try {
+        logger.info("Initializing conversation", { conversationId });
         await getCurrentUser();
         
         if (!mounted) return;
         
         if (currentProfileId) {
+          logger.info("Current profile retrieved, fetching messages", { 
+            profileId: currentProfileId,
+            conversationId 
+          });
           await fetchMessages();
+        } else {
+          logger.warn("No current profile ID after getCurrentUser", { conversationId });
         }
-      } catch (error) {
-        console.error("Error initializing conversation:", error);
+      } catch (error: any) {
+        logger.error("Error initializing conversation", { 
+          error: error.message,
+          stack: error.stack,
+          conversationId 
+        });
         if (mounted) {
           setIsError(true);
           toast({
@@ -101,11 +115,12 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   useEffect(() => {
     if (!currentProfileId || !conversationId) return;
 
+    logger.info("Setting up message subscription", { 
+      profileId: currentProfileId,
+      conversationId
+    });
+    
     const unsubscribe = subscribeToNewMessages();
-
-    console.log("Setting up message subscription with profile ID:", currentProfileId);
-    console.log("Current conversation ID:", conversationId);
-    console.log("Current messages count:", messages.length);
 
     return () => {
       unsubscribe();
@@ -115,13 +130,19 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   // Marquer les messages comme lus lorsqu'ils changent
   useEffect(() => {
     if (currentProfileId && messages.length > 0 && !isLoading) {
-      console.log("Checking for unread messages after messages update");
+      logger.info("Checking for unread messages after update", {
+        messagesCount: messages.length,
+        profileId: currentProfileId
+      });
+      
       const hasUnreadMessages = messages.some(
         msg => msg.sender_id !== currentProfileId && !msg.read_at
       );
       
       if (hasUnreadMessages) {
-        console.log("Found unread messages, marking as read");
+        logger.info("Found unread messages, marking as read", {
+          profileId: currentProfileId
+        });
         setTimeout(() => markMessagesAsRead(), 500);
       }
     }
@@ -137,17 +158,57 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     }
   }, [messages]);
 
+  // Fonction pour rafraîchir manuellement les messages
+  const refreshMessages = async () => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
+    setIsError(false);
+    
+    try {
+      logger.info("Manually refreshing messages", { conversationId });
+      await fetchMessages();
+    } catch (error: any) {
+      logger.error("Error refreshing messages", { 
+        error: error.message,
+        stack: error.stack,
+        conversationId 
+      });
+      setIsError(true);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de rafraîchir les messages"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   // Essayer à nouveau en cas d'erreur
   const retryLoad = async () => {
     setIsError(false);
     setIsLoading(true);
+    
     try {
+      logger.info("Retrying conversation load", { conversationId });
       await getCurrentUser();
+      
       if (currentProfileId) {
+        logger.info("Retrying message fetch", { 
+          profileId: currentProfileId,
+          conversationId 
+        });
         await fetchMessages();
+      } else {
+        logger.warn("No profile ID when retrying load", { conversationId });
       }
-    } catch (error) {
-      console.error("Error retrying load:", error);
+    } catch (error: any) {
+      logger.error("Error retrying load", { 
+        error: error.message,
+        stack: error.stack,
+        conversationId 
+      });
       setIsError(true);
       toast({
         variant: "destructive",
@@ -175,6 +236,14 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
             </h2>
           </div>
         )}
+        <button 
+          onClick={refreshMessages}
+          disabled={isRefreshing}
+          className="p-2 hover:bg-white/10 rounded-full transition-colors"
+          title="Rafraîchir les messages"
+        >
+          <RefreshCw className={`w-5 h-5 text-[#f3ebad] ${isRefreshing ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

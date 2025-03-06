@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/services/LogService";
 
 interface UseMessageRetrievalProps {
   conversationId: string;
@@ -16,40 +17,112 @@ export const useMessageRetrieval = ({
 }: UseMessageRetrievalProps) => {
   const fetchMessages = async () => {
     try {
-      console.log("Fetching messages for conversation:", conversationId);
-      console.log("Current user profile ID:", currentProfileId);
+      logger.info("Fetching messages", { 
+        conversationId, 
+        currentProfileId,
+        component: "useMessageRetrieval" 
+      });
       
       if (!conversationId) {
-        console.error("No conversation ID provided");
+        logger.error("No conversation ID provided", { component: "useMessageRetrieval" });
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "ID de conversation manquant",
+        });
+        return;
+      }
+
+      if (!currentProfileId) {
+        logger.error("No current profile ID", { 
+          conversationId, 
+          component: "useMessageRetrieval" 
+        });
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Vous devez être connecté pour accéder aux messages",
+        });
         return;
       }
       
-      // Vérifier d'abord si l'utilisateur est membre de cette conversation
+      // First get the user's profile to confirm it exists
+      const { data: profileCheck, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', currentProfileId)
+        .single();
+        
+      if (profileError) {
+        logger.error("Error checking profile existence", { 
+          error: profileError, 
+          currentProfileId,
+          component: "useMessageRetrieval" 
+        });
+        
+        if (profileError.code === 'PGRST116') { // not found error
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Votre profil n'a pas été trouvé",
+          });
+          return;
+        }
+        
+        throw profileError;
+      }
+      
+      if (!profileCheck) {
+        logger.error("Profile not found", { 
+          currentProfileId,
+          component: "useMessageRetrieval" 
+        });
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Votre profil n'a pas été trouvé",
+        });
+        return;
+      }
+      
+      // Now check if the user is a member of this conversation
       const { data: conversationCheck, error: conversationError } = await supabase
         .from('conversations')
         .select('*')
         .eq('id', conversationId)
         .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
-        .single();
+        .maybeSingle();
       
       if (conversationError) {
-        console.error("Error checking conversation membership:", conversationError);
-        if (conversationError.code !== 'PGRST116') { // not found error
-          throw conversationError;
-        }
-        // Si l'utilisateur n'est pas membre de la conversation, ne pas récupérer les messages
-        console.log("User is not a member of this conversation");
-        setMessages([]);
-        return;
+        logger.error("Error checking conversation membership", { 
+          error: conversationError, 
+          conversationId, 
+          currentProfileId,
+          component: "useMessageRetrieval" 
+        });
+        throw conversationError;
       }
       
       if (!conversationCheck) {
-        console.log("Conversation not found or user is not a member");
+        logger.info("User is not a member of this conversation", { 
+          conversationId, 
+          currentProfileId,
+          component: "useMessageRetrieval" 
+        });
         setMessages([]);
+        toast({
+          variant: "destructive",
+          title: "Accès refusé",
+          description: "Vous n'êtes pas membre de cette conversation",
+        });
         return;
       }
       
-      console.log("User confirmed as member of conversation:", conversationCheck);
+      logger.info("User confirmed as member of conversation", { 
+        conversation: conversationCheck, 
+        currentProfileId,
+        component: "useMessageRetrieval" 
+      });
       
       const { data: messages, error } = await supabase
         .from('messages')
@@ -64,23 +137,34 @@ export const useMessageRetrieval = ({
           sender:profiles!messages_sender_id_fkey (
             id,
             username,
-            full_name
+            full_name,
+            avatar_url
           )
         `)
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error("Error fetching messages:", error);
+        logger.error("Error fetching messages", { 
+          error, 
+          conversationId,
+          component: "useMessageRetrieval" 
+        });
         throw error;
       }
       
-      console.log("Fetched messages:", messages?.length || 0);
+      logger.info("Fetched messages count", { 
+        count: messages?.length || 0, 
+        conversationId,
+        component: "useMessageRetrieval" 
+      });
+      
       if (messages && messages.length > 0) {
-        console.log("First message:", messages[0]);
-        console.log("Last message:", messages[messages.length - 1]);
-      } else {
-        console.log("No messages found for this conversation");
+        logger.debug("First and last messages", { 
+          first: messages[0], 
+          last: messages[messages.length - 1],
+          component: "useMessageRetrieval" 
+        });
       }
       
       setMessages(messages || []);
@@ -90,7 +174,13 @@ export const useMessageRetrieval = ({
         setTimeout(() => markMessagesAsRead(), 1000);
       }
     } catch (error: any) {
-      console.error("Error in fetchMessages:", error);
+      logger.error("Error in fetchMessages", { 
+        error: error.message, 
+        stack: error.stack,
+        conversationId,
+        currentProfileId,
+        component: "useMessageRetrieval" 
+      });
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -101,12 +191,25 @@ export const useMessageRetrieval = ({
 
   const markMessagesAsRead = async () => {
     if (!currentProfileId) {
-      console.log("No current profile ID, skipping mark as read");
+      logger.info("No current profile ID, skipping mark as read", {
+        component: "useMessageRetrieval"
+      });
+      return;
+    }
+    
+    if (!conversationId) {
+      logger.info("No conversation ID, skipping mark as read", {
+        component: "useMessageRetrieval"
+      });
       return;
     }
 
     try {
-      console.log("Marking messages as read for profile:", currentProfileId);
+      logger.info("Marking messages as read", { 
+        currentProfileId, 
+        conversationId,
+        component: "useMessageRetrieval" 
+      });
       
       // First check if there are any unread messages
       const { data: unreadMessages, error: checkError } = await supabase
@@ -117,17 +220,25 @@ export const useMessageRetrieval = ({
         .is('read_at', null);
 
       if (checkError) {
-        console.error("Error checking unread messages:", checkError);
+        logger.error("Error checking unread messages", { 
+          error: checkError,
+          component: "useMessageRetrieval" 
+        });
         throw checkError;
       }
 
       if (!unreadMessages || unreadMessages.length === 0) {
-        console.log("No unread messages to mark");
+        logger.info("No unread messages to mark", {
+          component: "useMessageRetrieval"
+        });
         return;
       }
 
-      console.log(`Found ${unreadMessages.length} unread messages to mark as read`);
-      console.log("Unread message IDs:", unreadMessages.map(msg => msg.id));
+      logger.info("Found unread messages to mark as read", { 
+        count: unreadMessages.length,
+        messageIds: unreadMessages.map(msg => msg.id),
+        component: "useMessageRetrieval" 
+      });
 
       const { error: updateError } = await supabase
         .from('messages')
@@ -139,13 +250,22 @@ export const useMessageRetrieval = ({
         .is('read_at', null);
 
       if (updateError) {
-        console.error("Error marking messages as read:", updateError);
+        logger.error("Error marking messages as read", { 
+          error: updateError,
+          component: "useMessageRetrieval" 
+        });
         throw updateError;
       }
 
-      console.log("Successfully marked messages as read");
-    } catch (error) {
-      console.error("Error in markMessagesAsRead:", error);
+      logger.info("Successfully marked messages as read", {
+        component: "useMessageRetrieval"
+      });
+    } catch (error: any) {
+      logger.error("Error in markMessagesAsRead", { 
+        error: error.message, 
+        stack: error.stack,
+        component: "useMessageRetrieval" 
+      });
     }
   };
 
