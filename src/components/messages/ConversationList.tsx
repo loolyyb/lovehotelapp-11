@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,13 +15,15 @@ import { useNavigate } from "react-router-dom";
 const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel-v2.jpg";
 
 interface ConversationListProps {
-  onSelectConversation: (id: string) => void;
+  onSelectConversation: (conversationId: string) => void;
   selectedConversationId: string | null;
+  onNetworkError?: () => void;
 }
 
-export function ConversationList({
-  onSelectConversation,
-  selectedConversationId
+export function ConversationList({ 
+  onSelectConversation, 
+  selectedConversationId,
+  onNetworkError
 }: ConversationListProps) {
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);

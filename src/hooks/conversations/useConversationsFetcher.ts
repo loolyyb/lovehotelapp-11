@@ -10,7 +10,7 @@ export const useConversationsFetcher = (profileId: string | null) => {
   const [error, setError] = useState<string | null>(null);
   const logger = useLogger("useConversationsFetcher");
 
-  const fetchConversations = useCallback(async (retryCount = 0, maxRetries = 5) => {
+  const fetchConversations = useCallback(async (retryCount = 0, maxRetries = 3) => {
     if (!profileId) {
       logger.info("No profile ID provided, skipping conversations fetch");
       return [];
@@ -21,8 +21,23 @@ export const useConversationsFetcher = (profileId: string | null) => {
       setError(null);
       logger.info("Fetching conversations", { 
         profileId, 
-        timestamp: new Date().toISOString() 
+        timestamp: new Date().toISOString(),
+        retryCount
       });
+      
+      // First check if we can connect to Supabase at all
+      try {
+        const { data: connectionTest } = await supabase.from('profiles').select('count(*)', { count: 'exact', head: true });
+        logger.info("Connection test successful", { count: connectionTest?.count });
+      } catch (connError: any) {
+        logger.error("Connection test failed", { 
+          error: connError.message,
+          code: connError.code || 'unknown'
+        });
+        
+        // If we can't even connect, throw a more specific error
+        throw new Error(`NETWORK_ERROR: ${connError.message}`);
+      }
       
       // Get conversations with retries
       const getConversations = async (attempts = 0): Promise<any[]> => {
@@ -46,7 +61,7 @@ export const useConversationsFetcher = (profileId: string | null) => {
         } catch (error: any) {
           logger.error(`Error fetching conversations (attempt ${attempts + 1})`, {
             error: error.message,
-            code: error.code,
+            code: error.code || 'unknown',
             component: "useConversationsFetcher"
           });
           
@@ -82,6 +97,7 @@ export const useConversationsFetcher = (profileId: string | null) => {
         component: "useConversationsFetcher"
       });
       
+      setConversations(filteredData);
       return filteredData;
     } catch (error: any) {
       logger.error("Error fetching conversations", { 
@@ -90,6 +106,18 @@ export const useConversationsFetcher = (profileId: string | null) => {
         component: "useConversationsFetcher",
         retryCount 
       });
+      
+      // Format a user-friendly error message
+      let errorMessage = "Impossible de charger les conversations.";
+      
+      if (error.message?.includes('Failed to fetch') || 
+          error.message?.includes('NetworkError') ||
+          error.message?.includes('NETWORK_ERROR') ||
+          error.code === 'NETWORK_ERROR') {
+        errorMessage = "Problème de connexion réseau. Veuillez vérifier votre connexion internet.";
+      } else if (error.message?.includes('JWT')) {
+        errorMessage = "Session expirée. Veuillez vous reconnecter.";
+      }
       
       if (retryCount < maxRetries) {
         logger.info(`Retrying conversations fetch (${retryCount + 1}/${maxRetries})`, { 
@@ -102,7 +130,7 @@ export const useConversationsFetcher = (profileId: string | null) => {
       }
       
       AlertService.captureException(error);
-      setError("Impossible de charger les conversations. Veuillez vérifier votre connexion et réessayer.");
+      setError(errorMessage);
       return [];
     } finally {
       setIsLoading(false);

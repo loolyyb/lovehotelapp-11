@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { MessageView } from "@/components/messages/MessageView";
@@ -10,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { EmptyState } from "@/components/messages/EmptyState";
 
-// Memoized MessageView to prevent unnecessary re-renders
 const MemoizedMessageView = memo(({ conversationId, onBack }: { conversationId: string, onBack: () => void }) => {
   return (
     <MessageView 
@@ -27,6 +25,7 @@ export default function Messages() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [isCheckingConnection, setIsCheckingConnection] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isNetworkError, setIsNetworkError] = useState(false);
   const location = useLocation();
   const logger = useLogger("Messages");
   const previousConversationRef = useRef<string | null>(null);
@@ -47,6 +46,7 @@ export default function Messages() {
   const checkConnectionStatus = async () => {
     setIsCheckingConnection(true);
     setConnectionError(null);
+    setIsNetworkError(false);
     
     try {
       // Try to get the user to check authentication - using await properly here
@@ -73,14 +73,33 @@ export default function Messages() {
         
       if (queryError) {
         logger.error("Database connection error", { error: queryError });
-        setConnectionError("Problème de connexion à la base de données. Veuillez réessayer.");
+        
+        // Check if it's a network-related error
+        if (queryError.message?.includes('Failed to fetch') || 
+            queryError.message?.includes('NetworkError') ||
+            queryError.message?.includes('network') ||
+            queryError.code === 'NETWORK_ERROR') {
+          setIsNetworkError(true);
+          setConnectionError("Problème de connexion au réseau. Veuillez vérifier votre connexion Internet.");
+        } else {
+          setConnectionError("Problème de connexion à la base de données. Veuillez réessayer.");
+        }
         return;
       }
       
       // Connection is good
       logger.info("Connection check successful");
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Connection check failed", { error });
+      
+      // Check if it's a network-related error
+      if (error.message?.includes('Failed to fetch') || 
+          error.message?.includes('NetworkError') ||
+          error.message?.includes('network') ||
+          error.code === 'NETWORK_ERROR') {
+        setIsNetworkError(true);
+      }
+      
       setConnectionError("Erreur de connexion au serveur. Veuillez vérifier votre connexion Internet.");
     } finally {
       setIsCheckingConnection(false);
@@ -120,13 +139,22 @@ export default function Messages() {
           if (data.user) {
             // Force refresh conversations
             logger.info("Forcing conversation refresh", { userId: data.user.id });
+            // Force page reload to refresh all components and connections
+            if (isNetworkError) {
+              window.location.reload();
+            }
           }
         }).catch(error => {
           logger.error("Error getting user during refresh", { error });
+          toast({
+            variant: "destructive",
+            title: "Erreur de connexion",
+            description: "Impossible de récupérer votre profil. Veuillez réessayer."
+          });
         });
       }
     });
-  }, [connectionError, logger]);
+  }, [connectionError, isNetworkError, logger, toast]);
 
   if (connectionError) {
     return (
@@ -163,6 +191,7 @@ export default function Messages() {
         <ConversationList
           onSelectConversation={handleSelectConversation}
           selectedConversationId={selectedConversation}
+          onNetworkError={() => setIsNetworkError(true)}
         />
       </div>
       
@@ -177,6 +206,7 @@ export default function Messages() {
             <EmptyState 
               onRefresh={handleRefreshConversations}
               isRefreshing={isCheckingConnection}
+              isNetworkError={isNetworkError}
             />
           </div>
         )}
