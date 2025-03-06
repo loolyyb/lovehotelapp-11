@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Announcement } from "./Announcement";
@@ -71,12 +70,10 @@ export function AnnouncementsList() {
       }
 
       const transformedData: AnnouncementType[] = rawData.map(announcement => {
-        // Fix: Cast the profile data with the appropriate type or use a safe default
-        const profileData = (announcement.profiles as ProfileData) || { 
-          full_name: null, 
-          username: null, 
-          avatar_url: null 
-        };
+        // Fix: Access the first element if profiles is an array, or use default values
+        const profileData: ProfileData = Array.isArray(announcement.profiles) && announcement.profiles.length > 0
+          ? announcement.profiles[0]
+          : { full_name: null, username: null, avatar_url: null };
         
         const displayName = profileData.full_name || 
                           profileData.username || 
