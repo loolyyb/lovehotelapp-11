@@ -206,7 +206,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
     // Get the user's profile to ensure correct association
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, user_id')
       .eq('user_id', user.id)
       .single();
       
@@ -226,15 +226,19 @@ export const findConversationsByProfileId = async (profileId: string) => {
         requestedProfileId: profileId,
         component: "findConversationsByProfileId"
       });
-      // If these don't match, there may be a session/profile issue
-      // We'll use the correct profile ID from auth
+      // If these don't match, use the correct profile ID from auth
       profileId = userProfile.id;
       logger.info(`Using corrected profile ID: ${profileId}`, {
         component: "findConversationsByProfileId"
       });
     }
     
-    // Let's try a more direct and simpler approach with RLS in mind
+    // Direct query approach
+    logger.info(`Executing conversations query for profile: ${profileId}`, {
+      component: "findConversationsByProfileId"
+    });
+    
+    // Use simple OR condition with string interpolation to bypass RLS issues
     const { data, error } = await supabase
       .from('conversations')
       .select(`
@@ -259,11 +263,16 @@ export const findConversationsByProfileId = async (profileId: string) => {
     }
     
     if (!data || data.length === 0) {
-      logger.info(`No conversations found for profile ${profileId}`, {
+      logger.warn(`No conversations found for profile ${profileId}`, {
         component: "findConversationsByProfileId"
       });
       return [];
     }
+    
+    logger.info(`Found ${data.length} conversations for profile ${profileId}`, {
+      component: "findConversationsByProfileId",
+      conversationIds: data.map(c => c.id)
+    });
     
     // Fetch user profiles for each conversation
     const conversationsWithProfiles = await Promise.all(data.map(async (conversation) => {
@@ -286,9 +295,9 @@ export const findConversationsByProfileId = async (profileId: string) => {
           });
           return {
             ...conversation,
-            user1: conversation.user1_id === profileId ? { id: profileId } : otherUserProfile,
-            user2: conversation.user1_id === profileId ? otherUserProfile : { id: profileId },
-            otherUser: otherUserProfile || { id: otherUserId, username: 'Utilisateur inconnu' }
+            user1: conversation.user1_id === profileId ? { id: profileId } : { id: otherUserId },
+            user2: conversation.user1_id === profileId ? { id: otherUserId } : { id: profileId },
+            otherUser: { id: otherUserId, username: 'Utilisateur inconnu' }
           };
         }
         
@@ -323,7 +332,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
       }
     }));
     
-    logger.info(`Found ${conversationsWithProfiles.length} enriched conversations for profile ${profileId}`, {
+    logger.info(`Enriched ${conversationsWithProfiles.length} conversations for profile ${profileId}`, {
       component: "findConversationsByProfileId"
     });
     return conversationsWithProfiles;

@@ -56,7 +56,13 @@ export const useMessageFetcher = ({
         return null;
       }
 
-      // Verify the conversation exists and user has access - RLS will handle permissions
+      logger.info("User authenticated, checking conversation access", { 
+        authUserId: user.id,
+        profileId: currentProfileId,
+        component: "useMessageFetcher"
+      });
+
+      // Verify the conversation exists and user has access
       const { data: conversationData, error: conversationError } = await supabase
         .from('conversations')
         .select('id, user1_id, user2_id')
@@ -77,6 +83,13 @@ export const useMessageFetcher = ({
         });
         return null;
       }
+
+      // Additional logging to debug conversation access
+      logger.info("Conversation details", {
+        conversation: conversationData,
+        currentProfileId,
+        component: "useMessageFetcher"
+      });
 
       // Verify current user is part of this conversation
       if (conversationData && conversationData.user1_id !== currentProfileId && conversationData.user2_id !== currentProfileId) {

@@ -39,6 +39,13 @@ export const useMessageHandlers = ({
         throw new Error("Vous devez être connecté pour envoyer des messages");
       }
 
+      logger.info("Sending message", { 
+        conversationId, 
+        senderProfileId: currentProfileId,
+        authUserId: user.id,
+        component: "useMessageHandlers" 
+      });
+
       // First verify the user has permission to this conversation
       const { data: conversation, error: verifyError } = await supabase
         .from('conversations')
