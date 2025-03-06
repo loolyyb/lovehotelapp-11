@@ -28,6 +28,8 @@ export const useConversations = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setError("Vous devez être connecté pour accéder aux messages");
+        setIsLoading(false);
+        fetchingRef.current = false;
         return;
       }
 
@@ -40,6 +42,8 @@ export const useConversations = () => {
 
       if (!userProfile) {
         setConversations([]);
+        setIsLoading(false);
+        fetchingRef.current = false;
         return;
       }
 
@@ -61,7 +65,8 @@ export const useConversations = () => {
         `)
         .or(`user1_id.eq.${userProfile.id},user2_id.eq.${userProfile.id}`)
         .eq('status', 'active')
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })
+        .order('messages.created_at', { foreignTable: 'messages', ascending: false });
 
       if (error) throw error;
       
@@ -69,7 +74,11 @@ export const useConversations = () => {
         conversation.user1_id !== conversation.user2_id
       ) || [];
       
-      logger.info("Fetched conversations", { count: filteredData.length });
+      logger.info("Fetched conversations", { 
+        count: filteredData.length,
+        timestamp: new Date().toISOString() 
+      });
+      
       setConversations(filteredData);
     } catch (error: any) {
       logger.error("Error fetching conversations", { 
@@ -111,12 +120,31 @@ export const useConversations = () => {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',  // Listen for all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'conversations',
+          filter: `user1_id=eq.${currentProfileId}`, 
         },
         (payload) => {
-          logger.info("Conversation update detected", { 
+          logger.info("Conversation change detected", { 
+            event: payload.eventType,
+            conversationId: payload.new.id,
+            timestamp: new Date().toISOString()
+          });
+          fetchConversations();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',  // Listen for all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'conversations',
+          filter: `user2_id=eq.${currentProfileId}`, 
+        },
+        (payload) => {
+          logger.info("Conversation change detected", { 
+            event: payload.eventType,
             conversationId: payload.new.id,
             timestamp: new Date().toISOString()
           });
@@ -158,26 +186,6 @@ export const useConversations = () => {
     }, 300);
   }, [fetchConversations, logger]);
 
-  // Handler for updated messages with debounce to prevent excessive updates
-  const handleMessageUpdate = useCallback((message) => {
-    logger.info("Message updated, triggering conversation update", { 
-      messageId: message.id, 
-      conversationId: message.conversation_id,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Clear any existing debounce timer
-    if (debounceTimerRef.current) {
-      window.clearTimeout(debounceTimerRef.current);
-    }
-    
-    // Set a new debounce timer to fetch conversations
-    debounceTimerRef.current = window.setTimeout(() => {
-      fetchConversations();
-      debounceTimerRef.current = null;
-    }, 300);
-  }, [fetchConversations, logger]);
-
   // Cleanup debounce timer on unmount
   useEffect(() => {
     return () => {
@@ -191,7 +199,6 @@ export const useConversations = () => {
   useRealtimeMessages({
     currentProfileId,
     onNewMessage: handleNewMessage,
-    onMessageUpdate: handleMessageUpdate
   });
 
   return { conversations, isLoading, error, refetch: fetchConversations, currentProfileId };

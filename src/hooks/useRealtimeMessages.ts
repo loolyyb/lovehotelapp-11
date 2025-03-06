@@ -91,9 +91,10 @@ export const useRealtimeMessages = ({
           // Update the conversation in the database to trigger the subscription in useConversations
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             try {
+              const now = new Date().toISOString();
               const { data, error } = await supabase
                 .from('conversations')
-                .update({ updated_at: new Date().toISOString() })
+                .update({ updated_at: now })
                 .eq('id', conversationId)
                 .select();
               
@@ -105,6 +106,7 @@ export const useRealtimeMessages = ({
               } else {
                 logger.info("Successfully updated conversation timestamp", { 
                   conversationId,
+                  timestamp: now,
                   success: !!data 
                 });
               }

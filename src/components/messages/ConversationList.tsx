@@ -70,6 +70,16 @@ export function ConversationList({
     refetch();
   }, [refetch, logger]);
 
+  // Effect to periodically refresh conversations as a fallback
+  useEffect(() => {
+    const interval = setInterval(() => {
+      logger.info("Periodic conversation refresh");
+      refetch();
+    }, 60000); // Every minute
+    
+    return () => clearInterval(interval);
+  }, [refetch, logger]);
+
   if (isLoading) {
     return <LoadingState />;
   }
@@ -96,34 +106,34 @@ export function ConversationList({
 
       <div className="flex-1 overflow-y-auto">
         {conversations.map(conversation => {
-        const otherUser = conversation.user1.id === currentUserProfileId ? conversation.user2 : conversation.user1;
-        const lastMessage = conversation.messages?.[0];
-        return <div key={conversation.id} className={`p-4 border-b border-rose/20 cursor-pointer hover:bg-rose/5 transition-colors ${selectedConversationId === conversation.id ? 'bg-rose/10' : ''}`} onClick={() => onSelectConversation(conversation.id)}>
-              <div className="flex items-center space-x-3">
-                <Avatar>
-                  <AvatarImage src={otherUser.avatar_url || DEFAULT_AVATAR_URL} />
-                  <AvatarFallback>
-                    <img src={DEFAULT_AVATAR_URL} alt="Default Avatar" className="w-full h-full object-cover" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline">
-                    <h3 className="font-medium text-burgundy truncate">
-                      {otherUser.full_name}
-                    </h3>
-                    {lastMessage && <span className="text-xs text-gray-500">
-                        {format(new Date(lastMessage.created_at), 'HH:mm', {
-                    locale: fr
-                  })}
-                      </span>}
+          const otherUser = conversation.user1.id === currentUserProfileId ? conversation.user2 : conversation.user1;
+          const lastMessage = conversation.messages?.[0];
+          return <div key={conversation.id} className={`p-4 border-b border-rose/20 cursor-pointer hover:bg-rose/5 transition-colors ${selectedConversationId === conversation.id ? 'bg-rose/10' : ''}`} onClick={() => onSelectConversation(conversation.id)}>
+                <div className="flex items-center space-x-3">
+                  <Avatar>
+                    <AvatarImage src={otherUser.avatar_url || DEFAULT_AVATAR_URL} />
+                    <AvatarFallback>
+                      <img src={DEFAULT_AVATAR_URL} alt="Default Avatar" className="w-full h-full object-cover" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline">
+                      <h3 className="font-medium text-burgundy truncate">
+                        {otherUser.full_name}
+                      </h3>
+                      {lastMessage && <span className="text-xs text-gray-500">
+                          {format(new Date(lastMessage.created_at), 'HH:mm', {
+                            locale: fr
+                          })}
+                        </span>}
+                    </div>
+                    {lastMessage && <p className="text-sm text-gray-600 truncate">
+                        {lastMessage.content}
+                      </p>}
                   </div>
-                  {lastMessage && <p className="text-sm text-gray-600 truncate">
-                      {lastMessage.content}
-                    </p>}
                 </div>
-              </div>
-            </div>;
-      })}
+              </div>;
+        })}
       </div>
     </div>;
 }
