@@ -106,12 +106,12 @@ export function ConversationList({
 
       <div className="flex-1 overflow-y-auto">
         {conversations.map(conversation => {
-          const otherUser = conversation.user1.id === currentUserProfileId ? conversation.user2 : conversation.user1;
+          const otherUser = conversation.user1?.id === currentUserProfileId ? conversation.user2 : conversation.user1;
           const lastMessage = conversation.messages?.[0];
           return <div key={conversation.id} className={`p-4 border-b border-rose/20 cursor-pointer hover:bg-rose/5 transition-colors ${selectedConversationId === conversation.id ? 'bg-rose/10' : ''}`} onClick={() => onSelectConversation(conversation.id)}>
                 <div className="flex items-center space-x-3">
                   <Avatar>
-                    <AvatarImage src={otherUser.avatar_url || DEFAULT_AVATAR_URL} />
+                    <AvatarImage src={otherUser?.avatar_url || DEFAULT_AVATAR_URL} />
                     <AvatarFallback>
                       <img src={DEFAULT_AVATAR_URL} alt="Default Avatar" className="w-full h-full object-cover" />
                     </AvatarFallback>
@@ -119,7 +119,7 @@ export function ConversationList({
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline">
                       <h3 className="font-medium text-burgundy truncate">
-                        {otherUser.full_name}
+                        {otherUser?.full_name || "Utilisateur"}
                       </h3>
                       {lastMessage && <span className="text-xs text-gray-500">
                           {format(new Date(lastMessage.created_at), 'HH:mm', {

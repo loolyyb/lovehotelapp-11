@@ -49,37 +49,62 @@ export const useConversations = () => {
 
       setCurrentProfileId(userProfile.id);
       
+      // First fetch conversations with basic details
       const { data, error } = await supabase
         .from('conversations')
         .select(`
           *,
           user1:profiles!conversations_user1_profile_fkey(*),
-          user2:profiles!conversations_user2_profile_fkey(*),
-          messages(
-            id,
-            content,
-            created_at,
-            sender_id,
-            read_at
-          )
+          user2:profiles!conversations_user2_profile_fkey(*)
         `)
         .or(`user1_id.eq.${userProfile.id},user2_id.eq.${userProfile.id}`)
         .eq('status', 'active')
-        .order('updated_at', { ascending: false })
-        .order('messages.created_at', { foreignTable: 'messages', ascending: false });
+        .order('updated_at', { ascending: false });
 
       if (error) throw error;
       
+      // Filter out self-conversations
       const filteredData = data?.filter(conversation => 
         conversation.user1_id !== conversation.user2_id
       ) || [];
       
+      // For each conversation, fetch the most recent message separately
+      const conversationsWithMessages = await Promise.all(
+        filteredData.map(async (conversation) => {
+          const { data: messages, error: messagesError } = await supabase
+            .from('messages')
+            .select(`
+              id,
+              content,
+              created_at,
+              sender_id,
+              read_at
+            `)
+            .eq('conversation_id', conversation.id)
+            .order('created_at', { ascending: false })
+            .limit(1);
+            
+          if (messagesError) {
+            logger.error("Error fetching messages for conversation", {
+              error: messagesError,
+              conversationId: conversation.id
+            });
+            return { ...conversation, messages: [] };
+          }
+          
+          return {
+            ...conversation,
+            messages: messages || []
+          };
+        })
+      );
+      
       logger.info("Fetched conversations", { 
-        count: filteredData.length,
+        count: conversationsWithMessages.length,
         timestamp: new Date().toISOString() 
       });
       
-      setConversations(filteredData);
+      setConversations(conversationsWithMessages);
     } catch (error: any) {
       logger.error("Error fetching conversations", { 
         error: error.message,
@@ -126,12 +151,15 @@ export const useConversations = () => {
           filter: `user1_id=eq.${currentProfileId}`, 
         },
         (payload) => {
-          logger.info("Conversation change detected", { 
-            event: payload.eventType,
-            conversationId: payload.new.id,
-            timestamp: new Date().toISOString()
-          });
-          fetchConversations();
+          // Ensure payload.new is defined and has an id
+          if (payload.new && typeof payload.new === 'object' && 'id' in payload.new) {
+            logger.info("Conversation change detected", { 
+              event: payload.eventType,
+              conversationId: payload.new.id,
+              timestamp: new Date().toISOString()
+            });
+            fetchConversations();
+          }
         }
       )
       .on(
@@ -143,12 +171,15 @@ export const useConversations = () => {
           filter: `user2_id=eq.${currentProfileId}`, 
         },
         (payload) => {
-          logger.info("Conversation change detected", { 
-            event: payload.eventType,
-            conversationId: payload.new.id,
-            timestamp: new Date().toISOString()
-          });
-          fetchConversations();
+          // Ensure payload.new is defined and has an id
+          if (payload.new && typeof payload.new === 'object' && 'id' in payload.new) {
+            logger.info("Conversation change detected", { 
+              event: payload.eventType,
+              conversationId: payload.new.id,
+              timestamp: new Date().toISOString()
+            });
+            fetchConversations();
+          }
         }
       )
       .subscribe((status) => {
