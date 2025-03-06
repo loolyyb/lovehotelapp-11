@@ -17,6 +17,13 @@ interface AnnouncementType {
   avatar_url: string | null;
 }
 
+// Define an interface for the profile data
+interface ProfileData {
+  full_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+}
+
 export function AnnouncementsList() {
   const [announcements, setAnnouncements] = useState<AnnouncementType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,8 +71,13 @@ export function AnnouncementsList() {
       }
 
       const transformedData: AnnouncementType[] = rawData.map(announcement => {
-        // Fix: Access profiles as an object, not as an array
-        const profileData = announcement.profiles || {};
+        // Fix: Cast the profile data with the appropriate type or use a safe default
+        const profileData = (announcement.profiles as ProfileData) || { 
+          full_name: null, 
+          username: null, 
+          avatar_url: null 
+        };
+        
         const displayName = profileData.full_name || 
                           profileData.username || 
                           "Utilisateur inconnu";
@@ -77,7 +89,7 @@ export function AnnouncementsList() {
           created_at: announcement.created_at,
           user_id: announcement.user_id,
           full_name: displayName,
-          avatar_url: profileData.avatar_url ?? null
+          avatar_url: profileData.avatar_url
         };
       });
 
