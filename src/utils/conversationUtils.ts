@@ -1,11 +1,31 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export const getCurrentUserId = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   return user.id;
+};
+
+export const getProfileByAuthId = async (authUserId: string) => {
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('id, user_id, full_name')
+      .eq('user_id', authUserId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching profile by auth ID:', error);
+      return null;
+    }
+
+    return profile;
+  } catch (error) {
+    console.error('Exception in getProfileByAuthId:', error);
+    return null;
+  }
 };
 
 export const getTargetUserId = async (profileId: string) => {
@@ -18,12 +38,17 @@ export const getTargetUserId = async (profileId: string) => {
     
     if (profileError) {
       console.error('Error fetching profile:', profileError);
-      throw profileError;
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Profil introuvable.",
+      });
+      return null;
     }
 
     if (!profile) {
       console.error('No profile found with ID:', profileId);
-      useToast().toast({
+      toast({
         variant: "destructive",
         title: "Erreur",
         description: "Profil introuvable.",
@@ -34,7 +59,7 @@ export const getTargetUserId = async (profileId: string) => {
     return profile.id;
   } catch (error) {
     console.error('Error in getTargetUserId:', error);
-    useToast().toast({
+    toast({
       variant: "destructive",
       title: "Erreur",
       description: "Impossible de récupérer les informations de l'utilisateur.",
@@ -61,7 +86,7 @@ export const createOrGetConversation = async (currentUserId: string, targetUserI
       throw new Error("Current user profile not found");
     }
 
-    // Check if conversation exists
+    // Check if conversation exists - using proper parameterized query
     const { data: existingConversations, error: queryError } = await supabase
       .from('conversations')
       .select('id')
@@ -101,5 +126,42 @@ export const createOrGetConversation = async (currentUserId: string, targetUserI
   } catch (error) {
     console.error('Error in createOrGetConversation:', error);
     throw error;
+  }
+};
+
+// Function to find conversations by profile ID
+export const findConversationsByProfileId = async (profileId: string) => {
+  if (!profileId) {
+    console.error("No profile ID provided to findConversationsByProfileId");
+    return [];
+  }
+  
+  try {
+    // Use a clean parameterized query with explicit parameters
+    const { data, error } = await supabase
+      .from('conversations')
+      .select(`
+        id, 
+        status,
+        blocked_by,
+        user1_id,
+        user2_id,
+        created_at,
+        updated_at
+      `)
+      .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
+      .neq('status', 'deleted')
+      .order('updated_at', { ascending: false });
+      
+    if (error) {
+      console.error("Error fetching conversations by profile ID:", error);
+      return [];
+    }
+    
+    console.log(`Found ${data?.length || 0} conversations for profile ${profileId}`);
+    return data || [];
+  } catch (error) {
+    console.error("Exception in findConversationsByProfileId:", error);
+    return [];
   }
 };

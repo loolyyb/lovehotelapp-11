@@ -11,6 +11,7 @@ import { useLogger } from "@/hooks/useLogger";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { getProfileByAuthId } from "@/utils/conversationUtils";
 
 const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel-v2.jpg";
 
@@ -110,34 +111,37 @@ export function ConversationList({
         return;
       }
       
-      const {
-        data: profile,
-        error: profileError
-      } = await supabase.from('profiles').select('id').eq('user_id', user.id).single();
-      
-      if (profileError) {
-        logger.error("Error fetching profile", { 
-          error: profileError,
-          userId: user.id
-        });
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de récupérer votre profil. Veuillez vous reconnecter ou recharger la page."
-        });
-        return;
-      }
+      const profile = await getProfileByAuthId(user.id);
       
       if (profile) {
         setCurrentUserProfileId(profile.id);
         logger.info("Current user profile fetched", { profileId: profile.id });
       } else {
-        logger.warn("No profile found for current user", { userId: user.id });
-        toast({
-          variant: "destructive",
-          title: "Profil manquant",
-          description: "Aucun profil trouvé. Veuillez vous reconnecter ou contacter le support."
-        });
+        const { data: newProfile, error } = await supabase
+          .from('profiles')
+          .insert({
+            id: crypto.randomUUID(),
+            user_id: user.id,
+            full_name: user.email?.split('@')[0] || 'Utilisateur',
+            role: 'user'
+          })
+          .select('id')
+          .single();
+          
+        if (error) {
+          logger.error("Failed to create profile", { error });
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de créer votre profil. Veuillez contacter le support."
+          });
+          return;
+        }
+        
+        if (newProfile) {
+          setCurrentUserProfileId(newProfile.id);
+          logger.info("Created new profile", { profileId: newProfile.id });
+        }
       }
     } catch (error) {
       logger.error("Error fetching current user profile:", error);
