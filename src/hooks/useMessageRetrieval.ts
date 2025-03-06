@@ -48,21 +48,24 @@ export const useMessageRetrieval = ({
       }
       
       // First get the user's profile to confirm it exists
+      let profileCheck;
+      
       try {
-        const { data: profileCheck, error: profileError } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('id, username, full_name')
           .eq('id', currentProfileId)
           .single();
           
-        if (profileError) {
+        if (error) {
+          // Handle profile fetch error
           logger.error("Error checking profile existence", { 
-            error: profileError, 
+            error, 
             currentProfileId,
             component: "useMessageRetrieval" 
           });
           
-          if (profileError.code === 'PGRST116') { // not found error
+          if (error.code === 'PGRST116') { // not found error
             toast({
               variant: "destructive",
               title: "Erreur",
@@ -71,42 +74,84 @@ export const useMessageRetrieval = ({
             return;
           }
           
-          throw profileError;
+          // For other errors, we'll retry with a more resilient approach
+          throw error;
         }
         
-        if (!profileCheck) {
-          logger.error("Profile not found", { 
-            currentProfileId,
-            component: "useMessageRetrieval" 
-          });
-          toast({
-            variant: "destructive",
-            title: "Erreur",
-            description: "Votre profil n'a pas été trouvé",
-          });
-          return;
-        }
-
-        logger.info("User profile found", { 
-          profileId: profileCheck.id,
-          username: profileCheck.username,
-          fullName: profileCheck.full_name,
-          component: "useMessageRetrieval" 
-        });
+        profileCheck = data;
       } catch (error: any) {
         logger.error("Network error checking profile", {
           error: error.message,
           stack: error.stack,
           component: "useMessageRetrieval"
         });
-        AlertService.captureException(error);
+        
+        // Implement retry logic with user ID instead
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          if (userData?.user?.id) {
+            const { data: profileByUserId, error: userIdError } = await supabase
+              .from('profiles')
+              .select('id, username, full_name')
+              .eq('user_id', userData.user.id)
+              .single();
+              
+            if (userIdError) {
+              AlertService.captureException(error);
+              toast({
+                variant: "destructive",
+                title: "Erreur de connexion",
+                description: "Problème de connexion au serveur. Veuillez réessayer.",
+              });
+              return;
+            }
+            
+            profileCheck = profileByUserId;
+          } else {
+            // Still couldn't get the user
+            AlertService.captureException(error);
+            toast({
+              variant: "destructive",
+              title: "Erreur de connexion",
+              description: "Problème de connexion au serveur. Veuillez réessayer.",
+            });
+            return;
+          }
+        } catch (retryError: any) {
+          // Final failure
+          logger.error("Failed to get profile after retry", {
+            error: retryError.message,
+            component: "useMessageRetrieval"
+          });
+          AlertService.captureException(retryError);
+          toast({
+            variant: "destructive",
+            title: "Erreur de connexion",
+            description: "Problème de connexion au serveur. Veuillez réessayer.",
+          });
+          return;
+        }
+      }
+      
+      if (!profileCheck) {
+        logger.error("Profile not found", { 
+          currentProfileId,
+          component: "useMessageRetrieval" 
+        });
         toast({
           variant: "destructive",
-          title: "Erreur de connexion",
-          description: "Problème de connexion au serveur. Veuillez réessayer.",
+          title: "Erreur",
+          description: "Votre profil n'a pas été trouvé",
         });
         return;
       }
+
+      logger.info("User profile found", { 
+        profileId: profileCheck.id,
+        username: profileCheck.username,
+        fullName: profileCheck.full_name,
+        component: "useMessageRetrieval" 
+      });
       
       // Now check if the user is a member of this conversation
       try {
@@ -169,28 +214,47 @@ export const useMessageRetrieval = ({
           component: "useMessageRetrieval" 
         });
         
-        const { data: messages, error } = await supabase
-          .from('messages')
-          .select(`
-            id,
-            content,
-            created_at,
-            read_at,
-            sender_id,
-            media_type,
-            media_url,
-            sender:profiles!messages_sender_id_fkey (
-              id,
-              username,
-              full_name,
-              avatar_url
-            )
-          `)
-          .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true });
-
+        const fetchWithRetry = async (retryCount = 0, maxRetries = 3) => {
+          try {
+            const { data: messagesData, error } = await supabase
+              .from('messages')
+              .select(`
+                id,
+                content,
+                created_at,
+                read_at,
+                sender_id,
+                media_type,
+                media_url,
+                sender:profiles!messages_sender_id_fkey (
+                  id,
+                  username,
+                  full_name,
+                  avatar_url
+                )
+              `)
+              .eq('conversation_id', conversationId)
+              .order('created_at', { ascending: true });
+            
+            if (error) throw error;
+            return { messagesData, error: null };
+          } catch (error: any) {
+            if (retryCount < maxRetries) {
+              logger.info(`Retrying message fetch (${retryCount + 1}/${maxRetries})`, {
+                component: "useMessageRetrieval"
+              });
+              // Exponential backoff
+              await new Promise(r => setTimeout(r, Math.pow(2, retryCount) * 500));
+              return fetchWithRetry(retryCount + 1, maxRetries);
+            }
+            return { messagesData: null, error };
+          }
+        };
+        
+        const { messagesData, error } = await fetchWithRetry();
+        
         if (error) {
-          logger.error("Error fetching messages", { 
+          logger.error("Error fetching messages after retries", { 
             error, 
             conversationId,
             component: "useMessageRetrieval" 
@@ -199,15 +263,15 @@ export const useMessageRetrieval = ({
         }
         
         logger.info("Fetched messages count", { 
-          count: messages?.length || 0, 
+          count: messagesData?.length || 0, 
           conversationId,
           component: "useMessageRetrieval" 
         });
         
-        if (messages && messages.length > 0) {
+        if (messagesData && messagesData.length > 0) {
           logger.debug("First and last messages", { 
-            first: messages[0], 
-            last: messages[messages.length - 1],
+            first: messagesData[0], 
+            last: messagesData[messagesData.length - 1],
             component: "useMessageRetrieval" 
           });
         } else {
@@ -218,10 +282,10 @@ export const useMessageRetrieval = ({
         }
         
         // Make sure messages is always an array
-        setMessages(messages || []);
+        setMessages(messagesData || []);
 
         // Add delay before marking messages as read
-        if (messages?.length > 0) {
+        if (messagesData?.length > 0) {
           setTimeout(() => markMessagesAsRead(), 1000);
         }
       } catch (error: any) {

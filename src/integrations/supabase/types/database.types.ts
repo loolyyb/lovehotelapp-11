@@ -28,6 +28,8 @@ export interface Database {
           user2_id: string;
           created_at: string;
           updated_at: string;
+          status?: string;
+          blocked_by?: string | null;
         };
         Insert: {
           id?: string;
@@ -35,6 +37,8 @@ export interface Database {
           user2_id: string;
           created_at?: string;
           updated_at?: string;
+          status?: string;
+          blocked_by?: string | null;
         };
         Update: {
           id?: string;
@@ -42,6 +46,8 @@ export interface Database {
           user2_id?: string;
           created_at?: string;
           updated_at?: string;
+          status?: string;
+          blocked_by?: string | null;
         };
       };
       messages: {
@@ -49,25 +55,34 @@ export interface Database {
           id: string;
           conversation_id: string;
           sender_id: string;
-          content: string;
+          content: string | null;
           created_at: string;
-          read: boolean;
+          read_at: string | null;
+          deleted_at: string | null;
+          media_url: string | null;
+          media_type: string | null;
         };
         Insert: {
           id?: string;
           conversation_id: string;
           sender_id: string;
-          content: string;
+          content?: string | null;
           created_at?: string;
-          read?: boolean;
+          read_at?: string | null;
+          deleted_at?: string | null;
+          media_url?: string | null;
+          media_type?: string | null;
         };
         Update: {
           id?: string;
           conversation_id?: string;
           sender_id?: string;
-          content?: string;
+          content?: string | null;
           created_at?: string;
-          read?: boolean;
+          read_at?: string | null;
+          deleted_at?: string | null;
+          media_url?: string | null;
+          media_type?: string | null;
         };
       };
     };
