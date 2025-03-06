@@ -1,10 +1,11 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { MessageHeader } from "./MessageHeader";
 import { MessageContent } from "./MessageContent";
 import { MessageInput } from "./MessageInput";
 import { useMessageHandlers } from "@/hooks/useMessageHandlers";
-import { useMessageRetrieval } from "@/hooks/useMessageRetrieval";
+import { useMessageRetrieval } from "@/hooks/messages/useMessageRetrieval";
 import { useConversationInit } from "@/hooks/useConversationInit";
 import { useMessageRefresh } from "@/hooks/useMessageRefresh";
 import { useLogger } from "@/hooks/useLogger";
