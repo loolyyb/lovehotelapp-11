@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
-import { findConversationsByProfileId, getProfileByAuthId } from "@/utils/conversationUtils";
+import { findConversationsByProfileId, getProfileByAuthId, createTestConversation } from "@/utils/conversationUtils";
 import { useToast } from "@/hooks/use-toast";
 
 export function useConversationsFetcher(currentProfileId: string | null) {
@@ -74,7 +74,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
 
       logger.info("Profile found, proceeding to fetch conversations", { profile: profileCheck });
       
-      // Use the simplified findConversationsByProfileId function which should avoid the relationship issues
+      // Use the simplified findConversationsByProfileId function which should now handle RLS better
       const fetchedConversations = await findConversationsByProfileId(currentProfileId);
       
       if (fetchedConversations.length === 0) {
@@ -101,21 +101,27 @@ export function useConversationsFetcher(currentProfileId: string | null) {
               otherProfileId: otherProfiles[0].id
             });
             
-            // Create a test conversation
-            const { data: newConv, error: convError } = await supabase
-              .from('conversations')
-              .insert({
-                user1_id: currentProfileId,
-                user2_id: otherProfiles[0].id,
-                status: 'active'
-              })
-              .select()
-              .single();
+            // Create a test conversation using our helper function
+            const newConv = await createTestConversation(currentProfileId, otherProfiles[0].id);
               
-            if (convError) {
-              logger.error("Error creating test conversation:", convError);
-            } else if (newConv) {
+            if (!newConv) {
+              logger.error("Failed to create test conversation");
+            } else {
               logger.info("Successfully created test conversation:", newConv);
+              
+              // Try creating a welcome message
+              try {
+                await supabase
+                  .from('messages')
+                  .insert({
+                    conversation_id: newConv.id,
+                    sender_id: otherProfiles[0].id,
+                    content: "Bonjour ! Comment puis-je vous aider ?"
+                  });
+                logger.info("Added welcome message to test conversation");
+              } catch (msgError) {
+                logger.error("Error adding welcome message:", msgError);
+              }
               
               // Try fetching conversations again after creating test conversation
               const updatedConversations = await findConversationsByProfileId(currentProfileId);
