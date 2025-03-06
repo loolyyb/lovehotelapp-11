@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Header } from "./components/layout/Header";
 import { MobileNavBar } from "./components/layout/MobileNavBar";
@@ -15,6 +15,7 @@ import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 import { useStatusBar } from './hooks/useStatusBar';
 import { useLogger } from './hooks/useLogger';
 import { enableRealtimeSubscriptions } from "./utils/enableRealtimeSubscriptions";
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 function Content() {
   const { session, loading, userProfile } = useAuthSession();
@@ -22,6 +23,7 @@ function Content() {
   const { currentThemeName } = useTheme();
   const { setStatusBarColor } = useStatusBar();
   const logger = useLogger('App');
+  const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
     logger.info("État de l'application", {
@@ -37,6 +39,25 @@ function Content() {
       setStatusBarColor();
     }
   }, [isMobile]);
+
+  useEffect(() => {
+    const setupRealtimeSubscriptions = async () => {
+      if (session) {
+        logger.info("Setting up realtime subscriptions", { userId: session.user.id });
+        const channel = await enableRealtimeSubscriptions();
+        realtimeChannelRef.current = channel;
+      }
+    };
+
+    setupRealtimeSubscriptions();
+
+    return () => {
+      if (realtimeChannelRef.current) {
+        logger.info("Cleaning up realtime subscriptions");
+        supabase.removeChannel(realtimeChannelRef.current);
+      }
+    };
+  }, [session, logger]);
 
   if (loading) {
     return (
@@ -123,7 +144,5 @@ const getBasename = () => {
   logger.info('Utilisation du basename par défaut: /');
   return '/';
 };
-
-enableRealtimeSubscriptions();
 
 export default App;

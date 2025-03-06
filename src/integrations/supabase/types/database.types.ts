@@ -1,3 +1,4 @@
+
 import { MatchesTable } from './matches.types';
 import { PreferencesTable } from './preferences.types';
 import { ProfilesTable } from './profiles.types';
@@ -20,6 +21,55 @@ export interface Database {
       profiles: ProfilesTable;
       admin_settings: AdminSettingsTable;
       notifications: NotificationsTable;
+      conversations: {
+        Row: {
+          id: string;
+          user1_id: string;
+          user2_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user1_id: string;
+          user2_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user1_id?: string;
+          user2_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          sender_id: string;
+          content: string;
+          created_at: string;
+          read: boolean;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          sender_id: string;
+          content: string;
+          created_at?: string;
+          read?: boolean;
+        };
+        Update: {
+          id?: string;
+          conversation_id?: string;
+          sender_id?: string;
+          content?: string;
+          created_at?: string;
+          read?: boolean;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
