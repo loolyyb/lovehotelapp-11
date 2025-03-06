@@ -82,11 +82,11 @@ export const useConversations = () => {
       if (!currentProfileId) return;
       
       try {
-        logger.info("Checking permissions and profile setup");
+        logger.info("Checking permissions and profile setup", { profileId: currentProfileId });
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          logger.warn("No authenticated user");
+          logger.warn("No authenticated user", { reason: "no_user" });
           return;
         }
         
@@ -103,7 +103,7 @@ export const useConversations = () => {
         }
         
         if (!profile) {
-          logger.warn("Profile not found, may need to create it");
+          logger.warn("Profile not found, may need to create it", { profileId: currentProfileId });
           return;
         }
         
@@ -129,7 +129,10 @@ export const useConversations = () => {
           if (updateError) {
             logger.error("Failed to update profile user_id", { error: updateError });
           } else {
-            logger.info("Successfully updated profile user_id");
+            logger.info("Successfully updated profile user_id", {
+              profileId: currentProfileId,
+              userId: user.id
+            });
           }
         }
       } catch (error) {
@@ -147,14 +150,14 @@ export const useConversations = () => {
     fetchingRef.current = true;
 
     try {
-      logger.info("Starting conversations fetch process");
+      logger.info("Starting conversations fetch process", { attempt: fetchAttemptsRef.current + 1 });
       fetchAttemptsRef.current += 1;
       
       // 1. Get user profile if not already available
       if (!currentProfileId) {
         const profileId = await getUserProfile();
         if (!profileId) {
-          logger.error("Could not retrieve user profile");
+          logger.error("Could not retrieve user profile", { reason: "profile_retrieval_failed" });
           fetchingRef.current = false;
           return;
         }
@@ -234,7 +237,7 @@ export const useConversations = () => {
 
   // Handler for conversation changes
   const handleConversationChange = useCallback(() => {
-    logger.info("Conversation change detected, triggering refresh");
+    logger.info("Conversation change detected, triggering refresh", { timestamp: new Date().toISOString() });
     fetchConversationsWithMessages();
   }, [logger, fetchConversationsWithMessages]);
 

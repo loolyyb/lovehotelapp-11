@@ -19,7 +19,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
 
   const fetchConversations = useCallback(async () => {
     if (!currentProfileId) {
-      logger.warn("No profile ID provided, cannot fetch conversations");
+      logger.warn("No profile ID provided, cannot fetch conversations", { reason: "missing_profile_id" });
       setError("Vous devez être connecté pour voir vos conversations");
       return [];
     }
@@ -49,38 +49,32 @@ export function useConversationsFetcher(currentProfileId: string | null) {
 
       logger.info("Profile found", { profile: profileCheck });
       
-      // Combined approach - try multiple strategies to ensure we get conversations
-      const results = await Promise.allSettled([
-        // Direct query with user1_id / user2_id filter
-        fetchConversationsDirectQuery(currentProfileId),
-        // FTS query with text search
-        fetchConversationsFullTextSearch(currentProfileId),
-        // Raw query through database function (bypasses RLS)
-        fetchConversationsRawQuery(currentProfileId)
-      ]);
+      // Try multiple strategies to get conversations, starting with the most reliable
+      // We'll try each strategy in order and use the first one that returns results
       
-      // Get the first successful result that has conversations
-      let fetchedConversations: any[] = [];
+      // Strategy 1: Direct query with explicit user1_id/user2_id conditions
+      logger.info("Trying direct query strategy", { profileId: currentProfileId });
+      let fetchedConversations = await fetchConversationsDirectQuery(currentProfileId);
       
-      for (const result of results) {
-        if (result.status === 'fulfilled' && result.value && result.value.length > 0) {
-          logger.info("Found conversations with strategy", { 
-            strategyIndex: results.indexOf(result),
-            count: result.value.length
-          });
-          fetchedConversations = result.value;
-          break;
-        }
+      // Strategy 2: Try a text match approach if direct query failed
+      if (fetchedConversations.length === 0) {
+        logger.info("Direct query returned no results, trying text search", { profileId: currentProfileId });
+        fetchedConversations = await fetchConversationsTextSearch(currentProfileId);
+      }
+      
+      // Strategy 3: Try a fallback query with cast if all else fails
+      if (fetchedConversations.length === 0) {
+        logger.info("Text search returned no results, trying fallback query", { profileId: currentProfileId });
+        fetchedConversations = await fetchConversationsFallback(currentProfileId);
       }
       
       // If we still don't have conversations, log the issue
       if (fetchedConversations.length === 0) {
         logger.warn("No conversations found with any strategy", {
-          profileId: currentProfileId,
-          results: results.map(r => r.status === 'fulfilled' ? 
-            { status: 'fulfilled', count: r.value?.length || 0 } : 
-            { status: 'rejected', reason: r.reason })
+          profileId: currentProfileId
         });
+      } else {
+        logger.info("Found conversations", { count: fetchedConversations.length });
       }
       
       // Fetch profiles for conversations we found
@@ -135,55 +129,101 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     }
   };
   
-  // Strategy 2: Use text search to find conversations
-  const fetchConversationsFullTextSearch = async (profileId: string) => {
+  // Strategy 2: Use simple text search to find conversations
+  const fetchConversationsTextSearch = async (profileId: string) => {
     try {
-      // This is a fallback that does a full text search on the conversations table
-      const { data, error } = await supabase
+      // Using .eq() instead of .ilike() to avoid the type issue
+      const { data: user1Conversations, error: error1 } = await supabase
         .from('conversations')
         .select('*')
-        .or(`user1_id.ilike.${profileId},user2_id.ilike.${profileId}`)
+        .eq('user1_id', profileId)
         .neq('status', 'deleted')
         .order('updated_at', { ascending: false });
         
-      if (error) {
-        logger.error("Error with FTS query", { error });
-        return [];
+      const { data: user2Conversations, error: error2 } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('user2_id', profileId)
+        .neq('status', 'deleted')
+        .order('updated_at', { ascending: false });
+        
+      if (error1) {
+        logger.error("Error fetching user1 conversations", { error: error1 });
       }
       
-      logger.info("FTS query results", {
-        count: data?.length || 0
+      if (error2) {
+        logger.error("Error fetching user2 conversations", { error: error2 });
+      }
+      
+      // Combine both result sets
+      const combinedResults = [
+        ...(user1Conversations || []),
+        ...(user2Conversations || [])
+      ];
+      
+      // Remove any duplicates by ID
+      const uniqueConversations = combinedResults.filter(
+        (conversation, index, self) => 
+          index === self.findIndex(c => c.id === conversation.id)
+      );
+      
+      logger.info("Text search query results", {
+        user1Count: user1Conversations?.length || 0,
+        user2Count: user2Conversations?.length || 0,
+        combinedCount: uniqueConversations.length
       });
       
-      return data || [];
+      return uniqueConversations;
     } catch (error) {
-      logger.error("Failed FTS query", { error });
+      logger.error("Failed text search query", { error });
       return [];
     }
   };
   
-  // Strategy 3: Use a raw query through a database function (bypasses RLS)
-  const fetchConversationsRawQuery = async (profileId: string) => {
+  // Strategy 3: Fallback with explicit SQL parameters to handle type issues
+  const fetchConversationsFallback = async (profileId: string) => {
     try {
-      // Try using our bypass function if it exists
+      // Using explicit parameters and the .match() approach
       const { data, error } = await supabase
-        .rpc('get_user_conversations', {
-          user_profile_id: profileId
-        });
+        .from('conversations')
+        .select('*')
+        .filter('user1_id', 'eq', profileId)
+        .neq('status', 'deleted')
+        .order('updated_at', { ascending: false });
         
       if (error) {
-        // Function might not exist if the user didn't run the SQL migrations
-        logger.warn("Error with RPC query (function may not exist)", { error });
+        logger.error("Error with fallback query for user1", { error });
         return [];
       }
       
-      logger.info("RPC query results", {
+      // Try the second query if the first returned no results
+      if (!data || data.length === 0) {
+        const { data: data2, error: error2 } = await supabase
+          .from('conversations')
+          .select('*')
+          .filter('user2_id', 'eq', profileId)
+          .neq('status', 'deleted')
+          .order('updated_at', { ascending: false });
+          
+        if (error2) {
+          logger.error("Error with fallback query for user2", { error: error2 });
+          return [];
+        }
+        
+        logger.info("Fallback query results for user2", {
+          count: data2?.length || 0
+        });
+        
+        return data2 || [];
+      }
+      
+      logger.info("Fallback query results for user1", {
         count: data?.length || 0
       });
       
       return data || [];
     } catch (error) {
-      logger.error("Failed RPC query", { error });
+      logger.error("Failed fallback query", { error });
       return [];
     }
   };
