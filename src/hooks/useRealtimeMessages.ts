@@ -50,7 +50,13 @@ export const useRealtimeMessages = ({
           });
 
           // Ensure payload.new exists and has an id property before proceeding
-          if (!payload.new || typeof payload.new.id === 'undefined') return;
+          // Using type guard to validate payload.new is not empty and has id property
+          if (!payload.new || !payload.new.id) {
+            logger.warn("Received payload without valid message id");
+            return;
+          }
+
+          const messageId = payload.new.id;
 
           // Fetch complete message data with sender details
           const { data: message, error } = await supabase
@@ -64,7 +70,7 @@ export const useRealtimeMessages = ({
                 avatar_url
               )
             `)
-            .eq('id', payload.new.id)
+            .eq('id', messageId)
             .maybeSingle();
 
           if (error) {
@@ -73,7 +79,7 @@ export const useRealtimeMessages = ({
           }
 
           if (!message) {
-            logger.warn("No message found after change", { messageId: payload.new.id });
+            logger.warn("No message found after change", { messageId });
             return;
           }
 
