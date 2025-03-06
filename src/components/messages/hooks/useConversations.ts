@@ -7,6 +7,7 @@ import { useUserProfileRetrieval } from "@/hooks/conversations/useUserProfileRet
 import { useConversationsFetcher } from "@/hooks/conversations/useConversationsFetcher";
 import { useLatestMessagesFetcher } from "@/hooks/conversations/useLatestMessagesFetcher";
 import { useConversationsRealtime } from "@/hooks/conversations/useConversationsRealtime";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useConversations = () => {
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +44,70 @@ export const useConversations = () => {
     else if (conversationsError) setError(conversationsError);
     else setError(null);
   }, [profileError, conversationsError]);
+
+  // Check permissions and fix profile issues
+  useEffect(() => {
+    const checkPermsAndFix = async () => {
+      if (!currentProfileId) return;
+      
+      try {
+        logger.info("Checking permissions and profile setup");
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          logger.warn("No authenticated user");
+          return;
+        }
+        
+        // Check if profile exists and has correct user_id
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, user_id')
+          .eq('id', currentProfileId)
+          .maybeSingle();
+          
+        if (profileError) {
+          logger.error("Error checking profile:", profileError);
+          return;
+        }
+        
+        if (!profile) {
+          logger.warn("Profile not found, may need to create it");
+          return;
+        }
+        
+        logger.info("Profile check successful", { 
+          profileId: profile.id,
+          userId: profile.user_id,
+          authId: user.id
+        });
+        
+        // If user_id doesn't match auth.id, update it
+        if (profile.user_id !== user.id) {
+          logger.warn("Profile user_id doesn't match auth.id, fixing...", {
+            profileId: profile.id,
+            profileUserId: profile.user_id,
+            authId: user.id
+          });
+          
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ user_id: user.id })
+            .eq('id', currentProfileId);
+            
+          if (updateError) {
+            logger.error("Failed to update profile user_id:", updateError);
+          } else {
+            logger.info("Successfully updated profile user_id");
+          }
+        }
+      } catch (error) {
+        logger.error("Error in permissions check:", error);
+      }
+    };
+    
+    checkPermsAndFix();
+  }, [currentProfileId, logger]);
 
   // Main fetch function that orchestrates the process
   const fetchConversationsWithMessages = useCallback(async () => {
