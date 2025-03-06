@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { MessageHeader } from "./MessageHeader";
 import { MessageContent } from "./MessageContent";
 import { MessageInput } from "./MessageInput";
@@ -20,8 +21,10 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const firstLoad = useRef(true);
   const logger = useLogger("MessageView");
+  const { toast } = useToast();
 
   const { getCurrentUser } = useConversationInit({
     conversationId,
@@ -41,9 +44,9 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const { 
     isRefreshing, 
     isError, 
-    isLoading, 
+    isLoading: refreshLoading, 
     setIsError, 
-    setIsLoading, 
+    setIsLoading: setRefreshLoading, 
     refreshMessages, 
     retryLoad 
   } = useMessageRefresh({
