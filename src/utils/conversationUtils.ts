@@ -139,7 +139,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
   try {
     console.log(`Finding conversations for profile: ${profileId}`);
     
-    // Use parameterized query approach instead of string interpolation
+    // Use a simplified approach with explicit join to avoid ambiguity issues
     const { data, error } = await supabase
       .from('conversations')
       .select(`
@@ -149,88 +149,72 @@ export const findConversationsByProfileId = async (profileId: string) => {
         user1_id,
         user2_id,
         created_at,
-        updated_at,
-        user1:profiles!user1_id(id, username, full_name, avatar_url),
-        user2:profiles!user2_id(id, username, full_name, avatar_url),
-        messages(
-          id,
-          content,
-          created_at,
-          sender_id,
-          read_at
-        )
+        updated_at
       `)
       .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
-      .eq('status', 'active')
-      .order('updated_at', { ascending: false });
+      .eq('status', 'active');
       
     if (error) {
       console.error("Error fetching conversations by profile ID:", error);
-      
-      // Try a fallback approach with simpler query
-      console.log("Trying fallback query approach...");
-      
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('conversations')
-        .select('*')
-        .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
-        .eq('status', 'active');
-        
-      if (fallbackError) {
-        console.error("Fallback query also failed:", fallbackError);
-        return [];
-      }
-      
-      console.log(`Fallback found ${fallbackData?.length || 0} basic conversations`);
-      
-      // Attempt to resolve the profiles for each conversation
-      const enrichedConversations = await Promise.all((fallbackData || []).map(async (conv) => {
-        try {
-          // Get the other user's profile (user1 or user2)
-          const otherUserId = conv.user1_id === profileId ? conv.user2_id : conv.user1_id;
-          
-          const { data: otherUserProfile } = await supabase
-            .from('profiles')
-            .select('id, username, full_name, avatar_url')
-            .eq('id', otherUserId)
-            .single();
-            
-          // Get the messages for this conversation
-          const { data: messages } = await supabase
-            .from('messages')
-            .select('id, content, created_at, sender_id, read_at')
-            .eq('conversation_id', conv.id)
-            .order('created_at', { ascending: false })
-            .limit(10);
-            
-          return {
-            ...conv,
-            user1: conv.user1_id === profileId ? null : otherUserProfile,
-            user2: conv.user1_id === profileId ? otherUserProfile : null,
-            otherUser: otherUserProfile,
-            messages: messages || []
-          };
-        } catch (err) {
-          console.error(`Error enriching conversation ${conv.id}:`, err);
-          return conv;
-        }
-      }));
-      
-      return enrichedConversations;
+      return [];
     }
     
-    const processedData = data?.map(conversation => {
-      // Add a messages array sorted by creation date, with the most recent first
-      if (conversation.messages) {
-        conversation.messages.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      }
-      return conversation;
-    }) || [];
+    if (!data || data.length === 0) {
+      console.log(`No conversations found for profile ${profileId}`);
+      return [];
+    }
     
-    console.log(`Found ${processedData.length} conversations for profile ${profileId}`);
-    return processedData;
+    // Fetch user profiles for each conversation
+    const conversationsWithProfiles = await Promise.all(data.map(async (conversation) => {
+      try {
+        const otherUserId = conversation.user1_id === profileId 
+          ? conversation.user2_id 
+          : conversation.user1_id;
+        
+        // Get the other user's profile
+        const { data: otherUserProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .eq('id', otherUserId)
+          .single();
+          
+        if (profileError) {
+          console.error(`Error fetching profile for user ${otherUserId}:`, profileError);
+          return {
+            ...conversation,
+            user1: conversation.user1_id === profileId ? { id: profileId } : otherUserProfile,
+            user2: conversation.user1_id === profileId ? otherUserProfile : { id: profileId },
+            otherUser: otherUserProfile || { id: otherUserId, username: 'Utilisateur inconnu' }
+          };
+        }
+        
+        // Get the latest messages for this conversation
+        const { data: messages, error: messagesError } = await supabase
+          .from('messages')
+          .select('id, content, created_at, sender_id, read_at')
+          .eq('conversation_id', conversation.id)
+          .order('created_at', { ascending: false })
+          .limit(10);
+          
+        if (messagesError) {
+          console.error(`Error fetching messages for conversation ${conversation.id}:`, messagesError);
+        }
+        
+        return {
+          ...conversation,
+          user1: conversation.user1_id === profileId ? { id: profileId } : otherUserProfile,
+          user2: conversation.user1_id === profileId ? otherUserProfile : { id: profileId },
+          otherUser: otherUserProfile,
+          messages: messages || []
+        };
+      } catch (err) {
+        console.error(`Error enriching conversation ${conversation.id}:`, err);
+        return conversation;
+      }
+    }));
+    
+    console.log(`Found ${conversationsWithProfiles.length} enriched conversations for profile ${profileId}`);
+    return conversationsWithProfiles;
   } catch (error) {
     console.error("Exception in findConversationsByProfileId:", error);
     return [];

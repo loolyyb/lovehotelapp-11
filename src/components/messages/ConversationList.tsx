@@ -7,7 +7,7 @@ import { fr } from "date-fns/locale";
 import { useConversations } from "./hooks/useConversations";
 import { LoadingState } from "./LoadingState";
 import { EmptyState } from "./EmptyState";
-import { AlertTriangle, RefreshCw, UserX } from "lucide-react";
+import { AlertTriangle, RefreshCw, UserPlus, UserX } from "lucide-react";
 import { useLogger } from "@/hooks/useLogger";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,7 @@ export function ConversationList({
 }: ConversationListProps) {
   const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [isCreatingTestConversation, setIsCreatingTestConversation] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [hasAuthError, setHasAuthError] = useState(false);
   const logger = useLogger("ConversationList");
@@ -157,6 +158,129 @@ export function ConversationList({
   const handleLogin = () => {
     logger.info("Redirecting to login page");
     navigate("/login", { state: { returnUrl: "/messages" } });
+  };
+
+  const handleCreateTestConversation = async () => {
+    if (!currentUserProfileId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour créer une conversation."
+      });
+      return;
+    }
+    
+    setIsCreatingTestConversation(true);
+    
+    try {
+      logger.info("Creating a test conversation", { profileId: currentUserProfileId });
+      
+      // Find any admin user or other user to create conversation with
+      const { data: otherProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .neq('id', currentUserProfileId)
+        .limit(1);
+        
+      if (profilesError) {
+        throw profilesError;
+      }
+      
+      if (!otherProfiles || otherProfiles.length === 0) {
+        logger.warn("No other users found to create conversation with");
+        
+        // Create a test profile if none exists
+        const { data: newProfile, error: newProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: crypto.randomUUID(),
+            user_id: crypto.randomUUID(),
+            full_name: 'Support',
+            username: 'support',
+            role: 'user'
+          })
+          .select('id')
+          .single();
+          
+        if (newProfileError) {
+          throw newProfileError;
+        }
+        
+        // Create conversation with the new profile
+        const { data: conversation, error: convError } = await supabase
+          .from('conversations')
+          .insert({
+            user1_id: currentUserProfileId,
+            user2_id: newProfile.id,
+            status: 'active'
+          })
+          .select()
+          .single();
+          
+        if (convError) {
+          throw convError;
+        }
+        
+        // Add a welcome message
+        await supabase
+          .from('messages')
+          .insert({
+            conversation_id: conversation.id,
+            sender_id: newProfile.id,
+            content: "Bonjour ! Je suis le support. Comment puis-je vous aider ?"
+          });
+          
+        toast({
+          title: "Conversation créée",
+          description: "Une conversation de test a été créée avec l'équipe de support."
+        });
+      } else {
+        // Create conversation with existing profile
+        const otherUser = otherProfiles[0];
+        logger.info("Creating conversation with user", { userId: otherUser.id });
+        
+        const { data: conversation, error: convError } = await supabase
+          .from('conversations')
+          .insert({
+            user1_id: currentUserProfileId,
+            user2_id: otherUser.id,
+            status: 'active'
+          })
+          .select()
+          .single();
+          
+        if (convError) {
+          throw convError;
+        }
+        
+        // Add a welcome message
+        await supabase
+          .from('messages')
+          .insert({
+            conversation_id: conversation.id,
+            sender_id: otherUser.id,
+            content: "Bonjour ! Comment puis-je vous aider ?"
+          });
+          
+        toast({
+          title: "Conversation créée",
+          description: `Une conversation de test a été créée avec ${otherUser.username || 'un autre utilisateur'}.`
+        });
+      }
+      
+      // Refresh conversations list
+      await refetch();
+      
+    } catch (error) {
+      logger.error("Error creating test conversation", { error });
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de créer une conversation de test. Veuillez réessayer."
+      });
+    } finally {
+      setIsCreatingTestConversation(false);
+    }
   };
 
   const handleRetry = useCallback(async () => {
@@ -303,7 +427,48 @@ export function ConversationList({
   });
 
   if (conversations.length === 0) {
-    return <EmptyState onRefresh={handleRetry} isRefreshing={isRetrying} />;
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
+        <div className="w-16 h-16 rounded-full bg-[#f3ebad]/10 flex items-center justify-center">
+          <UserPlus className="w-8 h-8 text-[#f3ebad]/70" />
+        </div>
+        <h3 className="text-lg font-medium text-[#f3ebad]">Aucune conversation</h3>
+        <p className="text-sm text-[#f3ebad]/70 max-w-sm">
+          Vous n'avez pas encore de conversations. Explorez les profils pour commencer une discussion ou créez une conversation de test.
+        </p>
+        <div className="flex space-x-3">
+          <Button 
+            onClick={handleCreateTestConversation}
+            className="bg-[#f3ebad] text-burgundy hover:bg-[#f3ebad]/90"
+            disabled={isCreatingTestConversation}
+          >
+            {isCreatingTestConversation ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Création...
+              </>
+            ) : (
+              "Créer une conversation test"
+            )}
+          </Button>
+          <Button 
+            onClick={handleRetry} 
+            variant="outline"
+            className="border-[#f3ebad]/30 text-[#f3ebad] hover:bg-[#f3ebad]/10"
+            disabled={isRetrying}
+          >
+            {isRetrying ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Actualisation...
+              </>
+            ) : (
+              "Actualiser"
+            )}
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return <div className="h-full flex flex-col">
