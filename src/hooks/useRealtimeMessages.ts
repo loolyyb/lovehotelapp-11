@@ -44,24 +44,24 @@ export const useRealtimeMessages = ({
           table: 'messages'
         },
         async (payload: RealtimePostgresChangesPayload<MessageRow>) => {
-          logger.info("Message change received", { 
-            event: payload.eventType,
-            messageId: payload.new?.id 
-          });
-
-          // Ensure payload.new exists and has an id property before proceeding
-          // Using type guard to validate payload.new is MessageRow type with id
-          if (
-            !payload.new || 
-            typeof payload.new !== 'object' || 
-            !('id' in payload.new) || 
-            typeof payload.new.id !== 'string'
-          ) {
+          // First check if payload.new exists and has required properties
+          if (!payload.new || typeof payload.new !== 'object') {
+            logger.warn("Received invalid payload", { payload });
+            return;
+          }
+          
+          // Type guard to ensure payload.new has an id property
+          if (!('id' in payload.new) || typeof payload.new.id !== 'string') {
             logger.warn("Received payload without valid message id");
             return;
           }
 
           const messageId = payload.new.id;
+          
+          logger.info("Message change received", { 
+            event: payload.eventType,
+            messageId 
+          });
 
           // Fetch complete message data with sender details
           const { data: message, error } = await supabase
