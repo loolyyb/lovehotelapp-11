@@ -35,11 +35,8 @@ const options = {
   }
 };
 
-export const supabase = createClient<Database>(
-  supabaseUrl,
-  supabaseAnonKey,
-  options
-);
+// Create client with proper argument structure
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Add a wrapper function for better error handling with type casting
 export const safeQueryResult = <T>(data: any): T[] => {
