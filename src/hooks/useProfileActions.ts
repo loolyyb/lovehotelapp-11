@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -19,11 +20,15 @@ export function useProfileActions(profileId: string) {
     const current = await getCurrentUserId();
     setCurrentUserId(current);
     
-    const target = await getTargetUserId(profileId);
-    if (!target) {
+    const targetResult = await getTargetUserId(profileId);
+    if (targetResult.error) {
       setIsTestProfile(true);
+      setTargetUserId(null);
+    } else if (targetResult.data) {
+      setTargetUserId(targetResult.data);
+    } else {
+      setTargetUserId(null);
     }
-    setTargetUserId(target);
   };
 
   const handleTestProfileError = () => {
