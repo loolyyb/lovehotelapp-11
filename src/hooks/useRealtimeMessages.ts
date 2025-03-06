@@ -10,6 +10,7 @@ interface UseRealtimeMessagesProps {
   currentProfileId?: string | null;
 }
 
+// Define a proper type for the Supabase realtime payload
 interface RealtimePayload extends RealtimePostgresChangesPayload<{
   [key: string]: any;
 }> {
@@ -96,5 +97,5 @@ export const useRealtimeMessages = ({
       logger.info("Cleaning up realtime messages subscription");
       supabase.removeChannel(channel);
     };
-  }, [currentProfileId, onNewMessage, onMessageUpdate]);
+  }, [currentProfileId, onNewMessage, onMessageUpdate, logger]);
 };
