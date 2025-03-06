@@ -27,9 +27,19 @@ export const useInitialMessages = ({
         component: "useInitialMessages" 
       });
       
-      // First check if the user has permission to access this conversation
-      const { data: currentSession } = await supabase.auth.getSession();
-      if (!currentSession?.session?.user) {
+      // Get the current authenticated user session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        logger.error("Error getting user session", { 
+          error: sessionError,
+          component: "useInitialMessages" 
+        });
+        setMessages([]);
+        return null;
+      }
+      
+      if (!sessionData?.session?.user) {
         logger.error("No authenticated user found", { 
           component: "useInitialMessages" 
         });
@@ -37,28 +47,16 @@ export const useInitialMessages = ({
         return null;
       }
       
-      const userId = currentSession.session.user.id;
+      const userId = sessionData.session.user.id;
       
-      // Check if user is part of this conversation
-      const { data: conversationCheck, error: convError } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('id', conversationId)
-        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-        .maybeSingle();
+      // For debugging
+      logger.info("Authenticated user found", { 
+        userId,
+        conversationId,
+        component: "useInitialMessages" 
+      });
       
-      if (convError || !conversationCheck) {
-        logger.error("User does not have access to this conversation", { 
-          error: convError,
-          userId,
-          conversationId,
-          component: "useInitialMessages" 
-        });
-        setMessages([]);
-        return null;
-      }
-      
-      // Now fetch the messages
+      // Now fetch the messages - RLS policies should handle access control
       const { data: initialMessages, error: messagesError } = await supabase
         .from('messages')
         .select(`
@@ -83,6 +81,7 @@ export const useInitialMessages = ({
         logger.error("Error fetching initial messages", { 
           error: messagesError,
           conversationId,
+          userId,
           component: "useInitialMessages" 
         });
         setMessages([]);
@@ -100,6 +99,7 @@ export const useInitialMessages = ({
       } else {
         logger.info("No initial messages found", {
           conversationId,
+          userId,
           component: "useInitialMessages"
         });
         // Always set empty array to clear any previous messages

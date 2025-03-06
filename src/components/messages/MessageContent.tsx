@@ -38,9 +38,14 @@ export function MessageContent({
       isLoading, 
       isError, 
       messagesCount: messages?.length || 0,
-      messageObjects: messages,
-      currentProfileId
+      currentProfileId,
+      messagesArray: messages
     });
+    
+    if (messages?.length > 0) {
+      console.log("First message:", messages[0]);
+      console.log("Last message:", messages[messages.length - 1]);
+    }
   }, [isLoading, isError, messages, currentProfileId]);
 
   if (isLoading && !messages?.length) {
@@ -56,7 +61,7 @@ export function MessageContent({
   }
 
   return (
-    <>
+    <div className="flex flex-col space-y-4 p-4">
       {messages.map((message) => (
         <MessageBubble
           key={message.id}
@@ -65,6 +70,6 @@ export function MessageContent({
         />
       ))}
       <div ref={messagesEndRef} />
-    </>
+    </div>
   );
 }

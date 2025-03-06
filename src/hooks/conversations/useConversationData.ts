@@ -52,30 +52,31 @@ export const useConversationData = ({
         component: "useConversationData" 
       });
       
-      // First verify that the user is part of this conversation
-      const { data: conversationAccess, error: accessError } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('id', conversationId)
-        .or(`user1_id.eq.${effectiveProfileId},user2_id.eq.${effectiveProfileId}`)
-        .maybeSingle();
-        
-      if (accessError || !conversationAccess) {
-        logger.error("User does not have access to this conversation", { 
-          error: accessError || "No access",
-          conversationId,
-          profileId: effectiveProfileId,
-          component: "useConversationData" 
+      // First make sure we have a valid session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        logger.error("Session error when fetching conversation", {
+          error: sessionError,
+          component: "useConversationData"
         });
         return null;
       }
       
+      if (!sessionData?.session?.user) {
+        logger.error("No authenticated session available", {
+          component: "useConversationData"
+        });
+        return null;
+      }
+      
+      // Let the RLS policies handle access control
       const { data: conversation, error: convError } = await supabase
         .from('conversations')
         .select(`
           *,
-          user1:profiles!conversations_user1_profile_fkey(id, username, full_name, avatar_url),
-          user2:profiles!conversations_user2_profile_fkey(id, username, full_name, avatar_url)
+          user1:profiles!conversations_user1_id_fkey(id, username, full_name, avatar_url),
+          user2:profiles!conversations_user2_id_fkey(id, username, full_name, avatar_url)
         `)
         .eq('id', conversationId)
         .maybeSingle();
