@@ -28,65 +28,111 @@ export const useRealtimeMessages = ({
     const channelId = `messages-updates-${currentProfileId}-${Date.now()}`;
     logger.info(`Setting up message realtime subscription: ${channelId}`, { component: logComponent });
 
-    // Récupérer la session pour l'authentification
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        logger.error("No authenticated session found for realtime subscription", { component: logComponent });
-        return;
-      }
-
-      // Créer le canal pour les messages
-      const channel = supabase
-        .channel(channelId)
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-          },
-          (payload) => {
-            if (payload.new) {
-              // Vérifier si le message fait partie d'une conversation de l'utilisateur
-              const conversationId = payload.new.conversation_id;
-              
-              logger.info("New message received via realtime", { 
-                component: logComponent,
-                messageId: payload.new.id,
-                conversation: conversationId
+    // Abonnement aux changements sur la table messages
+    const channel = supabase
+      .channel(channelId)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          if (payload.new) {
+            // Vérifier si le message fait partie d'une conversation de l'utilisateur
+            const conversationId = payload.new.conversation_id;
+            
+            logger.info("New message received via realtime", { 
+              component: logComponent,
+              messageId: payload.new.id,
+              conversation: conversationId
+            });
+            
+            // Vérifier si ce message fait partie d'une conversation où l'utilisateur est présent
+            supabase
+              .from('conversations')
+              .select('id')
+              .eq('id', conversationId)
+              .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
+              .maybeSingle()
+              .then(({ data, error }) => {
+                if (error) {
+                  logger.error("Error checking conversation membership for realtime message", {
+                    error,
+                    conversationId,
+                    component: logComponent
+                  });
+                  return;
+                }
+                
+                if (data && onNewMessage) {
+                  logger.info("User is part of conversation, triggering new message callback", {
+                    messageId: payload.new.id,
+                    conversationId,
+                    component: logComponent
+                  });
+                  onNewMessage(payload.new);
+                } else {
+                  logger.info("User is not part of this conversation, ignoring message", {
+                    conversationId,
+                    component: logComponent
+                  });
+                }
               });
-              
-              if (onNewMessage) onNewMessage(payload.new);
-            }
           }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'messages',
-          },
-          (payload) => {
-            if (payload.new) {
-              logger.info("Message update received via realtime", { 
-                component: logComponent,
-                messageId: payload.new.id,
-                conversation: payload.new.conversation_id 
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          if (payload.new) {
+            logger.info("Message update received via realtime", { 
+              component: logComponent,
+              messageId: payload.new.id,
+              conversation: payload.new.conversation_id 
+            });
+            
+            // Vérifier si ce message fait partie d'une conversation où l'utilisateur est présent
+            supabase
+              .from('conversations')
+              .select('id')
+              .eq('id', payload.new.conversation_id)
+              .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
+              .maybeSingle()
+              .then(({ data, error }) => {
+                if (error) {
+                  logger.error("Error checking conversation membership for updated message", {
+                    error,
+                    conversationId: payload.new.conversation_id,
+                    component: logComponent
+                  });
+                  return;
+                }
+                
+                if (data && onMessageUpdate) {
+                  logger.info("User is part of conversation, triggering message update callback", {
+                    messageId: payload.new.id,
+                    conversationId: payload.new.conversation_id,
+                    component: logComponent
+                  });
+                  onMessageUpdate(payload.new);
+                }
               });
-              if (onMessageUpdate) onMessageUpdate(payload.new);
-            }
           }
-        )
-        .subscribe((status) => {
-          logger.info("Message subscription status", { component: logComponent, status, channelId });
-        });
+        }
+      )
+      .subscribe((status) => {
+        logger.info("Message subscription status", { component: logComponent, status, channelId });
+      });
 
-      // Sauvegarder la référence du canal pour pouvoir le désabonner plus tard
-      channelRef.current = channel;
-    }).catch(error => {
-      logger.error("Error getting auth session for realtime subscription", { component: logComponent, error });
-    });
+    // Sauvegarder la référence du canal pour pouvoir le désabonner plus tard
+    channelRef.current = channel;
 
     // Nettoyer l'abonnement lorsque le composant est démonté
     return () => {

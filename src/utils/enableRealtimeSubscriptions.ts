@@ -19,7 +19,41 @@ export const enableRealtimeSubscriptions = async () => {
       return null;
     }
     
-    const userId = session.user.id;
+    logger.info("User authenticated for realtime", { 
+      userId: session.user.id,
+      email: session.user.email,
+      component: logComponent 
+    });
+    
+    // Get the user's profile ID from the profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+      
+    if (profileError) {
+      logger.error("Error fetching profile for realtime", { 
+        error: profileError,
+        userId: session.user.id,
+        component: logComponent 
+      });
+      return null;
+    }
+    
+    if (!profile) {
+      logger.error("No profile found for user", { 
+        userId: session.user.id,
+        component: logComponent 
+      });
+      return null;
+    }
+    
+    const userId = profile.id;
+    logger.info("Using profile ID for subscriptions", { 
+      profileId: userId,
+      component: logComponent 
+    });
     
     // Créer un canal unique pour éviter les doublons de souscriptions
     const channelId = `public-conversations-${userId}-${Date.now()}`;

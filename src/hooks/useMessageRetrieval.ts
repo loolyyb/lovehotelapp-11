@@ -49,7 +49,7 @@ export const useMessageRetrieval = ({
       // First get the user's profile to confirm it exists
       const { data: profileCheck, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, username, full_name')
         .eq('id', currentProfileId)
         .single();
         
@@ -84,6 +84,13 @@ export const useMessageRetrieval = ({
         });
         return;
       }
+
+      logger.info("User profile found", { 
+        profileId: profileCheck.id,
+        username: profileCheck.username,
+        fullName: profileCheck.full_name,
+        component: "useMessageRetrieval" 
+      });
       
       // Now check if the user is a member of this conversation
       const { data: conversationCheck, error: conversationError } = await supabase
@@ -121,6 +128,14 @@ export const useMessageRetrieval = ({
       logger.info("User confirmed as member of conversation", { 
         conversation: conversationCheck, 
         currentProfileId,
+        component: "useMessageRetrieval" 
+      });
+      
+      // Get messages for this conversation
+      logger.info("Fetching messages for conversation", { 
+        conversationId,
+        user1_id: conversationCheck.user1_id,
+        user2_id: conversationCheck.user2_id,
         component: "useMessageRetrieval" 
       });
       
@@ -164,6 +179,11 @@ export const useMessageRetrieval = ({
           first: messages[0], 
           last: messages[messages.length - 1],
           component: "useMessageRetrieval" 
+        });
+      } else {
+        logger.info("No messages found for conversation", {
+          conversationId,
+          component: "useMessageRetrieval"
         });
       }
       

@@ -27,26 +27,55 @@ export const useConversations = () => {
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        logger.error("No authenticated user found", { component: "useConversations" });
         setError("Vous devez être connecté pour accéder aux messages");
         setIsLoading(false);
         fetchingRef.current = false;
         return;
       }
 
+      logger.info("User authenticated", { 
+        userId: user.id,
+        email: user.email,
+        component: "useConversations" 
+      });
+
       // Get user's profile id
-      const { data: userProfile } = await supabase
+      const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, username, full_name')
         .eq('user_id', user.id)
         .maybeSingle();
 
+      if (profileError) {
+        logger.error("Error fetching user profile", { 
+          error: profileError,
+          userId: user.id,
+          component: "useConversations" 
+        });
+        setError("Erreur lors de la récupération du profil");
+        setIsLoading(false);
+        fetchingRef.current = false;
+        return;
+      }
+
       if (!userProfile) {
-        logger.warn("No profile found for user", { userId: user.id });
+        logger.warn("No profile found for user", { 
+          userId: user.id,
+          component: "useConversations" 
+        });
         setConversations([]);
         setIsLoading(false);
         fetchingRef.current = false;
         return;
       }
+
+      logger.info("User profile found", { 
+        profileId: userProfile.id,
+        username: userProfile.username,
+        fullName: userProfile.full_name,
+        component: "useConversations" 
+      });
 
       setCurrentProfileId(userProfile.id);
       
@@ -55,8 +84,8 @@ export const useConversations = () => {
         .from('conversations')
         .select(`
           *,
-          user1:profiles!conversations_user1_profile_fkey(id, username, full_name, avatar_url),
-          user2:profiles!conversations_user2_profile_fkey(id, username, full_name, avatar_url)
+          user1:profiles!conversations_user1_id_fkey(id, username, full_name, avatar_url),
+          user2:profiles!conversations_user2_id_fkey(id, username, full_name, avatar_url)
         `)
         .or(`user1_id.eq.${userProfile.id},user2_id.eq.${userProfile.id}`)
         .eq('status', 'active')
@@ -66,19 +95,26 @@ export const useConversations = () => {
         logger.error("Error fetching conversations", {
           error: conversationsError.message,
           code: conversationsError.code,
-          details: conversationsError.details
+          details: conversationsError.details,
+          component: "useConversations"
         });
         throw conversationsError;
       }
+      
+      logger.info("Fetched conversations", { 
+        count: conversationsData?.length || 0,
+        component: "useConversations" 
+      });
       
       // Filtre pour exclure les conversations avec soi-même
       const filteredData = conversationsData?.filter(conversation => 
         conversation.user1_id !== conversation.user2_id
       ) || [];
       
-      logger.info("Fetched conversations before messages", { 
+      logger.info("Filtered conversations before messages", { 
         count: filteredData.length,
-        conversationIds: filteredData.map(c => c.id)
+        conversationIds: filteredData.map(c => c.id),
+        component: "useConversations"
       });
       
       // Pour chaque conversation, récupérer le message le plus récent
@@ -100,10 +136,17 @@ export const useConversations = () => {
           if (messagesError) {
             logger.error("Error fetching messages for conversation", {
               error: messagesError,
-              conversationId: conversation.id
+              conversationId: conversation.id,
+              component: "useConversations"
             });
             return { ...conversation, messages: [] };
           }
+          
+          logger.info("Messages for conversation", {
+            conversationId: conversation.id,
+            count: messages?.length || 0,
+            component: "useConversations"
+          });
           
           return {
             ...conversation,
@@ -112,10 +155,13 @@ export const useConversations = () => {
         })
       );
       
+      const conversationsWithMessagesCount = conversationsWithMessages.filter(c => c.messages?.length > 0).length;
+      
       logger.info("Fetched conversations with messages", { 
         count: conversationsWithMessages.length,
+        hasMessages: conversationsWithMessagesCount,
         timestamp: new Date().toISOString(),
-        hasMessages: conversationsWithMessages.filter(c => c.messages?.length > 0).length
+        component: "useConversations"
       });
       
       setConversations(conversationsWithMessages);
@@ -123,7 +169,7 @@ export const useConversations = () => {
       logger.error("Error fetching conversations", { 
         error: error.message,
         stack: error.stack,
-        conversationId: null 
+        component: "useConversations" 
       });
       setError("Impossible de charger les conversations");
       toast({
