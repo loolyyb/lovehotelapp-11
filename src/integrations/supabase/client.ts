@@ -13,7 +13,7 @@ const options = {
     detectSessionInUrl: true
   },
   global: {
-    fetch: (...args: any[]) => {
+    fetch: (...args: Parameters<typeof fetch>) => {
       // Add timeout to all fetch requests
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
@@ -31,7 +31,7 @@ const options = {
     }
   },
   db: {
-    schema: 'public'
+    schema: 'public' as const
   }
 };
 
@@ -40,3 +40,27 @@ export const supabase = createClient<Database>(
   supabaseAnonKey,
   options
 );
+
+// Add a wrapper function for better error handling with type casting
+export const safeQueryResult = <T>(data: any): T[] => {
+  // Handle potential SelectQueryError or other error types
+  if (!data || typeof data === 'string' || data.error) {
+    console.warn("Query returned an error or invalid data", data);
+    return [] as T[];
+  }
+  
+  // Cast the data to the expected type
+  return data as T[];
+};
+
+// Helper for single record with type safety
+export const safeQuerySingle = <T>(data: any): T | null => {
+  // Handle potential SelectQueryError or other error types
+  if (!data || typeof data === 'string' || data.error) {
+    console.warn("Query returned an error or invalid data for single record", data);
+    return null;
+  }
+  
+  // Cast the data to the expected type
+  return data as T;
+};

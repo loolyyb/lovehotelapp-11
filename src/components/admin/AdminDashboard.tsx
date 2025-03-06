@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, safeQueryResult } from "@/integrations/supabase/client";
 import { EventsManager } from "./events/EventsManager";
 import { ThemeTab } from "./dashboard/ThemeTab";
 import { VersionManager } from "./versions/VersionManager";
@@ -26,7 +26,7 @@ export function AdminDashboard() {
   const { session } = useAuthSession();
   const [searchTerm, setSearchTerm] = useState("");
   
-  const { data: users } = useQuery({
+  const { data: usersData } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
       const { data: profiles, error } = await supabase
@@ -35,7 +35,7 @@ export function AdminDashboard() {
       
       if (error) throw error;
       
-      return profiles as AdminUser[];
+      return safeQueryResult<AdminUser>(profiles);
     }
   });
 
@@ -120,7 +120,7 @@ export function AdminDashboard() {
                 className="max-w-sm"
               />
             </div>
-            <UsersManager users={users} searchTerm={searchTerm} />
+            <UsersManager users={usersData} searchTerm={searchTerm} />
           </Card>
         </TabsContent>
 
@@ -157,7 +157,7 @@ export function AdminDashboard() {
         <TabsContent value="stats">
           <StatsContent 
             stats={{
-              users,
+              users: usersData || [],
               messages,
               events,
               conversations,

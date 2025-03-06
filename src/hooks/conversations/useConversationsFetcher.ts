@@ -27,8 +27,8 @@ export const useConversationsFetcher = (profileId: string | null) => {
       
       // First check if we can connect to Supabase at all
       try {
-        const { data: connectionTest } = await supabase.from('profiles').select('count(*)', { count: 'exact', head: true });
-        logger.info("Connection test successful", { count: connectionTest?.count });
+        const { data: connectionTest, count } = await supabase.from('profiles').select('count(*)', { count: 'exact', head: true });
+        logger.info("Connection test successful", { count: count });
       } catch (connError: any) {
         logger.error("Connection test failed", { 
           error: connError.message,
@@ -50,7 +50,7 @@ export const useConversationsFetcher = (profileId: string | null) => {
               user2:profiles!conversations_user2_id_fkey(id, username, full_name, avatar_url)
             `)
             .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
-            .eq('status', 'active')
+            .eq('status', 'active' as any)
             .order('updated_at', { ascending: false });
 
           if (conversationsError) {
