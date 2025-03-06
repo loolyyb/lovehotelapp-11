@@ -45,7 +45,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         throw new Error("Profil introuvable. Veuillez vous reconnecter.");
       }
       
-      // Now fetch conversations with proper table aliases to avoid the duplicate table error
+      // Now fetch conversations with explicit joins and table references
       const { data, error: conversationsError } = await supabase
         .from('conversations')
         .select(`
@@ -56,8 +56,18 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           blocked_by,
           user1_id,
           user2_id,
-          user1:profiles!conversations_user1_id_fkey (id, full_name, username, avatar_url),
-          user2:profiles!conversations_user2_id_fkey (id, full_name, username, avatar_url)
+          profiles!conversations_user1_id_fkey (
+            id, 
+            full_name,
+            username,
+            avatar_url
+          ),
+          profiles!conversations_user2_id_fkey (
+            id,
+            full_name,
+            username,
+            avatar_url
+          )
         `)
         .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
         .eq('status', 'active');
@@ -67,20 +77,13 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         throw new Error(conversationsError.message);
       }
 
-      // Ensure type safety
+      // Ensure type safety and log results
       const typedData = safeQueryResult<any>(data);
-      console.info("Fetched conversations", { 
-        component: "useConversationsFetcher",
+      console.log("Conversations fetch result:", {
+        success: true,
         count: typedData.length,
-        conversationIds: typedData.map(c => c.id)
+        conversations: typedData
       });
-      
-      if (typedData.length === 0) {
-        console.info("Fetched conversations", { 
-          component: "useConversations",
-          count: 0
-        });
-      }
       
       setConversations(typedData);
       setError(null);
