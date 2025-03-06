@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useLogger } from '@/hooks/useLogger';
+import { logger } from '@/services/LogService';
 
 interface UseRealtimeMessagesProps {
   currentProfileId: string | null;
@@ -14,24 +14,24 @@ export const useRealtimeMessages = ({
   onNewMessage,
   onMessageUpdate
 }: UseRealtimeMessagesProps) => {
-  const logger = useLogger('useRealtimeMessages');
   const channelRef = useRef<any>(null);
+  const logComponent = 'useRealtimeMessages';
 
   useEffect(() => {
     // Ne pas s'abonner si aucun ID de profil n'est disponible
     if (!currentProfileId) {
-      logger.info("No current profile ID, skipping realtime subscription");
+      logger.info("No current profile ID, skipping realtime subscription", { component: logComponent });
       return;
     }
 
     // Créer un identifiant unique pour le canal
     const channelId = `messages-updates-${currentProfileId}-${Date.now()}`;
-    logger.info(`Setting up message realtime subscription: ${channelId}`);
+    logger.info(`Setting up message realtime subscription: ${channelId}`, { component: logComponent });
 
     // Récupérer la session pour l'authentification
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        logger.error("No authenticated session found for realtime subscription");
+        logger.error("No authenticated session found for realtime subscription", { component: logComponent });
         return;
       }
 
@@ -51,6 +51,7 @@ export const useRealtimeMessages = ({
               const conversationId = payload.new.conversation_id;
               
               logger.info("New message received via realtime", { 
+                component: logComponent,
                 messageId: payload.new.id,
                 conversation: conversationId
               });
@@ -69,6 +70,7 @@ export const useRealtimeMessages = ({
           (payload) => {
             if (payload.new) {
               logger.info("Message update received via realtime", { 
+                component: logComponent,
                 messageId: payload.new.id,
                 conversation: payload.new.conversation_id 
               });
@@ -77,24 +79,24 @@ export const useRealtimeMessages = ({
           }
         )
         .subscribe((status) => {
-          logger.info("Message subscription status", { status, channelId });
+          logger.info("Message subscription status", { component: logComponent, status, channelId });
         });
 
       // Sauvegarder la référence du canal pour pouvoir le désabonner plus tard
       channelRef.current = channel;
     }).catch(error => {
-      logger.error("Error getting auth session for realtime subscription", { error });
+      logger.error("Error getting auth session for realtime subscription", { component: logComponent, error });
     });
 
     // Nettoyer l'abonnement lorsque le composant est démonté
     return () => {
-      logger.info(`Removing message subscription: ${channelId}`);
+      logger.info(`Removing message subscription: ${channelId}`, { component: logComponent });
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [currentProfileId, onNewMessage, onMessageUpdate, logger]);
+  }, [currentProfileId, onNewMessage, onMessageUpdate]);
 
   // Ce hook ne renvoie rien car il gère uniquement les abonnements
   return null;
