@@ -45,7 +45,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         throw new Error("Profil introuvable. Veuillez vous reconnecter.");
       }
       
-      // Now fetch conversations with better OR condition syntax
+      // Now fetch conversations with proper table aliases to avoid the duplicate table error
       const { data, error: conversationsError } = await supabase
         .from('conversations')
         .select(`
@@ -56,8 +56,8 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           blocked_by,
           user1_id,
           user2_id,
-          profiles!conversations_user1_id_fkey (id, full_name, username, avatar_url),
-          profiles!conversations_user2_id_fkey (id, full_name, username, avatar_url)
+          user1:profiles!conversations_user1_id_fkey (id, full_name, username, avatar_url),
+          user2:profiles!conversations_user2_id_fkey (id, full_name, username, avatar_url)
         `)
         .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
         .eq('status', 'active');
