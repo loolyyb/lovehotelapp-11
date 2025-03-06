@@ -153,7 +153,7 @@ export const useMessageRetrieval = ({
         component: "useMessageRetrieval" 
       });
       
-      // Now check if the user is a member of this conversation
+      // Now check if the user is a member of this conversation - MODIFIED to use OR condition properly
       try {
         const { data: conversationCheck, error: conversationError } = await supabase
           .from('conversations')
@@ -207,7 +207,7 @@ export const useMessageRetrieval = ({
         return;
       }
       
-      // Get messages for this conversation with retries
+      // Get messages for this conversation with retries - MODIFIED to use additional logging
       try {
         logger.info("Fetching messages for conversation", { 
           conversationId,
@@ -216,6 +216,12 @@ export const useMessageRetrieval = ({
         
         const fetchWithRetry = async (retryCount = 0, maxRetries = 3) => {
           try {
+            logger.info("Attempting to fetch messages", {
+              attempt: retryCount + 1,
+              conversationId,
+              component: "useMessageRetrieval"
+            });
+            
             const { data: messagesData, error } = await supabase
               .from('messages')
               .select(`
@@ -224,6 +230,7 @@ export const useMessageRetrieval = ({
                 created_at,
                 read_at,
                 sender_id,
+                conversation_id,
                 media_type,
                 media_url,
                 sender:profiles!messages_sender_id_fkey (
@@ -236,11 +243,26 @@ export const useMessageRetrieval = ({
               .eq('conversation_id', conversationId)
               .order('created_at', { ascending: true });
             
-            if (error) throw error;
+            if (error) {
+              logger.error("Error in fetch attempt", {
+                error,
+                attempt: retryCount + 1,
+                component: "useMessageRetrieval"
+              });
+              throw error;
+            }
+            
+            logger.info("Messages fetch successful", {
+              messagesCount: messagesData?.length || 0,
+              conversationId,
+              component: "useMessageRetrieval"
+            });
+            
             return { messagesData, error: null };
           } catch (error: any) {
             if (retryCount < maxRetries) {
               logger.info(`Retrying message fetch (${retryCount + 1}/${maxRetries})`, {
+                error: error.message,
                 component: "useMessageRetrieval"
               });
               // Exponential backoff

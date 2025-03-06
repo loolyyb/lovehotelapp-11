@@ -5,12 +5,20 @@ import { Check, CheckCheck } from "lucide-react";
 
 interface MessageBubbleProps {
   message: {
+    id: string;
     content: string;
     created_at: string;
     read_at: string | null;
     sender_id: string;
+    conversation_id: string;
     media_url?: string;
     media_type?: string;
+    sender?: {
+      id: string;
+      username: string;
+      full_name: string;
+      avatar_url?: string;
+    };
   };
   isCurrentUser: boolean;
 }
