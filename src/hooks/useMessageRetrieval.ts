@@ -17,6 +17,40 @@ export const useMessageRetrieval = ({
   const fetchMessages = async () => {
     try {
       console.log("Fetching messages for conversation:", conversationId);
+      console.log("Current user profile ID:", currentProfileId);
+      
+      if (!conversationId) {
+        console.error("No conversation ID provided");
+        return;
+      }
+      
+      // Vérifier d'abord si l'utilisateur est membre de cette conversation
+      const { data: conversationCheck, error: conversationError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
+        .single();
+      
+      if (conversationError) {
+        console.error("Error checking conversation membership:", conversationError);
+        if (conversationError.code !== 'PGRST116') { // not found error
+          throw conversationError;
+        }
+        // Si l'utilisateur n'est pas membre de la conversation, ne pas récupérer les messages
+        console.log("User is not a member of this conversation");
+        setMessages([]);
+        return;
+      }
+      
+      if (!conversationCheck) {
+        console.log("Conversation not found or user is not a member");
+        setMessages([]);
+        return;
+      }
+      
+      console.log("User confirmed as member of conversation:", conversationCheck);
+      
       const { data: messages, error } = await supabase
         .from('messages')
         .select(`
@@ -41,7 +75,14 @@ export const useMessageRetrieval = ({
         throw error;
       }
       
-      console.log("Fetched messages:", messages);
+      console.log("Fetched messages:", messages?.length || 0);
+      if (messages && messages.length > 0) {
+        console.log("First message:", messages[0]);
+        console.log("Last message:", messages[messages.length - 1]);
+      } else {
+        console.log("No messages found for this conversation");
+      }
+      
       setMessages(messages || []);
 
       // Add delay before marking messages as read
@@ -52,8 +93,8 @@ export const useMessageRetrieval = ({
       console.error("Error in fetchMessages:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Could not load messages",
+        title: "Erreur",
+        description: "Impossible de charger les messages",
       });
     }
   };
@@ -76,6 +117,7 @@ export const useMessageRetrieval = ({
         .is('read_at', null);
 
       if (checkError) {
+        console.error("Error checking unread messages:", checkError);
         throw checkError;
       }
 
@@ -84,10 +126,8 @@ export const useMessageRetrieval = ({
         return;
       }
 
-      console.log(`Found ${unreadMessages.length} unread messages`);
-
-      // Correction ici : ajouter un log pour voir les IDs des messages non lus
-      console.log("Messages non lus:", unreadMessages.map(msg => msg.id));
+      console.log(`Found ${unreadMessages.length} unread messages to mark as read`);
+      console.log("Unread message IDs:", unreadMessages.map(msg => msg.id));
 
       const { error: updateError } = await supabase
         .from('messages')
