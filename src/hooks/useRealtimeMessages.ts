@@ -19,8 +19,6 @@ type MessageRow = {
   [key: string]: any;
 };
 
-type RealtimePayload = RealtimePostgresChangesPayload<MessageRow>;
-
 export const useRealtimeMessages = ({ 
   onNewMessage, 
   onMessageUpdate,
@@ -38,21 +36,21 @@ export const useRealtimeMessages = ({
 
     const channel = supabase
       .channel('messages-changes')
-      .on(
+      .on<MessageRow>(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'messages'
         },
-        async (payload: RealtimePayload) => {
+        async (payload: RealtimePostgresChangesPayload<MessageRow>) => {
           logger.info("Message change received", { 
             event: payload.eventType,
             messageId: payload.new?.id 
           });
 
           // Ensure payload.new exists and has an id property before proceeding
-          if (!payload.new || !('id' in payload.new)) return;
+          if (!payload.new || typeof payload.new.id === 'undefined') return;
 
           // Fetch complete message data with sender details
           const { data: message, error } = await supabase
