@@ -51,7 +51,8 @@ export const useRealtimeMessages = ({
             messageId: payload.new?.id 
           });
 
-          if (!payload.new) return;
+          // Ensure payload.new exists and has an id property before proceeding
+          if (!payload.new || !('id' in payload.new)) return;
 
           // Fetch complete message data with sender details
           const { data: message, error } = await supabase
