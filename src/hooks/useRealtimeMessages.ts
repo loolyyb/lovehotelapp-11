@@ -9,6 +9,18 @@ interface UseRealtimeMessagesProps {
   currentProfileId?: string | null;
 }
 
+interface RealtimePayload {
+  new: {
+    id: string;
+    [key: string]: any;
+  } | null;
+  old: {
+    id: string;
+    [key: string]: any;
+  } | null;
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+}
+
 export const useRealtimeMessages = ({ 
   onNewMessage, 
   onMessageUpdate,
@@ -33,7 +45,7 @@ export const useRealtimeMessages = ({
           schema: 'public',
           table: 'messages'
         },
-        async (payload) => {
+        async (payload: RealtimePayload) => {
           logger.info("Message change received", { 
             eventType: payload.eventType,
             messageId: payload.new?.id 
@@ -82,5 +94,5 @@ export const useRealtimeMessages = ({
       logger.info("Cleaning up realtime messages subscription");
       supabase.removeChannel(channel);
     };
-  }, [currentProfileId]);
+  }, [currentProfileId, onNewMessage, onMessageUpdate]);
 };
