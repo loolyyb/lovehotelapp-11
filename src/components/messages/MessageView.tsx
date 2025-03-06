@@ -1,15 +1,14 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { MessageHeader } from "./MessageHeader";
 import { MessageContent } from "./MessageContent";
 import { MessageInput } from "./MessageInput";
-import { useMessageSubscription } from "@/hooks/useMessageSubscription";
 import { useMessageHandlers } from "@/hooks/useMessageHandlers";
 import { useMessageRetrieval } from "@/hooks/useMessageRetrieval";
 import { useConversationInit } from "@/hooks/useConversationInit";
 import { useMessageRefresh } from "@/hooks/useMessageRefresh";
 import { useLogger } from "@/hooks/useLogger";
+import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 
 interface MessageViewProps {
   conversationId: string;
@@ -56,11 +55,6 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     currentProfileId,
   });
 
-  const { subscribeToNewMessages } = useMessageSubscription({
-    conversationId,
-    setMessages,
-  });
-
   const { sendMessage } = useMessageHandlers({
     currentProfileId,
     conversationId,
@@ -69,7 +63,24 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     toast,
   });
 
-  // Initialisation et chargement des messages
+  useRealtimeMessages({
+    currentProfileId,
+    onNewMessage: (message) => {
+      if (message.conversation_id === conversationId) {
+        logger.info("New message received, updating messages list", { messageId: message.id });
+        setMessages(prev => [...prev, message]);
+      }
+    },
+    onMessageUpdate: (message) => {
+      if (message.conversation_id === conversationId) {
+        logger.info("Message updated, updating messages list", { messageId: message.id });
+        setMessages(prev => prev.map(msg => 
+          msg.id === message.id ? message : msg
+        ));
+      }
+    }
+  });
+
   useEffect(() => {
     let mounted = true;
     setIsError(false);
@@ -91,8 +102,6 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
             conversationId 
           });
           await fetchMessages();
-        } else {
-          logger.warn("No current profile ID after getCurrentUser", { conversationId });
         }
       } catch (error: any) {
         logger.error("Error initializing conversation", { 
@@ -118,23 +127,6 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     };
   }, [conversationId, currentProfileId]);
 
-  // Gestion des abonnements en temps réel
-  useEffect(() => {
-    if (!currentProfileId || !conversationId) return;
-
-    logger.info("Setting up message subscription", { 
-      profileId: currentProfileId,
-      conversationId
-    });
-    
-    const unsubscribe = subscribeToNewMessages();
-
-    return () => {
-      unsubscribe();
-    };
-  }, [currentProfileId, conversationId]);
-
-  // Marquer les messages comme lus lorsqu'ils changent
   useEffect(() => {
     if (currentProfileId && messages.length > 0 && !isLoading) {
       logger.info("Checking for unread messages after update", {

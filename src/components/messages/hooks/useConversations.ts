@@ -1,12 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
+import { useLogger } from "@/hooks/useLogger";
 
 export const useConversations = () => {
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const { toast } = useToast();
+  const logger = useLogger("useConversations");
 
   const fetchConversations = async () => {
     try {
@@ -19,25 +24,19 @@ export const useConversations = () => {
         return;
       }
 
-      // First get the user's profile id
-      const { data: userProfile, error: profileError } = await supabase
+      // Get user's profile id
+      const { data: userProfile } = await supabase
         .from('profiles')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.error("Error fetching user profile:", profileError);
-        throw profileError;
-      }
-
       if (!userProfile) {
-        console.log("No profile found, waiting for profile creation...");
         setConversations([]);
         return;
       }
 
-      console.log("Fetching conversations for profile:", userProfile.id);
+      setCurrentProfileId(userProfile.id);
       
       const { data, error } = await supabase
         .from('conversations')
@@ -57,20 +56,15 @@ export const useConversations = () => {
         .eq('status', 'active')
         .order('updated_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching conversations:", error);
-        throw error;
-      }
+      if (error) throw error;
       
-      // Filter out conversations where user1_id equals user2_id (self-conversations)
       const filteredData = data?.filter(conversation => 
         conversation.user1_id !== conversation.user2_id
       ) || [];
       
-      console.log("Fetched conversations:", filteredData);
       setConversations(filteredData);
     } catch (error: any) {
-      console.error("Error in fetchConversations:", error);
+      logger.error("Error fetching conversations", { error });
       setError("Impossible de charger les conversations");
       toast({
         variant: "destructive",
@@ -82,42 +76,23 @@ export const useConversations = () => {
     }
   };
 
+  // Initial fetch
   useEffect(() => {
     fetchConversations();
-    
-    // Subscribe to changes in conversations and messages
-    const channel = supabase
-      .channel('conversations-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'conversations'
-        },
-        (payload) => {
-          console.log("Conversation change detected:", payload);
-          fetchConversations();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages'
-        },
-        (payload) => {
-          console.log("Message change detected:", payload);
-          fetchConversations();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
+
+  // Setup realtime subscription for messages
+  useRealtimeMessages({
+    currentProfileId,
+    onNewMessage: async (message) => {
+      logger.info("New message received, updating conversations", { messageId: message.id });
+      await fetchConversations();
+    },
+    onMessageUpdate: async (message) => {
+      logger.info("Message updated, updating conversations", { messageId: message.id });
+      await fetchConversations();
+    }
+  });
 
   return { conversations, isLoading, error, refetch: fetchConversations };
 };
