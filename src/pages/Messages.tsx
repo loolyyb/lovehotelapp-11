@@ -1,8 +1,21 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
+import { useLocation } from "react-router-dom";
 import { MessageView } from "@/components/messages/MessageView";
 import { ConversationList } from "@/components/messages/ConversationList";
-import { useLocation } from "react-router-dom";
+
+// Memoized MessageView to prevent unnecessary re-renders
+const MemoizedMessageView = memo(({ conversationId, onBack }: { conversationId: string, onBack: () => void }) => {
+  return (
+    <MessageView 
+      key={conversationId}
+      conversationId={conversationId}
+      onBack={onBack}
+    />
+  );
+});
+
+MemoizedMessageView.displayName = 'MemoizedMessageView';
 
 export default function Messages() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -14,13 +27,17 @@ export default function Messages() {
     }
   }, [location.state]);
 
-  const handleSelectConversation = (conversationId: string) => {
+  const handleSelectConversation = useCallback((conversationId: string) => {
     // Si on clique sur la conversation déjà sélectionnée, on ne fait rien
     if (selectedConversation === conversationId) return;
     
     // Sinon, on met à jour la conversation sélectionnée
     setSelectedConversation(conversationId);
-  };
+  }, [selectedConversation]);
+
+  const handleBack = useCallback(() => {
+    setSelectedConversation(null);
+  }, []);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-[#40192C] pt-12 backdrop-blur-sm">
@@ -33,10 +50,9 @@ export default function Messages() {
       
       <div className={`flex-1 ${!selectedConversation ? 'hidden md:flex' : ''}`}>
         {selectedConversation ? (
-          <MessageView
-            key={selectedConversation}
+          <MemoizedMessageView
             conversationId={selectedConversation}
-            onBack={() => setSelectedConversation(null)}
+            onBack={handleBack}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-[#f3ebad]/70">

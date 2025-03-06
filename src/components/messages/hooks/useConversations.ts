@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
@@ -12,10 +12,14 @@ export const useConversations = () => {
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const { toast } = useToast();
   const logger = useLogger("useConversations");
+  const fetchingRef = useRef(false);
 
   const fetchConversations = useCallback(async () => {
+    // Use ref to prevent multiple simultaneous fetches
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
+
     try {
-      setIsLoading(true);
       setError(null);
       
       const { data: { user } } = await supabase.auth.getUser();
@@ -78,6 +82,7 @@ export const useConversations = () => {
       });
     } finally {
       setIsLoading(false);
+      fetchingRef.current = false;
     }
   }, [toast, logger]);
 
@@ -86,19 +91,23 @@ export const useConversations = () => {
     fetchConversations();
   }, [fetchConversations]);
 
+  // Handler for new messages - debounced to prevent excessive updates
+  const handleNewMessage = useCallback((message) => {
+    logger.info("New message received, updating conversations", { messageId: message.id, conversationId: message.conversation_id });
+    fetchConversations();
+  }, [fetchConversations, logger]);
+
+  // Handler for updated messages - debounced to prevent excessive updates
+  const handleMessageUpdate = useCallback((message) => {
+    logger.info("Message updated, updating conversations", { messageId: message.id, conversationId: message.conversation_id });
+    fetchConversations();
+  }, [fetchConversations, logger]);
+
   // Setup realtime subscription for messages
   useRealtimeMessages({
     currentProfileId,
-    onNewMessage: async (message) => {
-      logger.info("New message received, updating conversations", { messageId: message.id, conversationId: message.conversation_id });
-      // Force refresh instead of trying to update the state directly
-      await fetchConversations();
-    },
-    onMessageUpdate: async (message) => {
-      logger.info("Message updated, updating conversations", { messageId: message.id, conversationId: message.conversation_id });
-      // Force refresh instead of trying to update the state directly
-      await fetchConversations();
-    }
+    onNewMessage: handleNewMessage,
+    onMessageUpdate: handleMessageUpdate
   });
 
   return { conversations, isLoading, error, refetch: fetchConversations };

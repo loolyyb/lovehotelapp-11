@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
@@ -25,6 +25,7 @@ export const useRealtimeMessages = ({
   currentProfileId 
 }: UseRealtimeMessagesProps) => {
   const logger = useLogger("useRealtimeMessages");
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     if (!currentProfileId) {
@@ -33,6 +34,12 @@ export const useRealtimeMessages = ({
     }
 
     logger.info("Setting up realtime messages subscription", { currentProfileId });
+
+    // Clean up previous subscription if it exists
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
 
     const channel = supabase
       .channel('messages-changes')
@@ -102,9 +109,15 @@ export const useRealtimeMessages = ({
         logger.info("Realtime subscription status", { status });
       });
 
+    // Store channel reference for cleanup
+    channelRef.current = channel;
+
     return () => {
       logger.info("Cleaning up realtime messages subscription");
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [currentProfileId, onNewMessage, onMessageUpdate, logger]);
 };
