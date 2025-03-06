@@ -31,7 +31,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       // First, check if the profile exists
       const { data: profileCheck, error: profileError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, username, full_name')
         .eq('id', currentProfileId)
         .maybeSingle();
         
@@ -44,6 +44,8 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         console.warn("Profile not found in database:", currentProfileId);
         throw new Error("Profil introuvable. Veuillez vous reconnecter.");
       }
+
+      console.log("Profile found:", profileCheck);
       
       // Now fetch conversations with unique aliases for the profiles to avoid the duplicate table error
       const { data, error: conversationsError } = await supabase
@@ -83,12 +85,76 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         success: true,
         count: typedData.length,
         profileId: currentProfileId,
-        conversations: typedData.map(c => ({ id: c.id, user1_id: c.user1_id, user2_id: c.user2_id }))
+        conversations: typedData.map(c => ({ 
+          id: c.id, 
+          user1_id: c.user1_id, 
+          user2_id: c.user2_id,
+          status: c.status
+        }))
       });
       
       // Log more detailed info if no conversations found
       if (typedData.length === 0) {
         console.log("No conversations found for profile:", currentProfileId);
+        
+        // Additional debug: Check if there are any conversations at all for this user without the status filter
+        const { data: allConvs, error: allConvsError } = await supabase
+          .from('conversations')
+          .select('id, status, user1_id, user2_id, blocked_by')
+          .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`);
+          
+        if (!allConvsError && allConvs) {
+          console.log("All conversations (including inactive):", {
+            count: allConvs.length,
+            conversations: allConvs
+          });
+          
+          // If we found conversations but they're not active, we should show them
+          if (allConvs.length > 0) {
+            const inactiveConversations = allConvs.filter(c => c.status !== 'active');
+            if (inactiveConversations.length > 0) {
+              console.log("Found inactive conversations:", inactiveConversations);
+              
+              // Include inactive conversations in the results if that's all we have
+              if (typedData.length === 0 && inactiveConversations.length > 0) {
+                // Fetch full details for these conversations
+                const { data: inactiveWithDetails } = await supabase
+                  .from('conversations')
+                  .select(`
+                    id, 
+                    created_at,
+                    updated_at,
+                    status,
+                    blocked_by,
+                    user1_id,
+                    user2_id,
+                    user1:profiles!conversations_user1_id_fkey (
+                      id, 
+                      full_name,
+                      username,
+                      avatar_url
+                    ),
+                    user2:profiles!conversations_user2_id_fkey (
+                      id,
+                      full_name,
+                      username,
+                      avatar_url
+                    )
+                  `)
+                  .in('id', inactiveConversations.map(c => c.id));
+                  
+                if (inactiveWithDetails) {
+                  console.log("Adding inactive conversations to results");
+                  const allData = [...typedData, ...safeQueryResult<any>(inactiveWithDetails)];
+                  setConversations(allData);
+                  setError(null);
+                  setIsLoading(false);
+                  return allData;
+                }
+              }
+            }
+          }
+        }
       }
       
       setConversations(typedData);
