@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export const getCurrentUserId = async () => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -22,7 +23,7 @@ export const getTargetUserId = async (profileId: string) => {
 
     if (!profile) {
       console.error('No profile found with ID:', profileId);
-      toast({
+      useToast().toast({
         variant: "destructive",
         title: "Erreur",
         description: "Profil introuvable.",
@@ -33,7 +34,7 @@ export const getTargetUserId = async (profileId: string) => {
     return profile.id;
   } catch (error) {
     console.error('Error in getTargetUserId:', error);
-    toast({
+    useToast().toast({
       variant: "destructive",
       title: "Erreur",
       description: "Impossible de récupérer les informations de l'utilisateur.",

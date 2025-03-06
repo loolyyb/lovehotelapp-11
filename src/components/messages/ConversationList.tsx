@@ -41,7 +41,6 @@ export function ConversationList({
     currentProfileId
   } = useConversations();
 
-  // First check authentication status
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -83,7 +82,6 @@ export function ConversationList({
     checkAuth();
   }, []);
 
-  // Use the currentProfileId from useConversations when available
   useEffect(() => {
     if (currentProfileId) {
       setCurrentUserProfileId(currentProfileId);
@@ -161,7 +159,6 @@ export function ConversationList({
     setIsRetrying(true);
     
     try {
-      // Check authentication first
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -175,7 +172,6 @@ export function ConversationList({
       
       setHasAuthError(false);
       
-      // Try to fix profile issues
       const { data: profile } = await supabase
         .from('profiles')
         .select('id')
@@ -189,7 +185,6 @@ export function ConversationList({
           description: "Création d'un profil en cours..."
         });
         
-        // Try to create a profile if missing
         const { error: insertError } = await supabase
           .from('profiles')
           .insert([{
@@ -210,10 +205,8 @@ export function ConversationList({
         }
       }
       
-      // Wait a moment for any DB updates to propagate
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Now refetch conversations
       await refetch();
       
       toast({
@@ -232,14 +225,13 @@ export function ConversationList({
     }
   }, [refetch, logger, toast, navigate]);
 
-  // Effect to periodically refresh conversations as a fallback
   useEffect(() => {
     const interval = setInterval(() => {
       if (!hasAuthError) {
         logger.info("Periodic conversation refresh");
         refetch();
       }
-    }, 60000); // Every minute
+    }, 60000);
     
     return () => clearInterval(interval);
   }, [refetch, logger, hasAuthError]);
