@@ -1,141 +1,61 @@
 
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useLogger } from "@/hooks/useLogger";
-import { AlertService } from "@/services/AlertService";
+import { useState } from "react";
+import { supabase, safeQueryResult } from "@/integrations/supabase/client";
 
-export const useConversationsFetcher = (profileId: string | null) => {
+export function useConversationsFetcher(currentProfileId: string | null) {
   const [conversations, setConversations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const logger = useLogger("useConversationsFetcher");
 
-  const fetchConversations = useCallback(async (retryCount = 0, maxRetries = 3) => {
-    if (!profileId) {
-      logger.info("No profile ID provided, skipping conversations fetch");
+  const fetchConversations = async () => {
+    if (!currentProfileId) {
+      console.warn("No profile ID provided, cannot fetch conversations");
+      setError("Vous devez être connecté pour voir vos conversations");
       return [];
     }
-    
-    try {
-      setIsLoading(true);
-      setError(null);
-      logger.info("Fetching conversations", { 
-        profileId, 
-        timestamp: new Date().toISOString(),
-        retryCount
-      });
-      
-      // First check if we can connect to Supabase at all
-      try {
-        const { data: connectionTest, count } = await supabase.from('profiles').select('count(*)', { count: 'exact', head: true });
-        logger.info("Connection test successful", { count: count });
-      } catch (connError: any) {
-        logger.error("Connection test failed", { 
-          error: connError.message,
-          code: connError.code || 'unknown'
-        });
-        
-        // If we can't even connect, throw a more specific error
-        throw new Error(`NETWORK_ERROR: ${connError.message}`);
-      }
-      
-      // Get conversations with retries
-      const getConversations = async (attempts = 0): Promise<any[]> => {
-        try {
-          const { data: conversationsData, error: conversationsError } = await supabase
-            .from('conversations')
-            .select(`
-              *,
-              user1:profiles!conversations_user1_id_fkey(id, username, full_name, avatar_url),
-              user2:profiles!conversations_user2_id_fkey(id, username, full_name, avatar_url)
-            `)
-            .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
-            .eq('status', 'active' as any)
-            .order('updated_at', { ascending: false });
 
-          if (conversationsError) {
-            throw conversationsError;
-          }
-          
-          return conversationsData || [];
-        } catch (error: any) {
-          logger.error(`Error fetching conversations (attempt ${attempts + 1})`, {
-            error: error.message,
-            code: error.code || 'unknown',
-            component: "useConversationsFetcher"
-          });
-          
-          if (attempts < maxRetries) {
-            logger.info(`Retrying conversations fetch (${attempts + 1}/${maxRetries})`, { 
-              component: "useConversationsFetcher"
-            });
-            
-            // Wait with exponential backoff before retrying
-            await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempts), 10000)));
-            return getConversations(attempts + 1);
-          }
-          
-          throw error;
-        }
-      };
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log("Fetching conversations for profile ID:", currentProfileId);
       
-      const conversationsData = await getConversations();
+      const { data, error: conversationsError } = await supabase
+        .from('conversations')
+        .select(`
+          id, 
+          created_at,
+          updated_at,
+          status,
+          blocked_by,
+          user1_id,
+          user2_id,
+          profiles!conversations_user1_id_fkey (id, full_name, username, avatar_url),
+          profiles!conversations_user2_id_fkey (id, full_name, username, avatar_url)
+        `)
+        .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
+        .eq('status', 'active');
+
+      if (conversationsError) {
+        console.error("Error fetching conversations:", conversationsError);
+        throw new Error(conversationsError.message);
+      }
+
+      // Ensure type safety
+      const typedData = safeQueryResult<any>(data);
+      console.log("Fetched conversations:", typedData);
       
-      logger.info("Fetched conversations", { 
-        count: conversationsData?.length || 0,
-        component: "useConversationsFetcher" 
-      });
-      
-      // Filter to exclude conversations with self
-      const filteredData = conversationsData?.filter(conversation => 
-        conversation.user1_id !== conversation.user2_id
-      ) || [];
-      
-      logger.info("Filtered conversations before messages", { 
-        count: filteredData.length,
-        conversationIds: filteredData.map(c => c.id),
-        component: "useConversationsFetcher"
-      });
-      
-      setConversations(filteredData);
-      return filteredData;
+      setConversations(typedData);
+      setError(null);
+      return typedData;
     } catch (error: any) {
-      logger.error("Error fetching conversations", { 
-        error: error.message, 
-        stack: error.stack,
-        component: "useConversationsFetcher",
-        retryCount 
-      });
-      
-      // Format a user-friendly error message
-      let errorMessage = "Impossible de charger les conversations.";
-      
-      if (error.message?.includes('Failed to fetch') || 
-          error.message?.includes('NetworkError') ||
-          error.message?.includes('NETWORK_ERROR') ||
-          error.code === 'NETWORK_ERROR') {
-        errorMessage = "Problème de connexion réseau. Veuillez vérifier votre connexion internet.";
-      } else if (error.message?.includes('JWT')) {
-        errorMessage = "Session expirée. Veuillez vous reconnecter.";
-      }
-      
-      if (retryCount < maxRetries) {
-        logger.info(`Retrying conversations fetch (${retryCount + 1}/${maxRetries})`, { 
-          component: "useConversationsFetcher"
-        });
-        
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, retryCount), 10000)));
-        return fetchConversations(retryCount + 1, maxRetries);
-      }
-      
-      AlertService.captureException(error);
-      setError(errorMessage);
+      console.error("Error in fetchConversations:", error);
+      setError(error.message || "Erreur lors du chargement des conversations");
       return [];
     } finally {
       setIsLoading(false);
     }
-  }, [profileId, logger]);
+  };
 
   return {
     conversations,
@@ -144,4 +64,4 @@ export const useConversationsFetcher = (profileId: string | null) => {
     error,
     fetchConversations
   };
-};
+}

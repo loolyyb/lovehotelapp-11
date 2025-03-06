@@ -1,112 +1,103 @@
 
-import React, { useEffect } from "react";
-import { AdminPasswordCheck } from "@/components/admin/AdminPasswordCheck";
+import { useState, useEffect } from "react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
-import { useAdminAuthStore } from "@/stores/adminAuthStore";
+import { AdminPasswordCheck } from "@/components/admin/AdminPasswordCheck";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function Admin() {
-  const { isAdminAuthenticated, setAdminAuthenticated } = useAdminAuthStore();
-  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const makeUserAdmin = async () => {
-    try {
-      // Hard-coded user ID to set as admin (this is the ID specified in the code)
-      const adminUserId = "b777ae12-9da5-46c7-9506-741e90e7d9a8";
-      
-      // Update the profile to set role as admin
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: "admin" })
-        .eq("id", adminUserId);
-      
-      if (error) {
-        console.error("Error setting user as admin:", error);
-        return false;
-      }
-      
-      console.log("Admin user role set successfully");
-      return true;
-    } catch (error) {
-      console.error("Exception when setting admin role:", error);
-      return false;
-    }
-  };
-
-  const checkAdminAuth = async () => {
-    try {
-      // Ensure the designated user is set as admin first
-      await makeUserAdmin();
-      
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) throw sessionError;
-
-      if (!session) {
-        setAdminAuthenticated(false);
-        toast({
-          variant: "destructive",
-          title: "Session expirée",
-          description: "Veuillez vous reconnecter pour accéder à l'administration",
-        });
-        navigate("/login");
-        return;
-      }
-
-      // Vérifier le rôle admin dans la base de données
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-
-      if (profileError) {
-        // Try again but with user_id
-        const { data: profileByUserId, error: userIdError } = await supabase
+  // Check if the user is authenticated and is an admin
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (!session) {
+          // Not authenticated
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+          toast({
+            variant: "destructive",
+            title: "Non autorisé",
+            description: "Vous devez être connecté pour accéder à cette page"
+          });
+          navigate("/login");
+          return;
+        }
+        
+        setIsAuthenticated(true);
+        
+        // Check if user is admin
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('user_id', session.user.id)
           .single();
-
-        if (userIdError) {
-          console.error("Error fetching profile by user_id:", userIdError);
-          throw userIdError;
-        }
-
-        if (profileByUserId?.role !== 'admin') {
-          console.log("User is not admin, role:", profileByUserId?.role);
+        
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          setIsAdmin(false);
           return;
         }
-      } else if (profile?.role !== 'admin') {
-        console.log("User is not admin, role:", profile?.role);
-        return;
+        
+        setIsAdmin(profile?.role === 'admin');
+      } catch (error: any) {
+        console.error("Auth error:", error);
+        toast({
+          variant: "destructive",
+          title: "Erreur d'authentification",
+          description: error.message || "Une erreur est survenue lors de la vérification de votre session"
+        });
+        navigate("/login");
+      } finally {
+        setIsLoading(false);
       }
-
-      // L'utilisateur a le rôle admin, on le définit comme authentifié
-      setAdminAuthenticated(true);
-      console.log("Admin role verified. Auth state set to true");
-    } catch (error) {
-      console.error('Error checking admin auth:', error);
-      setAdminAuthenticated(false);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la vérification des droits administrateur",
-      });
-      navigate("/");
-    }
-  };
-
-  useEffect(() => {
-    checkAdminAuth();
-  }, []);
-
-  if (!isAdminAuthenticated) {
-    return <AdminPasswordCheck onPasswordValid={() => setAdminAuthenticated(true)} />;
+    };
+    
+    checkAuth();
+  }, [toast, navigate]);
+  
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50">
+        <div className="text-[#f3ebad]">Chargement en cours...</div>
+      </div>
+    );
   }
-
+  
+  if (!isAuthenticated) {
+    return null; // The navigate in useEffect will redirect to login
+  }
+  
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50">
+        <div className="text-center p-8 bg-[#302234] rounded-lg border border-[#f3ebad]/20 max-w-md">
+          <h2 className="text-2xl font-bold text-[#f3ebad] mb-4">Accès Restreint</h2>
+          <p className="text-[#f3ebad]/80">
+            Vous n'avez pas les permissions nécessaires pour accéder au panneau d'administration.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!isPasswordValid) {
+    return <AdminPasswordCheck onPasswordValid={() => setIsPasswordValid(true)} />;
+  }
+  
   return <AdminDashboard />;
 }

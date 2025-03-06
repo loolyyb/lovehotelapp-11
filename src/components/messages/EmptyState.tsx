@@ -1,40 +1,37 @@
 
-import { RefreshCw, MessageSquare, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RefreshCw, AlertTriangle, MessageSquare } from "lucide-react";
 
 interface EmptyStateProps {
   onRefresh: () => void;
-  isRefreshing?: boolean;
+  isRefreshing: boolean;
   isNetworkError?: boolean;
 }
 
-export function EmptyState({ 
-  onRefresh, 
-  isRefreshing = false, 
-  isNetworkError = false 
-}: EmptyStateProps) {
+export function EmptyState({ onRefresh, isRefreshing, isNetworkError = false }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-6">
-      <div className="w-16 h-16 rounded-full bg-[#f3ebad]/10 flex items-center justify-center">
-        {isNetworkError ? (
-          <WifiOff className="w-8 h-8 text-[#f3ebad]/60" />
-        ) : (
-          <MessageSquare className="w-8 h-8 text-[#f3ebad]/60" />
-        )}
-      </div>
-      <div className="space-y-2 max-w-sm">
-        <h3 className="text-xl font-medium text-[#f3ebad]">
-          {isNetworkError ? "Problème de connexion" : "Pas de messages"}
-        </h3>
-        <p className="text-sm text-[#f3ebad]/70">
-          {isNetworkError 
-            ? "Impossible de charger vos conversations. Vérifiez votre connexion internet ou essayez de vous reconnecter."
-            : "Vous n'avez pas encore de conversations actives. Commencez à échanger avec d'autres utilisateurs pour voir vos messages ici."}
-        </p>
-      </div>
-      <Button 
+    <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+      {isNetworkError ? (
+        <AlertTriangle className="w-16 h-16 mb-4 text-amber-400" />
+      ) : (
+        <MessageSquare className="w-16 h-16 mb-4 text-[#f3ebad]/60" />
+      )}
+      
+      <h2 className="mb-2 text-xl font-semibold text-[#f3ebad]">
+        {isNetworkError 
+          ? "Problème de connexion" 
+          : "Aucune conversation"}
+      </h2>
+      
+      <p className="mb-6 text-[#f3ebad]/70 max-w-md">
+        {isNetworkError
+          ? "Impossible de se connecter au serveur. Vérifiez votre connexion internet et réessayez."
+          : "Envoyez un message à un autre utilisateur pour commencer une conversation."}
+      </p>
+      
+      <Button
         onClick={onRefresh}
-        className="px-4 py-2 text-sm font-medium text-burgundy bg-[#f3ebad] rounded-md hover:bg-[#f3ebad]/90 transition-colors"
+        className="bg-[#f3ebad] text-[#40192C] hover:bg-[#f3ebad]/90"
         disabled={isRefreshing}
       >
         {isRefreshing ? (

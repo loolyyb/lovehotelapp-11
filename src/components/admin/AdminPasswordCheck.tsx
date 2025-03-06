@@ -1,109 +1,116 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { supabase, safeQuerySingle } from "@/integrations/supabase/client";
-import { hash } from "@/utils/crypto";
+import { verifyPassword } from "@/utils/crypto";
 import { useToast } from "@/hooks/use-toast";
-import { useAdminAuthStore } from "@/stores/adminAuthStore";
 
-export function AdminPasswordCheck() {
+interface AdminPasswordCheckProps {
+  onPasswordValid: () => void;
+}
+
+export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps) {
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { setAdminAuthenticated } = useAdminAuthStore();
 
-  async function handleAdminLogin(e: React.FormEvent) {
-    e.preventDefault();
-    
-    if (!password) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez entrer le mot de passe administrateur",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
+  const checkPassword = async () => {
+    setIsLoading(true);
+    setError(null);
 
     try {
-      // Get admin profile by ID
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', '1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed')
-        .single();
-
-      if (error) {
-        // Try to get admin by role
-        const { data: adminProfile, error: adminError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('role', 'admin')
-          .limit(1)
-          .single();
-
-        if (adminError) {
-          throw new Error("Aucun administrateur trouvé");
-        }
-
-        const adminProfileData = safeQuerySingle(adminProfile);
-        if (!adminProfileData || adminProfileData.role !== 'admin') {
-          throw new Error("Profil administrateur invalide");
-        }
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Vous devez être connecté pour accéder à cette page");
       }
 
-      // Check if password hash matches
-      const hashedPassword = hash(password);
-      if (hashedPassword === 'bc99586cd969f108cd85c4a7277aa4d890cf04e8' || hashedPassword === '5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8') {
-        setAdminAuthenticated(true);
+      // Get the current user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (profileError) {
+        throw new Error("Impossible de vérifier votre profil");
+      }
+      
+      const typedProfile = safeQuerySingle<{ role: string }>(profile);
+      
+      if (!typedProfile) {
+        throw new Error("Profil introuvable");
+      }
+
+      // Check if user is admin
+      if (typedProfile.role !== 'admin') {
+        throw new Error("Vous n'avez pas les droits pour accéder à cette page");
+      }
+
+      // For this demo, we'll use a hardcoded password hash
+      // In a real app, you would get this from the database
+      const ADMIN_PASSWORD_HASH = "2c1743a391305fbf367df8e4f069f9f9";
+      
+      if (verifyPassword(password, ADMIN_PASSWORD_HASH)) {
         toast({
-          title: "Connecté",
-          description: "Vous êtes maintenant connecté en tant qu'administrateur",
+          title: "Accès accordé",
+          description: "Bienvenue dans le panneau d'administration"
         });
+        onPasswordValid();
       } else {
         throw new Error("Mot de passe incorrect");
       }
     } catch (error: any) {
-      console.error('Admin auth error:', error);
+      console.error("Auth error:", error);
+      setError(error.message || "Une erreur est survenue");
       toast({
-        title: "Erreur d'authentification",
-        description: error.message || "Une erreur est survenue lors de l'authentification",
         variant: "destructive",
+        title: "Erreur d'authentification",
+        description: error.message || "Une erreur est survenue"
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#40192C] p-6">
-      <div className="bg-[#40192C]/60 border border-[#f3ebad]/20 p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-2xl text-[#f3ebad] font-bold mb-6 text-center">
-          Espace Administrateur
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50">
+      <Card className="w-full max-w-md p-6 space-y-4 bg-[#302234] border-[#f3ebad]/20">
+        <h2 className="text-2xl font-bold text-center text-[#f3ebad]">
+          Panneau d'Administration
         </h2>
+        <p className="text-[#f3ebad]/80 text-center">
+          Entrez le mot de passe pour accéder au panneau d'administration
+        </p>
         
-        <form onSubmit={handleAdminLogin} className="space-y-4">
-          <div className="space-y-2">
-            <Input
-              type="password"
-              placeholder="Mot de passe administrateur"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border-[#f3ebad]/30 bg-[#40192C]/80 text-[#f3ebad]"
-            />
+        {error && (
+          <div className="p-3 my-2 text-sm text-red-500 bg-red-100/10 rounded">
+            {error}
           </div>
+        )}
+        
+        <div className="space-y-4">
+          <Input
+            type="password"
+            placeholder="Mot de passe administrateur"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="bg-[#f3ebad]/5 text-[#f3ebad] border-[#f3ebad]/20"
+            onKeyDown={(e) => e.key === "Enter" && checkPassword()}
+          />
           
           <Button
-            type="submit"
+            onClick={checkPassword}
             className="w-full bg-[#f3ebad] text-[#40192C] hover:bg-[#f3ebad]/90"
-            disabled={loading}
+            disabled={isLoading}
           >
-            {loading ? "Vérification..." : "Accéder au Dashboard"}
+            {isLoading ? "Vérification..." : "Accéder au panneau"}
           </Button>
-        </form>
-      </div>
+        </div>
+      </Card>
     </div>
   );
 }
