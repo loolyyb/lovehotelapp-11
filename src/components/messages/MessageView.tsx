@@ -10,7 +10,7 @@ import { useMessageRefresh } from "@/hooks/useMessageRefresh";
 import { useLogger } from "@/hooks/useLogger";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { EmptyState } from "./EmptyState";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MessageViewProps {
   conversationId: string;
