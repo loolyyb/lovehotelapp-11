@@ -13,6 +13,7 @@ export const useConversations = () => {
   const { toast } = useToast();
   const logger = useLogger("useConversations");
   const fetchingRef = useRef(false);
+  const debounceTimerRef = useRef<number | null>(null);
 
   const fetchConversations = useCallback(async () => {
     // Use ref to prevent multiple simultaneous fetches
@@ -91,17 +92,52 @@ export const useConversations = () => {
     fetchConversations();
   }, [fetchConversations]);
 
-  // Handler for new messages - debounced to prevent excessive updates
+  // Handler for new messages with debounce to prevent excessive updates
   const handleNewMessage = useCallback((message) => {
-    logger.info("New message received, updating conversations", { messageId: message.id, conversationId: message.conversation_id });
-    fetchConversations();
+    logger.info("New message received, triggering conversation update", { 
+      messageId: message.id, 
+      conversationId: message.conversation_id 
+    });
+    
+    // Clear any existing debounce timer
+    if (debounceTimerRef.current) {
+      window.clearTimeout(debounceTimerRef.current);
+    }
+    
+    // Set a new debounce timer to fetch conversations
+    debounceTimerRef.current = window.setTimeout(() => {
+      fetchConversations();
+      debounceTimerRef.current = null;
+    }, 300);
   }, [fetchConversations, logger]);
 
-  // Handler for updated messages - debounced to prevent excessive updates
+  // Handler for updated messages with debounce to prevent excessive updates
   const handleMessageUpdate = useCallback((message) => {
-    logger.info("Message updated, updating conversations", { messageId: message.id, conversationId: message.conversation_id });
-    fetchConversations();
+    logger.info("Message updated, triggering conversation update", { 
+      messageId: message.id, 
+      conversationId: message.conversation_id 
+    });
+    
+    // Clear any existing debounce timer
+    if (debounceTimerRef.current) {
+      window.clearTimeout(debounceTimerRef.current);
+    }
+    
+    // Set a new debounce timer to fetch conversations
+    debounceTimerRef.current = window.setTimeout(() => {
+      fetchConversations();
+      debounceTimerRef.current = null;
+    }, 300);
   }, [fetchConversations, logger]);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        window.clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // Setup realtime subscription for messages
   useRealtimeMessages({

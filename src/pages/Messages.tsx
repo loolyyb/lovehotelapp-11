@@ -1,8 +1,9 @@
 
-import { useState, useEffect, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { MessageView } from "@/components/messages/MessageView";
 import { ConversationList } from "@/components/messages/ConversationList";
+import { useLogger } from "@/hooks/useLogger";
 
 // Memoized MessageView to prevent unnecessary re-renders
 const MemoizedMessageView = memo(({ conversationId, onBack }: { conversationId: string, onBack: () => void }) => {
@@ -20,24 +21,39 @@ MemoizedMessageView.displayName = 'MemoizedMessageView';
 export default function Messages() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const location = useLocation();
+  const logger = useLogger("Messages");
+  const previousConversationRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (location.state?.conversationId) {
+      logger.info("Setting conversation from location state", { conversationId: location.state.conversationId });
       setSelectedConversation(location.state.conversationId);
     }
-  }, [location.state]);
+  }, [location.state, logger]);
 
   const handleSelectConversation = useCallback((conversationId: string) => {
     // Si on clique sur la conversation déjà sélectionnée, on ne fait rien
-    if (selectedConversation === conversationId) return;
+    if (selectedConversation === conversationId) {
+      logger.info("Conversation already selected, ignoring", { conversationId });
+      return;
+    }
     
-    // Sinon, on met à jour la conversation sélectionnée
+    // Mémoriser l'ancienne valeur pour le logging
+    previousConversationRef.current = selectedConversation;
+    
+    logger.info("Changing selected conversation", { 
+      from: previousConversationRef.current, 
+      to: conversationId 
+    });
+    
+    // Mettre à jour la conversation sélectionnée
     setSelectedConversation(conversationId);
-  }, [selectedConversation]);
+  }, [selectedConversation, logger]);
 
   const handleBack = useCallback(() => {
+    logger.info("Navigating back from conversation view");
     setSelectedConversation(null);
-  }, []);
+  }, [logger]);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-[#40192C] pt-12 backdrop-blur-sm">
