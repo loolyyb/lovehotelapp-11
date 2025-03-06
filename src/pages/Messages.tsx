@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { MessageView } from "@/components/messages/MessageView";
@@ -48,8 +49,8 @@ export default function Messages() {
     setConnectionError(null);
     
     try {
-      // Try to get the user to check authentication
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      // Try to get the user to check authentication - using await properly here
+      const { data, error: authError } = await supabase.auth.getUser();
       
       if (authError) {
         logger.error("Authentication error", { error: authError });
@@ -57,7 +58,7 @@ export default function Messages() {
         return;
       }
       
-      if (!user) {
+      if (!data.user) {
         logger.error("No authenticated user");
         setConnectionError("Vous n'êtes pas connecté. Veuillez vous connecter pour accéder à vos messages.");
         return;
@@ -67,7 +68,7 @@ export default function Messages() {
       const { error: queryError } = await supabase
         .from('profiles')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', data.user.id)
         .maybeSingle();
         
       if (queryError) {
@@ -115,11 +116,14 @@ export default function Messages() {
     checkConnectionStatus().then(() => {
       if (!connectionError) {
         // If we have a profile, refresh conversations
-        const { data: { user } } = supabase.auth.getUser();
-        if (user) {
-          // Force refresh conversations
-          logger.info("Forcing conversation refresh", { userId: user.id });
-        }
+        supabase.auth.getUser().then(({ data }) => {
+          if (data.user) {
+            // Force refresh conversations
+            logger.info("Forcing conversation refresh", { userId: data.user.id });
+          }
+        }).catch(error => {
+          logger.error("Error getting user during refresh", { error });
+        });
       }
     });
   }, [connectionError, logger]);
