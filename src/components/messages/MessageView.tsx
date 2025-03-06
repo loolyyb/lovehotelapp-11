@@ -10,6 +10,7 @@ import { useMessageRefresh } from "@/hooks/useMessageRefresh";
 import { useLogger } from "@/hooks/useLogger";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { EmptyState } from "./EmptyState";
+import { supabase } from "@/lib/supabase";
 
 interface MessageViewProps {
   conversationId: string;
@@ -97,6 +98,18 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       }
       
       try {
+        // Check auth session first
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          toast({
+            variant: "destructive",
+            title: "Session expirée",
+            description: "Veuillez vous reconnecter pour accéder à vos messages"
+          });
+          return;
+        }
+
         logger.info("Initializing conversation", { conversationId });
         await getCurrentUser();
         
@@ -117,6 +130,11 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         });
         if (mounted) {
           setIsError(true);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de charger la conversation. Veuillez réessayer."
+          });
         }
       } finally {
         if (mounted) {
