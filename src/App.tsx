@@ -16,6 +16,7 @@ import { useStatusBar } from './hooks/useStatusBar';
 import { useLogger } from './hooks/useLogger';
 import { enableRealtimeSubscriptions } from "./utils/enableRealtimeSubscriptions";
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from "./integrations/supabase/client";
 
 function Content() {
   const { session, loading, userProfile } = useAuthSession();
