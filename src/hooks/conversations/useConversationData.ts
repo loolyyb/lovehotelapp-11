@@ -52,6 +52,24 @@ export const useConversationData = ({
         component: "useConversationData" 
       });
       
+      // First verify that the user is part of this conversation
+      const { data: conversationAccess, error: accessError } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('id', conversationId)
+        .or(`user1_id.eq.${effectiveProfileId},user2_id.eq.${effectiveProfileId}`)
+        .maybeSingle();
+        
+      if (accessError || !conversationAccess) {
+        logger.error("User does not have access to this conversation", { 
+          error: accessError || "No access",
+          conversationId,
+          profileId: effectiveProfileId,
+          component: "useConversationData" 
+        });
+        return null;
+      }
+      
       const { data: conversation, error: convError } = await supabase
         .from('conversations')
         .select(`

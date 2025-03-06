@@ -5,6 +5,7 @@ import { useProfileRetrieval } from "./conversations/useProfileRetrieval";
 import { useConversationData } from "./conversations/useConversationData";
 import { useInitialMessages } from "./conversations/useInitialMessages";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseConversationInitProps {
   conversationId: string;
@@ -40,6 +41,38 @@ export const useConversationInit = ({
     conversationId,
     setMessages
   });
+
+  // Effect to verify access to conversation for security
+  useEffect(() => {
+    const verifyAccess = async () => {
+      if (!conversationId || !internalProfileId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('id', conversationId)
+          .or(`user1_id.eq.${internalProfileId},user2_id.eq.${internalProfileId}`)
+          .maybeSingle();
+          
+        if (error || !data) {
+          logger.error("User doesn't have access to this conversation", {
+            profileId: internalProfileId,
+            conversationId,
+            component: "useConversationInit"
+          });
+          setMessages([]);
+        }
+      } catch (error) {
+        logger.error("Error verifying conversation access", {
+          error,
+          component: "useConversationInit"
+        });
+      }
+    };
+    
+    verifyAccess();
+  }, [conversationId, internalProfileId]);
 
   // Effect to update internalProfileId when the external one changes
   useEffect(() => {
@@ -100,6 +133,25 @@ export const useConversationInit = ({
       // Update our internal state as well
       setInternalProfileId(profileId);
       
+      // First check if user has access to this conversation
+      const { data: accessCheck, error: accessError } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('id', conversationId)
+        .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
+        .maybeSingle();
+      
+      if (accessError || !accessCheck) {
+        logger.error("User does not have access to this conversation", {
+          profileId,
+          conversationId,
+          component: "useConversationInit"
+        });
+        setMessages([]);
+        setIsLoading(false);
+        return;
+      }
+      
       // Fetch initial messages and conversation details in parallel
       const results = await Promise.allSettled([
         fetchInitialMessages(),
@@ -111,6 +163,9 @@ export const useConversationInit = ({
           error: results[0].reason,
           component: "useConversationInit"
         });
+        setMessages([]);
+      } else if (results[0].status === 'fulfilled' && !results[0].value) {
+        // If we got no messages (null or empty array), set empty messages array
         setMessages([]);
       }
       

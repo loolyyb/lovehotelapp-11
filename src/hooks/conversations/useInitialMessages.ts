@@ -27,6 +27,38 @@ export const useInitialMessages = ({
         component: "useInitialMessages" 
       });
       
+      // First check if the user has permission to access this conversation
+      const { data: currentSession } = await supabase.auth.getSession();
+      if (!currentSession?.session?.user) {
+        logger.error("No authenticated user found", { 
+          component: "useInitialMessages" 
+        });
+        setMessages([]);
+        return null;
+      }
+      
+      const userId = currentSession.session.user.id;
+      
+      // Check if user is part of this conversation
+      const { data: conversationCheck, error: convError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+        .maybeSingle();
+      
+      if (convError || !conversationCheck) {
+        logger.error("User does not have access to this conversation", { 
+          error: convError,
+          userId,
+          conversationId,
+          component: "useInitialMessages" 
+        });
+        setMessages([]);
+        return null;
+      }
+      
+      // Now fetch the messages
       const { data: initialMessages, error: messagesError } = await supabase
         .from('messages')
         .select(`

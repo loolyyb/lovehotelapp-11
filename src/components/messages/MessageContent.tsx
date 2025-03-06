@@ -38,6 +38,7 @@ export function MessageContent({
       isLoading, 
       isError, 
       messagesCount: messages?.length || 0,
+      messageObjects: messages,
       currentProfileId
     });
   }, [isLoading, isError, messages, currentProfileId]);
