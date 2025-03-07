@@ -44,7 +44,7 @@ export const MessagesFetcher = {
     conversationId: string,
     currentProfileId: string | null,
     useCache = true
-  ) {
+  ): Promise<any[] | null> {
     if (!conversationId || !currentProfileId) {
       logger.info("Cannot fetch messages: missing ID", { 
         hasConversationId: !!conversationId, 
@@ -169,7 +169,7 @@ export const MessagesFetcher = {
     conversationId: string,
     currentProfileId: string | null,
     hasMoreMessages: boolean
-  ) {
+  ): Promise<any[] | null> {
     if (!conversationId || !currentProfileId || !hasMoreMessages) return null;
     
     try {

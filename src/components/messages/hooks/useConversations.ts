@@ -20,6 +20,7 @@ export const useConversations = () => {
   const fetchAttemptsRef = useRef(0);
   const previousConversationsRef = useRef<any[]>([]);
   const lastFetchTimeRef = useRef(0);
+  const isMountedRef = useRef(true);
 
   // Import all the refactored hooks
   const {
@@ -59,9 +60,18 @@ export const useConversations = () => {
     }
   }, [profileError, conversationsError, error]);
 
+  // Set mounted ref
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   // Diagnostic check for profile and username - only run once per profile ID
   useEffect(() => {
-    if (!currentProfileId) return;
+    if (!currentProfileId || !isMountedRef.current) return;
     
     // Check if we have this profile cached first
     const cachedProfile = getCachedProfile(currentProfileId);
@@ -74,31 +84,34 @@ export const useConversations = () => {
     }
     
     // Fetch profile details
-    supabase
-      .from('profiles')
-      .select('id, username, full_name')
-      .eq('id', currentProfileId)
-      .single()
-      .then(({ data, error }) => {
-        if (error) {
-          logger.error("Error fetching profile details", { error });
-        } else if (data) {
-          logger.info("User profile found", {
-            profileId: data.id,
-            username: data.username,
-            fullName: data.full_name
-          });
-          // Cache the profile
-          cacheProfile(data.id, data);
-        }
-      });
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, full_name')
+        .eq('id', currentProfileId)
+        .single();
+        
+      if (error) {
+        logger.error("Error fetching profile details", { error });
+      } else if (data && isMountedRef.current) {
+        logger.info("User profile found", {
+          profileId: data.id,
+          username: data.username,
+          fullName: data.full_name
+        });
+        // Cache the profile
+        cacheProfile(data.id, data);
+      }
+    };
+    
+    fetchProfile();
   }, [currentProfileId, logger, cacheProfile, getCachedProfile]);
 
   // Main fetch function with optimizations to prevent unnecessary renders
   const fetchConversationsWithMessages = useCallback(async (useCache = true) => {
     // Use ref to prevent multiple simultaneous fetches
-    if (fetchingRef.current) {
-      logger.info("Fetch already in progress, skipping", { useCache });
+    if (fetchingRef.current || !isMountedRef.current) {
+      logger.info("Fetch already in progress or component unmounted, skipping", { useCache });
       return;
     }
     
@@ -134,6 +147,11 @@ export const useConversations = () => {
       // 2. Fetch conversations for the user with optional caching
       const fetchedConversations = await fetchConversations(useCache);
       
+      if (!isMountedRef.current) {
+        fetchingRef.current = false;
+        return;
+      }
+      
       // Skip unnecessary updates if the data hasn't changed
       const hasChanged = JSON.stringify(fetchedConversations) !== JSON.stringify(previousConversationsRef.current);
       
@@ -150,8 +168,10 @@ export const useConversations = () => {
         // 3. Fetch latest message for each conversation if we have conversations
         const conversationsWithMessages = await fetchLatestMessages(fetchedConversations);
         
-        // 4. Update state with the completed data
-        setConversations(conversationsWithMessages);
+        if (isMountedRef.current) {
+          // 4. Update state with the completed data
+          setConversations(conversationsWithMessages);
+        }
       } else if (fetchedConversations && fetchedConversations.length === 0) {
         // Clear previous conversations reference
         previousConversationsRef.current = [];
@@ -164,7 +184,9 @@ export const useConversations = () => {
         error: error.message,
         stack: error.stack
       });
-      setError("Impossible de charger les conversations. Veuillez réessayer plus tard.");
+      if (isMountedRef.current) {
+        setError("Impossible de charger les conversations. Veuillez réessayer plus tard.");
+      }
     } finally {
       fetchingRef.current = false;
     }
@@ -195,7 +217,7 @@ export const useConversations = () => {
   // Handle conversation changes with debounce and throttling to prevent cascading updates
   const handleConversationChange = useCallback(() => {
     // Skip updates if already fetching or if throttled
-    if (fetchingRef.current || (Date.now() - lastFetchTimeRef.current < 2000)) {
+    if (fetchingRef.current || (Date.now() - lastFetchTimeRef.current < 2000) || !isMountedRef.current) {
       return;
     }
     
@@ -207,7 +229,7 @@ export const useConversations = () => {
     }
     
     debounceTimerRef.current = window.setTimeout(() => {
-      if (!fetchingRef.current) {
+      if (!fetchingRef.current && isMountedRef.current) {
         fetchConversationsWithMessages(false); // Force fresh fetch
       }
       debounceTimerRef.current = null;

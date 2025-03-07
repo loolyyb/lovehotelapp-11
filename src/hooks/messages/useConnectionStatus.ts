@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
 
@@ -8,13 +8,32 @@ export const useConnectionStatus = () => {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isNetworkError, setIsNetworkError] = useState(false);
   const logger = useLogger("useConnectionStatus");
+  const lastCheckTimeRef = useRef(0);
+  const checkInProgressRef = useRef(false);
 
   const checkConnectionStatus = useCallback(async () => {
+    // Prevent multiple simultaneous checks
+    if (checkInProgressRef.current) {
+      logger.info("Connection check already in progress, skipping");
+      return;
+    }
+    
+    // Throttle checks to no more than once every 5 seconds
+    const now = Date.now();
+    if (now - lastCheckTimeRef.current < 5000) {
+      logger.info("Throttling connection check, too soon after previous check", {
+        msSinceLastCheck: now - lastCheckTimeRef.current
+      });
+      return;
+    }
+    
+    checkInProgressRef.current = true;
     setIsCheckingConnection(true);
     setConnectionError(null);
-    setIsNetworkError(false);
     
     try {
+      lastCheckTimeRef.current = now;
+      
       // Try to get the user to check authentication
       const { data, error: authError } = await supabase.auth.getUser();
       
@@ -53,7 +72,8 @@ export const useConnectionStatus = () => {
         return;
       }
       
-      // Connection is good
+      // If we get here, connection is good
+      setIsNetworkError(false);
       logger.info("Connection check successful");
     } catch (error: any) {
       logger.error("Connection check failed", { error });
@@ -69,8 +89,14 @@ export const useConnectionStatus = () => {
       setConnectionError("Erreur de connexion au serveur. Veuillez vérifier votre connexion Internet.");
     } finally {
       setIsCheckingConnection(false);
+      checkInProgressRef.current = false;
     }
   }, [logger]);
+
+  // Run initial check on mount, but only once
+  useEffect(() => {
+    checkConnectionStatus();
+  }, []);
 
   return {
     isCheckingConnection,
