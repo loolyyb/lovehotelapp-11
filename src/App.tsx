@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Header } from "./components/layout/Header";
@@ -9,7 +10,7 @@ import { useAuthSession } from "./hooks/useAuthSession";
 import { AppRoutes } from "./components/layout/AppRoutes";
 import { ThemeProvider, useTheme } from "./providers/ThemeProvider";
 import { appConfig } from "./config/app.config";
-import { Loader } from "lucide-react";
+import { Loader, Info } from "lucide-react";
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 import { useStatusBar } from './hooks/useStatusBar';
@@ -17,6 +18,17 @@ import { useLogger } from './hooks/useLogger';
 import { enableRealtimeSubscriptions } from "./utils/enableRealtimeSubscriptions";
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from "./integrations/supabase/client";
+
+// Maintenance notification component for the index page
+const MaintenanceNotification = () => (
+  <div className="bg-[#f3ebad]/10 backdrop-blur-sm border border-[#f3ebad]/20 rounded-lg p-4 mb-4 mx-4 flex items-start gap-3">
+    <Info className="text-[#f3ebad] w-5 h-5 mt-0.5 flex-shrink-0" />
+    <p className="text-[#f3ebad]/90 text-sm">
+      La messagerie fait actuellement l'objet d'une optimisation pour vous offrir une meilleure expérience. 
+      Nos équipes y travaillent activement. Merci de votre patience !
+    </p>
+  </div>
+);
 
 function Content() {
   const { session, loading, userProfile } = useAuthSession();
@@ -75,6 +87,8 @@ function Content() {
     >
       {session && <Header userProfile={userProfile} />}
       <div className="flex-grow pt-[4.5rem]">
+        {/* Add the maintenance notification box at the top of the index page */}
+        {!session && <div className="mt-4"><MaintenanceNotification /></div>}
         <AppRoutes session={session} />
       </div>
       <Footer />

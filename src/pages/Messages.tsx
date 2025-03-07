@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, memo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { MessageView } from "@/components/messages/MessageView";
@@ -7,19 +6,8 @@ import { useLogger } from "@/hooks/useLogger";
 import { supabase } from "@/integrations/supabase/client"; 
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw, Info } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { EmptyState } from "@/components/messages/EmptyState";
-
-// New notification component
-const MaintenanceNotification = () => (
-  <div className="bg-[#f3ebad]/10 backdrop-blur-sm border border-[#f3ebad]/20 rounded-lg p-4 mb-4 flex items-start gap-3">
-    <Info className="text-[#f3ebad] w-5 h-5 mt-0.5 flex-shrink-0" />
-    <p className="text-[#f3ebad]/90 text-sm">
-      La messagerie fait actuellement l'objet d'une optimisation pour vous offrir une meilleure expérience. 
-      Nos équipes y travaillent activement. Merci de votre patience !
-    </p>
-  </div>
-);
 
 const MemoizedMessageView = memo(({ conversationId, onBack }: { conversationId: string, onBack: () => void }) => {
   return (
@@ -198,37 +186,30 @@ export default function Messages() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-[#40192C] pt-12 backdrop-blur-sm">
-      {/* Add the maintenance notification at the top */}
-      <div className="px-4 md:px-6 mb-4">
-        <MaintenanceNotification />
+    <div className="flex h-[calc(100vh-4rem)] bg-[#40192C] pt-12 backdrop-blur-sm">
+      <div className={`w-full md:w-[380px] border-r border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300 ${selectedConversation ? 'hidden md:block' : ''}`}>
+        <ConversationList
+          onSelectConversation={handleSelectConversation}
+          selectedConversationId={selectedConversation}
+          onNetworkError={() => setIsNetworkError(true)}
+        />
       </div>
       
-      <div className="flex flex-1 overflow-hidden">
-        <div className={`w-full md:w-[380px] border-r border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300 ${selectedConversation ? 'hidden md:block' : ''}`}>
-          <ConversationList
-            onSelectConversation={handleSelectConversation}
-            selectedConversationId={selectedConversation}
-            onNetworkError={() => setIsNetworkError(true)}
+      <div className={`flex-1 ${!selectedConversation ? 'hidden md:flex' : ''}`}>
+        {selectedConversation ? (
+          <MemoizedMessageView
+            conversationId={selectedConversation}
+            onBack={handleBack}
           />
-        </div>
-        
-        <div className={`flex-1 ${!selectedConversation ? 'hidden md:flex' : ''}`}>
-          {selectedConversation ? (
-            <MemoizedMessageView
-              conversationId={selectedConversation}
-              onBack={handleBack}
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <EmptyState 
+              onRefresh={handleRefreshConversations}
+              isRefreshing={isCheckingConnection}
+              isNetworkError={isNetworkError}
             />
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <EmptyState 
-                onRefresh={handleRefreshConversations}
-                isRefreshing={isCheckingConnection}
-                isNetworkError={isNetworkError}
-              />
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
