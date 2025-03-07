@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
 
@@ -15,6 +15,7 @@ export const useRealtimeMessages = ({
   onMessageUpdate
 }: UseRealtimeMessagesProps) => {
   const logger = useLogger("useRealtimeMessages");
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     if (!currentProfileId) {
@@ -26,8 +27,13 @@ export const useRealtimeMessages = ({
       profileId: currentProfileId
     });
 
-    // Subscribe to new messages
-    const channel = supabase
+    // Clean up existing subscription if it exists
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    // Subscribe to new messages with optimized filter
+    channelRef.current = supabase
       .channel(`messages-${currentProfileId}`)
       .on(
         'postgres_changes',
@@ -39,18 +45,13 @@ export const useRealtimeMessages = ({
         },
         (payload) => {
           logger.info("New message received via realtime", {
-            payload: {
-              ...payload,
-              new: {
-                ...payload.new,
-                id: payload.new.id
-              }
-            }
+            messageId: payload.new.id,
+            conversationId: payload.new.conversation_id
           });
 
           // Fetch sender details if needed
           if (payload.new && payload.new.sender_id) {
-            // Restructuring the Promise chain to properly handle Promise types
+            // Use async function with try/catch for better error handling
             const fetchSender = async () => {
               try {
                 const { data: sender, error } = await supabase
@@ -114,7 +115,9 @@ export const useRealtimeMessages = ({
     // Cleanup
     return () => {
       logger.info("Cleaning up realtime subscription");
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
     };
   }, [currentProfileId, onNewMessage, onMessageUpdate, logger]);
 };

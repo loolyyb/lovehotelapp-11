@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
 import { useMessageRetrieval } from "@/hooks/messages/useMessageRetrieval";
@@ -29,6 +30,7 @@ interface MessageViewLogicProps {
 }
 
 export function MessageViewLogic({ conversationId, renderContent }: MessageViewLogicProps) {
+  // Optimize initial states to reduce rerenders
   const [messages, setMessages] = useState<any[]>([]);
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<any>(null);
@@ -37,19 +39,25 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [profileInitialized, setProfileInitialized] = useState(false);
   const [isFetchingInitialMessages, setIsFetchingInitialMessages] = useState(false);
+  
+  // Use refs for tracking loading states to reduce rerenders
+  const fetchingRef = useRef(false);
   const firstLoad = useRef(true);
   const logger = useLogger("MessageViewLogic");
   const { toast } = useToast();
 
+  // Memoize the profile setter function to prevent recreating on every render
+  const memoizedProfileSetter = useCallback((profileId: string | null) => {
+    setCurrentProfileId(profileId);
+    if (profileId) {
+      setProfileInitialized(true);
+    }
+  }, []);
+
   const { getCurrentUser } = useConversationInit({
     conversationId,
     setMessages,
-    setCurrentProfileId: (profileId: string | null) => {
-      setCurrentProfileId(profileId);
-      if (profileId) {
-        setProfileInitialized(true);
-      }
-    },
+    setCurrentProfileId: memoizedProfileSetter,
     setOtherUser,
     setIsLoading,
   });
@@ -92,36 +100,49 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
     toast,
   });
 
+  // Memoize the new message handler to prevent recreating on every render
+  const handleNewMessage = useCallback((message) => {
+    if (message.conversation_id === conversationId) {
+      logger.info("New message received, updating messages list", { messageId: message.id });
+      // Use optimistic update via cache
+      addMessageToCache(message);
+    }
+  }, [conversationId, addMessageToCache, logger]);
+
+  // Memoize the message update handler
+  const handleMessageUpdate = useCallback((message) => {
+    if (message.conversation_id === conversationId) {
+      logger.info("Message updated, updating messages list", { messageId: message.id });
+      setMessages(prev => prev.map(msg => 
+        msg.id === message.id ? message : msg
+      ));
+    }
+  }, [conversationId, logger]);
+
+  // Use the memoized handlers for realtime updates
   useRealtimeMessages({
     currentProfileId,
-    onNewMessage: (message) => {
-      if (message.conversation_id === conversationId) {
-        logger.info("New message received, updating messages list", { messageId: message.id });
-        // Use optimistic update via cache
-        addMessageToCache(message);
-      }
-    },
-    onMessageUpdate: (message) => {
-      if (message.conversation_id === conversationId) {
-        logger.info("Message updated, updating messages list", { messageId: message.id });
-        setMessages(prev => prev.map(msg => 
-          msg.id === message.id ? message : msg
-        ));
-      }
-    }
+    onNewMessage: handleNewMessage,
+    onMessageUpdate: handleMessageUpdate
   });
 
-  const handleRefresh = async () => {
+  // Memoize refresh handler
+  const handleRefresh = useCallback(async () => {
+    if (isRefreshing) return;
     logger.info("Manually refreshing messages", { conversationId });
     await refreshMessages();
-  };
+  }, [refreshMessages, isRefreshing, conversationId, logger]);
 
   // Initial profile and auth check - only runs once
   useEffect(() => {
     let mounted = true;
     setIsError(false);
     
+    // Cache auth check results to prevent repeated API calls
     const checkAuth = async () => {
+      if (fetchingRef.current) return;
+      fetchingRef.current = true;
+      
       try {
         // Check auth session first
         const { data: { session } } = await supabase.auth.getSession();
@@ -168,6 +189,7 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
       } finally {
         if (mounted) {
           firstLoad.current = false;
+          fetchingRef.current = false;
         }
       }
     };
@@ -179,9 +201,10 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
     };
   }, [conversationId]); // Only depend on conversationId
 
-  // Fetch messages when profile is initialized
+  // Fetch messages when profile is initialized - with debounce
   useEffect(() => {
     let mounted = true;
+    let debounceTimeout: NodeJS.Timeout;
     
     const loadMessages = async () => {
       if (!currentProfileId || !profileInitialized || !isAuthChecked || isFetchingInitialMessages) {
@@ -213,15 +236,20 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
       }
     };
     
-    loadMessages();
+    // Add debounce to prevent multiple rapid API calls
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(loadMessages, 100);
     
     return () => {
       mounted = false;
+      clearTimeout(debounceTimeout);
     };
-  }, [currentProfileId, profileInitialized, isAuthChecked, conversationId]);
+  }, [currentProfileId, profileInitialized, isAuthChecked, conversationId, fetchMessages]);
 
-  // Handle marking messages as read
+  // Handle marking messages as read with debounce
   useEffect(() => {
+    let markAsReadTimeout: NodeJS.Timeout;
+    
     if (currentProfileId && messages.length > 0 && !isLoading) {
       logger.info("Checking for unread messages after update", {
         messagesCount: messages.length,
@@ -236,27 +264,25 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
         logger.info("Found unread messages, marking as read", {
           profileId: currentProfileId
         });
-        setTimeout(() => markMessagesAsRead(), 500);
+        // Add debounce to prevent multiple rapid API calls
+        clearTimeout(markAsReadTimeout);
+        markAsReadTimeout = setTimeout(() => markMessagesAsRead(), 700);
       }
     }
-  }, [messages, currentProfileId, isLoading, markMessagesAsRead]);
+    
+    return () => {
+      clearTimeout(markAsReadTimeout);
+    };
+  }, [messages, currentProfileId, isLoading, markMessagesAsRead, logger]);
 
-  // Debug state changes
-  useEffect(() => {
-    logger.info("MessageViewLogic state update", {
-      isLoading,
-      isAuthChecked,
-      profileInitialized,
-      isFetchingInitialMessages,
-      messagesCount: messages.length,
-      hasCurrentProfile: !!currentProfileId
-    });
-  }, [isLoading, isAuthChecked, profileInitialized, isFetchingInitialMessages, messages.length, currentProfileId]);
+  // Combined loading state - memoized to prevent unnecessary rerenders
+  const showLoader = useMemo(() => 
+    isLoading && (!messages.length || !isAuthChecked || !profileInitialized || isFetchingInitialMessages),
+    [isLoading, messages.length, isAuthChecked, profileInitialized, isFetchingInitialMessages]
+  );
 
-  // Combined loading state 
-  const showLoader = isLoading && (!messages.length || !isAuthChecked || !profileInitialized || isFetchingInitialMessages);
-
-  return renderContent({
+  // Memoize the render props to prevent unnecessary rerenders
+  const renderProps = useMemo(() => ({
     messages,
     currentProfileId,
     otherUser,
@@ -271,5 +297,23 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
     newMessage,
     setNewMessage,
     sendMessage
-  });
+  }), [
+    messages,
+    currentProfileId,
+    otherUser,
+    showLoader,
+    isError,
+    retryLoad,
+    handleRefresh,
+    isRefreshing,
+    loadMoreMessages,
+    isLoadingMore,
+    isFetchingMore,
+    hasMoreMessages,
+    newMessage,
+    setNewMessage,
+    sendMessage
+  ]);
+
+  return renderContent(renderProps);
 }

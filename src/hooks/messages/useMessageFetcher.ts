@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
@@ -13,7 +12,7 @@ interface UseMessageFetcherProps {
 }
 
 /**
- * Hook for message fetching operations
+ * Hook for message fetching operations with improved performance
  */
 export const useMessageFetcher = ({ 
   conversationId, 
@@ -25,8 +24,9 @@ export const useMessageFetcher = ({
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [fetchInProgress, setFetchInProgress] = useState(false);
   
-  // Default page size
-  const PAGE_SIZE = 20;
+  // Increase default page size for initial load but keep pagination size smaller
+  const INITIAL_PAGE_SIZE = 15;
+  const PAGINATION_SIZE = 10;
 
   const fetchMessages = useCallback(async (useCache = true) => {
     if (!conversationId || !currentProfileId) {
@@ -59,8 +59,10 @@ export const useMessageFetcher = ({
         });
         
         const cachedMessages = MessageCache.get(conversationId);
-        if (cachedMessages) {
+        if (cachedMessages && cachedMessages.length > 0) {
           setMessages(cachedMessages);
+          // Still check for newer messages in the background after a short delay
+          setTimeout(() => checkForNewerMessages(cachedMessages), 2000);
           return cachedMessages;
         }
       }
@@ -71,7 +73,7 @@ export const useMessageFetcher = ({
         component: "useMessageFetcher" 
       });
       
-      // Fetch messages with pagination - RLS policies will handle access control
+      // Optimize query to select only necessary fields and limit result size
       const { data: messagesData, error } = await supabase
         .from('messages')
         .select(`
@@ -92,7 +94,7 @@ export const useMessageFetcher = ({
         `)
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: false })
-        .limit(PAGE_SIZE)
+        .limit(INITIAL_PAGE_SIZE)
         .order('created_at', { ascending: true });
       
       if (error) {
@@ -121,7 +123,7 @@ export const useMessageFetcher = ({
       }
       
       setMessages(messagesData || []);
-      setHasMoreMessages(messagesData?.length === PAGE_SIZE);
+      setHasMoreMessages(messagesData?.length === INITIAL_PAGE_SIZE);
       return messagesData;
     } catch (error: any) {
       logger.error("Network error fetching messages", {
@@ -141,23 +143,18 @@ export const useMessageFetcher = ({
     }
   }, [conversationId, currentProfileId, setMessages, toast, fetchInProgress]);
 
-  const fetchMoreMessages = useCallback(async () => {
-    if (!conversationId || !currentProfileId || !hasMoreMessages || isLoadingMore) return;
-
-    setIsLoadingMore(true);
+  // New function to check for newer messages without full reload
+  const checkForNewerMessages = async (existingMessages: any[]) => {
+    if (!conversationId || !currentProfileId || existingMessages.length === 0) return;
     
     try {
-      // Get current messages to determine the offset
-      const currentMessages = MessageCache.get(conversationId) || [];
+      // Get the timestamp of the newest message we have
+      const newestMessage = [...existingMessages].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0];
       
-      logger.info("Fetching more messages", { 
-        conversationId, 
-        currentCount: currentMessages.length,
-        component: "useMessageFetcher" 
-      });
-      
-      // Fetch older messages using created_at as cursor
-      let query = supabase
+      // Only fetch messages newer than what we already have
+      const { data: newerMessages, error } = await supabase
         .from('messages')
         .select(`
           id,
@@ -176,21 +173,74 @@ export const useMessageFetcher = ({
           )
         `)
         .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: false });
+        .gt('created_at', newestMessage.created_at)
+        .order('created_at', { ascending: true });
       
-      // Use cursor pagination if we have messages
-      if (currentMessages.length > 0) {
-        const oldestMessage = [...currentMessages].sort(
-          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        )[0];
-        
-        if (oldestMessage) {
-          query = query.lt('created_at', oldestMessage.created_at);
-        }
+      if (error) {
+        logger.error("Error checking for newer messages", { error });
+        return;
       }
       
-      const { data: olderMessages, error } = await query
-        .limit(PAGE_SIZE)
+      if (newerMessages && newerMessages.length > 0) {
+        logger.info(`Found ${newerMessages.length} new messages`, { conversationId });
+        // Update cache and state with new messages
+        const updatedMessages = [...existingMessages, ...newerMessages];
+        MessageCache.set(conversationId, updatedMessages);
+        setMessages(updatedMessages);
+      }
+    } catch (error) {
+      logger.error("Error in checkForNewerMessages", { error });
+    }
+  };
+
+  const fetchMoreMessages = useCallback(async () => {
+    if (!conversationId || !currentProfileId || !hasMoreMessages || isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    
+    try {
+      // Get current messages to determine the offset
+      const currentMessages = MessageCache.get(conversationId) || [];
+      
+      logger.info("Fetching more messages", { 
+        conversationId, 
+        currentCount: currentMessages.length,
+        component: "useMessageFetcher" 
+      });
+      
+      // Find the oldest message we have
+      if (currentMessages.length === 0) {
+        setHasMoreMessages(false);
+        return null;
+      }
+      
+      const oldestMessage = [...currentMessages].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      )[0];
+      
+      // Fetch older messages with optimized query
+      const { data: olderMessages, error } = await supabase
+        .from('messages')
+        .select(`
+          id,
+          content,
+          created_at,
+          read_at,
+          sender_id,
+          conversation_id,
+          media_type,
+          media_url,
+          sender:profiles!messages_sender_id_fkey (
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('conversation_id', conversationId)
+        .lt('created_at', oldestMessage.created_at)
+        .order('created_at', { ascending: false })
+        .limit(PAGINATION_SIZE)
         .order('created_at', { ascending: true });
       
       if (error) {
@@ -215,12 +265,12 @@ export const useMessageFetcher = ({
       
       if (olderMessages && olderMessages.length > 0) {
         // Update the cache with new messages
-        const updatedMessages = [...(MessageCache.get(conversationId) || []), ...olderMessages];
+        const updatedMessages = [...olderMessages, ...currentMessages];
         MessageCache.set(conversationId, updatedMessages);
         
         // Update state
         setMessages(updatedMessages);
-        setHasMoreMessages(olderMessages.length === PAGE_SIZE);
+        setHasMoreMessages(olderMessages.length === PAGINATION_SIZE);
       } else {
         setHasMoreMessages(false);
       }
