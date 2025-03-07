@@ -8,9 +8,10 @@ import { logger } from "@/services/LogService";
 export const MessageCacheOperations = {
   /**
    * Add a single message to the cache
+   * @returns boolean indicating whether the operation was successful
    */
-  addMessageToCache: (conversationId: string, message: any): void => {
-    if (!conversationId) return;
+  addMessageToCache: (conversationId: string, message: any): boolean => {
+    if (!conversationId) return false;
     
     if (MessageCache.has(conversationId)) {
       // Add to cache
