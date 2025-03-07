@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -71,7 +70,6 @@ export function ConversationList({
           return;
         }
         
-        // Get profile data directly after session check
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -119,7 +117,6 @@ export function ConversationList({
     try {
       logger.info("Creating a test conversation", { profileId: currentProfileId });
       
-      // Find any admin user or other user to create conversation with
       const { data: otherProfiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, username')
@@ -133,7 +130,6 @@ export function ConversationList({
       if (!otherProfiles || otherProfiles.length === 0) {
         logger.warn("No other users found to create conversation with");
         
-        // Create a test profile if none exists
         const { data: newProfile, error: newProfileError } = await supabase
           .from('profiles')
           .insert({
@@ -150,7 +146,6 @@ export function ConversationList({
           throw newProfileError;
         }
         
-        // Create conversation with the new profile
         const { data: conversation, error: convError } = await supabase
           .from('conversations')
           .insert({
@@ -165,7 +160,6 @@ export function ConversationList({
           throw convError;
         }
         
-        // Add a welcome message
         await supabase
           .from('messages')
           .insert({
@@ -179,7 +173,6 @@ export function ConversationList({
           description: "Une conversation de test a été créée avec l'équipe de support."
         });
       } else {
-        // Create conversation with existing profile
         const otherUser = otherProfiles[0];
         logger.info("Creating conversation with user", { userId: otherUser.id });
         
@@ -197,7 +190,6 @@ export function ConversationList({
           throw convError;
         }
         
-        // Add a welcome message
         await supabase
           .from('messages')
           .insert({
@@ -212,7 +204,6 @@ export function ConversationList({
         });
       }
       
-      // Refresh conversations list
       await refetch();
       
     } catch (error) {
@@ -305,7 +296,6 @@ export function ConversationList({
     return () => clearInterval(interval);
   }, [refetch, logger, hasAuthError, authChecked]);
 
-  // Handle authentication error state
   if (hasAuthError) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
@@ -415,7 +405,6 @@ export function ConversationList({
     );
   }
 
-  // Define the active conversation background color to be used in both places
   const activeConversationBgClass = "bg-[#5A293D]";
   const hoverClass = "hover:bg-rose/5";
 
@@ -453,8 +442,8 @@ export function ConversationList({
               key={conversation.id} 
               className={`p-4 border-b border-rose/20 cursor-pointer transition-colors ${
                 isActive 
-                  ? `${activeConversationBgClass} border-r-0`  // Active state with no right border
-                  : hoverClass                 // Hover state for inactive
+                  ? `${activeConversationBgClass} border-r-0` 
+                  : hoverClass
               }`} 
               onClick={() => onSelectConversation(conversation.id)}
             >

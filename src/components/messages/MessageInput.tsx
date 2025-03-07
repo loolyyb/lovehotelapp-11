@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Send } from "lucide-react";
 
 interface MessageInputProps {
@@ -17,6 +17,7 @@ export function MessageInput({
 }: MessageInputProps) {
   const [isTyping, setIsTyping] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitTimeoutRef = useRef<number | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
@@ -29,18 +30,26 @@ export function MessageInput({
       if (newMessage.trim()) {
         setIsSubmitting(true);
         onSend(e as any);
+        
         // Reset submission state after a short delay
-        setTimeout(() => {
+        if (submitTimeoutRef.current) {
+          clearTimeout(submitTimeoutRef.current);
+        }
+        
+        submitTimeoutRef.current = window.setTimeout(() => {
           setIsSubmitting(false);
-        }, 500);
+          submitTimeoutRef.current = null;
+        }, 1000) as unknown as number;
+        
         setIsTyping(false);
       }
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (isSubmitting || disabled || !newMessage.trim()) {
-      e.preventDefault();
       return;
     }
     
@@ -48,9 +57,14 @@ export function MessageInput({
     onSend(e);
     
     // Reset submission state after a short delay
-    setTimeout(() => {
+    if (submitTimeoutRef.current) {
+      clearTimeout(submitTimeoutRef.current);
+    }
+    
+    submitTimeoutRef.current = window.setTimeout(() => {
       setIsSubmitting(false);
-    }, 500);
+      submitTimeoutRef.current = null;
+    }, 1000) as unknown as number;
   };
 
   return (

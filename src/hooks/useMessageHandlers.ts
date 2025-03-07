@@ -26,7 +26,9 @@ export const useMessageHandlers = ({
 }: UseMessageHandlersProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const optimisticMessageRef = useRef<string | null>(null);
-  const processingMessageRef = useRef(false);
+  const processingMessageRef = useRef<boolean>(false);
+  const processingTimeoutRef = useRef<number | null>(null);
+  const messageIdSentRef = useRef<Set<string>>(new Set());
 
   const sendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +44,30 @@ export const useMessageHandlers = ({
     // Store the message to be sent
     const messageToSend = newMessage.trim();
     optimisticMessageRef.current = messageToSend;
+    
+    // Generate a unique ID for this message attempt
+    const messageAttemptId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Check if we've just attempted to send this exact message
+    if (messageIdSentRef.current.has(messageToSend)) {
+      logger.info("Preventing duplicate message send", { 
+        messageContent: messageToSend,
+        component: "useMessageHandlers" 
+      });
+      
+      processingMessageRef.current = false;
+      setIsProcessing(false);
+      setNewMessage("");
+      return;
+    }
+    
+    // Mark this message as being processed
+    messageIdSentRef.current.add(messageToSend);
+    
+    // Clear this message from the sent set after a while
+    setTimeout(() => {
+      messageIdSentRef.current.delete(messageToSend);
+    }, 5000);
     
     // Optimistically clear the input field right away for better UX
     setNewMessage("");
@@ -90,7 +116,7 @@ export const useMessageHandlers = ({
 
       // Create optimistic temporary message for immediate display
       if (setMessages) {
-        const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const tempId = `temp-${messageAttemptId}`;
         const optimisticMessage = {
           id: tempId,
           conversation_id: conversationId,
@@ -106,9 +132,16 @@ export const useMessageHandlers = ({
         };
         
         // Add to local state immediately for better UX
-        setMessages(prev => [...prev, optimisticMessage].sort(
-          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        ));
+        setMessages(prev => {
+          // Ensure no duplicate optimistic messages
+          const filtered = prev.filter(m => 
+            !(m.optimistic && m.content === messageToSend)
+          );
+          
+          return [...filtered, optimisticMessage].sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+        });
         
         if (addMessageToCache) {
           addMessageToCache(optimisticMessage);
@@ -144,7 +177,7 @@ export const useMessageHandlers = ({
       // Replace optimistic message with real one if we're using local state updates
       if (setMessages && newMessageData) {
         setMessages(prev => prev
-          .filter(msg => !msg.optimistic)
+          .filter(msg => !(msg.optimistic && msg.content === messageToSend))
           .concat([newMessageData])
           .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
         );
@@ -177,15 +210,25 @@ export const useMessageHandlers = ({
     } finally {
       setIsProcessing(false);
       optimisticMessageRef.current = null;
-      setTimeout(() => {
+      
+      // Clear the processing lock after a delay to prevent rapid resubmission
+      if (processingTimeoutRef.current) {
+        clearTimeout(processingTimeoutRef.current);
+      }
+      
+      processingTimeoutRef.current = window.setTimeout(() => {
         processingMessageRef.current = false;
-      }, 500); // Prevent multiple submissions within 500ms
+        processingTimeoutRef.current = null;
+      }, 1000) as unknown as number;
     }
   }, [currentProfileId, conversationId, newMessage, isProcessing, toast, setNewMessage, setMessages, addMessageToCache]);
 
-  // Use a leading debounce to prevent double-clicks without delaying the first submission
+  // Properly memoized function without double-call risk
   const debouncedSendMessage = useCallback(
-    debounce((e: React.FormEvent) => sendMessage(e), 300, { leading: true, trailing: false }),
+    (e: React.FormEvent) => {
+      if (processingMessageRef.current) return;
+      sendMessage(e);
+    },
     [sendMessage]
   );
 
