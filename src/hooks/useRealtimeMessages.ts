@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
 
@@ -17,6 +17,7 @@ export const useRealtimeMessages = ({
   const logger = useLogger("useRealtimeMessages");
   const channelRef = useRef<any>(null);
   const lastProcessedMessageRef = useRef<Set<string>>(new Set());
+  const processingMessageRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!currentProfileId) {
@@ -50,14 +51,18 @@ export const useRealtimeMessages = ({
           table: 'messages'
         },
         (payload) => {
+          if (processingMessageRef.current) return;
+          
           const messageId = payload.new?.id;
           if (!messageId || lastProcessedMessageRef.current.has(messageId)) {
             return; // Skip if already processed or invalid
           }
 
-          logger.info("New message received via realtime", {
-            messageId: payload.new.id,
-            conversationId: payload.new.conversation_id
+          logger.info("New message received via realtime", { 
+            messageId: payload.new.id, 
+            conversationId: payload.new.conversation_id,
+            senderId: payload.new.sender_id,
+            currentProfileId
           });
 
           // Mark as processed to prevent duplicate handling
@@ -68,6 +73,8 @@ export const useRealtimeMessages = ({
           if (payload.new.sender_id === currentProfileId || 
               payload.new.conversation_id.includes(currentProfileId)) {
               
+            processingMessageRef.current = true;
+            
             // Fetch sender details if needed
             if (payload.new && payload.new.sender_id) {
               // Use async function with try/catch for better error handling
@@ -86,6 +93,7 @@ export const useRealtimeMessages = ({
                     });
                     // Still deliver the message even if sender fetch fails
                     onNewMessage(payload.new);
+                    processingMessageRef.current = false;
                     return;
                   }
                   
@@ -93,6 +101,7 @@ export const useRealtimeMessages = ({
                     ...payload.new,
                     sender
                   });
+                  processingMessageRef.current = false;
                 } catch (error: any) {
                   logger.error("Exception in fetching sender for realtime message", {
                     error: error.message,
@@ -101,6 +110,7 @@ export const useRealtimeMessages = ({
                   });
                   // Still deliver the message even if sender fetch fails
                   onNewMessage(payload.new);
+                  processingMessageRef.current = false;
                 }
               };
               
@@ -108,7 +118,10 @@ export const useRealtimeMessages = ({
               fetchSender();
             } else {
               onNewMessage(payload.new);
+              processingMessageRef.current = false;
             }
+          } else {
+            processingMessageRef.current = false;
           }
         }
       )
@@ -140,4 +153,17 @@ export const useRealtimeMessages = ({
       }
     };
   }, [currentProfileId, onNewMessage, onMessageUpdate, logger]);
+
+  // Handle new messages callback
+  const handleNewMessage = useCallback((message: any) => {
+    logger.info("New message received in realtime hook", { 
+      messageId: message.id, 
+      conversationId: message.conversation_id,
+      timestamp: new Date().toISOString()
+    });
+    
+    onNewMessage(message);
+  }, [logger, onNewMessage]);
+
+  return { handleNewMessage };
 };

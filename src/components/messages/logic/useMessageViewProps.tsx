@@ -113,13 +113,15 @@ export function useMessageViewProps(conversationId: string) {
     messages
   });
 
-  // Setup message sending
+  // Setup message sending with direct access to message state
   const { sendMessage } = useMessageHandlers({
     currentProfileId,
     conversationId,
     newMessage,
     setNewMessage,
     toast,
+    setMessages,
+    addMessageToCache
   });
 
   // Message realtime update handlers
@@ -133,7 +135,9 @@ export function useMessageViewProps(conversationId: string) {
         if (prev.some(m => m.id === message.id)) {
           return prev;
         }
-        return [...prev, message];
+        return [...prev, message].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
       });
       
       // Also update cache to ensure persistence

@@ -12,11 +12,20 @@ export const CacheOperations = {
    * with optimized insertion and sorting
    */
   addMessage(conversationId: string, message: any): boolean {
-    if (!conversationId || !message || !message.id) {
+    if (!conversationId || !message) {
       logger.warn("Invalid parameters for addMessage", { 
         hasConversationId: !!conversationId, 
         hasMessage: !!message,
-        hasMessageId: message?.id
+        messageId: message?.id
+      });
+      return false;
+    }
+    
+    // For optimistic messages without an ID, we can still add them
+    if (!message.id && !message.optimistic) {
+      logger.warn("Message has no ID and is not optimistic", { 
+        conversationId,
+        message
       });
       return false;
     }
@@ -25,17 +34,28 @@ export const CacheOperations = {
     const existingMessages = MessageCacheStore.get(conversationId) || [];
     
     // Check if message already exists to avoid duplicates
-    if (existingMessages.some(m => m.id === message.id)) {
+    // For optimistic messages, check the content instead of ID
+    const isDuplicate = message.id 
+      ? existingMessages.some(m => m.id === message.id)
+      : existingMessages.some(m => 
+          m.optimistic && 
+          m.content === message.content && 
+          m.sender_id === message.sender_id &&
+          Math.abs(new Date(m.created_at).getTime() - new Date(message.created_at).getTime()) < 5000
+        );
+    
+    if (isDuplicate) {
       logger.info("Message already exists in cache, skipping", { 
-        messageId: message.id,
+        messageId: message.id || 'optimistic',
         conversationId
       });
       return false;
     }
     
     logger.info("Adding message to cache", { 
-      messageId: message.id,
-      conversationId
+      messageId: message.id || 'optimistic',
+      conversationId,
+      isOptimistic: !!message.optimistic
     });
     
     // Add new message and sort by creation time
