@@ -10,6 +10,14 @@ export const useConnectionStatus = () => {
   const logger = useLogger("useConnectionStatus");
   const lastCheckTimeRef = useRef(0);
   const checkInProgressRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const checkConnectionStatus = useCallback(async () => {
     // Prevent multiple simultaneous checks
@@ -18,9 +26,9 @@ export const useConnectionStatus = () => {
       return;
     }
     
-    // Throttle checks to no more than once every 5 seconds
+    // Aggressive throttling - check at most once every 10 seconds
     const now = Date.now();
-    if (now - lastCheckTimeRef.current < 5000) {
+    if (now - lastCheckTimeRef.current < 10000) {
       logger.info("Throttling connection check, too soon after previous check", {
         msSinceLastCheck: now - lastCheckTimeRef.current
       });
@@ -28,14 +36,19 @@ export const useConnectionStatus = () => {
     }
     
     checkInProgressRef.current = true;
-    setIsCheckingConnection(true);
-    setConnectionError(null);
+    lastCheckTimeRef.current = now;
+    
+    if (mountedRef.current) {
+      setIsCheckingConnection(true);
+      setConnectionError(null);
+    }
     
     try {
-      lastCheckTimeRef.current = now;
-      
       // Try to get the user to check authentication
       const { data, error: authError } = await supabase.auth.getUser();
+      
+      // Don't update state if component unmounted
+      if (!mountedRef.current) return;
       
       if (authError) {
         logger.error("Authentication error", { error: authError });
@@ -49,33 +62,41 @@ export const useConnectionStatus = () => {
         return;
       }
       
-      // Check if we can query the database
-      const { error: queryError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
-        
-      if (queryError) {
-        logger.error("Database connection error", { error: queryError });
-        
-        // Check if it's a network-related error
-        if (queryError.message?.includes('Failed to fetch') || 
-            queryError.message?.includes('NetworkError') ||
-            queryError.message?.includes('network') ||
-            queryError.code === 'NETWORK_ERROR') {
-          setIsNetworkError(true);
-          setConnectionError("Problème de connexion au réseau. Veuillez vérifier votre connexion Internet.");
-        } else {
-          setConnectionError("Problème de connexion à la base de données. Veuillez réessayer.");
+      // Check if we can query the database, but don't do this on every check
+      // Only do a full database check if we had a previous network error
+      if (isNetworkError) {
+        // Check if we can query the database
+        const { error: queryError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+          
+        if (queryError) {
+          logger.error("Database connection error", { error: queryError });
+          
+          // Check if it's a network-related error
+          if (queryError.message?.includes('Failed to fetch') || 
+              queryError.message?.includes('NetworkError') ||
+              queryError.message?.includes('network') ||
+              queryError.code === 'NETWORK_ERROR') {
+            setIsNetworkError(true);
+            setConnectionError("Problème de connexion au réseau. Veuillez vérifier votre connexion Internet.");
+          } else {
+            setConnectionError("Problème de connexion à la base de données. Veuillez réessayer.");
+          }
+          return;
         }
-        return;
       }
       
       // If we get here, connection is good
       setIsNetworkError(false);
+      setConnectionError(null);
       logger.info("Connection check successful");
     } catch (error: any) {
+      // Don't update state if component unmounted
+      if (!mountedRef.current) return;
+      
       logger.error("Connection check failed", { error });
       
       // Check if it's a network-related error
@@ -88,15 +109,27 @@ export const useConnectionStatus = () => {
       
       setConnectionError("Erreur de connexion au serveur. Veuillez vérifier votre connexion Internet.");
     } finally {
-      setIsCheckingConnection(false);
-      checkInProgressRef.current = false;
+      if (mountedRef.current) {
+        setIsCheckingConnection(false);
+      }
+      
+      // Delay clearing the flag to prevent immediate consecutive checks
+      setTimeout(() => {
+        checkInProgressRef.current = false;
+      }, 1000);
     }
-  }, [logger]);
+  }, [logger, isNetworkError]);
 
   // Run initial check on mount, but only once
   useEffect(() => {
-    checkConnectionStatus();
-  }, []);
+    if (mountedRef.current) {
+      checkConnectionStatus();
+    }
+    
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [checkConnectionStatus]);
 
   return {
     isCheckingConnection,

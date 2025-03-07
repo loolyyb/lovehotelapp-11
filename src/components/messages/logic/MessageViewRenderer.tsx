@@ -24,25 +24,25 @@ export function MessageViewRenderer({
     }
   }, [viewProps.otherUser]);
 
+  // Create a stable props object to avoid excessive re-renders
+  // Only include the properties that renderContent needs
+  const stableProps = {
+    messages: viewProps.messages || [],
+    currentProfileId: viewProps.currentProfileId,
+    otherUser: viewProps.otherUser,
+    isLoading: viewProps.isLoading,
+    isError: viewProps.isError,
+    retryLoad: viewProps.retryLoad,
+    refreshMessages: viewProps.refreshMessages,
+    isRefreshing: viewProps.isRefreshing,
+    loadMoreMessages: viewProps.loadMoreMessages,
+    isLoadingMore: viewProps.isLoadingMore,
+    hasMoreMessages: viewProps.hasMoreMessages,
+    newMessage: viewProps.newMessage,
+    setNewMessage: viewProps.setNewMessage,
+    sendMessage: viewProps.sendMessage
+  };
+
   // Pass all view props to the render function
-  return (
-    <>
-      {renderContent({
-        messages: viewProps.messages || [],
-        currentProfileId: viewProps.currentProfileId,
-        otherUser: viewProps.otherUser,
-        isLoading: viewProps.isLoading,
-        isError: viewProps.isError,
-        retryLoad: viewProps.retryLoad,
-        refreshMessages: viewProps.refreshMessages,
-        isRefreshing: viewProps.isRefreshing,
-        loadMoreMessages: viewProps.loadMoreMessages,
-        isLoadingMore: viewProps.isLoadingMore,
-        hasMoreMessages: viewProps.hasMoreMessages,
-        newMessage: viewProps.newMessage,
-        setNewMessage: viewProps.setNewMessage,
-        sendMessage: viewProps.sendMessage
-      })}
-    </>
-  );
+  return <>{renderContent(stableProps)}</>;
 }

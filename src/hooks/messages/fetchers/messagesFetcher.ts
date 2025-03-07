@@ -8,7 +8,7 @@ import { MessageCache } from '../cache';
 const INITIAL_PAGE_SIZE = 15;
 const PAGINATION_SIZE = 10;
 const DEBOUNCE_TIME = 300; // ms
-const THROTTLE_TIME = 1000; // ms
+const THROTTLE_TIME = 2000; // ms - increased to prevent too frequent API calls
 
 // Optimization: Only select fields we need to reduce payload size
 const MESSAGE_FIELDS = `
@@ -31,12 +31,29 @@ const MESSAGE_FIELDS = `
 // In-memory query debounce tracking
 const pendingQueries = new Map<string, Promise<any[] | null>>();
 const lastFetchTimes = new Map<string, number>();
+const failedAttempts = new Map<string, number>();
+const MAX_RETRY_ATTEMPTS = 3;
 
 /**
  * Message fetching functions with optimized database queries
  * and enhanced caching
  */
 export const MessagesFetcher = {
+  /**
+   * Reset failed attempts counter for a conversation
+   */
+  resetFailedAttempts(conversationId: string): void {
+    failedAttempts.set(conversationId, 0);
+  },
+  
+  /**
+   * Check if we should back off from fetching due to too many failed attempts
+   */
+  shouldBackOff(conversationId: string): boolean {
+    const attempts = failedAttempts.get(conversationId) || 0;
+    return attempts >= MAX_RETRY_ATTEMPTS;
+  },
+  
   /**
    * Fetch initial messages for a conversation with query deduplication
    */
@@ -51,6 +68,21 @@ export const MessagesFetcher = {
         hasProfileId: !!currentProfileId,
         component: "messagesFetcher" 
       });
+      return null;
+    }
+
+    // Check if we should back off due to repeated failures
+    if (this.shouldBackOff(conversationId)) {
+      logger.warn("Backing off from fetching messages due to repeated failures", {
+        conversationId,
+        component: "messagesFetcher"
+      });
+      
+      // Reset after a longer period (30 seconds)
+      setTimeout(() => {
+        this.resetFailedAttempts(conversationId);
+      }, 30000);
+      
       return null;
     }
 
@@ -113,30 +145,43 @@ export const MessagesFetcher = {
             .select(MESSAGE_FIELDS)
             .eq('conversation_id', conversationId)
             .order('created_at', { ascending: false })
-            .limit(INITIAL_PAGE_SIZE)
-            .order('created_at', { ascending: true });
-          
+            .limit(INITIAL_PAGE_SIZE);
+            
           if (error) {
+            // Increment failed attempts counter
+            const attempts = (failedAttempts.get(conversationId) || 0) + 1;
+            failedAttempts.set(conversationId, attempts);
+            
             logger.error("Error fetching messages", { 
               error, 
               conversationId,
+              attempts,
               component: "messagesFetcher" 
             });
             return null;
           }
           
+          // Success - reset failed attempts counter
+          this.resetFailedAttempts(conversationId);
+          
+          // Now sort in ascending order for display - this avoids a double sort in the DB
+          const sortedMessages = messagesData ? 
+            [...messagesData].sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            ) : [];
+          
           logger.info("Successfully fetched messages", { 
-            count: messagesData?.length || 0, 
+            count: sortedMessages?.length || 0, 
             conversationId,
             component: "messagesFetcher" 
           });
           
           // Cache the results
-          if (messagesData) {
-            MessageCache.set(conversationId, messagesData);
+          if (sortedMessages && sortedMessages.length > 0) {
+            MessageCache.set(conversationId, sortedMessages);
           }
           
-          return messagesData || [];
+          return sortedMessages || [];
         } finally {
           // Remove from pending queries after a short delay
           // This prevents immediate duplicate requests but allows
@@ -157,6 +202,11 @@ export const MessagesFetcher = {
         component: "messagesFetcher"
       });
       AlertService.captureException(error);
+      
+      // Increment failed attempts counter
+      const attempts = (failedAttempts.get(conversationId) || 0) + 1;
+      failedAttempts.set(conversationId, attempts);
+      
       pendingQueries.delete(conversationId);
       return null;
     }
@@ -197,9 +247,8 @@ export const MessagesFetcher = {
         .select(MESSAGE_FIELDS)
         .eq('conversation_id', conversationId)
         .lt('created_at', oldestMessage.created_at)
-        .order('created_at', { ascending: false })
-        .limit(PAGINATION_SIZE)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .limit(PAGINATION_SIZE);
       
       if (error) {
         logger.error("Error fetching more messages", { 

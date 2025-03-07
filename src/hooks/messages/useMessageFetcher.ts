@@ -27,9 +27,11 @@ export const useMessageFetcher = ({
   const componentMountedRef = useRef(true);
   const fetchAttemptRef = useRef(0);
   const lastFetchTimeRef = useRef(0);
+  const errorDisplayedRef = useRef(false);
 
   // Cleanup on unmount
   useEffect(() => {
+    componentMountedRef.current = true;
     return () => {
       componentMountedRef.current = false;
     };
@@ -40,6 +42,12 @@ export const useMessageFetcher = ({
     fetchInProgressRef.current = false;
     fetchAttemptRef.current = 0;
     lastFetchTimeRef.current = 0;
+    errorDisplayedRef.current = false;
+    
+    // Reset failed attempts for the new conversation
+    if (conversationId) {
+      MessagesFetcher.resetFailedAttempts(conversationId);
+    }
   }, [conversationId]);
 
   // Fetch initial messages with concurrency control using a ref
@@ -56,7 +64,7 @@ export const useMessageFetcher = ({
 
     // Throttle rapid successive fetches
     const now = Date.now();
-    if (now - lastFetchTimeRef.current < 500 && fetchAttemptRef.current > 0) {
+    if (now - lastFetchTimeRef.current < 1000 && fetchAttemptRef.current > 0) {
       logger.info("Throttling rapid fetch requests", {
         timeSinceLastFetch: now - lastFetchTimeRef.current,
         component: "useMessageFetcher"
@@ -69,6 +77,19 @@ export const useMessageFetcher = ({
     fetchAttemptRef.current++;
 
     try {
+      // Check if we should back off due to repeated failures
+      if (MessagesFetcher.shouldBackOff(conversationId)) {
+        if (!errorDisplayedRef.current && componentMountedRef.current) {
+          toast({
+            variant: "destructive",
+            title: "Problème de connexion",
+            description: "Impossible de charger les messages. Veuillez vérifier votre connexion Internet et réessayer.",
+          });
+          errorDisplayedRef.current = true;
+        }
+        return null;
+      }
+
       const messagesData = await MessagesFetcher.fetchInitialMessages(
         conversationId,
         currentProfileId,
@@ -77,30 +98,39 @@ export const useMessageFetcher = ({
       
       if (!componentMountedRef.current) return null;
       
-      if (messagesData) {
+      if (messagesData && messagesData.length > 0) {
         setMessages(messagesData);
-        setHasMoreMessages(messagesData.length === 15); // INITIAL_PAGE_SIZE
+        setHasMoreMessages(messagesData.length >= 15); // INITIAL_PAGE_SIZE
+        
+        // Reset error flag on success
+        errorDisplayedRef.current = false;
+        
+        return messagesData;
       } else if (!useCache) {
         // If we explicitly skipped cache but got no results, show empty
         setMessages([]);
         setHasMoreMessages(false);
       }
       
-      return messagesData;
+      return messagesData || [];
     } catch (error) {
       logger.error("Error in fetchMessages", { error });
-      if (componentMountedRef.current) {
+      if (componentMountedRef.current && !errorDisplayedRef.current) {
         toast({
           variant: "destructive",
           title: "Erreur",
           description: "Impossible de charger les messages",
         });
+        errorDisplayedRef.current = true;
       }
       return null;
     } finally {
-      if (componentMountedRef.current) {
-        fetchInProgressRef.current = false;
-      }
+      // Delay clearing the flag slightly to prevent rapid consecutive fetches
+      setTimeout(() => {
+        if (componentMountedRef.current) {
+          fetchInProgressRef.current = false;
+        }
+      }, 1000);
     }
   }, [conversationId, currentProfileId, setMessages, toast]);
 
@@ -119,9 +149,9 @@ export const useMessageFetcher = ({
       
       if (!componentMountedRef.current) return null;
       
-      if (updatedMessages) {
+      if (updatedMessages && updatedMessages.length > 0) {
         setMessages(updatedMessages);
-        setHasMoreMessages(updatedMessages.length > 0 && updatedMessages.length % 10 === 0); // PAGINATION_SIZE
+        setHasMoreMessages(updatedMessages.length % 10 === 0); // PAGINATION_SIZE
         return updatedMessages;
       } else {
         setHasMoreMessages(false);
