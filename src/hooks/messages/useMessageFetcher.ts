@@ -1,8 +1,7 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { MessagesFetcher } from './fetchers/messagesFetcher';
-import { MessageCacheOperations } from './cache/messageCacheOperations';
-import { MessageCache } from './cache/messageCache';
+import { MessageCache } from './cache';
 import { logger } from "@/services/LogService";
 
 interface UseMessageFetcherProps {
@@ -14,6 +13,7 @@ interface UseMessageFetcherProps {
 
 /**
  * Hook for message fetching operations with improved performance
+ * and reduced re-renders
  */
 export const useMessageFetcher = ({ 
   conversationId, 
@@ -23,12 +23,13 @@ export const useMessageFetcher = ({
 }: UseMessageFetcherProps) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
-  const [fetchInProgress, setFetchInProgress] = useState(false);
+  const fetchInProgressRef = useRef(false);
 
-  // Fetch initial messages with concurrency control
+  // Fetch initial messages with concurrency control using a ref
+  // This prevents multiple fetches from happening at the same time
   const fetchMessages = useCallback(async (useCache = true) => {
     // Prevent concurrent fetches
-    if (fetchInProgress) {
+    if (fetchInProgressRef.current) {
       logger.info("Fetch already in progress, skipping duplicate request", {
         conversationId,
         component: "useMessageFetcher"
@@ -36,7 +37,7 @@ export const useMessageFetcher = ({
       return null;
     }
 
-    setFetchInProgress(true);
+    fetchInProgressRef.current = true;
 
     try {
       const messagesData = await MessagesFetcher.fetchInitialMessages(
@@ -64,9 +65,9 @@ export const useMessageFetcher = ({
       });
       return null;
     } finally {
-      setFetchInProgress(false);
+      fetchInProgressRef.current = false;
     }
-  }, [conversationId, currentProfileId, setMessages, toast, fetchInProgress]);
+  }, [conversationId, currentProfileId, setMessages, toast]);
 
   // Fetch older messages
   const fetchMoreMessages = useCallback(async () => {
@@ -106,7 +107,7 @@ export const useMessageFetcher = ({
   const addMessageToCache = useCallback((message: any) => {
     if (!conversationId) return;
     
-    const cacheUpdated = MessageCacheOperations.addMessageToCache(conversationId, message);
+    const cacheUpdated = MessageCache.addMessage(conversationId, message);
     
     // Also update the state if cache was updated
     if (cacheUpdated) {
@@ -122,11 +123,11 @@ export const useMessageFetcher = ({
 
   // Clear cache helper methods
   const clearCache = useCallback(() => {
-    MessageCacheOperations.clearCache();
+    MessageCache.clearAll();
   }, []);
 
   const clearConversationCache = useCallback((convoId: string) => {
-    MessageCacheOperations.clearConversationCache(convoId);
+    MessageCache.clearConversation(convoId);
   }, []);
 
   return { 
@@ -137,6 +138,6 @@ export const useMessageFetcher = ({
     clearConversationCache,
     isLoadingMore, 
     hasMoreMessages,
-    fetchInProgress
+    fetchInProgress: fetchInProgressRef.current
   };
 };

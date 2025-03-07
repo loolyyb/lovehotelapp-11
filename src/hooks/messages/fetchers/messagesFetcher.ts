@@ -2,15 +2,33 @@
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 import { AlertService } from "@/services/AlertService";
-import { MessageCache } from '../cache/messageCache';
-import { MessageCacheOperations } from '../cache/messageCacheOperations';
+import { MessageCache } from '../cache';
 
 // Constants for pagination
 const INITIAL_PAGE_SIZE = 15;
 const PAGINATION_SIZE = 10;
 
+// Define the fields we need to reduce payload size
+const MESSAGE_FIELDS = `
+  id,
+  content,
+  created_at,
+  read_at,
+  sender_id,
+  conversation_id,
+  media_type,
+  media_url,
+  sender:profiles!messages_sender_id_fkey (
+    id,
+    username,
+    full_name,
+    avatar_url
+  )
+`;
+
 /**
- * Message fetching functions
+ * Message fetching functions with optimized database queries
+ * and enhanced caching
  */
 export const MessagesFetcher = {
   /**
@@ -43,7 +61,7 @@ export const MessagesFetcher = {
         if (cachedMessages && cachedMessages.length > 0) {
           // Check for newer messages in the background after a short delay
           setTimeout(() => {
-            MessageCacheOperations.checkForNewerMessages(supabase, conversationId, cachedMessages);
+            MessageCache.checkForNewerMessages(supabase, conversationId, cachedMessages);
           }, 2000);
           
           return cachedMessages;
@@ -59,22 +77,7 @@ export const MessagesFetcher = {
       // Optimize query to select only necessary fields and limit result size
       const { data: messagesData, error } = await supabase
         .from('messages')
-        .select(`
-          id,
-          content,
-          created_at,
-          read_at,
-          sender_id,
-          conversation_id,
-          media_type,
-          media_url,
-          sender:profiles!messages_sender_id_fkey (
-            id,
-            username,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select(MESSAGE_FIELDS)
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: false })
         .limit(INITIAL_PAGE_SIZE)
@@ -144,22 +147,7 @@ export const MessagesFetcher = {
       // Fetch older messages with optimized query
       const { data: olderMessages, error } = await supabase
         .from('messages')
-        .select(`
-          id,
-          content,
-          created_at,
-          read_at,
-          sender_id,
-          conversation_id,
-          media_type,
-          media_url,
-          sender:profiles!messages_sender_id_fkey (
-            id,
-            username,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select(MESSAGE_FIELDS)
         .eq('conversation_id', conversationId)
         .lt('created_at', oldestMessage.created_at)
         .order('created_at', { ascending: false })
