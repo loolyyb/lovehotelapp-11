@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useMessageFetcher } from "./useMessageFetcher";
 import { useMessageMarker } from "./useMessageMarker";
 
@@ -23,6 +23,7 @@ export const useMessageRetrieval = ({
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const loadMoreTimerRef = useRef<number | null>(null);
   const markAsReadTimerRef = useRef<number | null>(null);
+  const lastAddedMessageRef = useRef<string | null>(null);
 
   // Use the optimized fetcher
   const { 
@@ -46,6 +47,38 @@ export const useMessageRetrieval = ({
     currentProfileId
   });
 
+  // Enhanced addMessageToCache with deduplication
+  const enhancedAddMessageToCache = useCallback((message: any) => {
+    if (!message || !message.id) return;
+    
+    // Prevent adding the same message multiple times
+    if (lastAddedMessageRef.current === message.id) return;
+    lastAddedMessageRef.current = message.id;
+    
+    // Add to cache
+    const result = addMessageToCache(message);
+    
+    // If successfully added to cache, also update the state
+    if (result) {
+      setMessages(prev => {
+        // Check if message already exists to avoid duplicates
+        if (prev.some(m => m.id === message.id)) {
+          return prev;
+        }
+        return [...prev, message].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      });
+    }
+    
+    // Reset lastAddedMessageRef after a delay to allow re-adding in case of errors
+    setTimeout(() => {
+      if (lastAddedMessageRef.current === message.id) {
+        lastAddedMessageRef.current = null;
+      }
+    }, 5000);
+  }, [addMessageToCache, setMessages]);
+
   // Fetch messages and handle marking as read with debounce
   const fetchMessagesAndMarkAsRead = useCallback(async (useCache = true) => {
     if (!currentProfileId) {
@@ -65,7 +98,7 @@ export const useMessageRetrieval = ({
       markAsReadTimerRef.current = window.setTimeout(() => {
         markMessagesAsRead();
         markAsReadTimerRef.current = null;
-      }, 1200) as unknown as number;
+      }, 1000) as unknown as number;
     }
     
     return result;
@@ -95,29 +128,30 @@ export const useMessageRetrieval = ({
   }, [fetchMoreMessages, hasMoreMessages, isFetchingMore, currentProfileId, fetchInProgress]);
 
   // Cleanup timers on unmount
-  const cleanup = useCallback(() => {
-    if (markAsReadTimerRef.current) {
-      window.clearTimeout(markAsReadTimerRef.current);
-      markAsReadTimerRef.current = null;
-    }
-    
-    if (loadMoreTimerRef.current) {
-      window.clearTimeout(loadMoreTimerRef.current);
-      loadMoreTimerRef.current = null;
-    }
+  useEffect(() => {
+    return () => {
+      if (markAsReadTimerRef.current) {
+        window.clearTimeout(markAsReadTimerRef.current);
+        markAsReadTimerRef.current = null;
+      }
+      
+      if (loadMoreTimerRef.current) {
+        window.clearTimeout(loadMoreTimerRef.current);
+        loadMoreTimerRef.current = null;
+      }
+    };
   }, []);
 
   return { 
     fetchMessages: fetchMessagesAndMarkAsRead,
     loadMoreMessages,
     markMessagesAsRead,
-    addMessageToCache,
+    addMessageToCache: enhancedAddMessageToCache,
     clearCache,
     clearConversationCache,
     isLoadingMore,
     hasMoreMessages,
     isFetchingMore,
-    fetchInProgress,
-    cleanup
+    fetchInProgress
   };
 };

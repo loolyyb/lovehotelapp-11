@@ -1,67 +1,56 @@
 
 import { logger } from "@/services/LogService";
 import { MessageCacheStore } from "./messageCacheStore";
-import { MAX_CACHE_AGE_MS, getCacheKey } from "./cacheSettings";
+import { MAX_CACHE_SIZE } from "./cacheSettings";
 
 /**
- * Core cache operations for adding and retrieving messages
- * with optimized performance
+ * Operations to manipulate the message cache
  */
 export const CacheOperations = {
   /**
-   * Add a single message to the cache
-   * @returns boolean indicating whether the operation was successful
+   * Add a single message to the cache for a conversation
+   * with optimized insertion and sorting
    */
   addMessage(conversationId: string, message: any): boolean {
-    if (!conversationId || !message) return false;
-    
-    const cacheKey = getCacheKey(conversationId);
-    const cached = MessageCacheStore._cache.get(cacheKey);
-    
-    if (!cached) {
-      // If no cache exists yet, create a new entry
-      MessageCacheStore.set(conversationId, [message]);
-      return true;
+    if (!conversationId || !message || !message.id) {
+      logger.warn("Invalid parameters for addMessage", { 
+        hasConversationId: !!conversationId, 
+        hasMessage: !!message,
+        hasMessageId: message?.id
+      });
+      return false;
     }
     
-    // Check if message already exists to prevent duplicates
-    // Use a Set for O(1) lookup performance on large message lists
-    const messageIds = new Set(cached.messages.map(msg => msg.id));
+    // Get existing messages for the conversation
+    const existingMessages = MessageCacheStore.get(conversationId) || [];
     
-    if (!messageIds.has(message.id)) {
-      cached.messages.push(message);
-      cached.timestamp = Date.now();
-      // Update the cache entry to refresh the LRU position
-      MessageCacheStore._cache.set(cacheKey, cached);
-      return true;
+    // Check if message already exists to avoid duplicates
+    if (existingMessages.some(m => m.id === message.id)) {
+      logger.info("Message already exists in cache, skipping", { 
+        messageId: message.id,
+        conversationId
+      });
+      return false;
     }
     
-    return false;
-  },
-  
-  /**
-   * Get messages from cache, checking validity first
-   * @returns messages array or undefined if not in cache or expired
-   */
-  getMessages(conversationId: string): any[] | undefined {
-    if (!conversationId) return undefined;
+    logger.info("Adding message to cache", { 
+      messageId: message.id,
+      conversationId
+    });
     
-    const cacheKey = getCacheKey(conversationId);
-    const cached = MessageCacheStore._cache.get(cacheKey);
+    // Add new message and sort by creation time
+    const updatedMessages = [...existingMessages, message].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
     
-    if (!cached) return undefined;
-    
-    // Check if cache is still valid (not too old)
-    if (Date.now() - cached.timestamp > MAX_CACHE_AGE_MS) {
-      logger.info("Cache expired for conversation", { conversationId });
-      MessageCacheStore._cache.delete(cacheKey);
-      return undefined;
+    // Ensure we don't exceed the maximum cache size
+    if (updatedMessages.length > MAX_CACHE_SIZE) {
+      updatedMessages.splice(0, updatedMessages.length - MAX_CACHE_SIZE);
     }
     
-    // Update timestamp on access to refresh LRU status
-    cached.timestamp = Date.now();
-    MessageCacheStore._cache.set(cacheKey, cached);
+    // Store the updated messages
+    MessageCacheStore.set(conversationId, updatedMessages);
     
-    return cached.messages;
+    return true;
   }
 };

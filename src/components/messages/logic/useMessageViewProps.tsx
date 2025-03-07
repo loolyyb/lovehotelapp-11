@@ -126,10 +126,27 @@ export function useMessageViewProps(conversationId: string) {
   const handleNewMessage = useCallback((message) => {
     if (message.conversation_id === conversationId) {
       logger.info("New message received, updating messages list", { messageId: message.id });
-      // Use optimistic update via cache
+      
+      // Directly add to messages state for immediate display
+      setMessages(prev => {
+        // Check if message already exists to avoid duplicates
+        if (prev.some(m => m.id === message.id)) {
+          return prev;
+        }
+        return [...prev, message];
+      });
+      
+      // Also update cache to ensure persistence
       addMessageToCache(message);
+      
+      // Mark as read after a short delay
+      setTimeout(() => {
+        if (currentProfileId && message.sender_id !== currentProfileId) {
+          markMessagesAsRead();
+        }
+      }, 500);
     }
-  }, [conversationId, addMessageToCache, logger]);
+  }, [conversationId, addMessageToCache, setMessages, logger, currentProfileId, markMessagesAsRead]);
 
   const handleMessageUpdate = useCallback((message) => {
     if (message.conversation_id === conversationId) {

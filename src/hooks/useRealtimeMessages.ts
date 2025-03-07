@@ -16,6 +16,7 @@ export const useRealtimeMessages = ({
 }: UseRealtimeMessagesProps) => {
   const logger = useLogger("useRealtimeMessages");
   const channelRef = useRef<any>(null);
+  const lastProcessedMessageRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!currentProfileId) {
@@ -32,63 +33,82 @@ export const useRealtimeMessages = ({
       supabase.removeChannel(channelRef.current);
     }
 
+    // Clear the set when changing profile ID
+    lastProcessedMessageRef.current.clear();
+
+    // Create a unique channel name with timestamp to avoid conflicts
+    const channelName = `messages-${currentProfileId}-${Date.now()}`;
+
     // Subscribe to new messages with optimized filter
     channelRef.current = supabase
-      .channel(`messages-${currentProfileId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
-          filter: `sender_id=neq.${currentProfileId}` // Only listen for messages from others
+          table: 'messages'
         },
         (payload) => {
+          const messageId = payload.new?.id;
+          if (!messageId || lastProcessedMessageRef.current.has(messageId)) {
+            return; // Skip if already processed or invalid
+          }
+
           logger.info("New message received via realtime", {
             messageId: payload.new.id,
             conversationId: payload.new.conversation_id
           });
 
-          // Fetch sender details if needed
-          if (payload.new && payload.new.sender_id) {
-            // Use async function with try/catch for better error handling
-            const fetchSender = async () => {
-              try {
-                const { data: sender, error } = await supabase
-                  .from('profiles')
-                  .select('id, username, full_name, avatar_url')
-                  .eq('id', payload.new.sender_id)
-                  .single();
-                
-                if (error) {
-                  logger.error("Error fetching sender for realtime message", {
-                    error,
+          // Mark as processed to prevent duplicate handling
+          lastProcessedMessageRef.current.add(messageId);
+
+          // Only process messages if they're relevant to current user
+          // Either as sender or in their conversation
+          if (payload.new.sender_id === currentProfileId || 
+              payload.new.conversation_id.includes(currentProfileId)) {
+              
+            // Fetch sender details if needed
+            if (payload.new && payload.new.sender_id) {
+              // Use async function with try/catch for better error handling
+              const fetchSender = async () => {
+                try {
+                  const { data: sender, error } = await supabase
+                    .from('profiles')
+                    .select('id, username, full_name, avatar_url')
+                    .eq('id', payload.new.sender_id)
+                    .single();
+                  
+                  if (error) {
+                    logger.error("Error fetching sender for realtime message", {
+                      error,
+                      senderId: payload.new.sender_id
+                    });
+                    // Still deliver the message even if sender fetch fails
+                    onNewMessage(payload.new);
+                    return;
+                  }
+                  
+                  onNewMessage({
+                    ...payload.new,
+                    sender
+                  });
+                } catch (error: any) {
+                  logger.error("Exception in fetching sender for realtime message", {
+                    error: error.message,
+                    stack: error.stack,
                     senderId: payload.new.sender_id
                   });
                   // Still deliver the message even if sender fetch fails
                   onNewMessage(payload.new);
-                  return;
                 }
-                
-                onNewMessage({
-                  ...payload.new,
-                  sender
-                });
-              } catch (error: any) {
-                logger.error("Exception in fetching sender for realtime message", {
-                  error: error.message,
-                  stack: error.stack,
-                  senderId: payload.new.sender_id
-                });
-                // Still deliver the message even if sender fetch fails
-                onNewMessage(payload.new);
-              }
-            };
-            
-            // Execute the async function
-            fetchSender();
-          } else {
-            onNewMessage(payload.new);
+              };
+              
+              // Execute the async function
+              fetchSender();
+            } else {
+              onNewMessage(payload.new);
+            }
           }
         }
       )
@@ -109,7 +129,7 @@ export const useRealtimeMessages = ({
         }
       )
       .subscribe((status) => {
-        logger.info("Realtime subscription status", { status });
+        logger.info("Realtime subscription status", { status, channelName });
       });
 
     // Cleanup
