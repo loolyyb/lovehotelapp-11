@@ -56,20 +56,18 @@ export const useMessageRetrieval = ({
     lastAddedMessageRef.current = message.id;
     
     // Add to cache
-    const result = addMessageToCache(message);
+    addMessageToCache(message);
     
-    // If successfully added to cache, also update the state
-    if (result) {
-      setMessages(prev => {
-        // Check if message already exists to avoid duplicates
-        if (prev.some(m => m.id === message.id)) {
-          return prev;
-        }
-        return [...prev, message].sort(
-          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
-      });
-    }
+    // Also update the state directly
+    setMessages(prev => {
+      // Check if message already exists to avoid duplicates
+      if (prev.some(m => m.id === message.id)) {
+        return prev;
+      }
+      return [...prev, message].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+    });
     
     // Reset lastAddedMessageRef after a delay to allow re-adding in case of errors
     setTimeout(() => {
