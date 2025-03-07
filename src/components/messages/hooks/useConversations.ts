@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
@@ -233,6 +234,19 @@ export const useConversations = () => {
       debounceTimerRef.current = null;
     }, 800);  // Increased debounce time to prevent rapid firing
   }, [logger, fetchConversationsWithMessages]);
+
+  // Handle message updates (the missing function)
+  const handleMessageUpdate = useCallback((message: any) => {
+    logger.info("Message update received", { 
+      messageId: message.id, 
+      conversationId: message.conversation_id
+    });
+    
+    // If the message belongs to a conversation we have, refresh conversations
+    if (conversations.some(conv => conv.id === message.conversation_id)) {
+      handleConversationChange();
+    }
+  }, [logger, conversations, handleConversationChange]);
 
   // Setup realtime subscription for conversation updates
   const { handleNewMessage: realtimeMessageHandler } = useConversationsRealtime(
