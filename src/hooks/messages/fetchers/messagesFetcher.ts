@@ -7,6 +7,8 @@ import { MessageCache } from '../cache';
 // Constants for pagination
 const INITIAL_PAGE_SIZE = 15;
 const PAGINATION_SIZE = 10;
+const DEBOUNCE_TIME = 300; // ms
+const THROTTLE_TIME = 1000; // ms
 
 // Optimization: Only select fields we need to reduce payload size
 const MESSAGE_FIELDS = `
@@ -28,6 +30,7 @@ const MESSAGE_FIELDS = `
 
 // In-memory query debounce tracking
 const pendingQueries = new Map<string, Promise<any[] | null>>();
+const lastFetchTimes = new Map<string, number>();
 
 /**
  * Message fetching functions with optimized database queries
@@ -51,8 +54,19 @@ export const MessagesFetcher = {
       return null;
     }
 
-    // Unique query ID to deduplicate concurrent requests
-    const queryId = `init_${conversationId}_${Date.now()}`;
+    // Throttle requests - no more than one request per conversation every THROTTLE_TIME ms
+    const now = Date.now();
+    const lastFetchTime = lastFetchTimes.get(conversationId) || 0;
+    if (now - lastFetchTime < THROTTLE_TIME && pendingQueries.has(conversationId)) {
+      logger.info("Throttling fetch request", { 
+        conversationId,
+        timeSinceLastFetch: now - lastFetchTime,
+        component: "messagesFetcher" 
+      });
+      return pendingQueries.get(conversationId);
+    }
+    
+    lastFetchTimes.set(conversationId, now);
     
     try {
       // Try to get from cache first if allowed
@@ -129,7 +143,7 @@ export const MessagesFetcher = {
           // new requests after a reasonable time
           setTimeout(() => {
             pendingQueries.delete(conversationId);
-          }, 300);
+          }, DEBOUNCE_TIME);
         }
       })();
       

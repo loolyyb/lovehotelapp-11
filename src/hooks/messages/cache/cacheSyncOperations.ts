@@ -5,6 +5,7 @@ import { MAX_CACHE_AGE_MS, getCacheKey } from "./cacheSettings";
 
 // Track in-progress sync operations to prevent duplicates
 const syncOperations = new Map<string, boolean>();
+const syncTimers = new Map<string, number>();
 
 /**
  * Operations for syncing and checking for newer messages
@@ -97,6 +98,7 @@ export const CacheSyncOperations = {
       // to prevent too frequent checks
       if (cached) {
         cached.timestamp = Date.now();
+        MessageCacheStore._cache.set(cacheKey, cached);
       }
       
       return null;
@@ -104,11 +106,30 @@ export const CacheSyncOperations = {
       logger.error("Error in checkForNewerMessages", { error });
       return null;
     } finally {
+      // Clear any existing timer
+      if (syncTimers.has(conversationId)) {
+        window.clearTimeout(syncTimers.get(conversationId));
+      }
+      
       // Remove from in-progress operations after a delay
       // to prevent immediate duplicates
-      setTimeout(() => {
+      const timerId = window.setTimeout(() => {
         syncOperations.delete(conversationId);
-      }, 500);
+        syncTimers.delete(conversationId);
+      }, 800) as unknown as number;
+      
+      syncTimers.set(conversationId, timerId);
     }
+  },
+  
+  // Clean up all sync operations and timers
+  cleanupSync() {
+    syncOperations.clear();
+    
+    // Clear all timers
+    syncTimers.forEach(timerId => {
+      window.clearTimeout(timerId);
+    });
+    syncTimers.clear();
   }
 };
