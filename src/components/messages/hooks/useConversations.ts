@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
@@ -7,6 +6,7 @@ import { useUserProfileRetrieval } from "@/hooks/conversations/useUserProfileRet
 import { useConversationsFetcher } from "@/hooks/conversations/useConversationsFetcher";
 import { useLatestMessagesFetcher } from "@/hooks/conversations/useLatestMessagesFetcher";
 import { useConversationsRealtime } from "@/hooks/conversations/useConversationsRealtime";
+import { useConversationCache } from "@/hooks/conversations/useConversationCache";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useConversations = () => {
@@ -32,10 +32,18 @@ export const useConversations = () => {
     setConversations,
     isLoading: conversationsLoading,
     error: conversationsError,
-    fetchConversations
+    fetchConversations,
+    loadMoreConversations,
+    hasMore
   } = useConversationsFetcher(currentProfileId);
 
   const { fetchLatestMessages } = useLatestMessagesFetcher();
+  
+  const { 
+    cacheProfile, 
+    getCachedProfile, 
+    clearCache 
+  } = useConversationCache();
 
   // Combine loading and error states
   const isLoading = profileLoading || conversationsLoading;
@@ -56,6 +64,16 @@ export const useConversations = () => {
   // Diagnostic check for profile and username
   useEffect(() => {
     if (currentProfileId) {
+      // Check if we have this profile cached first
+      const cachedProfile = getCachedProfile(currentProfileId);
+      if (cachedProfile) {
+        logger.info("Using cached profile details", {
+          profileId: cachedProfile.id,
+          username: cachedProfile.username
+        });
+        return;
+      }
+      
       // Fetch profile details
       supabase
         .from('profiles')
@@ -71,86 +89,24 @@ export const useConversations = () => {
               username: data.username,
               fullName: data.full_name
             });
+            // Cache the profile
+            cacheProfile(data.id, data);
           }
         });
     }
-  }, [currentProfileId, logger]);
-
-  // Check permissions and fix profile issues
-  useEffect(() => {
-    const checkPermsAndFix = async () => {
-      if (!currentProfileId) return;
-      
-      try {
-        logger.info("Checking permissions and profile setup", { profileId: currentProfileId });
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          logger.warn("No authenticated user", { reason: "no_user" });
-          return;
-        }
-        
-        // Check if profile exists and has correct user_id
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, user_id')
-          .eq('id', currentProfileId)
-          .maybeSingle();
-          
-        if (profileError) {
-          logger.error("Error checking profile", { error: profileError });
-          return;
-        }
-        
-        if (!profile) {
-          logger.warn("Profile not found, may need to create it", { profileId: currentProfileId });
-          return;
-        }
-        
-        logger.info("Profile check successful", { 
-          profileId: profile.id,
-          userId: profile.user_id,
-          authId: user.id
-        });
-        
-        // If user_id doesn't match auth.id, update it
-        if (profile.user_id !== user.id) {
-          logger.warn("Profile user_id doesn't match auth.id, fixing...", {
-            profileId: profile.id,
-            profileUserId: profile.user_id,
-            authId: user.id
-          });
-          
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ user_id: user.id })
-            .eq('id', currentProfileId);
-            
-          if (updateError) {
-            logger.error("Failed to update profile user_id", { error: updateError });
-          } else {
-            logger.info("Successfully updated profile user_id", {
-              profileId: currentProfileId,
-              userId: user.id
-            });
-          }
-        }
-      } catch (error) {
-        logger.error("Error in permissions check", { error });
-      }
-    };
-    
-    checkPermsAndFix();
-  }, [currentProfileId, logger]);
+  }, [currentProfileId, logger, cacheProfile, getCachedProfile]);
 
   // Main fetch function that orchestrates the process
-  const fetchConversationsWithMessages = useCallback(async () => {
+  const fetchConversationsWithMessages = useCallback(async (useCache = true) => {
     // Use ref to prevent multiple simultaneous fetches
     if (fetchingRef.current) return;
     fetchingRef.current = true;
 
     try {
-      logger.info("Starting conversations fetch process", { attempt: fetchAttemptsRef.current + 1 });
+      logger.info("Starting conversations fetch process", { 
+        attempt: fetchAttemptsRef.current + 1,
+        useCache
+      });
       fetchAttemptsRef.current += 1;
       
       // 1. Get user profile if not already available
@@ -163,8 +119,8 @@ export const useConversations = () => {
         }
       }
 
-      // 2. Fetch conversations for the user
-      const fetchedConversations = await fetchConversations();
+      // 2. Fetch conversations for the user with optional caching
+      const fetchedConversations = await fetchConversations(useCache);
       
       if (fetchedConversations.length === 0) {
         logger.warn("No conversations found, attempt", { attemptNumber: fetchAttemptsRef.current });
@@ -204,11 +160,13 @@ export const useConversations = () => {
         }
       }
       
-      // 3. Fetch latest message for each conversation
-      const conversationsWithMessages = await fetchLatestMessages(fetchedConversations);
-      
-      // 4. Update state with the completed data
-      setConversations(conversationsWithMessages);
+      // 3. Fetch latest message for each conversation if we have conversations
+      if (fetchedConversations.length > 0) {
+        const conversationsWithMessages = await fetchLatestMessages(fetchedConversations);
+        
+        // 4. Update state with the completed data
+        setConversations(conversationsWithMessages);
+      }
       
       // Reset retry counter on success
       retryCountRef.current = 0;
@@ -233,39 +191,33 @@ export const useConversations = () => {
   // Initial fetch
   useEffect(() => {
     fetchConversationsWithMessages();
-  }, [fetchConversationsWithMessages]);
+    
+    // Clear cache on component unmount
+    return () => {
+      clearCache();
+    };
+  }, [fetchConversationsWithMessages, clearCache]);
 
-  // Handler for conversation changes
+  // Handler for conversation changes with debounce
   const handleConversationChange = useCallback(() => {
     logger.info("Conversation change detected, triggering refresh", { timestamp: new Date().toISOString() });
-    fetchConversationsWithMessages();
-  }, [logger, fetchConversationsWithMessages]);
-
-  // Handler for new messages with debounce to prevent excessive updates
-  const handleNewMessage = useCallback((message: any) => {
-    logger.info("New message received, triggering conversation update", { 
-      messageId: message.id, 
-      conversationId: message.conversation_id,
-      timestamp: new Date().toISOString()
-    });
     
-    // Clear any existing debounce timer
+    // Debounce the refresh to prevent too many updates
     if (debounceTimerRef.current) {
       window.clearTimeout(debounceTimerRef.current);
     }
     
-    // Set a new debounce timer to fetch conversations
     debounceTimerRef.current = window.setTimeout(() => {
-      fetchConversationsWithMessages();
+      fetchConversationsWithMessages(false); // Force fresh fetch
       debounceTimerRef.current = null;
-    }, 300);
-  }, [fetchConversationsWithMessages, logger]);
+    }, 500);
+  }, [logger, fetchConversationsWithMessages]);
 
   // Setup realtime subscription for conversation updates
   const { handleNewMessage: realtimeMessageHandler } = useConversationsRealtime(
     currentProfileId,
     handleConversationChange,
-    handleNewMessage
+    () => {} // We handle messages separately
   );
 
   // Cleanup debounce timer on unmount
@@ -287,7 +239,9 @@ export const useConversations = () => {
     conversations, 
     isLoading, 
     error, 
-    refetch: fetchConversationsWithMessages, 
-    currentProfileId 
+    refetch: useCallback(() => fetchConversationsWithMessages(false), [fetchConversationsWithMessages]), 
+    currentProfileId,
+    loadMoreConversations,
+    hasMoreConversations: hasMore
   };
 };

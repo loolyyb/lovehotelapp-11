@@ -1,9 +1,11 @@
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { LoadingState } from "./LoadingState";
 import { ErrorState } from "./ErrorState";
 import { EmptyConversation } from "./EmptyConversation";
+import { Button } from "../ui/button";
+import { ChevronUp } from "lucide-react";
 
 interface MessageContentProps {
   isLoading: boolean;
@@ -11,6 +13,9 @@ interface MessageContentProps {
   messages: any[];
   currentProfileId: string | null;
   retryLoad: () => void;
+  loadMoreMessages?: () => void;
+  isLoadingMore?: boolean;
+  hasMoreMessages?: boolean;
 }
 
 export function MessageContent({ 
@@ -18,19 +23,42 @@ export function MessageContent({
   isError,
   messages,
   currentProfileId,
-  retryLoad
+  retryLoad,
+  loadMoreMessages,
+  isLoadingMore = false,
+  hasMoreMessages = false
 }: MessageContentProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const messageContainerRef = useRef<HTMLDivElement>(null);
 
-  // Automatic scroll to last message
+  // Track if user has scrolled up
+  const handleScroll = () => {
+    if (!messageContainerRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = messageContainerRef.current;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+    
+    // Only change autoScroll if it's different from current value
+    if (autoScroll !== isAtBottom) {
+      setAutoScroll(isAtBottom);
+    }
+    
+    // Check if we need to load more messages when scrolling to top
+    if (scrollTop < 100 && hasMoreMessages && loadMoreMessages && !isLoadingMore) {
+      loadMoreMessages();
+    }
+  };
+
+  // Automatic scroll to last message on new messages
   useEffect(() => {
-    if (messages && messages.length > 0) {
+    if (messages && messages.length > 0 && autoScroll) {
       const timeout = setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
       return () => clearTimeout(timeout);
     }
-  }, [messages]);
+  }, [messages, autoScroll]);
 
   // Add enhanced logging to help debug
   useEffect(() => {
@@ -40,7 +68,8 @@ export function MessageContent({
       messagesCount: messages?.length || 0,
       currentProfileId,
       hasCurrentProfile: Boolean(currentProfileId),
-      messagesArray: messages
+      hasMoreMessages,
+      isLoadingMore
     });
     
     if (messages?.length > 0) {
@@ -64,7 +93,7 @@ export function MessageContent({
         console.log("Current user messages count:", currentUserMessages.length);
       }
     }
-  }, [isLoading, isError, messages, currentProfileId]);
+  }, [isLoading, isError, messages, currentProfileId, hasMoreMessages, isLoadingMore]);
 
   if (isLoading && !messages?.length) {
     return <LoadingState />;
@@ -79,7 +108,31 @@ export function MessageContent({
   }
 
   return (
-    <div className="flex flex-col space-y-4 p-4">
+    <div 
+      className="flex flex-col space-y-1 p-4 overflow-y-auto h-full" 
+      ref={messageContainerRef}
+      onScroll={handleScroll}
+    >
+      {isLoadingMore && (
+        <div className="flex justify-center py-2">
+          <div className="animate-pulse text-[#f3ebad]/70">Chargement des messages...</div>
+        </div>
+      )}
+      
+      {hasMoreMessages && !isLoadingMore && (
+        <div className="flex justify-center py-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={loadMoreMessages}
+            className="text-[#f3ebad]/70 hover:text-[#f3ebad] hover:bg-[#f3ebad]/10 flex items-center"
+          >
+            <ChevronUp className="h-4 w-4 mr-1" />
+            Charger plus de messages
+          </Button>
+        </div>
+      )}
+      
       {messages.map((message) => (
         <MessageBubble
           key={message.id}
@@ -87,6 +140,7 @@ export function MessageContent({
           isCurrentUser={message.sender_id === currentProfileId}
         />
       ))}
+      
       <div ref={messagesEndRef} />
     </div>
   );

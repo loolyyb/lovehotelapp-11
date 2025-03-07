@@ -1,6 +1,7 @@
 
 import { useMessageFetcher } from "./useMessageFetcher";
 import { useMessageMarker } from "./useMessageMarker";
+import { useState, useCallback } from "react";
 
 interface UseMessageRetrievalProps {
   conversationId: string;
@@ -15,7 +16,16 @@ export const useMessageRetrieval = ({
   setMessages, 
   toast 
 }: UseMessageRetrievalProps) => {
-  const { fetchMessages } = useMessageFetcher({
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  
+  const { 
+    fetchMessages, 
+    fetchMoreMessages, 
+    addMessageToCache, 
+    clearCache,
+    isLoadingMore, 
+    hasMoreMessages 
+  } = useMessageFetcher({
     conversationId,
     currentProfileId,
     setMessages,
@@ -28,15 +38,41 @@ export const useMessageRetrieval = ({
   });
 
   // Add delay before marking messages as read after fetching
-  const fetchMessagesAndMarkAsRead = async () => {
-    await fetchMessages();
+  const fetchMessagesAndMarkAsRead = async (useCache = true) => {
+    const result = await fetchMessages(useCache);
     
     // Add delay before marking messages as read
-    setTimeout(() => markMessagesAsRead(), 1000);
+    if (result && result.length > 0) {
+      setTimeout(() => markMessagesAsRead(), 1000);
+    }
+    
+    return result;
   };
+  
+  // Load more messages with debounce to prevent multiple calls
+  const loadMoreMessages = useCallback(async () => {
+    if (isFetchingMore || !hasMoreMessages) return;
+    
+    setIsFetchingMore(true);
+    
+    try {
+      await fetchMoreMessages();
+    } finally {
+      // Add a slight delay to prevent rapid sequential requests
+      setTimeout(() => {
+        setIsFetchingMore(false);
+      }, 500);
+    }
+  }, [fetchMoreMessages, hasMoreMessages, isFetchingMore]);
 
   return { 
     fetchMessages: fetchMessagesAndMarkAsRead,
-    markMessagesAsRead
+    loadMoreMessages,
+    markMessagesAsRead,
+    addMessageToCache,
+    clearCache,
+    isLoadingMore,
+    hasMoreMessages,
+    isFetchingMore
   };
 };

@@ -42,7 +42,15 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     setIsLoading,
   });
 
-  const { fetchMessages, markMessagesAsRead } = useMessageRetrieval({
+  const { 
+    fetchMessages, 
+    loadMoreMessages, 
+    markMessagesAsRead, 
+    addMessageToCache,
+    isLoadingMore,
+    hasMoreMessages,
+    isFetchingMore
+  } = useMessageRetrieval({
     conversationId,
     currentProfileId,
     setMessages,
@@ -77,7 +85,8 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     onNewMessage: (message) => {
       if (message.conversation_id === conversationId) {
         logger.info("New message received, updating messages list", { messageId: message.id });
-        setMessages(prev => [...prev, message]);
+        // Use optimistic update via cache
+        addMessageToCache(message);
       }
     },
     onMessageUpdate: (message) => {
@@ -220,7 +229,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         otherUser={otherUser}
       />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-pulse text-[#f3ebad]/70">Chargement des messages...</div>
@@ -244,6 +253,9 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
             messages={messages}
             currentProfileId={currentProfileId}
             retryLoad={retryLoad}
+            loadMoreMessages={loadMoreMessages}
+            isLoadingMore={isLoadingMore || isFetchingMore}
+            hasMoreMessages={hasMoreMessages}
           />
         )}
       </div>

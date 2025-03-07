@@ -29,6 +29,11 @@ export const useMessageHandlers = ({
     }
 
     setIsProcessing(true);
+    // Store the message to be sent
+    const messageToSend = newMessage.trim();
+    
+    // Optimistically clear the input field right away for better UX
+    setNewMessage("");
 
     try {
       // First check if user is authenticated
@@ -78,8 +83,8 @@ export const useMessageHandlers = ({
         .insert({
           conversation_id: conversationId,
           sender_id: currentProfileId,
-          content: newMessage.trim(),
-          media_type: newMessage.startsWith('[Image]') ? 'image' : 'text'
+          content: messageToSend,
+          media_type: messageToSend.startsWith('[Image]') ? 'image' : 'text'
         });
           
       if (insertError) {
@@ -94,14 +99,16 @@ export const useMessageHandlers = ({
         conversationId,
         component: "useMessageHandlers"
       });
-      
-      setNewMessage("");
     } catch (error: any) {
       logger.error("Error in sendMessage:", { 
         error: error.message,
         stack: error.stack,
         component: "useMessageHandlers" 
       });
+      
+      // If there was an error, put the message back in the input field
+      setNewMessage(messageToSend);
+      
       toast({
         variant: "destructive",
         title: "Erreur",
