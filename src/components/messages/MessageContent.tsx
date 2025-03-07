@@ -10,6 +10,9 @@ interface MessageContentProps {
   loadMoreMessages: () => void;
   isLoadingMore: boolean;
   hasMoreMessages: boolean;
+  isLoading?: boolean;
+  isError?: boolean;
+  retryLoad?: () => void;
 }
 
 export function MessageContent({
@@ -17,7 +20,10 @@ export function MessageContent({
   currentProfileId,
   loadMoreMessages,
   isLoadingMore,
-  hasMoreMessages
+  hasMoreMessages,
+  isLoading = false,
+  isError = false,
+  retryLoad
 }: MessageContentProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);

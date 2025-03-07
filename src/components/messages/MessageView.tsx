@@ -67,14 +67,14 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
               <EmptyState onRefresh={refreshMessages} isRefreshing={isRefreshing} />
             ) : (
               <MessageContent 
-                isLoading={isLoading}
-                isError={isError}
                 messages={messages}
                 currentProfileId={currentProfileId}
-                retryLoad={retryLoad}
                 loadMoreMessages={loadMoreMessages}
                 isLoadingMore={isLoadingMore}
                 hasMoreMessages={hasMoreMessages}
+                isLoading={isLoading}
+                isError={isError}
+                retryLoad={retryLoad}
               />
             )}
           </MessageViewContainer>
