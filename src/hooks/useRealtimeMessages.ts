@@ -123,12 +123,11 @@ export const useRealtimeMessages = ({
                   };
                   
                   logger.info("Delivering enriched message to handler", {
-                    messageId: payload.new.id, // Fix: access id from payload.new instead of enrichedMessage
+                    messageId: payload.new.id, // Access id from payload.new instead of enrichedMessage
                     hasProfileInfo: !!enrichedMessage.sender
                   });
                   
                   onNewMessage(enrichedMessage);
-                  processingMessageRef.current = false;
                 } catch (error: any) {
                   logger.error("Exception in fetching sender for realtime message", {
                     error: error.message,
@@ -137,6 +136,7 @@ export const useRealtimeMessages = ({
                   });
                   // Still deliver the message even if sender fetch fails
                   onNewMessage(payload.new);
+                } finally {
                   processingMessageRef.current = false;
                 }
               };

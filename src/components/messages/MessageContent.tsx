@@ -34,6 +34,12 @@ export function MessageContent({
   const prevMessagesLengthRef = useRef<number>(0);
   const prevLastMessageIdRef = useRef<string | null>(null);
   const isUserAtBottomRef = useRef<boolean>(true);
+  const messagesRef = useRef<any[]>([]);
+
+  // Update messagesRef when messages prop changes
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // Track if user has scrolled up
   const handleScroll = () => {
