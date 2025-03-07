@@ -37,7 +37,7 @@ export const MessagesFetcher = {
   /**
    * Fetch initial messages for a conversation with query deduplication
    */
-  fetchInitialMessages: async (
+  async fetchInitialMessages(
     conversationId: string,
     currentProfileId: string | null,
     useCache = true
@@ -151,7 +151,7 @@ export const MessagesFetcher = {
   /**
    * Fetch more (older) messages for a conversation
    */
-  fetchMoreMessages: async (
+  async fetchMoreMessages(
     conversationId: string,
     currentProfileId: string | null,
     hasMoreMessages: boolean
