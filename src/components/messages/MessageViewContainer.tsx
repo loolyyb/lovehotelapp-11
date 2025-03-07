@@ -20,7 +20,7 @@ export function MessageViewContainer({
   footer
 }: MessageViewContainerProps) {
   return (
-    <div className="flex flex-col h-full bg-[#40192C] backdrop-blur-sm border-[0.5px] border-[#f3ebad]/30">
+    <div className="flex flex-col h-full bg-[#5A293D] backdrop-blur-sm border-[0.5px] border-[#f3ebad]/30">
       <MessageHeader 
         onBack={onBack} 
         refreshMessages={refreshMessages} 

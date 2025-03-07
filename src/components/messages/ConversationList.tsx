@@ -414,6 +414,10 @@ export function ConversationList({
     );
   }
 
+  // Define the active conversation background color to be used in both places
+  const activeConversationBgClass = "bg-[#5A293D]";
+  const hoverClass = "hover:bg-rose/5";
+
   return <div className="h-full flex flex-col">
       <div className="p-4 border-b border-rose/20">
         <div className="flex items-center justify-between">
@@ -434,38 +438,50 @@ export function ConversationList({
         {conversations.map(conversation => {
           const otherUser = conversation.otherUser;
           const lastMessage = conversation.messages?.[0];
+          const isActive = selectedConversationId === conversation.id;
           
           logger.debug("Rendering conversation", { 
             conversationId: conversation.id, 
             otherUserId: otherUser?.id,
-            hasMessages: conversation.messages?.length > 0
+            hasMessages: conversation.messages?.length > 0,
+            isActive
           });
           
-          return <div key={conversation.id} className={`p-4 border-b border-rose/20 cursor-pointer hover:bg-rose/5 transition-colors ${selectedConversationId === conversation.id ? 'bg-rose/10' : ''}`} onClick={() => onSelectConversation(conversation.id)}>
-                <div className="flex items-center space-x-3">
-                  <Avatar>
-                    <AvatarImage src={otherUser?.avatar_url || DEFAULT_AVATAR_URL} />
-                    <AvatarFallback>
-                      <img src={DEFAULT_AVATAR_URL} alt="Default Avatar" className="w-full h-full object-cover" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline">
-                      <h3 className="font-medium text-[#f3ebad] truncate">
-                        {otherUser?.full_name || otherUser?.username || "Utilisateur"}
-                      </h3>
-                      {lastMessage && <span className="text-xs text-[#f3ebad]/50">
-                          {format(new Date(lastMessage.created_at), 'HH:mm', {
-                            locale: fr
-                          })}
-                        </span>}
-                    </div>
-                    {lastMessage && <p className="text-sm text-[#f3ebad]/70 truncate">
-                        {lastMessage.content}
-                      </p>}
+          return (
+            <div 
+              key={conversation.id} 
+              className={`p-4 border-b border-rose/20 cursor-pointer transition-colors ${
+                isActive 
+                  ? activeConversationBgClass  // Active state
+                  : hoverClass                 // Hover state for inactive
+              }`} 
+              onClick={() => onSelectConversation(conversation.id)}
+            >
+              <div className="flex items-center space-x-3">
+                <Avatar>
+                  <AvatarImage src={otherUser?.avatar_url || DEFAULT_AVATAR_URL} />
+                  <AvatarFallback>
+                    <img src={DEFAULT_AVATAR_URL} alt="Default Avatar" className="w-full h-full object-cover" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-baseline">
+                    <h3 className="font-medium text-[#f3ebad] truncate">
+                      {otherUser?.full_name || otherUser?.username || "Utilisateur"}
+                    </h3>
+                    {lastMessage && <span className="text-xs text-[#f3ebad]/50">
+                        {format(new Date(lastMessage.created_at), 'HH:mm', {
+                          locale: fr
+                        })}
+                      </span>}
                   </div>
+                  {lastMessage && <p className="text-sm text-[#f3ebad]/70 truncate">
+                      {lastMessage.content}
+                    </p>}
                 </div>
-              </div>;
+              </div>
+            </div>
+          );
         })}
       </div>
     </div>;
