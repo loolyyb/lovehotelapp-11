@@ -1,16 +1,14 @@
 
-import { logger } from "@/services/LogService";
-import { AlertService } from "@/services/AlertService";
-import { useProfileRetrieval } from "./conversations/useProfileRetrieval";
-import { useConversationData } from "./conversations/useConversationData";
-import { useInitialMessages } from "./conversations/useInitialMessages";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { useLogger } from "@/hooks/useLogger";
 import { supabase } from "@/integrations/supabase/client";
+import { useConversationData } from "@/hooks/conversations/useConversationData";
+import { AlertService } from "@/services/AlertService";
 
 interface UseConversationInitProps {
   conversationId: string;
   setMessages: React.Dispatch<React.SetStateAction<any[]>>;
-  setCurrentProfileId: React.Dispatch<React.SetStateAction<string | null>>;
+  setCurrentProfileId: (profileId: string | null) => void;
   setOtherUser: React.Dispatch<React.SetStateAction<any>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -22,63 +20,87 @@ export const useConversationInit = ({
   setOtherUser,
   setIsLoading,
 }: UseConversationInitProps) => {
-  const [internalProfileId, setInternalProfileId] = useState<string | null>(null);
-  
-  const { getCurrentUserProfile } = useProfileRetrieval({
-    setCurrentProfileId: (profileId) => {
-      setInternalProfileId(profileId);
-      setCurrentProfileId(profileId);
-    }
-  });
+  const logger = useLogger("useConversationInit");
   
   const { fetchConversationDetails } = useConversationData({
     conversationId,
-    currentProfileId: internalProfileId,
-    setOtherUser
+    currentProfileId: null, // Will be updated once profile is retrieved
+    setOtherUser,
   });
 
   const getCurrentUser = useCallback(async () => {
     try {
-      logger.info("Initializing user profile", { 
-        conversationId,
-        component: "useConversationInit" 
+      logger.info("Getting current user profile", {
+        conversationId
       });
       
-      const profileId = await getCurrentUserProfile();
+      // Get the current authenticated user
+      const { data: authData, error: authError } = await supabase.auth.getUser();
       
-      if (!profileId) {
-        logger.error("Could not retrieve user profile ID", { 
-          conversationId,
-          component: "useConversationInit" 
+      if (authError) {
+        logger.error("Authentication error", { 
+          error: authError,
+          component: "useConversationInit"
         });
+        setIsLoading(false);
         return;
       }
       
-      logger.info("User profile retrieved successfully", {
-        profileId,
-        conversationId,
+      if (!authData.user) {
+        logger.info("No authenticated user found", {
+          component: "useConversationInit"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Get user's profile ID
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', authData.user.id)
+        .single();
+        
+      if (profileError) {
+        logger.error("Error getting user profile", { 
+          error: profileError,
+          userId: authData.user.id,
+          component: "useConversationInit"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!profileData) {
+        logger.error("No profile found for user", { 
+          userId: authData.user.id,
+          component: "useConversationInit"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      logger.info("Retrieved user profile", { 
+        profileId: profileData.id,
         component: "useConversationInit"
       });
       
-      // Now that we have the profile ID, fetch conversation details
+      // Set the current profile ID
+      setCurrentProfileId(profileData.id);
+      
+      // Fetch conversation details
       await fetchConversationDetails();
       
     } catch (error: any) {
-      logger.error("Error in getCurrentUser", { 
+      logger.error("Exception in getCurrentUser", { 
         error: error.message,
         stack: error.stack,
-        conversationId,
-        component: "useConversationInit" 
-      });
-      AlertService.captureException(error, { 
-        conversationId,
         component: "useConversationInit"
       });
-    } finally {
-      // Only when we've finished this initial setup, we allow messaging to proceed
-      // even if there was an error, so the UI doesn't break
+      AlertService.captureException(error);
+      setIsLoading(false);
     }
-  }, [conversationId, getCurrentUserProfile, fetchConversationDetails]);
+  }, [conversationId, setCurrentProfileId, fetchConversationDetails, setIsLoading, logger]);
 
   return { getCurrentUser };
 };

@@ -1,8 +1,7 @@
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useMessageRetrieval } from "@/hooks/messages/useMessageRetrieval";
 import { useConversationInit } from "@/hooks/useConversationInit";
 import { useMessageRefresh } from "@/hooks/useMessageRefresh";
@@ -45,12 +44,12 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
   const { getCurrentUser } = useConversationInit({
     conversationId,
     setMessages,
-    setCurrentProfileId: useCallback((profileId: string | null) => {
+    setCurrentProfileId: (profileId: string | null) => {
       setCurrentProfileId(profileId);
       if (profileId) {
         setProfileInitialized(true);
       }
-    }, []),
+    },
     setOtherUser,
     setIsLoading,
   });
@@ -219,7 +218,7 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
     return () => {
       mounted = false;
     };
-  }, [currentProfileId, profileInitialized, isAuthChecked, conversationId, fetchMessages, logger]);
+  }, [currentProfileId, profileInitialized, isAuthChecked, conversationId]);
 
   // Handle marking messages as read
   useEffect(() => {
@@ -240,7 +239,7 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
         setTimeout(() => markMessagesAsRead(), 500);
       }
     }
-  }, [messages, currentProfileId, isLoading, markMessagesAsRead, logger]);
+  }, [messages, currentProfileId, isLoading, markMessagesAsRead]);
 
   // Debug state changes
   useEffect(() => {
@@ -252,7 +251,7 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
       messagesCount: messages.length,
       hasCurrentProfile: !!currentProfileId
     });
-  }, [isLoading, isAuthChecked, profileInitialized, isFetchingInitialMessages, messages.length, currentProfileId, logger]);
+  }, [isLoading, isAuthChecked, profileInitialized, isFetchingInitialMessages, messages.length, currentProfileId]);
 
   // Combined loading state 
   const showLoader = isLoading && (!messages.length || !isAuthChecked || !profileInitialized || isFetchingInitialMessages);
