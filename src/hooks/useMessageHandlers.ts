@@ -13,6 +13,7 @@ interface UseMessageHandlersProps {
   toast: ReturnType<typeof useToast>["toast"];
   setMessages?: React.Dispatch<React.SetStateAction<any[]>>;
   addMessageToCache?: (message: any) => void;
+  trackSentMessage?: (messageId: string) => void;
 }
 
 export const useMessageHandlers = ({ 
@@ -22,7 +23,8 @@ export const useMessageHandlers = ({
   setNewMessage,
   toast,
   setMessages,
-  addMessageToCache
+  addMessageToCache,
+  trackSentMessage
 }: UseMessageHandlersProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const optimisticMessageRef = useRef<string | null>(null);
@@ -174,6 +176,11 @@ export const useMessageHandlers = ({
         component: "useMessageHandlers"
       });
 
+      // Track this message as sent by this client to avoid duplicates from realtime
+      if (newMessageData?.id && trackSentMessage) {
+        trackSentMessage(newMessageData.id);
+      }
+
       // Replace optimistic message with real one if we're using local state updates
       if (setMessages && newMessageData) {
         setMessages(prev => prev
@@ -221,7 +228,7 @@ export const useMessageHandlers = ({
         processingTimeoutRef.current = null;
       }, 1000) as unknown as number;
     }
-  }, [currentProfileId, conversationId, newMessage, isProcessing, toast, setNewMessage, setMessages, addMessageToCache]);
+  }, [currentProfileId, conversationId, newMessage, isProcessing, toast, setNewMessage, setMessages, addMessageToCache, trackSentMessage]);
 
   // Properly memoized function without double-call risk
   const debouncedSendMessage = useCallback(

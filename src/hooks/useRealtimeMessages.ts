@@ -18,6 +18,16 @@ export const useRealtimeMessages = ({
   const channelRef = useRef<any>(null);
   const lastProcessedMessageRef = useRef<Set<string>>(new Set());
   const processingMessageRef = useRef<boolean>(false);
+  const sentByMeRef = useRef<Set<string>>(new Set());
+
+  // Track messages that this client has sent
+  const trackSentMessage = useCallback((messageId: string) => {
+    sentByMeRef.current.add(messageId);
+    // Remove from tracking after 10 seconds to prevent memory leaks
+    setTimeout(() => {
+      sentByMeRef.current.delete(messageId);
+    }, 10000);
+  }, []);
 
   useEffect(() => {
     if (!currentProfileId) {
@@ -36,6 +46,7 @@ export const useRealtimeMessages = ({
 
     // Clear the set when changing profile ID
     lastProcessedMessageRef.current.clear();
+    sentByMeRef.current.clear();
 
     // Create a unique channel name with timestamp to avoid conflicts
     const channelName = `messages-${currentProfileId}-${Date.now()}`;
@@ -56,6 +67,14 @@ export const useRealtimeMessages = ({
           const messageId = payload.new?.id;
           if (!messageId || lastProcessedMessageRef.current.has(messageId)) {
             return; // Skip if already processed or invalid
+          }
+
+          // Skip messages that were sent by this client to avoid duplicates
+          if (sentByMeRef.current.has(messageId)) {
+            logger.info("Ignoring message sent by this client", { 
+              messageId: messageId
+            });
+            return;
           }
 
           logger.info("New message received via realtime", { 
@@ -167,5 +186,8 @@ export const useRealtimeMessages = ({
     };
   }, [currentProfileId, onNewMessage, onMessageUpdate, logger]);
 
-  return { handleNewMessage: onNewMessage };
+  return { 
+    handleNewMessage: onNewMessage, 
+    trackSentMessage 
+  };
 };

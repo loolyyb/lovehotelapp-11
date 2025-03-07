@@ -113,17 +113,6 @@ export function useMessageViewProps(conversationId: string) {
     messages
   });
 
-  // Setup message sending with direct access to message state
-  const { sendMessage } = useMessageHandlers({
-    currentProfileId,
-    conversationId,
-    newMessage,
-    setNewMessage,
-    toast,
-    setMessages,
-    addMessageToCache
-  });
-
   // Message realtime update handlers - Improved for better UI updates
   const handleNewMessage = useCallback((message) => {
     if (message.conversation_id === conversationId) {
@@ -136,7 +125,7 @@ export function useMessageViewProps(conversationId: string) {
       // Directly add to messages state for immediate display
       setMessages(prev => {
         // Check if message already exists to avoid duplicates
-        if (prev.some(m => m.id === message.id)) {
+        if (prev.some(m => m.id === message.id || (m.optimistic && m.content === message.content))) {
           return prev;
         }
         
@@ -174,10 +163,22 @@ export function useMessageViewProps(conversationId: string) {
   }, [conversationId, setMessages, logger]);
 
   // Setup realtime message updates with improved subscription
-  useRealtimeMessages({
+  const { trackSentMessage } = useRealtimeMessages({
     currentProfileId,
     onNewMessage: handleNewMessage,
     onMessageUpdate: handleMessageUpdate
+  });
+
+  // Setup message sending with direct access to message state
+  const { sendMessage } = useMessageHandlers({
+    currentProfileId,
+    conversationId,
+    newMessage,
+    setNewMessage,
+    toast,
+    setMessages,
+    addMessageToCache,
+    trackSentMessage
   });
 
   // Combined loading state

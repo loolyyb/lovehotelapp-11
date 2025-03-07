@@ -32,6 +32,8 @@ export function MessageContent({
   const [autoScroll, setAutoScroll] = useState(true);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const prevMessagesLengthRef = useRef<number>(0);
+  const prevLastMessageIdRef = useRef<string | null>(null);
+  const isUserAtBottomRef = useRef<boolean>(true);
 
   // Track if user has scrolled up
   const handleScroll = () => {
@@ -39,6 +41,9 @@ export function MessageContent({
     
     const { scrollTop, scrollHeight, clientHeight } = messageContainerRef.current;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+    
+    // Update ref for use in useEffect
+    isUserAtBottomRef.current = isAtBottom;
     
     // Only change autoScroll if it's different from current value
     if (autoScroll !== isAtBottom) {
@@ -51,16 +56,37 @@ export function MessageContent({
     }
   };
 
+  // Function to determine if there's a new message
+  const hasNewMessage = () => {
+    if (!messages || !Array.isArray(messages) || messages.length === 0) return false;
+    
+    // Check for new message count
+    const hasMoreMessages = messages.length > prevMessagesLengthRef.current;
+    
+    // Check for new message ID (different from last known message)
+    const lastMessage = messages[messages.length - 1];
+    const lastMessageId = lastMessage?.id || null;
+    const isNewMessageId = lastMessageId && lastMessageId !== prevLastMessageIdRef.current;
+    
+    // Update refs for next comparison
+    prevMessagesLengthRef.current = messages.length;
+    if (lastMessageId) {
+      prevLastMessageIdRef.current = lastMessageId;
+    }
+    
+    return hasMoreMessages || isNewMessageId;
+  };
+
   // Automatic scroll to last message on new messages
   useEffect(() => {
     if (!messages || !Array.isArray(messages)) return;
     
     // Check if we received new messages
-    const hasNewMessages = messages.length > prevMessagesLengthRef.current;
-    prevMessagesLengthRef.current = messages.length;
+    const gotNewMessage = hasNewMessage();
+    const userWantsAutoScroll = autoScroll || isUserAtBottomRef.current;
     
     // Only scroll if we're at the bottom or if new messages came in
-    if (hasNewMessages && autoScroll && !isLoadingMore) {
+    if ((gotNewMessage && userWantsAutoScroll) && !isLoadingMore) {
       const timeout = setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -79,6 +105,23 @@ export function MessageContent({
   if (!Array.isArray(messages) || messages.length === 0) {
     return <EmptyConversation />;
   }
+
+  // Filter out duplicate messages with the same ID
+  const uniqueMessages = messages.reduce((acc: any[], message) => {
+    // For optimistic messages, use content as the key
+    if (message.optimistic) {
+      if (!acc.some(m => m.optimistic && m.content === message.content)) {
+        acc.push(message);
+      }
+      return acc;
+    }
+    
+    // For regular messages, use ID as the key
+    if (!acc.some(m => m.id === message.id)) {
+      acc.push(message);
+    }
+    return acc;
+  }, []);
 
   return (
     <div 
@@ -106,7 +149,7 @@ export function MessageContent({
         </div>
       )}
       
-      {messages.map((message) => (
+      {uniqueMessages.map((message) => (
         <MessageBubble
           key={message.id || `temp-${message.created_at}`}
           message={message}
