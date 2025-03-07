@@ -123,7 +123,7 @@ export const useRealtimeMessages = ({
                   };
                   
                   logger.info("Delivering enriched message to handler", {
-                    messageId: enrichedMessage.id,
+                    messageId: payload.new.id, // Fix: access id from payload.new instead of enrichedMessage
                     hasProfileInfo: !!enrichedMessage.sender
                   });
                   
