@@ -2,7 +2,6 @@
 import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
-import debounce from 'lodash/debounce';
 import { logger } from "@/services/LogService";
 
 interface UseMessageHandlersProps {
@@ -31,20 +30,24 @@ export const useMessageHandlers = ({
   const processingMessageRef = useRef<boolean>(false);
   const processingTimeoutRef = useRef<number | null>(null);
   const messageIdSentRef = useRef<Set<string>>(new Set());
+  const pendingOptimisticMessagesRef = useRef<Set<string>>(new Set());
 
   const sendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Prevent double submissions
-    if (processingMessageRef.current || !currentProfileId || !newMessage.trim() || isProcessing) {
+    // Store the message to be sent immediately to prevent it from being lost
+    const messageToSend = newMessage.trim();
+    
+    // If there's nothing to send or already processing, return early
+    if (processingMessageRef.current || !currentProfileId || !messageToSend || isProcessing) {
       return;
     }
-
+    
+    // Set processing flags
     processingMessageRef.current = true;
     setIsProcessing(true);
     
-    // Store the message to be sent
-    const messageToSend = newMessage.trim();
+    // Store for reference
     optimisticMessageRef.current = messageToSend;
     
     // Generate a unique ID for this message attempt
@@ -65,6 +68,7 @@ export const useMessageHandlers = ({
     
     // Mark this message as being processed
     messageIdSentRef.current.add(messageToSend);
+    pendingOptimisticMessagesRef.current.add(messageToSend);
     
     // Clear this message from the sent set after a while
     setTimeout(() => {
@@ -72,6 +76,7 @@ export const useMessageHandlers = ({
     }, 5000);
     
     // Optimistically clear the input field right away for better UX
+    // This is safe since we've already captured messageToSend
     setNewMessage("");
 
     try {
@@ -170,6 +175,9 @@ export const useMessageHandlers = ({
         throw insertError;
       }
       
+      // Remove from pending optimistic messages
+      pendingOptimisticMessagesRef.current.delete(messageToSend);
+      
       logger.info("Message sent successfully", {
         conversationId,
         messageId: newMessageData?.id,
@@ -201,12 +209,15 @@ export const useMessageHandlers = ({
         component: "useMessageHandlers" 
       });
       
+      // Remove from pending
+      pendingOptimisticMessagesRef.current.delete(messageToSend);
+      
       // If there was an error, put the message back in the input field
       setNewMessage(messageToSend);
       
       // Remove optimistic message if we have local state management
       if (setMessages) {
-        setMessages(prev => prev.filter(msg => !msg.optimistic));
+        setMessages(prev => prev.filter(msg => !(msg.optimistic && msg.content === messageToSend)));
       }
       
       toast({
@@ -230,14 +241,9 @@ export const useMessageHandlers = ({
     }
   }, [currentProfileId, conversationId, newMessage, isProcessing, toast, setNewMessage, setMessages, addMessageToCache, trackSentMessage]);
 
-  // Properly memoized function without double-call risk
-  const debouncedSendMessage = useCallback(
-    (e: React.FormEvent) => {
-      if (processingMessageRef.current) return;
-      sendMessage(e);
-    },
-    [sendMessage]
-  );
-
-  return { sendMessage: debouncedSendMessage };
+  return { 
+    sendMessage,
+    isProcessing,
+    pendingOptimisticMessages: pendingOptimisticMessagesRef.current
+  };
 };

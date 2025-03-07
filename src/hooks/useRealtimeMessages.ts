@@ -19,6 +19,8 @@ export const useRealtimeMessages = ({
   const lastProcessedMessageRef = useRef<Set<string>>(new Set());
   const processingMessageRef = useRef<boolean>(false);
   const sentByMeRef = useRef<Set<string>>(new Set());
+  const subscriptionConnectedRef = useRef<boolean>(false);
+  const subscriptionIdRef = useRef<string>("");
 
   // Track messages that this client has sent
   const trackSentMessage = useCallback((messageId: string) => {
@@ -37,7 +39,11 @@ export const useRealtimeMessages = ({
 
     // Clean up existing subscription if it exists
     if (channelRef.current) {
+      logger.info("Removing existing realtime subscription", { 
+        channelId: subscriptionIdRef.current 
+      });
       supabase.removeChannel(channelRef.current);
+      subscriptionConnectedRef.current = false;
     }
 
     // Clear the sets when changing profile ID
@@ -45,6 +51,8 @@ export const useRealtimeMessages = ({
     sentByMeRef.current.clear();
 
     const channelName = `messages-${currentProfileId}-${Date.now()}`;
+    subscriptionIdRef.current = channelName;
+    logger.info("Setting up new realtime subscription", { channelName });
 
     channelRef.current = supabase
       .channel(channelName)
@@ -56,13 +64,27 @@ export const useRealtimeMessages = ({
           table: 'messages'
         },
         async (payload) => {
-          if (processingMessageRef.current) return;
+          // Skip processing if already handling a message
+          if (processingMessageRef.current) {
+            logger.info("Already processing a message, skipping", { 
+              messageId: payload.new?.id 
+            });
+            return;
+          }
           
           const messageId = payload.new?.id;
-          if (!messageId || lastProcessedMessageRef.current.has(messageId)) {
+          if (!messageId) {
+            logger.info("No message ID in payload, skipping");
+            return;
+          }
+          
+          // Avoid processing messages we've already seen
+          if (lastProcessedMessageRef.current.has(messageId)) {
+            logger.info("Message already processed, skipping", { messageId });
             return;
           }
 
+          // Skip messages sent by this client
           if (sentByMeRef.current.has(messageId)) {
             logger.info("Ignoring message sent by this client", { messageId });
             return;
@@ -74,19 +96,43 @@ export const useRealtimeMessages = ({
 
           try {
             if (payload.new && payload.new.sender_id) {
-              const { data: sender } = await supabase
-                .from('profiles')
-                .select('id, username, full_name, avatar_url')
-                .eq('id', payload.new.sender_id)
-                .single();
-              
-              const enrichedMessage = {
-                ...payload.new,
-                sender
-              };
-              
-              onNewMessage(enrichedMessage);
+              // Fetch sender profile data only if not already included
+              if (!payload.new.sender) {
+                const { data: sender } = await supabase
+                  .from('profiles')
+                  .select('id, username, full_name, avatar_url')
+                  .eq('id', payload.new.sender_id)
+                  .single();
+                
+                if (sender) {
+                  const enrichedMessage = {
+                    ...payload.new,
+                    sender
+                  };
+                  
+                  logger.info("New message enriched with sender data", { 
+                    messageId: payload.new.id,
+                    senderId: sender.id
+                  });
+                  
+                  onNewMessage(enrichedMessage);
+                } else {
+                  // Fallback if sender not found
+                  logger.warn("Sender profile not found, using raw message", { 
+                    messageId: payload.new.id 
+                  });
+                  onNewMessage(payload.new);
+                }
+              } else {
+                // Sender already included in payload
+                logger.info("Using message with included sender", { 
+                  messageId: payload.new.id 
+                });
+                onNewMessage(payload.new);
+              }
             } else {
+              // No sender_id in payload
+              logger.info("Message without sender_id, using raw message");
               onNewMessage(payload.new);
             }
           } catch (error: any) {
@@ -94,9 +140,13 @@ export const useRealtimeMessages = ({
               error: error.message,
               messageId
             });
+            // Still try to deliver the message even if enrichment fails
             onNewMessage(payload.new);
           } finally {
-            processingMessageRef.current = false;
+            // Only unlock processing after a slight delay to prevent rapid reprocessing
+            setTimeout(() => {
+              processingMessageRef.current = false;
+            }, 50);
           }
 
           // Clean up old message ids after 5 minutes
@@ -118,17 +168,27 @@ export const useRealtimeMessages = ({
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        subscriptionConnectedRef.current = status === 'SUBSCRIBED';
+        logger.info("Realtime subscription status changed", { 
+          channelName, 
+          status, 
+          connected: subscriptionConnectedRef.current 
+        });
+      });
 
     return () => {
+      logger.info("Cleaning up realtime subscription", { channelName });
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
+        subscriptionConnectedRef.current = false;
       }
     };
   }, [currentProfileId, onNewMessage, onMessageUpdate, logger]);
 
   return { 
     handleNewMessage: onNewMessage, 
-    trackSentMessage 
+    trackSentMessage,
+    isSubscriptionConnected: subscriptionConnectedRef.current
   };
 };

@@ -1,4 +1,5 @@
-import { useRef, useEffect, useState, useMemo } from "react";
+
+import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { LoadingState } from "./LoadingState";
 import { ErrorState } from "./ErrorState";
@@ -34,15 +35,57 @@ export function MessageContent({
   const prevLastMessageIdRef = useRef<string | null>(null);
   const isUserAtBottomRef = useRef<boolean>(true);
   const messagesRef = useRef<any[]>([]);
+  const scrollPositionRef = useRef<number>(0);
+  const isScrollingRef = useRef<boolean>(false);
+  const scrollTimeoutRef = useRef<number | null>(null);
 
   // Update messagesRef when messages prop changes
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
 
-  // Track if user has scrolled up
-  const handleScroll = () => {
-    if (!messageContainerRef.current) return;
+  // Memoize unique messages to prevent unnecessary re-renders
+  const uniqueMessages = useMemo(() => {
+    // Create a deduplicated messages array with stable rendering
+    const result = messages.reduce((acc: any[], message) => {
+      if (message.optimistic) {
+        // For optimistic messages, check by content to avoid duplicates
+        if (!acc.some(m => m.optimistic && m.content === message.content)) {
+          acc.push(message);
+        }
+        return acc;
+      }
+      
+      // For regular messages, check by ID
+      if (!acc.some(m => m.id === message.id)) {
+        acc.push(message);
+      }
+      return acc;
+    }, []);
+    
+    return result;
+  }, [messages]);
+
+  // Save scroll position before updates
+  const saveScrollPosition = useCallback(() => {
+    if (messageContainerRef.current) {
+      scrollPositionRef.current = messageContainerRef.current.scrollTop;
+    }
+  }, []);
+
+  // Restore scroll position after updates
+  const restoreScrollPosition = useCallback(() => {
+    if (messageContainerRef.current && !autoScroll) {
+      messageContainerRef.current.scrollTop = scrollPositionRef.current;
+    }
+  }, [autoScroll]);
+
+  // Track if user has scrolled up with debouncing to prevent too many state updates
+  const handleScroll = useCallback(() => {
+    if (!messageContainerRef.current || isScrollingRef.current) return;
+    
+    isScrollingRef.current = true;
+    saveScrollPosition();
     
     const { scrollTop, scrollHeight, clientHeight } = messageContainerRef.current;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
@@ -59,10 +102,20 @@ export function MessageContent({
     if (scrollTop < 100 && hasMoreMessages && loadMoreMessages && !isLoadingMore) {
       loadMoreMessages();
     }
-  };
+    
+    // Debounce scroll handling
+    if (scrollTimeoutRef.current) {
+      window.clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    scrollTimeoutRef.current = window.setTimeout(() => {
+      isScrollingRef.current = false;
+      scrollTimeoutRef.current = null;
+    }, 100) as unknown as number;
+  }, [autoScroll, hasMoreMessages, isLoadingMore, loadMoreMessages, saveScrollPosition]);
 
-  // Function to determine if there's a new message
-  const hasNewMessage = () => {
+  // Function to determine if there's a new message with memo for stability
+  const hasNewMessage = useCallback(() => {
     if (!messages || !Array.isArray(messages) || messages.length === 0) return false;
     
     // Check for new message count
@@ -80,7 +133,7 @@ export function MessageContent({
     }
     
     return hasMoreMessages || isNewMessageId;
-  };
+  }, [messages]);
 
   // Automatic scroll to last message on new messages - optimized
   useEffect(() => {
@@ -90,11 +143,24 @@ export function MessageContent({
     const userWantsAutoScroll = autoScroll || isUserAtBottomRef.current;
     
     if ((gotNewMessage && userWantsAutoScroll) && !isLoadingMore) {
+      // Use requestAnimationFrame for smoother scrolling
       requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       });
+    } else if (!isLoadingMore) {
+      // If not scrolling to bottom, maintain scroll position
+      restoreScrollPosition();
     }
-  }, [messages, autoScroll, isLoadingMore]);
+  }, [uniqueMessages, autoScroll, isLoadingMore, hasNewMessage, restoreScrollPosition]);
+
+  // Cleanup timeouts
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        window.clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (isLoading && (!messages || messages.length === 0)) {
     return <LoadingState />;
@@ -107,23 +173,6 @@ export function MessageContent({
   if (!Array.isArray(messages) || messages.length === 0) {
     return <EmptyConversation />;
   }
-
-  // Memoize unique messages to prevent unnecessary re-renders
-  const uniqueMessages = useMemo(() => {
-    return messages.reduce((acc: any[], message) => {
-      if (message.optimistic) {
-        if (!acc.some(m => m.optimistic && m.content === message.content)) {
-          acc.push(message);
-        }
-        return acc;
-      }
-      
-      if (!acc.some(m => m.id === message.id)) {
-        acc.push(message);
-      }
-      return acc;
-    }, []);
-  }, [messages]);
 
   return (
     <div 

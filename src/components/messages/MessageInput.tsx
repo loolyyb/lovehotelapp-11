@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Send } from "lucide-react";
 
 interface MessageInputProps {
@@ -10,31 +10,34 @@ interface MessageInputProps {
 }
 
 export function MessageInput({ 
-  newMessage, 
-  setNewMessage, 
+  newMessage: externalNewMessage, 
+  setNewMessage: externalSetNewMessage, 
   onSend,
   disabled = false
 }: MessageInputProps) {
+  // Use internal state to prevent input loss during parent re-renders
+  const [internalNewMessage, setInternalNewMessage] = useState(externalNewMessage);
   const [isTyping, setIsTyping] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitTimeoutRef = useRef<number | null>(null);
   const lastSubmitTimeRef = useRef<number>(0);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Sync external and internal state carefully
   useEffect(() => {
-    // Cleanup function to clear any timeouts when component unmounts
-    return () => {
-      if (submitTimeoutRef.current) {
-        clearTimeout(submitTimeoutRef.current);
-      }
-    };
-  }, []);
+    if (externalNewMessage !== internalNewMessage && !isTyping) {
+      setInternalNewMessage(externalNewMessage);
+    }
+  }, [externalNewMessage, internalNewMessage, isTyping]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setNewMessage(e.target.value);
-    setIsTyping(e.target.value.length > 0);
-  };
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setInternalNewMessage(newValue);
+    setIsTyping(newValue.length > 0);
+    externalSetNewMessage(newValue);
+  }, [externalSetNewMessage]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !disabled && !isSubmitting) {
       e.preventDefault();
       
@@ -44,7 +47,7 @@ export function MessageInput({
         return;
       }
       
-      if (newMessage.trim()) {
+      if (internalNewMessage.trim()) {
         lastSubmitTimeRef.current = now;
         setIsSubmitting(true);
         onSend(e as any);
@@ -62,14 +65,14 @@ export function MessageInput({
         setIsTyping(false);
       }
     }
-  };
+  }, [internalNewMessage, onSend, disabled, isSubmitting]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     
     const now = Date.now();
     // Prevent rapid resubmissions (within 1000ms)
-    if (isSubmitting || disabled || !newMessage.trim() || now - lastSubmitTimeRef.current < 1000) {
+    if (isSubmitting || disabled || !internalNewMessage.trim() || now - lastSubmitTimeRef.current < 1000) {
       return;
     }
     
@@ -86,15 +89,25 @@ export function MessageInput({
       setIsSubmitting(false);
       submitTimeoutRef.current = null;
     }, 1000) as unknown as number;
-  };
+  }, [internalNewMessage, onSend, disabled, isSubmitting]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      if (submitTimeoutRef.current) {
+        clearTimeout(submitTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <form onSubmit={handleSubmit} className="relative">
       <textarea
+        ref={inputRef}
         className="w-full p-3 pr-12 bg-[#f3ebad]/10 border border-[#f3ebad]/20 rounded-md text-[#f3ebad] placeholder:text-[#f3ebad]/50 outline-none focus:border-[#f3ebad]/50 transition-colors resize-none"
         placeholder={disabled ? "Chargement en cours..." : "Votre message..."}
         rows={2}
-        value={newMessage}
+        value={internalNewMessage}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         disabled={disabled || isSubmitting}
