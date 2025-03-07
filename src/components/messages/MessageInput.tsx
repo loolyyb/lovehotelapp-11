@@ -1,31 +1,59 @@
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FormEvent } from "react";
+import { useState } from "react";
+import { Send } from "lucide-react";
 
 interface MessageInputProps {
   newMessage: string;
   setNewMessage: (message: string) => void;
-  onSend: (e: FormEvent) => void;
+  onSend: (e: React.FormEvent) => void;
+  disabled?: boolean;
 }
 
-export function MessageInput({ newMessage, setNewMessage, onSend }: MessageInputProps) {
+export function MessageInput({ 
+  newMessage, 
+  setNewMessage, 
+  onSend,
+  disabled = false
+}: MessageInputProps) {
+  const [isTyping, setIsTyping] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value);
+    setIsTyping(e.target.value.length > 0);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && !disabled) {
+      e.preventDefault();
+      if (newMessage.trim()) {
+        onSend(e as any);
+        setIsTyping(false);
+      }
+    }
+  };
+
   return (
-    <form onSubmit={onSend} className="flex space-x-2">
-      <Input
-        type="text"
+    <form onSubmit={onSend} className="relative">
+      <textarea
+        className="w-full p-3 pr-12 bg-[#f3ebad]/10 border border-[#f3ebad]/20 rounded-md text-[#f3ebad] placeholder:text-[#f3ebad]/50 outline-none focus:border-[#f3ebad]/50 transition-colors resize-none"
+        placeholder={disabled ? "Chargement en cours..." : "Votre message..."}
+        rows={2}
         value={newMessage}
-        onChange={(e) => setNewMessage(e.target.value)}
-        placeholder="Écrivez votre message..."
-        className="flex-1 bg-white/5 border-[#f3ebad]/30 text-[#f3ebad] placeholder:text-[#f3ebad]/50"
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        disabled={disabled}
       />
-      <Button 
+      <button
         type="submit"
-        className="bg-[#f3ebad]/20 text-[#f3ebad] hover:bg-[#f3ebad]/30"
-        disabled={!newMessage.trim()}
+        className={`absolute right-3 bottom-3 p-2 rounded-full ${
+          isTyping && !disabled
+            ? "bg-[#f3ebad] text-[#40192C]"
+            : "bg-[#f3ebad]/20 text-[#f3ebad]/50"
+        } transition-colors ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+        disabled={!isTyping || disabled}
       >
-        Envoyer
-      </Button>
+        <Send className="w-5 h-5" />
+      </button>
     </form>
   );
 }

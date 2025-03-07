@@ -17,6 +17,15 @@ export const useMessageFetcher = ({
   toast 
 }: UseMessageFetcherProps) => {
   const fetchMessages = async () => {
+    if (!conversationId || !currentProfileId) {
+      logger.info("Cannot fetch messages: missing ID", { 
+        hasConversationId: !!conversationId, 
+        hasProfileId: !!currentProfileId,
+        component: "useMessageFetcher" 
+      });
+      return null;
+    }
+
     try {
       logger.info("Fetching messages", { 
         conversationId, 
@@ -24,82 +33,7 @@ export const useMessageFetcher = ({
         component: "useMessageFetcher" 
       });
       
-      if (!conversationId) {
-        logger.error("No conversation ID provided", { component: "useMessageFetcher" });
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "ID de conversation manquant",
-        });
-        return null;
-      }
-
-      if (!currentProfileId) {
-        logger.error("No profile ID provided", { component: "useMessageFetcher" });
-        toast({
-          variant: "destructive",
-          title: "Erreur d'authentification",
-          description: "Vous devez être connecté pour accéder à cette conversation",
-        });
-        return null;
-      }
-
-      // Check if user is authenticated and get their role
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        logger.error("No authenticated user", { component: "useMessageFetcher" });
-        toast({
-          variant: "destructive",
-          title: "Erreur d'authentification",
-          description: "Votre session a expiré. Veuillez vous reconnecter.",
-        });
-        return null;
-      }
-
-      // Get user profile to check role
-      const { data: userProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, role')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError) {
-        logger.error("Error fetching user profile", { 
-          error: profileError, 
-          component: "useMessageFetcher" 
-        });
-        toast({
-          variant: "destructive",
-          title: "Erreur de profil",
-          description: "Impossible de récupérer votre profil",
-        });
-        return null;
-      }
-
-      const isAdmin = userProfile?.role === 'admin';
-      const canAccessConversation = (isAdmin || userProfile?.id === currentProfileId);
-      
-      if (!canAccessConversation) {
-        logger.warn("User has no permission to access this conversation", {
-          requestedProfileId: currentProfileId,
-          userProfileId: userProfile?.id,
-          component: "useMessageFetcher"
-        });
-      }
-      
-      logger.info("User authenticated, checking conversation access", { 
-        authUserId: user.id,
-        profileId: currentProfileId,
-        isAdmin,
-        component: "useMessageFetcher"
-      });
-
       // Fetch messages - RLS policies will handle access control
-      logger.info("Fetching messages for conversation", { 
-        conversationId,
-        component: "useMessageFetcher" 
-      });
-      
       const { data: messagesData, error } = await supabase
         .from('messages')
         .select(`
@@ -135,7 +69,7 @@ export const useMessageFetcher = ({
         return null;
       }
       
-      logger.info("Fetched messages count", { 
+      logger.info("Successfully fetched messages", { 
         count: messagesData?.length || 0, 
         conversationId,
         component: "useMessageFetcher" 

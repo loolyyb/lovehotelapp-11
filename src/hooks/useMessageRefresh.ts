@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLogger } from "@/hooks/useLogger";
 
@@ -22,8 +22,8 @@ export const useMessageRefresh = ({
   const { toast } = useToast();
   const logger = useLogger("MessageRefresh");
 
-  // Fonction pour rafraîchir manuellement les messages
-  const refreshMessages = async () => {
+  // Function to refresh messages manually
+  const refreshMessages = useCallback(async () => {
     if (isRefreshing) return;
     
     setIsRefreshing(true);
@@ -32,6 +32,11 @@ export const useMessageRefresh = ({
     try {
       logger.info("Manually refreshing messages", { conversationId });
       await fetchMessages();
+      
+      logger.info("Messages refreshed successfully", { 
+        conversationId,
+        hasProfile: !!currentProfileId
+      });
     } catch (error: any) {
       logger.error("Error refreshing messages", { 
         error: error.message,
@@ -47,17 +52,20 @@ export const useMessageRefresh = ({
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [conversationId, fetchMessages, isRefreshing, currentProfileId, logger, toast]);
 
-  // Essayer à nouveau en cas d'erreur
-  const retryLoad = async () => {
+  // Try again in case of error
+  const retryLoad = useCallback(async () => {
     setIsError(false);
     setIsLoading(true);
     
     try {
       logger.info("Retrying conversation load", { conversationId });
+      
+      // First reinitialize the user profile
       await getCurrentUser();
       
+      // Then fetch messages if we have a profile ID
       if (currentProfileId) {
         logger.info("Retrying message fetch", { 
           profileId: currentProfileId,
@@ -66,6 +74,7 @@ export const useMessageRefresh = ({
         await fetchMessages();
       } else {
         logger.warn("No profile ID when retrying load", { conversationId });
+        // Still allow UI to render even if profile ID is missing
       }
     } catch (error: any) {
       logger.error("Error retrying load", { 
@@ -82,7 +91,7 @@ export const useMessageRefresh = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [conversationId, getCurrentUser, currentProfileId, fetchMessages, logger, toast]);
 
   return { 
     isRefreshing, 

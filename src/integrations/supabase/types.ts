@@ -1262,9 +1262,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_auth_user_profile_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       sync_missing_profiles: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      user_has_conversation_access: {
+        Args: {
+          conversation_uuid: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

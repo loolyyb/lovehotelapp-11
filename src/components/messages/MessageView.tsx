@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { MessageHeader } from "./MessageHeader";
 import { MessageContent } from "./MessageContent";
@@ -23,6 +24,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const [otherUser, setOtherUser] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [profileInitialized, setProfileInitialized] = useState(false);
   const firstLoad = useRef(true);
   const logger = useLogger("MessageView");
   const { toast } = useToast();
@@ -30,7 +32,12 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const { getCurrentUser } = useConversationInit({
     conversationId,
     setMessages,
-    setCurrentProfileId,
+    setCurrentProfileId: useCallback((profileId: string | null) => {
+      setCurrentProfileId(profileId);
+      if (profileId) {
+        setProfileInitialized(true);
+      }
+    }, []),
     setOtherUser,
     setIsLoading,
   });
@@ -88,20 +95,18 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     await refreshMessages();
   };
 
+  // Initial profile and auth check - only runs once
   useEffect(() => {
     let mounted = true;
     setIsError(false);
     
-    const initConversation = async () => {
-      if (!firstLoad.current) {
-        setIsLoading(true);
-      }
-      
+    const checkAuth = async () => {
       try {
         // Check auth session first
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
+          logger.error("No active session", { component: "MessageView" });
           toast({
             variant: "destructive",
             title: "Session expirée",
@@ -110,47 +115,82 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
           return;
         }
 
-        logger.info("Initializing conversation", { conversationId });
-        await getCurrentUser();
-        
-        if (!mounted) return;
-        
-        if (currentProfileId) {
-          logger.info("Current profile retrieved, fetching messages", { 
-            profileId: currentProfileId,
-            conversationId 
-          });
-          await fetchMessages();
-        }
-      } catch (error: any) {
-        logger.error("Error initializing conversation", { 
-          error: error.message,
-          stack: error.stack,
+        logger.info("Auth session valid, initializing conversation", { 
+          userId: session.user.id,
           conversationId 
         });
+        
+        if (mounted) {
+          await getCurrentUser();
+        }
+      } catch (error: any) {
+        logger.error("Error checking authentication", { 
+          error: error.message,
+          stack: error.stack
+        });
+        
         if (mounted) {
           setIsError(true);
           toast({
             variant: "destructive",
-            title: "Erreur",
-            description: "Impossible de charger la conversation. Veuillez réessayer."
+            title: "Erreur d'authentification",
+            description: "Impossible de vérifier votre identité. Veuillez vous reconnecter."
           });
         }
       } finally {
         if (mounted) {
           firstLoad.current = false;
-          setIsLoading(false);
         }
       }
     };
 
-    initConversation();
+    checkAuth();
 
     return () => {
       mounted = false;
     };
-  }, [conversationId, currentProfileId]);
+  }, [conversationId]); // Only depend on conversationId
 
+  // Fetch messages when profile is initialized
+  useEffect(() => {
+    let mounted = true;
+    
+    const loadMessages = async () => {
+      if (!currentProfileId || !profileInitialized) {
+        return;
+      }
+      
+      logger.info("Profile initialized, fetching messages", { 
+        profileId: currentProfileId,
+        conversationId 
+      });
+      
+      try {
+        await fetchMessages();
+      } catch (error: any) {
+        logger.error("Error fetching messages", { 
+          error: error.message,
+          stack: error.stack
+        });
+        
+        if (mounted) {
+          setIsError(true);
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    loadMessages();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [currentProfileId, profileInitialized, conversationId, fetchMessages, logger]);
+
+  // Handle marking messages as read
   useEffect(() => {
     if (currentProfileId && messages.length > 0 && !isLoading) {
       logger.info("Checking for unread messages after update", {
@@ -169,7 +209,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         setTimeout(() => markMessagesAsRead(), 500);
       }
     }
-  }, [messages, currentProfileId, isLoading]);
+  }, [messages, currentProfileId, isLoading, markMessagesAsRead, logger]);
 
   return (
     <div className="flex flex-col h-full bg-[#40192C] backdrop-blur-sm border-[0.5px] border-[#f3ebad]/30">
@@ -182,9 +222,19 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {isLoading ? (
-          <div>Loading...</div>
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-pulse text-[#f3ebad]/70">Chargement des messages...</div>
+          </div>
         ) : isError ? (
-          <div>Error loading messages</div>
+          <div className="flex flex-col items-center justify-center h-full text-[#f3ebad]/70">
+            <p className="mb-4">Impossible de charger les messages</p>
+            <button 
+              onClick={retryLoad} 
+              className="px-4 py-2 bg-[#f3ebad]/20 text-[#f3ebad] rounded-md hover:bg-[#f3ebad]/30 transition-colors"
+            >
+              Réessayer
+            </button>
+          </div>
         ) : messages.length === 0 ? (
           <EmptyState onRefresh={handleRefresh} isRefreshing={isRefreshing} />
         ) : (
@@ -203,6 +253,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
           newMessage={newMessage}
           setNewMessage={setNewMessage}
           onSend={sendMessage}
+          disabled={isLoading || isError || !currentProfileId}
         />
       </div>
     </div>
