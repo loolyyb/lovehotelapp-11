@@ -72,40 +72,22 @@ export const useMessageHandlers = ({
         throw new Error("Vous n'êtes pas autorisé à envoyer des messages dans cette conversation");
       }
 
-      // Use direct approach to bypass potential RLS issues
-      const query = `
-        INSERT INTO messages (conversation_id, sender_id, content, media_type)
-        VALUES ('${conversationId}', '${currentProfileId}', '${newMessage.trim().replace(/'/g, "''")}', 
-        ${newMessage.startsWith('[Image]') ? "'image'" : "'text'"})
-        RETURNING id
-      `;
-      
-      // Try the direct SQL approach first for better compatibility with existing RLS
-      const { data, error } = await supabase.rpc('execute_sql', { query_text: query });
-      
-      // If that fails, fall back to the regular insert method
-      if (error) {
-        logger.error("Failed to use direct SQL, falling back to regular insert", { 
-          error,
+      // Insert the message
+      const { error: insertError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: currentProfileId,
+          content: newMessage.trim(),
+          media_type: newMessage.startsWith('[Image]') ? 'image' : 'text'
+        });
+          
+      if (insertError) {
+        logger.error("Insert message error:", { 
+          error: insertError,
           component: "useMessageHandlers" 
         });
-        
-        const { error: insertError } = await supabase
-          .from('messages')
-          .insert({
-            conversation_id: conversationId,
-            sender_id: currentProfileId,
-            content: newMessage.trim(),
-            media_type: newMessage.startsWith('[Image]') ? 'image' : 'text'
-          });
-          
-        if (insertError) {
-          logger.error("Insert message error:", { 
-            error: insertError,
-            component: "useMessageHandlers" 
-          });
-          throw insertError;
-        }
+        throw insertError;
       }
       
       logger.info("Message sent successfully", {

@@ -104,7 +104,7 @@ export const createOrGetConversation = async (currentUserId: string, targetUserI
       component: "createOrGetConversation"
     });
 
-    // Check if conversation exists using proper parameters
+    // Check if conversation exists
     const { data: existingConversations, error: queryError } = await supabase
       .from('conversations')
       .select('id')
@@ -233,11 +233,6 @@ export const findConversationsByProfileId = async (profileId: string) => {
       });
     }
     
-    // Direct query approach
-    logger.info(`Executing conversations query for profile: ${profileId}`, {
-      component: "findConversationsByProfileId"
-    });
-    
     // Use simple OR condition with string interpolation to bypass RLS issues
     const { data, error } = await supabase
       .from('conversations')
@@ -295,8 +290,6 @@ export const findConversationsByProfileId = async (profileId: string) => {
           });
           return {
             ...conversation,
-            user1: conversation.user1_id === profileId ? { id: profileId } : { id: otherUserId },
-            user2: conversation.user1_id === profileId ? { id: otherUserId } : { id: profileId },
             otherUser: { id: otherUserId, username: 'Utilisateur inconnu' }
           };
         }
