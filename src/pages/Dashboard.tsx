@@ -1,7 +1,19 @@
+
 import { motion } from "framer-motion";
-import { BedDouble, Calendar, Heart, Theater, Utensils, UserRound } from "lucide-react";
+import { BedDouble, Calendar, Heart, Info, Theater, Utensils, UserRound } from "lucide-react";
 import { DashboardWidget } from "@/components/dashboard/DashboardWidget";
 import { useAuthSession } from "@/hooks/useAuthSession";
+
+// Maintenance notification component for the dashboard
+const MaintenanceNotification = () => (
+  <div className="bg-[#f3ebad]/10 backdrop-blur-sm border border-[#f3ebad]/20 rounded-lg p-4 mb-4 mx-4 flex items-start gap-3">
+    <Info className="text-[#f3ebad] w-5 h-5 mt-0.5 flex-shrink-0" />
+    <p className="text-[#f3ebad]/90 text-sm">
+      La messagerie fait actuellement l'objet d'une optimisation pour vous offrir une meilleure expérience. 
+      Nos équipes y travaillent activement. Merci de votre patience !
+    </p>
+  </div>
+);
 
 const Dashboard = () => {
   const {
@@ -58,6 +70,15 @@ const Dashboard = () => {
         >
           Bonjour {userProfile?.full_name?.split(' ')[0] || 'Lover'}
         </motion.h1>
+        
+        {/* Maintenance notification now appears here, on the dashboard for logged-in users */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <MaintenanceNotification />
+        </motion.div>
         
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
