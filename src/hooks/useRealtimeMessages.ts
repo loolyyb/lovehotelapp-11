@@ -50,12 +50,17 @@ export const useRealtimeMessages = ({
 
           // Fetch sender details if needed
           if (payload.new && payload.new.sender_id) {
+            // Use Promise chaining properly with error handling
             supabase
               .from('profiles')
               .select('id, username, full_name, avatar_url')
               .eq('id', payload.new.sender_id)
               .single()
-              .then(({ data: sender }) => {
+              .then(({ data: sender, error }) => {
+                if (error) {
+                  throw error;
+                }
+                
                 onNewMessage({
                   ...payload.new,
                   sender
