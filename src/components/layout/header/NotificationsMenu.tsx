@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,27 +20,160 @@ export function NotificationsMenu() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isMarkingAsRead, setIsMarkingAsRead] = useState(false);
+  const notificationChannelRef = useRef<any>(null);
+  const messagesChannelRef = useRef<any>(null);
+  const profileIdRef = useRef<string | null>(null);
   const { toast } = useToast();
   const logger = useLogger('NotificationsMenu');
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN') {
+        if (session?.user?.id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .single();
+            
+          if (profile?.id) {
+            profileIdRef.current = profile.id;
+            subscribeToMessages(profile.id);
+          }
+        }
         fetchNotifications();
       } else if (event === 'SIGNED_OUT') {
         setNotifications([]);
         setUnreadCount(0);
+        profileIdRef.current = null;
+        
+        // Clean up subscriptions
+        if (notificationChannelRef.current) {
+          supabase.removeChannel(notificationChannelRef.current);
+          notificationChannelRef.current = null;
+        }
+        if (messagesChannelRef.current) {
+          supabase.removeChannel(messagesChannelRef.current);
+          messagesChannelRef.current = null;
+        }
       }
     });
 
-    fetchNotifications();
+    // Initial fetch
+    fetchUserProfile().then(profileId => {
+      if (profileId) {
+        profileIdRef.current = profileId;
+        subscribeToMessages(profileId);
+      }
+      fetchNotifications();
+    });
+    
     const cleanupSubscription = subscribeToNotifications();
 
     return () => {
       authListener?.subscription.unsubscribe();
       cleanupSubscription();
+      
+      if (notificationChannelRef.current) {
+        supabase.removeChannel(notificationChannelRef.current);
+      }
+      if (messagesChannelRef.current) {
+        supabase.removeChannel(messagesChannelRef.current);
+      }
     };
   }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) {
+        return null;
+      }
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', session.session.user.id)
+        .single();
+        
+      return profile?.id || null;
+    } catch (error) {
+      logger.error('Error fetching user profile:', { error });
+      return null;
+    }
+  };
+
+  const subscribeToMessages = (profileId: string) => {
+    // Clean up previous subscription if exists
+    if (messagesChannelRef.current) {
+      supabase.removeChannel(messagesChannelRef.current);
+    }
+    
+    logger.info('Setting up message subscription for profile', { profileId });
+    
+    // Subscribe to new messages where user is recipient
+    messagesChannelRef.current = supabase
+      .channel(`messages-notifications-${profileId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages'
+        },
+        async (payload) => {
+          // Check if this is a message for a conversation the user is part of
+          if (payload.new && payload.new.conversation_id && payload.new.sender_id) {
+            const conversationId = payload.new.conversation_id;
+            const senderId = payload.new.sender_id;
+            
+            // Skip if message was sent by this user
+            if (senderId === profileId) {
+              return;
+            }
+            
+            // Verify user is part of this conversation
+            const { data: conversation } = await supabase
+              .from('conversations')
+              .select('*')
+              .eq('id', conversationId)
+              .single();
+              
+            if (conversation && (conversation.user1_id === profileId || conversation.user2_id === profileId)) {
+              // This is a message for the current user
+              logger.info('New message received for user', { 
+                conversationId, 
+                messageId: payload.new.id 
+              });
+              
+              // Get sender details
+              const { data: sender } = await supabase
+                .from('profiles')
+                .select('username, full_name')
+                .eq('id', senderId)
+                .single();
+              
+              const senderName = sender?.username || sender?.full_name || 'Quelqu'un';
+              
+              // Create notification for this message
+              await supabase
+                .from('notifications')
+                .insert({
+                  title: 'Nouveau message',
+                  content: `${senderName} vous a envoyé un message`,
+                  type: 'message',
+                  user_id: session?.session?.user?.id,
+                  link_url: `/messages?conversation=${conversationId}`,
+                  is_read: false
+                });
+            }
+          }
+        }
+      )
+      .subscribe((status) => {
+        logger.info('Messages subscription status:', { status });
+      });
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -81,7 +214,7 @@ export function NotificationsMenu() {
   };
 
   const subscribeToNotifications = () => {
-    const channel = supabase
+    notificationChannelRef.current = supabase
       .channel('notifications-changes')
       .on(
         'postgres_changes',
@@ -100,7 +233,10 @@ export function NotificationsMenu() {
       });
 
     return () => {
-      supabase.removeChannel(channel);
+      if (notificationChannelRef.current) {
+        supabase.removeChannel(notificationChannelRef.current);
+        notificationChannelRef.current = null;
+      }
     };
   };
 
@@ -141,6 +277,8 @@ export function NotificationsMenu() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
+      case 'message':
+        return '💬';
       case 'offer':
         return '🎁';
       case 'news':

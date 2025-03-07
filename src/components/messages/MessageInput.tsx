@@ -17,24 +17,33 @@ export function MessageInput({
 }: MessageInputProps) {
   // Use internal state to prevent input loss during parent re-renders
   const [internalNewMessage, setInternalNewMessage] = useState(externalNewMessage);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(Boolean(externalNewMessage));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitTimeoutRef = useRef<number | null>(null);
   const lastSubmitTimeRef = useRef<number>(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const synchronizingRef = useRef<boolean>(false);
 
   // Sync external and internal state carefully
   useEffect(() => {
-    if (externalNewMessage !== internalNewMessage && !isTyping) {
+    if (!synchronizingRef.current && externalNewMessage !== internalNewMessage) {
       setInternalNewMessage(externalNewMessage);
     }
-  }, [externalNewMessage, internalNewMessage, isTyping]);
+  }, [externalNewMessage, internalNewMessage]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setInternalNewMessage(newValue);
     setIsTyping(newValue.length > 0);
+    
+    // Prevent external state synchronization in next render cycle
+    synchronizingRef.current = true;
     externalSetNewMessage(newValue);
+    
+    // Reset synchronization lock after a short delay
+    setTimeout(() => {
+      synchronizingRef.current = false;
+    }, 50);
   }, [externalSetNewMessage]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -90,6 +99,19 @@ export function MessageInput({
       submitTimeoutRef.current = null;
     }, 1000) as unknown as number;
   }, [internalNewMessage, onSend, disabled, isSubmitting]);
+
+  // Make sure input focuses when component mounts
+  useEffect(() => {
+    const focusInput = () => {
+      if (inputRef.current && !disabled) {
+        inputRef.current.focus();
+      }
+    };
+    
+    // Small delay to ensure DOM is ready
+    const timeout = setTimeout(focusInput, 100);
+    return () => clearTimeout(timeout);
+  }, [disabled]);
 
   // Cleanup effect
   useEffect(() => {

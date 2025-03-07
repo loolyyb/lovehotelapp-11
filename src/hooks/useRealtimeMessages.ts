@@ -21,6 +21,7 @@ export const useRealtimeMessages = ({
   const sentByMeRef = useRef<Set<string>>(new Set());
   const subscriptionConnectedRef = useRef<boolean>(false);
   const subscriptionIdRef = useRef<string>("");
+  const messageProcessingLockRef = useRef<Map<string, boolean>>(new Map());
 
   // Track messages that this client has sent
   const trackSentMessage = useCallback((messageId: string) => {
@@ -49,6 +50,7 @@ export const useRealtimeMessages = ({
     // Clear the sets when changing profile ID
     lastProcessedMessageRef.current.clear();
     sentByMeRef.current.clear();
+    messageProcessingLockRef.current.clear();
 
     const channelName = `messages-${currentProfileId}-${Date.now()}`;
     subscriptionIdRef.current = channelName;
@@ -64,17 +66,22 @@ export const useRealtimeMessages = ({
           table: 'messages'
         },
         async (payload) => {
-          // Skip processing if already handling a message
-          if (processingMessageRef.current) {
-            logger.info("Already processing a message, skipping", { 
-              messageId: payload.new?.id 
-            });
-            return;
-          }
-          
+          // Get message ID first to use in all logs
           const messageId = payload.new?.id;
           if (!messageId) {
             logger.info("No message ID in payload, skipping");
+            return;
+          }
+          
+          // Add strong lock using messageId to ensure we never process same message twice
+          if (messageProcessingLockRef.current.get(messageId)) {
+            logger.info("Message is currently being processed, skipping", { messageId });
+            return;
+          }
+          
+          // Skip processing if already handling a message
+          if (processingMessageRef.current) {
+            logger.info("Already processing a message, skipping", { messageId });
             return;
           }
           
@@ -90,9 +97,10 @@ export const useRealtimeMessages = ({
             return;
           }
 
-          // Mark as processed immediately to prevent duplicate handling
+          // Set locks immediately to prevent duplicate handling
           lastProcessedMessageRef.current.add(messageId);
           processingMessageRef.current = true;
+          messageProcessingLockRef.current.set(messageId, true);
 
           try {
             if (payload.new && payload.new.sender_id) {
@@ -111,23 +119,19 @@ export const useRealtimeMessages = ({
                   };
                   
                   logger.info("New message enriched with sender data", { 
-                    messageId: payload.new.id,
+                    messageId: messageId,
                     senderId: sender.id
                   });
                   
                   onNewMessage(enrichedMessage);
                 } else {
                   // Fallback if sender not found
-                  logger.warn("Sender profile not found, using raw message", { 
-                    messageId: payload.new.id 
-                  });
+                  logger.warn("Sender profile not found, using raw message", { messageId });
                   onNewMessage(payload.new);
                 }
               } else {
                 // Sender already included in payload
-                logger.info("Using message with included sender", { 
-                  messageId: payload.new.id 
-                });
+                logger.info("Using message with included sender", { messageId });
                 onNewMessage(payload.new);
               }
             } else {
@@ -146,7 +150,8 @@ export const useRealtimeMessages = ({
             // Only unlock processing after a slight delay to prevent rapid reprocessing
             setTimeout(() => {
               processingMessageRef.current = false;
-            }, 50);
+              messageProcessingLockRef.current.delete(messageId);
+            }, 100);
           }
 
           // Clean up old message ids after 5 minutes
