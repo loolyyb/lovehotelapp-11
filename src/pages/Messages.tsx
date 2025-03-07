@@ -25,12 +25,10 @@ export default function Messages() {
     checkConnectionStatus 
   } = useConnectionStatus();
 
+  // Effect to initialize and cleanup component
   useEffect(() => {
     logger.info("Messages page mounted");
-    
     mountedRef.current = true;
-    
-    // Check connection status when component mounts
     checkConnectionStatus();
     
     if (location.state?.conversationId) {
@@ -44,21 +42,17 @@ export default function Messages() {
   }, [location.state, logger, checkConnectionStatus]);
 
   const handleSelectConversation = useCallback((conversationId: string) => {
-    // If clicking on the already selected conversation, do nothing
     if (selectedConversation === conversationId) {
       logger.info("Conversation already selected, ignoring", { conversationId });
       return;
     }
     
-    // Remember previous value for logging
     previousConversationRef.current = selectedConversation;
-    
     logger.info("Changing selected conversation", { 
       from: previousConversationRef.current, 
       to: conversationId 
     });
     
-    // Update the selected conversation
     setSelectedConversation(conversationId);
   }, [selectedConversation, logger]);
 
@@ -67,51 +61,41 @@ export default function Messages() {
     setSelectedConversation(null);
   }, [logger]);
 
-  const handleRefreshConversations = useCallback(() => {
+  const handleRefreshConversations = useCallback(async () => {
     logger.info("Manually refreshing conversations");
     
-    // Avoid multiple rapid refresh attempts
     refreshAttemptRef.current += 1;
     const currentAttempt = refreshAttemptRef.current;
     
-    // Check connection status first
-    checkConnectionStatus().then(() => {
-      // If connection is OK but there was a network error before
+    try {
+      await checkConnectionStatus();
+      
       if (!connectionError && isNetworkError && mountedRef.current && currentAttempt === refreshAttemptRef.current) {
         setIsNetworkError(false);
-        
-        // If we had a network error that's now resolved, reload the page
-        // This is a last resort approach that ensures all connections are reestablished
         window.location.reload();
         return;
       }
       
-      // Normal refresh flow if there's no connection error
       if (!connectionError && mountedRef.current && currentAttempt === refreshAttemptRef.current) {
-        // If we have a profile, refresh conversations
-        supabase.auth.getUser().then(({ data, error }) => {
-          if (error || !data.user) {
-            throw error || new Error("No authenticated user");
-          }
-          
-          // Show success toast
-          toast({
-            title: "Actualisation réussie",
-            description: "Vos conversations ont été actualisées"
-          });
-        }).catch(error => {
-          logger.error("Error getting user during refresh", { error });
-          
-          if (mountedRef.current) {
-            toast({
-              variant: "destructive",
-              title: "Erreur de connexion",
-              description: "Impossible de récupérer votre profil. Veuillez réessayer."
-            });
-          }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No authenticated user");
+        
+        toast({
+          title: "Actualisation réussie",
+          description: "Vos conversations ont été actualisées"
         });
       }
-    });
+    } catch (error) {
+      logger.error("Error during refresh", { error });
+      
+      if (mountedRef.current) {
+        toast({
+          variant: "destructive",
+          title: "Erreur de connexion",
+          description: "Impossible de récupérer votre profil. Veuillez réessayer."
+        });
+      }
+    }
   }, [connectionError, isNetworkError, logger, toast, checkConnectionStatus, setIsNetworkError]);
 
   if (connectionError) {

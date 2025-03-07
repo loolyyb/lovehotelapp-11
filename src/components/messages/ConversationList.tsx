@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,7 +26,6 @@ export function ConversationList({
   selectedConversationId,
   onNetworkError
 }: ConversationListProps) {
-  const [currentUserProfileId, setCurrentUserProfileId] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isCreatingTestConversation, setIsCreatingTestConversation] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
@@ -48,7 +46,7 @@ export function ConversationList({
     const checkAuth = async () => {
       try {
         logger.info("Checking authentication status");
-        const { data, error } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           logger.error("Session check error", { error });
@@ -61,7 +59,7 @@ export function ConversationList({
           return;
         }
         
-        if (!data.session) {
+        if (!session) {
           logger.warn("No active session found");
           setHasAuthError(true);
           toast({
@@ -72,7 +70,22 @@ export function ConversationList({
           return;
         }
         
-        logger.info("Authentication check successful", { userId: data.session.user.id });
+        // Get profile data directly after session check
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        if (profileError) {
+          logger.error("Error fetching profile", { error: profileError });
+          return;
+        }
+        
+        if (profileData) {
+          logger.info("Using existing profile", { ...profileData });
+        }
+        
         setHasAuthError(false);
       } catch (e) {
         logger.error("Error checking auth status", { error: e });
@@ -83,77 +96,7 @@ export function ConversationList({
     };
     
     checkAuth();
-  }, []);
-
-  useEffect(() => {
-    if (currentProfileId) {
-      setCurrentUserProfileId(currentProfileId);
-      logger.info("Using profile ID from conversations hook", { profileId: currentProfileId });
-    } else if (authChecked && !hasAuthError) {
-      getCurrentUserProfile();
-    }
-  }, [currentProfileId, authChecked, hasAuthError, logger]);
-
-  const getCurrentUserProfile = async () => {
-    try {
-      logger.info("Fetching current user profile");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        logger.warn("No authenticated user found");
-        toast({
-          variant: "destructive",
-          title: "Non connecté",
-          description: "Veuillez vous connecter pour accéder à vos messages."
-        });
-        setHasAuthError(true);
-        return;
-      }
-      
-      const profile = await getProfileByAuthId(user.id);
-      
-      if (profile) {
-        setCurrentUserProfileId(profile.id);
-        logger.info("Current user profile fetched", { profileId: profile.id });
-      } else {
-        // Attempt to create a profile if none exists
-        logger.warn("No profile found for user, creating one", { userId: user.id });
-        
-        const { data: newProfile, error } = await supabase
-          .from('profiles')
-          .insert({
-            id: crypto.randomUUID(),
-            user_id: user.id,
-            full_name: user.email?.split('@')[0] || 'Utilisateur',
-            username: user.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 1000),
-            role: 'user'
-          })
-          .select('id')
-          .single();
-          
-        if (error) {
-          logger.error("Failed to create profile", { error });
-          toast({
-            variant: "destructive",
-            title: "Erreur",
-            description: "Impossible de créer votre profil. Veuillez contacter le support."
-          });
-          return;
-        }
-        
-        if (newProfile) {
-          setCurrentUserProfileId(newProfile.id);
-          logger.info("Created new profile", { profileId: newProfile.id });
-        }
-      }
-    } catch (error) {
-      logger.error("Error fetching current user profile:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur de connexion",
-        description: "Problème de connexion au serveur. Veuillez réessayer."
-      });
-    }
-  };
+  }, [logger, toast]);
 
   const handleLogin = () => {
     logger.info("Redirecting to login page");
@@ -161,7 +104,7 @@ export function ConversationList({
   };
 
   const handleCreateTestConversation = async () => {
-    if (!currentUserProfileId) {
+    if (!currentProfileId) {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -173,13 +116,13 @@ export function ConversationList({
     setIsCreatingTestConversation(true);
     
     try {
-      logger.info("Creating a test conversation", { profileId: currentUserProfileId });
+      logger.info("Creating a test conversation", { profileId: currentProfileId });
       
       // Find any admin user or other user to create conversation with
       const { data: otherProfiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, username')
-        .neq('id', currentUserProfileId)
+        .neq('id', currentProfileId)
         .limit(1);
         
       if (profilesError) {
@@ -210,7 +153,7 @@ export function ConversationList({
         const { data: conversation, error: convError } = await supabase
           .from('conversations')
           .insert({
-            user1_id: currentUserProfileId,
+            user1_id: currentProfileId,
             user2_id: newProfile.id,
             status: 'active'
           })
@@ -242,7 +185,7 @@ export function ConversationList({
         const { data: conversation, error: convError } = await supabase
           .from('conversations')
           .insert({
-            user1_id: currentUserProfileId,
+            user1_id: currentProfileId,
             user2_id: otherUser.id,
             status: 'active'
           })
@@ -352,14 +295,14 @@ export function ConversationList({
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!hasAuthError) {
+      if (!hasAuthError && authChecked) {
         logger.info("Periodic conversation refresh");
         refetch();
       }
     }, 60000);
     
     return () => clearInterval(interval);
-  }, [refetch, logger, hasAuthError]);
+  }, [refetch, logger, hasAuthError, authChecked]);
 
   // Handle authentication error state
   if (hasAuthError) {
@@ -423,7 +366,7 @@ export function ConversationList({
 
   logger.info("Rendering conversation list", { 
     conversationsCount: conversations.length,
-    currentUserProfileId
+    currentUserProfileId: currentProfileId
   });
 
   if (conversations.length === 0) {

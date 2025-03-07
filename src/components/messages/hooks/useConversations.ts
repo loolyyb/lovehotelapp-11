@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
@@ -22,7 +21,6 @@ export const useConversations = () => {
   const lastFetchTimeRef = useRef(0);
   const isMountedRef = useRef(true);
 
-  // Import all the refactored hooks
   const {
     currentProfileId,
     setCurrentProfileId,
@@ -256,22 +254,63 @@ export const useConversations = () => {
   useRealtimeMessages({
     currentProfileId,
     onNewMessage: realtimeMessageHandler,
+    onMessageUpdate: handleMessageUpdate
   });
+
+  // Initialize profile and fetch conversations
+  useEffect(() => {
+    const initializeData = async () => {
+      if (fetchingRef.current) return;
+      
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        
+        if (!session) {
+          setError("User not authenticated");
+          return;
+        }
+
+        // Get profile data
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        if (profileError) throw profileError;
+        
+        if (profile) {
+          logger.info("Profile found, fetching conversations", { profileId: profile.id });
+          setCurrentProfileId(profile.id);
+          await fetchConversations(false); // Force fresh fetch
+        }
+      } catch (error) {
+        logger.error("Error initializing conversations data", { error });
+        setError("Failed to load conversations");
+      }
+    };
+
+    initializeData();
+  }, []);
 
   // Use memoized state to prevent unnecessary rerenders
   const result = useMemo(() => ({ 
     conversations, 
-    isLoading, 
-    error, 
-    refetch: () => fetchConversationsWithMessages(false), 
+    isLoading: profileLoading || conversationsLoading,
+    error: error || profileError || conversationsError,
+    refetch: () => fetchConversations(false),
     currentProfileId,
     loadMoreConversations,
     hasMoreConversations: hasMore
   }), [
-    conversations, 
-    isLoading, 
-    error, 
-    fetchConversationsWithMessages, 
+    conversations,
+    profileLoading,
+    conversationsLoading,
+    error,
+    profileError,
+    conversationsError,
+    fetchConversations,
     currentProfileId,
     loadMoreConversations,
     hasMore
