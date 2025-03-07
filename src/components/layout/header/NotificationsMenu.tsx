@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Bell, Loader2 } from "lucide-react";
 import {
@@ -153,7 +152,9 @@ export function NotificationsMenu() {
                 .eq('id', senderId)
                 .single();
               
-              const senderName = sender?.username || sender?.full_name || 'Quelqu'un';
+              const senderName = sender?.username || sender?.full_name || 'Quelqu\'un';
+              
+              const { data: session } = await supabase.auth.getSession();
               
               // Create notification for this message
               await supabase
