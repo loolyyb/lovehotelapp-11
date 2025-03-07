@@ -1,8 +1,9 @@
 
-import { useState } from "react";
+import { useState, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 import { AlertService } from "@/services/AlertService";
+import { MessageCache } from './cache/messageCache';
 
 interface UseMessageFetcherProps {
   conversationId: string;
@@ -11,9 +12,9 @@ interface UseMessageFetcherProps {
   toast: any;
 }
 
-// Cache for messages to reduce database queries
-const messagesCache = new Map<string, any[]>();
-
+/**
+ * Hook for message fetching operations
+ */
 export const useMessageFetcher = ({ 
   conversationId, 
   currentProfileId, 
@@ -22,11 +23,12 @@ export const useMessageFetcher = ({
 }: UseMessageFetcherProps) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [fetchInProgress, setFetchInProgress] = useState(false);
   
   // Default page size
   const PAGE_SIZE = 20;
 
-  const fetchMessages = async (useCache = true) => {
+  const fetchMessages = useCallback(async (useCache = true) => {
     if (!conversationId || !currentProfileId) {
       logger.info("Cannot fetch messages: missing ID", { 
         hasConversationId: !!conversationId, 
@@ -36,22 +38,34 @@ export const useMessageFetcher = ({
       return null;
     }
 
-    // Try to get from cache first if allowed
-    const cacheKey = `${conversationId}_messages`;
-    if (useCache && messagesCache.has(cacheKey)) {
-      logger.info("Using cached messages", {
+    // Prevent concurrent fetches
+    if (fetchInProgress) {
+      logger.info("Fetch already in progress, skipping duplicate request", {
         conversationId,
-        cachedCount: messagesCache.get(cacheKey)?.length || 0,
         component: "useMessageFetcher"
       });
-      
-      const cachedMessages = messagesCache.get(cacheKey);
-      setMessages(cachedMessages || []);
-      return cachedMessages;
+      return null;
     }
 
+    setFetchInProgress(true);
+
     try {
-      logger.info("Fetching messages", { 
+      // Try to get from cache first if allowed
+      if (useCache && MessageCache.has(conversationId)) {
+        logger.info("Using cached messages", {
+          conversationId,
+          cachedCount: MessageCache.get(conversationId)?.length || 0,
+          component: "useMessageFetcher"
+        });
+        
+        const cachedMessages = MessageCache.get(conversationId);
+        if (cachedMessages) {
+          setMessages(cachedMessages);
+          return cachedMessages;
+        }
+      }
+
+      logger.info("Fetching messages from database", { 
         conversationId, 
         currentProfileId,
         component: "useMessageFetcher" 
@@ -103,7 +117,7 @@ export const useMessageFetcher = ({
       
       // Cache the results
       if (messagesData) {
-        messagesCache.set(cacheKey, messagesData);
+        MessageCache.set(conversationId, messagesData);
       }
       
       setMessages(messagesData || []);
@@ -122,17 +136,19 @@ export const useMessageFetcher = ({
         description: "Problème lors du chargement des messages. Veuillez réessayer.",
       });
       return null;
+    } finally {
+      setFetchInProgress(false);
     }
-  };
+  }, [conversationId, currentProfileId, setMessages, toast, fetchInProgress]);
 
-  const fetchMoreMessages = async () => {
+  const fetchMoreMessages = useCallback(async () => {
     if (!conversationId || !currentProfileId || !hasMoreMessages || isLoadingMore) return;
 
     setIsLoadingMore(true);
     
     try {
       // Get current messages to determine the offset
-      const currentMessages = messagesCache.get(`${conversationId}_messages`) || [];
+      const currentMessages = MessageCache.get(conversationId) || [];
       
       logger.info("Fetching more messages", { 
         conversationId, 
@@ -199,9 +215,8 @@ export const useMessageFetcher = ({
       
       if (olderMessages && olderMessages.length > 0) {
         // Update the cache with new messages
-        const cacheKey = `${conversationId}_messages`;
-        const updatedMessages = [...(messagesCache.get(cacheKey) || []), ...olderMessages];
-        messagesCache.set(cacheKey, updatedMessages);
+        const updatedMessages = [...(MessageCache.get(conversationId) || []), ...olderMessages];
+        MessageCache.set(conversationId, updatedMessages);
         
         // Update state
         setMessages(updatedMessages);
@@ -227,24 +242,31 @@ export const useMessageFetcher = ({
     } finally {
       setIsLoadingMore(false);
     }
-  };
+  }, [conversationId, currentProfileId, hasMoreMessages, isLoadingMore, setMessages, toast]);
 
   // Method to add a new message to the cache
-  const addMessageToCache = (message: any) => {
-    const cacheKey = `${conversationId}_messages`;
-    if (messagesCache.has(cacheKey)) {
-      const currentMessages = messagesCache.get(cacheKey) || [];
-      messagesCache.set(cacheKey, [...currentMessages, message]);
+  const addMessageToCache = useCallback((message: any) => {
+    if (!conversationId) return;
+    
+    if (MessageCache.has(conversationId)) {
+      // Add to cache
+      MessageCache.addMessage(conversationId, message);
       
       // Also update the state
-      setMessages(prev => [...prev, message]);
+      setMessages(prev => {
+        // Prevent duplicates in state as well
+        if (prev.some(msg => msg.id === message.id)) {
+          return prev;
+        }
+        return [...prev, message];
+      });
     }
-  };
+  }, [conversationId, setMessages]);
 
   // Clear the cache when needed (e.g., on logout)
-  const clearCache = () => {
-    messagesCache.clear();
-  };
+  const clearCache = useCallback(() => {
+    MessageCache.clearAll();
+  }, []);
 
   return { 
     fetchMessages, 
@@ -252,6 +274,7 @@ export const useMessageFetcher = ({
     addMessageToCache, 
     clearCache, 
     isLoadingMore, 
-    hasMoreMessages 
+    hasMoreMessages,
+    fetchInProgress
   };
 };
