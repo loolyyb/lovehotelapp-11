@@ -31,6 +31,7 @@ export function MessageContent({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
   const messageContainerRef = useRef<HTMLDivElement>(null);
+  const prevMessagesLengthRef = useRef<number>(0);
 
   // Track if user has scrolled up
   const handleScroll = () => {
@@ -52,7 +53,14 @@ export function MessageContent({
 
   // Automatic scroll to last message on new messages
   useEffect(() => {
-    if (messages && messages.length > 0 && autoScroll && !isLoadingMore) {
+    if (!messages || !Array.isArray(messages)) return;
+    
+    // Check if we received new messages
+    const hasNewMessages = messages.length > prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = messages.length;
+    
+    // Only scroll if we're at the bottom or if new messages came in
+    if (hasNewMessages && autoScroll && !isLoadingMore) {
       const timeout = setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -100,7 +108,7 @@ export function MessageContent({
       
       {messages.map((message) => (
         <MessageBubble
-          key={message.id}
+          key={message.id || `temp-${message.created_at}`}
           message={message}
           isCurrentUser={message.sender_id === currentProfileId}
         />

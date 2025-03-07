@@ -69,9 +69,10 @@ export const useRealtimeMessages = ({
           lastProcessedMessageRef.current.add(messageId);
 
           // Only process messages if they're relevant to current user
-          // Either as sender or in their conversation
-          if (payload.new.sender_id === currentProfileId || 
-              payload.new.conversation_id.includes(currentProfileId)) {
+          // Either as sender or receiver in their conversation
+          const conversationId = payload.new.conversation_id;
+          if (conversationId && (conversationId.includes(currentProfileId) || 
+              payload.new.sender_id === currentProfileId)) {
               
             processingMessageRef.current = true;
             
@@ -92,15 +93,22 @@ export const useRealtimeMessages = ({
                       senderId: payload.new.sender_id
                     });
                     // Still deliver the message even if sender fetch fails
-                    onNewMessage(payload.new);
+                    onNewMessage({...payload.new});
                     processingMessageRef.current = false;
                     return;
                   }
                   
-                  onNewMessage({
+                  const enrichedMessage = {
                     ...payload.new,
                     sender
+                  };
+                  
+                  logger.info("Delivering enriched message to handler", {
+                    messageId: enrichedMessage.id,
+                    hasProfileInfo: !!enrichedMessage.sender
                   });
+                  
+                  onNewMessage(enrichedMessage);
                   processingMessageRef.current = false;
                 } catch (error: any) {
                   logger.error("Exception in fetching sender for realtime message", {
@@ -123,6 +131,11 @@ export const useRealtimeMessages = ({
           } else {
             processingMessageRef.current = false;
           }
+          
+          // Clean up old message ids from the set after 5 minutes to prevent memory leaks
+          setTimeout(() => {
+            lastProcessedMessageRef.current.delete(messageId);
+          }, 300000);
         }
       )
       .on(
@@ -154,16 +167,5 @@ export const useRealtimeMessages = ({
     };
   }, [currentProfileId, onNewMessage, onMessageUpdate, logger]);
 
-  // Handle new messages callback
-  const handleNewMessage = useCallback((message: any) => {
-    logger.info("New message received in realtime hook", { 
-      messageId: message.id, 
-      conversationId: message.conversation_id,
-      timestamp: new Date().toISOString()
-    });
-    
-    onNewMessage(message);
-  }, [logger, onNewMessage]);
-
-  return { handleNewMessage };
+  return { handleNewMessage: onNewMessage };
 };

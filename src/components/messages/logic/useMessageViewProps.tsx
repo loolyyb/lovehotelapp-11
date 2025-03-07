@@ -124,10 +124,14 @@ export function useMessageViewProps(conversationId: string) {
     addMessageToCache
   });
 
-  // Message realtime update handlers
+  // Message realtime update handlers - Improved for better UI updates
   const handleNewMessage = useCallback((message) => {
     if (message.conversation_id === conversationId) {
-      logger.info("New message received, updating messages list", { messageId: message.id });
+      logger.info("New message received, updating messages list", { 
+        messageId: message.id, 
+        senderId: message.sender_id,
+        currentProfileId
+      });
       
       // Directly add to messages state for immediate display
       setMessages(prev => {
@@ -135,20 +139,28 @@ export function useMessageViewProps(conversationId: string) {
         if (prev.some(m => m.id === message.id)) {
           return prev;
         }
-        return [...prev, message].sort(
+        
+        const updatedMessages = [...prev, message].sort(
           (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
+        
+        logger.info("Messages list updated with new message", { 
+          totalMessages: updatedMessages.length,
+          latestMessageId: updatedMessages[updatedMessages.length - 1]?.id
+        });
+        
+        return updatedMessages;
       });
       
       // Also update cache to ensure persistence
       addMessageToCache(message);
       
-      // Mark as read after a short delay
-      setTimeout(() => {
-        if (currentProfileId && message.sender_id !== currentProfileId) {
+      // Mark as read after a short delay if message is from other user
+      if (currentProfileId && message.sender_id !== currentProfileId) {
+        setTimeout(() => {
           markMessagesAsRead();
-        }
-      }, 500);
+        }, 500);
+      }
     }
   }, [conversationId, addMessageToCache, setMessages, logger, currentProfileId, markMessagesAsRead]);
 
@@ -161,7 +173,7 @@ export function useMessageViewProps(conversationId: string) {
     }
   }, [conversationId, setMessages, logger]);
 
-  // Setup realtime message updates
+  // Setup realtime message updates with improved subscription
   useRealtimeMessages({
     currentProfileId,
     onNewMessage: handleNewMessage,
