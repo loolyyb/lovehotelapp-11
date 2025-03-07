@@ -5,7 +5,7 @@ import { useLogger } from "@/hooks/useLogger";
 
 interface UseMessageRefreshProps {
   conversationId: string;
-  fetchMessages: () => Promise<void>;
+  fetchMessages: (useCache?: boolean) => Promise<any[] | null>;
   getCurrentUser: () => Promise<void>;
   currentProfileId: string | null;
 }
@@ -31,7 +31,7 @@ export const useMessageRefresh = ({
     
     try {
       logger.info("Manually refreshing messages", { conversationId });
-      await fetchMessages();
+      await fetchMessages(false); // Pass false to skip cache on refresh
       
       logger.info("Messages refreshed successfully", { 
         conversationId,
@@ -71,7 +71,7 @@ export const useMessageRefresh = ({
           profileId: currentProfileId,
           conversationId 
         });
-        await fetchMessages();
+        await fetchMessages(false); // Skip cache on retry
       } else {
         logger.warn("No profile ID when retrying load", { conversationId });
         // Still allow UI to render even if profile ID is missing

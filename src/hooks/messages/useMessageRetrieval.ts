@@ -38,7 +38,7 @@ export const useMessageRetrieval = ({
   });
 
   // Add delay before marking messages as read after fetching
-  const fetchMessagesAndMarkAsRead = async (useCache = true) => {
+  const fetchMessagesAndMarkAsRead = useCallback(async (useCache = true) => {
     const result = await fetchMessages(useCache);
     
     // Add delay before marking messages as read
@@ -47,7 +47,7 @@ export const useMessageRetrieval = ({
     }
     
     return result;
-  };
+  }, [fetchMessages, markMessagesAsRead]);
   
   // Load more messages with debounce to prevent multiple calls
   const loadMoreMessages = useCallback(async () => {
