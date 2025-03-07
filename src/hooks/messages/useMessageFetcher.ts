@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { MessagesFetcher } from './fetchers/messagesFetcher';
 import { MessageCache } from './cache';
 import { logger } from "@/services/LogService";
@@ -24,6 +24,23 @@ export const useMessageFetcher = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const fetchInProgressRef = useRef(false);
+  const componentMountedRef = useRef(true);
+  const fetchAttemptRef = useRef(0);
+  const lastFetchTimeRef = useRef(0);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      componentMountedRef.current = false;
+    };
+  }, []);
+
+  // Reset fetch state when conversation changes
+  useEffect(() => {
+    fetchInProgressRef.current = false;
+    fetchAttemptRef.current = 0;
+    lastFetchTimeRef.current = 0;
+  }, [conversationId]);
 
   // Fetch initial messages with concurrency control using a ref
   // This prevents multiple fetches from happening at the same time
@@ -37,7 +54,19 @@ export const useMessageFetcher = ({
       return null;
     }
 
+    // Throttle rapid successive fetches
+    const now = Date.now();
+    if (now - lastFetchTimeRef.current < 500 && fetchAttemptRef.current > 0) {
+      logger.info("Throttling rapid fetch requests", {
+        timeSinceLastFetch: now - lastFetchTimeRef.current,
+        component: "useMessageFetcher"
+      });
+      return null;
+    }
+
     fetchInProgressRef.current = true;
+    lastFetchTimeRef.current = now;
+    fetchAttemptRef.current++;
 
     try {
       const messagesData = await MessagesFetcher.fetchInitialMessages(
@@ -45,6 +74,8 @@ export const useMessageFetcher = ({
         currentProfileId,
         useCache
       );
+      
+      if (!componentMountedRef.current) return null;
       
       if (messagesData) {
         setMessages(messagesData);
@@ -58,20 +89,24 @@ export const useMessageFetcher = ({
       return messagesData;
     } catch (error) {
       logger.error("Error in fetchMessages", { error });
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les messages",
-      });
+      if (componentMountedRef.current) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les messages",
+        });
+      }
       return null;
     } finally {
-      fetchInProgressRef.current = false;
+      if (componentMountedRef.current) {
+        fetchInProgressRef.current = false;
+      }
     }
   }, [conversationId, currentProfileId, setMessages, toast]);
 
   // Fetch older messages
   const fetchMoreMessages = useCallback(async () => {
-    if (!conversationId || !currentProfileId || !hasMoreMessages || isLoadingMore) return null;
+    if (!conversationId || !currentProfileId || !hasMoreMessages || isLoadingMore || fetchInProgressRef.current) return null;
 
     setIsLoadingMore(true);
     
@@ -81,6 +116,8 @@ export const useMessageFetcher = ({
         currentProfileId,
         hasMoreMessages
       );
+      
+      if (!componentMountedRef.current) return null;
       
       if (updatedMessages) {
         setMessages(updatedMessages);
@@ -92,14 +129,18 @@ export const useMessageFetcher = ({
       }
     } catch (error) {
       logger.error("Error in fetchMoreMessages", { error });
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger plus de messages",
-      });
+      if (componentMountedRef.current) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger plus de messages",
+        });
+      }
       return null;
     } finally {
-      setIsLoadingMore(false);
+      if (componentMountedRef.current) {
+        setIsLoadingMore(false);
+      }
     }
   }, [conversationId, currentProfileId, hasMoreMessages, isLoadingMore, setMessages, toast]);
 
@@ -112,7 +153,7 @@ export const useMessageFetcher = ({
     // Also update the state if cache was updated
     if (cacheUpdated) {
       setMessages(prev => {
-        // Prevent duplicates in state
+        // Check if message already exists to prevent duplicates
         if (prev.some(msg => msg.id === message.id)) {
           return prev;
         }

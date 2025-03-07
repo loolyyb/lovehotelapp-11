@@ -1,97 +1,83 @@
 
+import { LRUCache } from 'lru-cache';
+import { CachedData, MessageCacheMap } from './cacheTypes';
+import { MAX_CACHE_SIZE, MAX_CACHE_AGE_MS, getCacheKey } from './cacheSettings';
 import { logger } from "@/services/LogService";
-import { CachedData, MessageCacheMap } from "./cacheTypes";
-import { MAX_CACHE_SIZE, getCacheKey } from "./cacheSettings";
-
-// Cache for messages to reduce database queries
-const messagesCache: MessageCacheMap = new Map<string, CachedData>();
 
 /**
- * Message cache store - handles the actual cache operations
+ * MessageCacheStore - Optimized LRU cache implementation for messages
+ * with automatic stale data eviction and memory management
  */
 export const MessageCacheStore = {
-  /**
-   * Get the raw cache map
-   */
-  getCache(): MessageCacheMap {
-    return messagesCache;
-  },
+  // Using LRU cache with configured size and TTL for better performance
+  _cache: new LRUCache<string, CachedData>({
+    max: MAX_CACHE_SIZE,
+    ttl: MAX_CACHE_AGE_MS,
+    updateAgeOnGet: true,
+    updateAgeOnHas: false,
+    allowStale: false,
+  }),
 
-  /**
-   * Get cached messages for a conversation
-   */
+  // Get messages from cache with automatic stale check
   get(conversationId: string): any[] | undefined {
+    if (!conversationId) return undefined;
+    
     const cacheKey = getCacheKey(conversationId);
-    const cached = messagesCache.get(cacheKey);
+    const cached = this._cache.get(cacheKey);
     
     if (!cached) return undefined;
     
-    // Update timestamp on access to implement LRU behavior
+    // Update timestamp on access for LRU behavior
     cached.timestamp = Date.now();
     return cached.messages;
   },
-
-  /**
-   * Store messages in cache with timestamp
-   */
+  
+  // Store messages in cache with timestamp
   set(conversationId: string, messages: any[]): void {
-    const cacheKey = getCacheKey(conversationId);
+    if (!conversationId || !messages) return;
     
-    // Store with current timestamp
-    messagesCache.set(cacheKey, {
+    const cacheKey = getCacheKey(conversationId);
+    this._cache.set(cacheKey, {
       messages,
       timestamp: Date.now()
     });
     
-    // Clean up old entries if cache is too large
-    if (messagesCache.size > MAX_CACHE_SIZE) {
-      this.cleanOldestEntries();
-    }
+    logger.info("Cache updated for conversation", { 
+      conversationId, 
+      messageCount: messages.length, 
+      component: "MessageCacheStore" 
+    });
   },
-
-  /**
-   * Check if a conversation has cached messages
-   */
+  
+  // Check if messages are in cache
   has(conversationId: string): boolean {
-    const cacheKey = getCacheKey(conversationId);
-    return messagesCache.has(cacheKey);
+    if (!conversationId) return false;
+    return this._cache.has(getCacheKey(conversationId));
   },
-
-  /**
-   * Remove a specific conversation from cache
-   */
-  delete(conversationId: string): boolean {
-    const cacheKey = getCacheKey(conversationId);
-    return messagesCache.delete(cacheKey);
-  },
-
-  /**
-   * Clear the entire cache
-   */
+  
+  // Clear the entire cache
   clear(): void {
-    messagesCache.clear();
-    logger.info("Message cache cleared");
+    this._cache.clear();
+    logger.info("Cache cleared", { component: "MessageCacheStore" });
   },
-
-  /**
-   * Helper function to remove oldest entries based on access timestamp
-   */
-  cleanOldestEntries(): void {
-    // Sort by timestamp and remove oldest entries
-    const entries = Array.from(messagesCache.entries());
-    
-    // Sort by timestamp (oldest first)
-    entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
-    
-    // Remove oldest 25% of entries
-    const removeCount = Math.max(1, Math.floor(messagesCache.size * 0.25));
-    
-    for (let i = 0; i < removeCount; i++) {
-      if (entries[i]) {
-        messagesCache.delete(entries[i][0]);
+  
+  // Delete specific conversation from cache
+  delete(conversationId: string): void {
+    if (!conversationId) return;
+    this._cache.delete(getCacheKey(conversationId));
+    logger.info("Cache entry deleted", { conversationId, component: "MessageCacheStore" });
+  },
+  
+  // For diagnostics and testing
+  getCache(): MessageCacheMap {
+    // Convert LRU cache to Map for compatibility
+    const result = new Map<string, CachedData>();
+    for (const key of this._cache.keys()) {
+      const value = this._cache.get(key);
+      if (value) {
+        result.set(key, value);
       }
     }
-    
-    logger.info(`Cleaned ${removeCount} old cache entries`);
+    return result;
   }
 };

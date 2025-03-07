@@ -5,6 +5,7 @@ import { MAX_CACHE_AGE_MS, getCacheKey } from "./cacheSettings";
 
 /**
  * Core cache operations for adding and retrieving messages
+ * with optimized performance
  */
 export const CacheOperations = {
   /**
@@ -12,11 +13,10 @@ export const CacheOperations = {
    * @returns boolean indicating whether the operation was successful
    */
   addMessage(conversationId: string, message: any): boolean {
-    if (!conversationId) return false;
+    if (!conversationId || !message) return false;
     
-    const cache = MessageCacheStore.getCache();
     const cacheKey = getCacheKey(conversationId);
-    const cached = cache.get(cacheKey);
+    const cached = MessageCacheStore._cache.get(cacheKey);
     
     if (!cached) {
       // If no cache exists yet, create a new entry
@@ -25,9 +25,14 @@ export const CacheOperations = {
     }
     
     // Check if message already exists to prevent duplicates
-    if (!cached.messages.some(msg => msg.id === message.id)) {
+    // Use a Set for O(1) lookup performance on large message lists
+    const messageIds = new Set(cached.messages.map(msg => msg.id));
+    
+    if (!messageIds.has(message.id)) {
       cached.messages.push(message);
       cached.timestamp = Date.now();
+      // Update the cache entry to refresh the LRU position
+      MessageCacheStore._cache.set(cacheKey, cached);
       return true;
     }
     
@@ -41,21 +46,22 @@ export const CacheOperations = {
   getMessages(conversationId: string): any[] | undefined {
     if (!conversationId) return undefined;
     
-    const cache = MessageCacheStore.getCache();
     const cacheKey = getCacheKey(conversationId);
-    const cached = cache.get(cacheKey);
+    const cached = MessageCacheStore._cache.get(cacheKey);
     
     if (!cached) return undefined;
     
     // Check if cache is still valid (not too old)
     if (Date.now() - cached.timestamp > MAX_CACHE_AGE_MS) {
       logger.info("Cache expired for conversation", { conversationId });
-      cache.delete(cacheKey);
+      MessageCacheStore._cache.delete(cacheKey);
       return undefined;
     }
     
-    // Update timestamp on access
+    // Update timestamp on access to refresh LRU status
     cached.timestamp = Date.now();
+    MessageCacheStore._cache.set(cacheKey, cached);
+    
     return cached.messages;
   }
 };

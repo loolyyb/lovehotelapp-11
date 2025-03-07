@@ -1,17 +1,19 @@
 
 import { logger } from "@/services/LogService";
 import { MessageCacheStore } from "./messageCacheStore";
+import { MAX_CACHE_AGE_MS, getCacheKey } from "./cacheSettings";
+
+// Track in-progress sync operations to prevent duplicates
+const syncOperations = new Map<string, boolean>();
 
 /**
  * Operations for syncing and checking for newer messages
+ * with optimizations to prevent duplicate requests
  */
 export const CacheSyncOperations = {
   /**
-   * Check for newer messages since the last fetch
-   * @param supabase - Supabase client
-   * @param conversationId - ID of the conversation
-   * @param existingMessages - Currently cached messages
-   * @returns Updated messages array or null if no new messages
+   * Check for newer messages since the last fetch with optimization
+   * to prevent duplicate or unnecessary requests
    */
   async checkForNewerMessages(
     supabase: any,
@@ -21,6 +23,26 @@ export const CacheSyncOperations = {
     if (!conversationId || !existingMessages || existingMessages.length === 0) {
       return null;
     }
+    
+    // Skip if already syncing this conversation
+    if (syncOperations.get(conversationId)) {
+      logger.info("Sync already in progress for conversation", { conversationId });
+      return null;
+    }
+    
+    // Check if cache is still fresh enough to not need a sync
+    const cacheKey = getCacheKey(conversationId);
+    const cached = MessageCacheStore._cache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < MAX_CACHE_AGE_MS / 2)) {
+      logger.info("Cache is still fresh, skipping sync", { 
+        conversationId,
+        ageMs: Date.now() - cached.timestamp
+      });
+      return null;
+    }
+    
+    // Mark sync as in progress
+    syncOperations.set(conversationId, true);
     
     try {
       // Get the timestamp of the newest message we have
@@ -71,10 +93,22 @@ export const CacheSyncOperations = {
         return updatedMessages;
       }
       
+      // Update timestamp even when no new messages found
+      // to prevent too frequent checks
+      if (cached) {
+        cached.timestamp = Date.now();
+      }
+      
       return null;
     } catch (error) {
       logger.error("Error in checkForNewerMessages", { error });
       return null;
+    } finally {
+      // Remove from in-progress operations after a delay
+      // to prevent immediate duplicates
+      setTimeout(() => {
+        syncOperations.delete(conversationId);
+      }, 500);
     }
   }
 };

@@ -8,7 +8,7 @@ import { MessageCache } from '../cache';
 const INITIAL_PAGE_SIZE = 15;
 const PAGINATION_SIZE = 10;
 
-// Define the fields we need to reduce payload size
+// Optimization: Only select fields we need to reduce payload size
 const MESSAGE_FIELDS = `
   id,
   content,
@@ -26,19 +26,22 @@ const MESSAGE_FIELDS = `
   )
 `;
 
+// In-memory query debounce tracking
+const pendingQueries = new Map<string, Promise<any[] | null>>();
+
 /**
  * Message fetching functions with optimized database queries
  * and enhanced caching
  */
 export const MessagesFetcher = {
   /**
-   * Fetch initial messages for a conversation
+   * Fetch initial messages for a conversation with query deduplication
    */
   fetchInitialMessages: async (
     conversationId: string,
     currentProfileId: string | null,
     useCache = true
-  ): Promise<any[] | null> => {
+  ): Promise<any[] | null> {
     if (!conversationId || !currentProfileId) {
       logger.info("Cannot fetch messages: missing ID", { 
         hasConversationId: !!conversationId, 
@@ -48,6 +51,9 @@ export const MessagesFetcher = {
       return null;
     }
 
+    // Unique query ID to deduplicate concurrent requests
+    const queryId = `init_${conversationId}_${Date.now()}`;
+    
     try {
       // Try to get from cache first if allowed
       if (useCache && MessageCache.has(conversationId)) {
@@ -60,12 +66,22 @@ export const MessagesFetcher = {
         const cachedMessages = MessageCache.get(conversationId);
         if (cachedMessages && cachedMessages.length > 0) {
           // Check for newer messages in the background after a short delay
+          // but don't block UI rendering
           setTimeout(() => {
             MessageCache.checkForNewerMessages(supabase, conversationId, cachedMessages);
-          }, 2000);
+          }, 200);
           
           return cachedMessages;
         }
+      }
+
+      // Check if a query is already in progress for this conversation
+      if (pendingQueries.has(conversationId)) {
+        logger.info("Reusing in-progress query", { 
+          conversationId, 
+          component: "messagesFetcher" 
+        });
+        return pendingQueries.get(conversationId);
       }
 
       logger.info("Fetching messages from database", { 
@@ -74,36 +90,52 @@ export const MessagesFetcher = {
         component: "messagesFetcher" 
       });
       
-      // Optimize query to select only necessary fields and limit result size
-      const { data: messagesData, error } = await supabase
-        .from('messages')
-        .select(MESSAGE_FIELDS)
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: false })
-        .limit(INITIAL_PAGE_SIZE)
-        .order('created_at', { ascending: true });
+      // Create a new query and store the promise
+      const queryPromise = (async () => {
+        try {
+          // Optimize query to select only necessary fields and limit result size
+          const { data: messagesData, error } = await supabase
+            .from('messages')
+            .select(MESSAGE_FIELDS)
+            .eq('conversation_id', conversationId)
+            .order('created_at', { ascending: false })
+            .limit(INITIAL_PAGE_SIZE)
+            .order('created_at', { ascending: true });
+          
+          if (error) {
+            logger.error("Error fetching messages", { 
+              error, 
+              conversationId,
+              component: "messagesFetcher" 
+            });
+            return null;
+          }
+          
+          logger.info("Successfully fetched messages", { 
+            count: messagesData?.length || 0, 
+            conversationId,
+            component: "messagesFetcher" 
+          });
+          
+          // Cache the results
+          if (messagesData) {
+            MessageCache.set(conversationId, messagesData);
+          }
+          
+          return messagesData || [];
+        } finally {
+          // Remove from pending queries after a short delay
+          // This prevents immediate duplicate requests but allows
+          // new requests after a reasonable time
+          setTimeout(() => {
+            pendingQueries.delete(conversationId);
+          }, 300);
+        }
+      })();
       
-      if (error) {
-        logger.error("Error fetching messages", { 
-          error, 
-          conversationId,
-          component: "messagesFetcher" 
-        });
-        return null;
-      }
-      
-      logger.info("Successfully fetched messages", { 
-        count: messagesData?.length || 0, 
-        conversationId,
-        component: "messagesFetcher" 
-      });
-      
-      // Cache the results
-      if (messagesData) {
-        MessageCache.set(conversationId, messagesData);
-      }
-      
-      return messagesData || [];
+      // Store the promise to deduplicate concurrent requests
+      pendingQueries.set(conversationId, queryPromise);
+      return await queryPromise;
     } catch (error: any) {
       logger.error("Network error fetching messages", {
         error: error.message,
@@ -111,6 +143,7 @@ export const MessagesFetcher = {
         component: "messagesFetcher"
       });
       AlertService.captureException(error);
+      pendingQueries.delete(conversationId);
       return null;
     }
   },
@@ -122,7 +155,7 @@ export const MessagesFetcher = {
     conversationId: string,
     currentProfileId: string | null,
     hasMoreMessages: boolean
-  ): Promise<any[] | null> => {
+  ): Promise<any[] | null> {
     if (!conversationId || !currentProfileId || !hasMoreMessages) return null;
     
     try {

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useLogger } from "@/hooks/useLogger";
@@ -17,6 +18,8 @@ export const useConversations = () => {
   const debounceTimerRef = useRef<number | null>(null);
   const retryCountRef = useRef(0);
   const fetchAttemptsRef = useRef(0);
+  const previousConversationsRef = useRef<any[]>([]);
+  const lastFetchTimeRef = useRef(0);
 
   // Import all the refactored hooks
   const {
@@ -48,59 +51,68 @@ export const useConversations = () => {
   // Combine loading and error states
   const isLoading = profileLoading || conversationsLoading;
   
+  // Only update error state when it actually changes
   useEffect(() => {
-    if (profileError) setError(profileError);
-    else if (conversationsError) setError(conversationsError);
-    else setError(null);
-  }, [profileError, conversationsError]);
-
-  // Log when we retrieve conversations
-  useEffect(() => {
-    logger.info("Fetched conversations", {
-      count: conversations.length
-    });
-  }, [conversations, logger]);
-
-  // Diagnostic check for profile and username
-  useEffect(() => {
-    if (currentProfileId) {
-      // Check if we have this profile cached first
-      const cachedProfile = getCachedProfile(currentProfileId);
-      if (cachedProfile) {
-        logger.info("Using cached profile details", {
-          profileId: cachedProfile.id,
-          username: cachedProfile.username
-        });
-        return;
-      }
-      
-      // Fetch profile details
-      supabase
-        .from('profiles')
-        .select('id, username, full_name')
-        .eq('id', currentProfileId)
-        .single()
-        .then(({ data, error }) => {
-          if (error) {
-            logger.error("Error fetching profile details", { error });
-          } else if (data) {
-            logger.info("User profile found", {
-              profileId: data.id,
-              username: data.username,
-              fullName: data.full_name
-            });
-            // Cache the profile
-            cacheProfile(data.id, data);
-          }
-        });
+    const newError = profileError || conversationsError || null;
+    if (newError !== error) {
+      setError(newError);
     }
+  }, [profileError, conversationsError, error]);
+
+  // Diagnostic check for profile and username - only run once per profile ID
+  useEffect(() => {
+    if (!currentProfileId) return;
+    
+    // Check if we have this profile cached first
+    const cachedProfile = getCachedProfile(currentProfileId);
+    if (cachedProfile) {
+      logger.info("Using cached profile details", {
+        profileId: cachedProfile.id,
+        username: cachedProfile.username
+      });
+      return;
+    }
+    
+    // Fetch profile details
+    supabase
+      .from('profiles')
+      .select('id, username, full_name')
+      .eq('id', currentProfileId)
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          logger.error("Error fetching profile details", { error });
+        } else if (data) {
+          logger.info("User profile found", {
+            profileId: data.id,
+            username: data.username,
+            fullName: data.full_name
+          });
+          // Cache the profile
+          cacheProfile(data.id, data);
+        }
+      });
   }, [currentProfileId, logger, cacheProfile, getCachedProfile]);
 
-  // Main fetch function that orchestrates the process
+  // Main fetch function with optimizations to prevent unnecessary renders
   const fetchConversationsWithMessages = useCallback(async (useCache = true) => {
     // Use ref to prevent multiple simultaneous fetches
-    if (fetchingRef.current) return;
+    if (fetchingRef.current) {
+      logger.info("Fetch already in progress, skipping", { useCache });
+      return;
+    }
+    
+    // Throttle requests - don't allow more than one fetch every 2 seconds
+    const now = Date.now();
+    if (now - lastFetchTimeRef.current < 2000 && fetchAttemptsRef.current > 0) {
+      logger.info("Throttling fetch request, too soon after previous fetch", {
+        msSinceLastFetch: now - lastFetchTimeRef.current
+      });
+      return;
+    }
+    
     fetchingRef.current = true;
+    lastFetchTimeRef.current = now;
 
     try {
       logger.info("Starting conversations fetch process", { 
@@ -122,50 +134,27 @@ export const useConversations = () => {
       // 2. Fetch conversations for the user with optional caching
       const fetchedConversations = await fetchConversations(useCache);
       
-      if (fetchedConversations.length === 0) {
-        logger.warn("No conversations found, attempt", { attemptNumber: fetchAttemptsRef.current });
-        
-        // After several attempts, try to diagnose the issue
-        if (fetchAttemptsRef.current > 3) {
-          // Try fetching all conversations that might be relevant (admin access)
-          const { data: allConversations, error: allError } = await supabase
-            .from('conversations')
-            .select('*')
-            .limit(20);
-            
-          logger.info("Diagnostic - all conversations", {
-            success: !allError,
-            count: allConversations?.length || 0,
-            error: allError
-          });
-          
-          // Try to check for user profile mismatch
-          const { data: authUser } = await supabase.auth.getUser();
-          if (authUser.user) {
-            logger.info("Diagnostic - auth user", {
-              id: authUser.user.id,
-              email: authUser.user.email
-            });
-            
-            const { data: userProfiles } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', authUser.user.id);
-              
-            logger.info("Diagnostic - user profiles", {
-              count: userProfiles?.length || 0,
-              profiles: userProfiles
-            });
-          }
-        }
+      // Skip unnecessary updates if the data hasn't changed
+      const hasChanged = JSON.stringify(fetchedConversations) !== JSON.stringify(previousConversationsRef.current);
+      
+      if (!hasChanged && previousConversationsRef.current.length > 0) {
+        logger.info("Conversations haven't changed, skipping update");
+        fetchingRef.current = false;
+        return;
       }
       
-      // 3. Fetch latest message for each conversation if we have conversations
-      if (fetchedConversations.length > 0) {
+      if (fetchedConversations && fetchedConversations.length > 0) {
+        // Update reference for future comparisons
+        previousConversationsRef.current = fetchedConversations;
+        
+        // 3. Fetch latest message for each conversation if we have conversations
         const conversationsWithMessages = await fetchLatestMessages(fetchedConversations);
         
         // 4. Update state with the completed data
         setConversations(conversationsWithMessages);
+      } else if (fetchedConversations && fetchedConversations.length === 0) {
+        // Clear previous conversations reference
+        previousConversationsRef.current = [];
       }
       
       // Reset retry counter on success
@@ -188,19 +177,29 @@ export const useConversations = () => {
     setConversations
   ]);
 
-  // Initial fetch
+  // Initial fetch - only run once, and when dependencies change
   useEffect(() => {
-    fetchConversationsWithMessages();
+    if (currentProfileId && !fetchingRef.current) {
+      fetchConversationsWithMessages();
+    }
     
     // Clear cache on component unmount
     return () => {
       clearCache();
+      if (debounceTimerRef.current) {
+        window.clearTimeout(debounceTimerRef.current);
+      }
     };
-  }, [fetchConversationsWithMessages, clearCache]);
+  }, [fetchConversationsWithMessages, clearCache, currentProfileId]);
 
-  // Handler for conversation changes with debounce
+  // Handle conversation changes with debounce and throttling to prevent cascading updates
   const handleConversationChange = useCallback(() => {
-    logger.info("Conversation change detected, triggering refresh", { timestamp: new Date().toISOString() });
+    // Skip updates if already fetching or if throttled
+    if (fetchingRef.current || (Date.now() - lastFetchTimeRef.current < 2000)) {
+      return;
+    }
+    
+    logger.info("Conversation change detected", { timestamp: new Date().toISOString() });
     
     // Debounce the refresh to prevent too many updates
     if (debounceTimerRef.current) {
@@ -208,9 +207,11 @@ export const useConversations = () => {
     }
     
     debounceTimerRef.current = window.setTimeout(() => {
-      fetchConversationsWithMessages(false); // Force fresh fetch
+      if (!fetchingRef.current) {
+        fetchConversationsWithMessages(false); // Force fresh fetch
+      }
       debounceTimerRef.current = null;
-    }, 500);
+    }, 800);  // Increased debounce time to prevent rapid firing
   }, [logger, fetchConversationsWithMessages]);
 
   // Setup realtime subscription for conversation updates
@@ -235,13 +236,24 @@ export const useConversations = () => {
     onNewMessage: realtimeMessageHandler,
   });
 
-  return { 
+  // Use memoized state to prevent unnecessary rerenders
+  const result = useMemo(() => ({ 
     conversations, 
     isLoading, 
     error, 
-    refetch: useCallback(() => fetchConversationsWithMessages(false), [fetchConversationsWithMessages]), 
+    refetch: () => fetchConversationsWithMessages(false), 
     currentProfileId,
     loadMoreConversations,
     hasMoreConversations: hasMore
-  };
+  }), [
+    conversations, 
+    isLoading, 
+    error, 
+    fetchConversationsWithMessages, 
+    currentProfileId,
+    loadMoreConversations,
+    hasMore
+  ]);
+
+  return result;
 };
