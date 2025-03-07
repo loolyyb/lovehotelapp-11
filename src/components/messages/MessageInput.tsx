@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 
 interface MessageInputProps {
@@ -18,6 +18,16 @@ export function MessageInput({
   const [isTyping, setIsTyping] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitTimeoutRef = useRef<number | null>(null);
+  const lastSubmitTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    // Cleanup function to clear any timeouts when component unmounts
+    return () => {
+      if (submitTimeoutRef.current) {
+        clearTimeout(submitTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
@@ -27,7 +37,15 @@ export function MessageInput({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !disabled && !isSubmitting) {
       e.preventDefault();
+      
+      const now = Date.now();
+      // Prevent rapid resubmissions (within 1000ms)
+      if (now - lastSubmitTimeRef.current < 1000) {
+        return;
+      }
+      
       if (newMessage.trim()) {
+        lastSubmitTimeRef.current = now;
         setIsSubmitting(true);
         onSend(e as any);
         
@@ -49,10 +67,13 @@ export function MessageInput({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isSubmitting || disabled || !newMessage.trim()) {
+    const now = Date.now();
+    // Prevent rapid resubmissions (within 1000ms)
+    if (isSubmitting || disabled || !newMessage.trim() || now - lastSubmitTimeRef.current < 1000) {
       return;
     }
     
+    lastSubmitTimeRef.current = now;
     setIsSubmitting(true);
     onSend(e);
     
