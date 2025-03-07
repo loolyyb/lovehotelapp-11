@@ -1,13 +1,14 @@
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useLogger } from "@/hooks/useLogger";
+import React, { useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useMessageRetrieval } from "@/hooks/messages/useMessageRetrieval";
 import { useConversationInit } from "@/hooks/useConversationInit";
 import { useMessageRefresh } from "@/hooks/useMessageRefresh";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useMessageHandlers } from "@/hooks/useMessageHandlers";
-import { supabase } from "@/integrations/supabase/client";
+import { useMessageViewState } from "@/hooks/messages/useMessageViewState";
+import { useMessageInitializer } from "@/hooks/messages/useMessageInitializer";
+import { useMessagesLoader } from "@/hooks/messages/useMessagesLoader";
 
 interface MessageViewLogicProps {
   conversationId: string;
@@ -30,38 +31,58 @@ interface MessageViewLogicProps {
 }
 
 export function MessageViewLogic({ conversationId, renderContent }: MessageViewLogicProps) {
-  // Optimize initial states to reduce rerenders
-  const [messages, setMessages] = useState<any[]>([]);
-  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
-  const [otherUser, setOtherUser] = useState<any>(null);
-  const [newMessage, setNewMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
-  const [profileInitialized, setProfileInitialized] = useState(false);
-  const [isFetchingInitialMessages, setIsFetchingInitialMessages] = useState(false);
-  
-  // Use refs for tracking loading states to reduce rerenders
-  const fetchingRef = useRef(false);
-  const firstLoad = useRef(true);
-  const logger = useLogger("MessageViewLogic");
   const { toast } = useToast();
+  
+  // Use the message view state hook to manage state
+  const {
+    messages,
+    setMessages,
+    currentProfileId,
+    setCurrentProfileId,
+    otherUser,
+    setOtherUser,
+    newMessage,
+    setNewMessage,
+    isLoading,
+    setIsLoading,
+    isAuthChecked,
+    setIsAuthChecked,
+    profileInitialized,
+    setProfileInitialized,
+    isFetchingInitialMessages,
+    setIsFetchingInitialMessages,
+    fetchingRef,
+    firstLoad,
+    logger
+  } = useMessageViewState();
 
-  // Memoize the profile setter function to prevent recreating on every render
-  const memoizedProfileSetter = useCallback((profileId: string | null) => {
-    setCurrentProfileId(profileId);
-    if (profileId) {
-      setProfileInitialized(true);
-    }
-  }, []);
-
+  // Setup conversation initialization
   const { getCurrentUser } = useConversationInit({
     conversationId,
     setMessages,
-    setCurrentProfileId: memoizedProfileSetter,
+    setCurrentProfileId: (profileId) => {
+      setCurrentProfileId(profileId);
+      if (profileId) {
+        setProfileInitialized(true);
+      }
+    },
     setOtherUser,
     setIsLoading,
   });
 
+  // Initialize message authentication
+  const { memoizedProfileSetter } = useMessageInitializer({
+    conversationId,
+    fetchingRef,
+    firstLoad,
+    setCurrentProfileId,
+    setIsAuthChecked,
+    setIsLoading,
+    setIsError: () => {}, // Will be set by useMessageRefresh
+    getCurrentUser,
+  });
+
+  // Setup message retrieval
   const { 
     fetchMessages, 
     loadMoreMessages, 
@@ -77,6 +98,7 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
     toast,
   });
 
+  // Setup message refresh
   const { 
     isRefreshing, 
     isError, 
@@ -92,6 +114,22 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
     currentProfileId,
   });
 
+  // Setup message loading
+  const { handleRefresh } = useMessagesLoader({
+    conversationId,
+    currentProfileId,
+    profileInitialized,
+    isAuthChecked,
+    isFetchingInitialMessages,
+    setIsFetchingInitialMessages,
+    setIsLoading,
+    setIsError,
+    fetchMessages,
+    markMessagesAsRead,
+    messages
+  });
+
+  // Setup message sending
   const { sendMessage } = useMessageHandlers({
     currentProfileId,
     conversationId,
@@ -100,7 +138,7 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
     toast,
   });
 
-  // Memoize the new message handler to prevent recreating on every render
+  // Message realtime update handlers
   const handleNewMessage = useCallback((message) => {
     if (message.conversation_id === conversationId) {
       logger.info("New message received, updating messages list", { messageId: message.id });
@@ -109,7 +147,6 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
     }
   }, [conversationId, addMessageToCache, logger]);
 
-  // Memoize the message update handler
   const handleMessageUpdate = useCallback((message) => {
     if (message.conversation_id === conversationId) {
       logger.info("Message updated, updating messages list", { messageId: message.id });
@@ -117,171 +154,22 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
         msg.id === message.id ? message : msg
       ));
     }
-  }, [conversationId, logger]);
+  }, [conversationId, setMessages, logger]);
 
-  // Use the memoized handlers for realtime updates
+  // Setup realtime message updates
   useRealtimeMessages({
     currentProfileId,
     onNewMessage: handleNewMessage,
     onMessageUpdate: handleMessageUpdate
   });
 
-  // Memoize refresh handler
-  const handleRefresh = useCallback(async () => {
-    if (isRefreshing) return;
-    logger.info("Manually refreshing messages", { conversationId });
-    await refreshMessages();
-  }, [refreshMessages, isRefreshing, conversationId, logger]);
-
-  // Initial profile and auth check - only runs once
-  useEffect(() => {
-    let mounted = true;
-    setIsError(false);
-    
-    // Cache auth check results to prevent repeated API calls
-    const checkAuth = async () => {
-      if (fetchingRef.current) return;
-      fetchingRef.current = true;
-      
-      try {
-        // Check auth session first
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          logger.error("No active session", { component: "MessageViewLogic" });
-          if (mounted) {
-            setIsAuthChecked(true);
-            setIsLoading(false);
-            toast({
-              variant: "destructive",
-              title: "Session expirée",
-              description: "Veuillez vous reconnecter pour accéder à vos messages"
-            });
-          }
-          return;
-        }
-
-        logger.info("Auth session valid, initializing conversation", { 
-          userId: session.user.id,
-          conversationId 
-        });
-        
-        if (mounted) {
-          await getCurrentUser();
-          setIsAuthChecked(true);
-        }
-      } catch (error: any) {
-        logger.error("Error checking authentication", { 
-          error: error.message,
-          stack: error.stack
-        });
-        
-        if (mounted) {
-          setIsAuthChecked(true);
-          setIsError(true);
-          setIsLoading(false);
-          toast({
-            variant: "destructive",
-            title: "Erreur d'authentification",
-            description: "Impossible de vérifier votre identité. Veuillez vous reconnecter."
-          });
-        }
-      } finally {
-        if (mounted) {
-          firstLoad.current = false;
-          fetchingRef.current = false;
-        }
-      }
-    };
-
-    checkAuth();
-
-    return () => {
-      mounted = false;
-    };
-  }, [conversationId]); // Only depend on conversationId
-
-  // Fetch messages when profile is initialized - with debounce
-  useEffect(() => {
-    let mounted = true;
-    let debounceTimeout: NodeJS.Timeout;
-    
-    const loadMessages = async () => {
-      if (!currentProfileId || !profileInitialized || !isAuthChecked || isFetchingInitialMessages) {
-        return;
-      }
-      
-      setIsFetchingInitialMessages(true);
-      logger.info("Profile initialized, fetching messages", { 
-        profileId: currentProfileId,
-        conversationId 
-      });
-      
-      try {
-        await fetchMessages();
-      } catch (error: any) {
-        logger.error("Error fetching messages", { 
-          error: error.message,
-          stack: error.stack
-        });
-        
-        if (mounted) {
-          setIsError(true);
-        }
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-          setIsFetchingInitialMessages(false);
-        }
-      }
-    };
-    
-    // Add debounce to prevent multiple rapid API calls
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(loadMessages, 100);
-    
-    return () => {
-      mounted = false;
-      clearTimeout(debounceTimeout);
-    };
-  }, [currentProfileId, profileInitialized, isAuthChecked, conversationId, fetchMessages]);
-
-  // Handle marking messages as read with debounce
-  useEffect(() => {
-    let markAsReadTimeout: NodeJS.Timeout;
-    
-    if (currentProfileId && messages.length > 0 && !isLoading) {
-      logger.info("Checking for unread messages after update", {
-        messagesCount: messages.length,
-        profileId: currentProfileId
-      });
-      
-      const hasUnreadMessages = messages.some(
-        msg => msg.sender_id !== currentProfileId && !msg.read_at
-      );
-      
-      if (hasUnreadMessages) {
-        logger.info("Found unread messages, marking as read", {
-          profileId: currentProfileId
-        });
-        // Add debounce to prevent multiple rapid API calls
-        clearTimeout(markAsReadTimeout);
-        markAsReadTimeout = setTimeout(() => markMessagesAsRead(), 700);
-      }
-    }
-    
-    return () => {
-      clearTimeout(markAsReadTimeout);
-    };
-  }, [messages, currentProfileId, isLoading, markMessagesAsRead, logger]);
-
-  // Combined loading state - memoized to prevent unnecessary rerenders
+  // Combined loading state
   const showLoader = useMemo(() => 
     isLoading && (!messages.length || !isAuthChecked || !profileInitialized || isFetchingInitialMessages),
     [isLoading, messages.length, isAuthChecked, profileInitialized, isFetchingInitialMessages]
   );
 
-  // Memoize the render props to prevent unnecessary rerenders
+  // Prepare render props
   const renderProps = useMemo(() => ({
     messages,
     currentProfileId,
