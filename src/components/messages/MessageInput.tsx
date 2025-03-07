@@ -16,6 +16,7 @@ export function MessageInput({
   disabled = false
 }: MessageInputProps) {
   const [isTyping, setIsTyping] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
@@ -23,17 +24,37 @@ export function MessageInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !disabled) {
+    if (e.key === 'Enter' && !e.shiftKey && !disabled && !isSubmitting) {
       e.preventDefault();
       if (newMessage.trim()) {
+        setIsSubmitting(true);
         onSend(e as any);
+        // Reset submission state after a short delay
+        setTimeout(() => {
+          setIsSubmitting(false);
+        }, 500);
         setIsTyping(false);
       }
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    if (isSubmitting || disabled || !newMessage.trim()) {
+      e.preventDefault();
+      return;
+    }
+    
+    setIsSubmitting(true);
+    onSend(e);
+    
+    // Reset submission state after a short delay
+    setTimeout(() => {
+      setIsSubmitting(false);
+    }, 500);
+  };
+
   return (
-    <form onSubmit={onSend} className="relative">
+    <form onSubmit={handleSubmit} className="relative">
       <textarea
         className="w-full p-3 pr-12 bg-[#f3ebad]/10 border border-[#f3ebad]/20 rounded-md text-[#f3ebad] placeholder:text-[#f3ebad]/50 outline-none focus:border-[#f3ebad]/50 transition-colors resize-none"
         placeholder={disabled ? "Chargement en cours..." : "Votre message..."}
@@ -41,16 +62,16 @@ export function MessageInput({
         value={newMessage}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        disabled={disabled}
+        disabled={disabled || isSubmitting}
       />
       <button
         type="submit"
         className={`absolute right-3 bottom-3 p-2 rounded-full ${
-          isTyping && !disabled
+          isTyping && !disabled && !isSubmitting
             ? "bg-[#f3ebad] text-[#40192C]"
             : "bg-[#f3ebad]/20 text-[#f3ebad]/50"
-        } transition-colors ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-        disabled={!isTyping || disabled}
+        } transition-colors ${(disabled || isSubmitting) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+        disabled={!isTyping || disabled || isSubmitting}
       >
         <Send className="w-5 h-5" />
       </button>

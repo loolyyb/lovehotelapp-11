@@ -26,14 +26,19 @@ export const useMessageHandlers = ({
 }: UseMessageHandlersProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const optimisticMessageRef = useRef<string | null>(null);
+  const processingMessageRef = useRef(false);
 
   const sendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentProfileId || !newMessage.trim() || isProcessing) {
+    
+    // Prevent double submissions
+    if (processingMessageRef.current || !currentProfileId || !newMessage.trim() || isProcessing) {
       return;
     }
 
+    processingMessageRef.current = true;
     setIsProcessing(true);
+    
     // Store the message to be sent
     const messageToSend = newMessage.trim();
     optimisticMessageRef.current = messageToSend;
@@ -172,11 +177,15 @@ export const useMessageHandlers = ({
     } finally {
       setIsProcessing(false);
       optimisticMessageRef.current = null;
+      setTimeout(() => {
+        processingMessageRef.current = false;
+      }, 500); // Prevent multiple submissions within 500ms
     }
   }, [currentProfileId, conversationId, newMessage, isProcessing, toast, setNewMessage, setMessages, addMessageToCache]);
 
+  // Use a leading debounce to prevent double-clicks without delaying the first submission
   const debouncedSendMessage = useCallback(
-    debounce((e: React.FormEvent) => sendMessage(e), 500, { leading: true, trailing: false }),
+    debounce((e: React.FormEvent) => sendMessage(e), 300, { leading: true, trailing: false }),
     [sendMessage]
   );
 
