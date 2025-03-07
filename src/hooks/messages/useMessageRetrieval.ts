@@ -26,6 +26,7 @@ export const useMessageRetrieval = ({
     fetchMoreMessages, 
     addMessageToCache, 
     clearCache,
+    clearConversationCache,
     isLoadingMore, 
     hasMoreMessages,
     fetchInProgress
@@ -79,6 +80,7 @@ export const useMessageRetrieval = ({
     markMessagesAsRead,
     addMessageToCache,
     clearCache,
+    clearConversationCache,
     isLoadingMore,
     hasMoreMessages,
     isFetchingMore,
