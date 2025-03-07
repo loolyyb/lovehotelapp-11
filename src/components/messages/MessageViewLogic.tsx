@@ -35,8 +35,8 @@ export function MessageViewLogic({ conversationId, renderContent }: MessageViewL
   return (
     <MessageViewRenderer
       conversationId={conversationId}
-      renderContent={renderContent}
       viewProps={viewProps}
+      renderContent={renderContent}
     />
   );
 }
