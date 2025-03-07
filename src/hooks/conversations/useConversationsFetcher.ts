@@ -33,10 +33,10 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     try {
       logger.info("Fetching conversations for profile ID", { profileId: currentProfileId });
       
-      // Verify profile exists
+      // Verify profile exists and get user role
       const { data: profileCheck, error: profileError } = await supabase
         .from('profiles')
-        .select('id, username, full_name, user_id')
+        .select('id, username, full_name, user_id, role')
         .eq('id', currentProfileId)
         .maybeSingle();
         
@@ -54,95 +54,53 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           logger.info("Attempting to use auth user to find profile", { authId: data.user.id });
           const profile = await getProfileByAuthId(data.user.id);
           
-          if (profile && profile.id !== currentProfileId) {
-            logger.warn("Found a different profile for this auth user - using that instead", {
+          if (profile) {
+            logger.warn("Found a profile for this auth user", {
               requestedProfileId: currentProfileId,
               foundProfileId: profile.id
             });
             
-            // Important: We'll use the correct profile ID we found
-            const fetchedConversations = await findConversationsByProfileId(profile.id);
-            setConversations(fetchedConversations);
-            setIsLoading(false);
-            return fetchedConversations;
+            // Use the found profile ID but don't override the requested one
+            if (profile.id !== currentProfileId) {
+              logger.info("Using the requested profile ID, may require admin permissions", {
+                requestedProfileId: currentProfileId,
+                userProfileId: profile.id,
+                userRole: profile.role
+              });
+            }
           }
         }
         
-        // If we still don't have a valid profile
-        throw new Error("Profil introuvable. Veuillez vous reconnecter.");
+        if (!profileCheck) {
+          throw new Error("Profil introuvable. Veuillez vous reconnecter.");
+        }
       }
 
-      logger.info("Profile found, proceeding to fetch conversations", { profile: profileCheck });
+      const userRole = profileCheck?.role || 'user';
+      logger.info("Profile found, proceeding to fetch conversations", { 
+        profile: profileCheck,
+        role: userRole
+      });
       
-      // Use the simplified findConversationsByProfileId function which should now handle RLS better
+      // Use findConversationsByProfileId which now properly respects the requested profile ID
+      // Row Level Security will handle access control
       const fetchedConversations = await findConversationsByProfileId(currentProfileId);
       
-      if (fetchedConversations.length === 0) {
+      // If no conversations found and user is not admin, we might want to create a test conversation
+      if (fetchedConversations.length === 0 && userRole !== 'admin') {
         logger.warn("No conversations found for profile", {
           profileId: currentProfileId,
-          authUserId: profileCheck.user_id
+          authUserId: profileCheck?.user_id,
+          role: userRole
         });
-        
-        // For diagnostic purposes, try to create a conversation
-        logger.info("Attempting to create a test conversation for diagnostic purposes");
-        
-        try {
-          // Check if there are any other profiles in the system
-          const { data: otherProfiles, error: otherProfilesError } = await supabase
-            .from('profiles')
-            .select('id')
-            .neq('id', currentProfileId)
-            .limit(1);
-            
-          if (otherProfilesError) {
-            logger.error("Error finding other profiles:", otherProfilesError);
-          } else if (otherProfiles && otherProfiles.length > 0) {
-            logger.info("Found another profile to create test conversation with", {
-              otherProfileId: otherProfiles[0].id
-            });
-            
-            // Create a test conversation using our helper function
-            const newConv = await createTestConversation(currentProfileId, otherProfiles[0].id);
-              
-            if (!newConv) {
-              logger.error("Failed to create test conversation");
-            } else {
-              logger.info("Successfully created test conversation:", newConv);
-              
-              // Try creating a welcome message
-              try {
-                await supabase
-                  .from('messages')
-                  .insert({
-                    conversation_id: newConv.id,
-                    sender_id: otherProfiles[0].id,
-                    content: "Bonjour ! Comment puis-je vous aider ?"
-                  });
-                logger.info("Added welcome message to test conversation");
-              } catch (msgError) {
-                logger.error("Error adding welcome message:", msgError);
-              }
-              
-              // Try fetching conversations again after creating test conversation
-              const updatedConversations = await findConversationsByProfileId(currentProfileId);
-              if (updatedConversations.length > 0) {
-                logger.info("Successfully retrieved conversations after creating test conversation", {
-                  count: updatedConversations.length
-                });
-                setConversations(updatedConversations);
-                setIsLoading(false);
-                return updatedConversations;
-              }
-            }
-          } else {
-            logger.info("No other profiles found to create test conversation");
-          }
-        } catch (testError) {
-          logger.error("Error during test conversation creation:", testError);
-        }
       }
       
-      logger.info("Setting conversations", { count: fetchedConversations.length });
+      logger.info("Setting conversations", { 
+        count: fetchedConversations.length,
+        profileId: currentProfileId,
+        role: userRole
+      });
+      
       setConversations(fetchedConversations);
       setIsLoading(false);
       return fetchedConversations;

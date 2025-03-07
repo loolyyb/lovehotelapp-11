@@ -44,7 +44,7 @@ export const useMessageFetcher = ({
         return null;
       }
 
-      // Check if profile is valid and get the current auth user
+      // Check if user is authenticated and get their role
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         logger.error("No authenticated user", { component: "useMessageFetcher" });
@@ -56,52 +56,36 @@ export const useMessageFetcher = ({
         return null;
       }
 
+      // Get user profile to check role
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError) {
+        logger.error("Error fetching user profile", { 
+          error: profileError, 
+          component: "useMessageFetcher" 
+        });
+        toast({
+          variant: "destructive",
+          title: "Erreur de profil",
+          description: "Impossible de récupérer votre profil",
+        });
+        return null;
+      }
+
+      const isAdmin = userProfile?.role === 'admin';
+      
       logger.info("User authenticated, checking conversation access", { 
         authUserId: user.id,
         profileId: currentProfileId,
+        isAdmin,
         component: "useMessageFetcher"
       });
 
-      // Verify the conversation exists and user has access
-      const { data: conversationData, error: conversationError } = await supabase
-        .from('conversations')
-        .select('id, user1_id, user2_id')
-        .eq('id', conversationId)
-        .single();
-        
-      if (conversationError) {
-        logger.error("Error verifying conversation access", { 
-          error: conversationError, 
-          conversationId,
-          component: "useMessageFetcher" 
-        });
-        
-        toast({
-          variant: "destructive",
-          title: "Accès non autorisé",
-          description: "Vous n'avez pas accès à cette conversation",
-        });
-        return null;
-      }
-
-      // Verify current user is part of this conversation
-      if (conversationData && conversationData.user1_id !== currentProfileId && conversationData.user2_id !== currentProfileId) {
-        logger.error("User not part of conversation", {
-          conversationId,
-          currentProfileId,
-          conversation: conversationData,
-          component: "useMessageFetcher"
-        });
-        
-        toast({
-          variant: "destructive",
-          title: "Accès non autorisé",
-          description: "Vous n'êtes pas autorisé à accéder à cette conversation",
-        });
-        return null;
-      }
-
-      // Now fetch messages
+      // Fetch messages - RLS policies will handle access control
       logger.info("Fetching messages for conversation", { 
         conversationId,
         component: "useMessageFetcher" 

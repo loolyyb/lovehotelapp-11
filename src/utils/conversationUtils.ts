@@ -12,7 +12,7 @@ export const getProfileByAuthId = async (authUserId: string) => {
   try {
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('id, user_id, full_name, username, avatar_url')
+      .select('id, user_id, full_name, username, avatar_url, role')
       .eq('user_id', authUserId)
       .single();
     
@@ -203,10 +203,10 @@ export const findConversationsByProfileId = async (profileId: string) => {
       return [];
     }
     
-    // Get the user's profile to ensure correct association
+    // Get the user's profile to check role for admin access
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, user_id')
+      .select('id, user_id, role')
       .eq('user_id', user.id)
       .single();
       
@@ -219,21 +219,20 @@ export const findConversationsByProfileId = async (profileId: string) => {
       return [];
     }
     
-    // Ensure the requested profile matches the authenticated user's profile
-    if (userProfile.id !== profileId) {
-      logger.error("Profile ID mismatch", {
-        authProfileId: userProfile.id,
-        requestedProfileId: profileId,
-        component: "findConversationsByProfileId"
-      });
-      // If these don't match, use the correct profile ID from auth
-      profileId = userProfile.id;
-      logger.info(`Using corrected profile ID: ${profileId}`, {
-        component: "findConversationsByProfileId"
-      });
-    }
+    // Check if the current user is an admin or accessing their own conversations
+    const isAdmin = userProfile.role === 'admin';
+    const isOwnProfile = userProfile.id === profileId;
     
-    // Use simple OR condition with string interpolation to bypass RLS issues
+    // Log the role and profile check
+    logger.info(`User profile check: isAdmin=${isAdmin}, isOwnProfile=${isOwnProfile}`, {
+      userProfileId: userProfile.id,
+      requestedProfileId: profileId,
+      userRole: userProfile.role,
+      component: "findConversationsByProfileId"
+    });
+    
+    // Proceed with the requested profileId without overriding
+    // Let RLS handle access control based on our policies
     const { data, error } = await supabase
       .from('conversations')
       .select(`
@@ -259,7 +258,9 @@ export const findConversationsByProfileId = async (profileId: string) => {
     
     if (!data || data.length === 0) {
       logger.warn(`No conversations found for profile ${profileId}`, {
-        component: "findConversationsByProfileId"
+        component: "findConversationsByProfileId",
+        isAdmin,
+        isOwnProfile
       });
       return [];
     }
@@ -351,22 +352,6 @@ export const createTestConversation = async (profileId: string, otherProfileId: 
     if (authError || !user) {
       logger.error("Authentication error in createTestConversation", {
         error: authError,
-        component: "createTestConversation"
-      });
-      return null;
-    }
-    
-    // Get the user's profile to ensure correct association
-    const { data: userProfile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-      
-    if (profileError || !userProfile) {
-      logger.error("Failed to retrieve user profile for test conversation", {
-        error: profileError,
-        userId: user.id,
         component: "createTestConversation"
       });
       return null;
