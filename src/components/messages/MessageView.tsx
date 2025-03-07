@@ -24,7 +24,9 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const [otherUser, setOtherUser] = useState<any>(null);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [profileInitialized, setProfileInitialized] = useState(false);
+  const [isFetchingInitialMessages, setIsFetchingInitialMessages] = useState(false);
   const firstLoad = useRef(true);
   const logger = useLogger("MessageView");
   const { toast } = useToast();
@@ -116,11 +118,15 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         
         if (!session) {
           logger.error("No active session", { component: "MessageView" });
-          toast({
-            variant: "destructive",
-            title: "Session expirée",
-            description: "Veuillez vous reconnecter pour accéder à vos messages"
-          });
+          if (mounted) {
+            setIsAuthChecked(true);
+            setIsLoading(false);
+            toast({
+              variant: "destructive",
+              title: "Session expirée",
+              description: "Veuillez vous reconnecter pour accéder à vos messages"
+            });
+          }
           return;
         }
 
@@ -131,6 +137,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         
         if (mounted) {
           await getCurrentUser();
+          setIsAuthChecked(true);
         }
       } catch (error: any) {
         logger.error("Error checking authentication", { 
@@ -139,7 +146,9 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
         });
         
         if (mounted) {
+          setIsAuthChecked(true);
           setIsError(true);
+          setIsLoading(false);
           toast({
             variant: "destructive",
             title: "Erreur d'authentification",
@@ -165,10 +174,11 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     let mounted = true;
     
     const loadMessages = async () => {
-      if (!currentProfileId || !profileInitialized) {
+      if (!currentProfileId || !profileInitialized || !isAuthChecked || isFetchingInitialMessages) {
         return;
       }
       
+      setIsFetchingInitialMessages(true);
       logger.info("Profile initialized, fetching messages", { 
         profileId: currentProfileId,
         conversationId 
@@ -188,6 +198,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       } finally {
         if (mounted) {
           setIsLoading(false);
+          setIsFetchingInitialMessages(false);
         }
       }
     };
@@ -197,7 +208,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     return () => {
       mounted = false;
     };
-  }, [currentProfileId, profileInitialized, conversationId, fetchMessages, logger]);
+  }, [currentProfileId, profileInitialized, isAuthChecked, conversationId, fetchMessages, logger]);
 
   // Handle marking messages as read
   useEffect(() => {
@@ -220,6 +231,21 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     }
   }, [messages, currentProfileId, isLoading, markMessagesAsRead, logger]);
 
+  // Debug state changes
+  useEffect(() => {
+    logger.info("MessageView state update", {
+      isLoading,
+      isAuthChecked,
+      profileInitialized,
+      isFetchingInitialMessages,
+      messagesCount: messages.length,
+      hasCurrentProfile: !!currentProfileId
+    });
+  }, [isLoading, isAuthChecked, profileInitialized, isFetchingInitialMessages, messages.length, currentProfileId, logger]);
+
+  // Combined loading state 
+  const showLoader = isLoading && (!messages.length || !isAuthChecked || !profileInitialized || isFetchingInitialMessages);
+
   return (
     <div className="flex flex-col h-full bg-[#40192C] backdrop-blur-sm border-[0.5px] border-[#f3ebad]/30">
       <MessageHeader 
@@ -230,7 +256,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       />
 
       <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
+        {showLoader ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-pulse text-[#f3ebad]/70">Chargement des messages...</div>
           </div>

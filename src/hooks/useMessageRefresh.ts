@@ -88,7 +88,7 @@ export const useMessageRefresh = ({
         title: "Erreur",
         description: "Impossible de charger la conversation"
       });
-    } finally {
+    } finally {  
       setIsLoading(false);
     }
   }, [conversationId, getCurrentUser, currentProfileId, fetchMessages, logger, toast]);

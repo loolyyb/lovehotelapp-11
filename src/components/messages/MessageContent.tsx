@@ -52,50 +52,15 @@ export function MessageContent({
 
   // Automatic scroll to last message on new messages
   useEffect(() => {
-    if (messages && messages.length > 0 && autoScroll) {
+    if (messages && messages.length > 0 && autoScroll && !isLoadingMore) {
       const timeout = setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
       return () => clearTimeout(timeout);
     }
-  }, [messages, autoScroll]);
+  }, [messages, autoScroll, isLoadingMore]);
 
-  // Add enhanced logging to help debug
-  useEffect(() => {
-    console.log("MessageContent render state:", { 
-      isLoading, 
-      isError, 
-      messagesCount: messages?.length || 0,
-      currentProfileId,
-      hasCurrentProfile: Boolean(currentProfileId),
-      hasMoreMessages,
-      isLoadingMore
-    });
-    
-    if (messages?.length > 0) {
-      console.log("First message:", messages[0]);
-      console.log("Last message:", messages[messages.length - 1]);
-      
-      // Count messages by sender to help debug
-      const messageBySender = {};
-      messages.forEach(msg => {
-        const senderId = msg.sender_id;
-        if (!messageBySender[senderId]) {
-          messageBySender[senderId] = 0;
-        }
-        messageBySender[senderId]++;
-      });
-      console.log("Messages by sender:", messageBySender);
-      
-      // Check if current user is a sender
-      if (currentProfileId) {
-        const currentUserMessages = messages.filter(m => m.sender_id === currentProfileId);
-        console.log("Current user messages count:", currentUserMessages.length);
-      }
-    }
-  }, [isLoading, isError, messages, currentProfileId, hasMoreMessages, isLoadingMore]);
-
-  if (isLoading && !messages?.length) {
+  if (isLoading && (!messages || messages.length === 0)) {
     return <LoadingState />;
   }
 
