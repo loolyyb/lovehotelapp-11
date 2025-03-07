@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { ChevronLeft, RefreshCw } from "lucide-react";
 
 interface MessageHeaderProps {
@@ -14,6 +14,31 @@ export function MessageHeader({
   isRefreshing, 
   otherUser 
 }: MessageHeaderProps) {
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleRefresh = () => {
+    // Start animation immediately on click
+    setIsAnimating(true);
+    
+    // Call the refresh function
+    refreshMessages();
+    
+    // Reset animation if server responds quickly (before visual feedback is useful)
+    if (!isRefreshing) {
+      // Keep animation for at least 500ms to ensure user sees feedback
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 500);
+    }
+  };
+
+  // When isRefreshing changes from true to false, stop the animation
+  if (!isRefreshing && isAnimating) {
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 300); // Small delay to ensure smooth transition
+  }
+
   return (
     <div className="p-4 border-b border-[#f3ebad]/30 flex items-center hover:shadow-lg transition-all duration-300">
       <button 
@@ -30,12 +55,12 @@ export function MessageHeader({
         </div>
       )}
       <button 
-        onClick={refreshMessages}
+        onClick={handleRefresh}
         disabled={isRefreshing}
         className="p-2 hover:bg-white/10 rounded-full transition-colors"
         title="Rafraîchir les messages"
       >
-        <RefreshCw className={`w-5 h-5 text-[#f3ebad] ${isRefreshing ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`w-5 h-5 text-[#f3ebad] ${isRefreshing || isAnimating ? 'animate-spin' : ''}`} />
       </button>
     </div>
   );
