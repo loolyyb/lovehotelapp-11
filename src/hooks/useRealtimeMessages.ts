@@ -50,15 +50,23 @@ export const useRealtimeMessages = ({
 
           // Fetch sender details if needed
           if (payload.new && payload.new.sender_id) {
-            // Use Promise chaining properly with error handling
+            // Fix the Promise chain to ensure proper error handling
             supabase
               .from('profiles')
               .select('id, username, full_name, avatar_url')
               .eq('id', payload.new.sender_id)
               .single()
-              .then(({ data: sender, error }) => {
+              .then(response => {
+                const { data: sender, error } = response;
+                
                 if (error) {
-                  throw error;
+                  logger.error("Error fetching sender for realtime message", {
+                    error,
+                    senderId: payload.new.sender_id
+                  });
+                  // Still deliver the message even if sender fetch fails
+                  onNewMessage(payload.new);
+                  return;
                 }
                 
                 onNewMessage({
@@ -67,8 +75,9 @@ export const useRealtimeMessages = ({
                 });
               })
               .catch(error => {
-                logger.error("Error fetching sender for realtime message", {
-                  error,
+                logger.error("Exception in fetching sender for realtime message", {
+                  error: error.message,
+                  stack: error.stack,
                   senderId: payload.new.sender_id
                 });
                 // Still deliver the message even if sender fetch fails
