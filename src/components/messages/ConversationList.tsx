@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -452,7 +453,7 @@ export function ConversationList({
               key={conversation.id} 
               className={`p-4 border-b border-rose/20 cursor-pointer transition-colors ${
                 isActive 
-                  ? activeConversationBgClass  // Active state
+                  ? `${activeConversationBgClass} border-r-0`  // Active state with no right border
                   : hoverClass                 // Hover state for inactive
               }`} 
               onClick={() => onSelectConversation(conversation.id)}

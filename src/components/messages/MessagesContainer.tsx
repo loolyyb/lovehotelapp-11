@@ -24,7 +24,7 @@ export function MessagesContainer({
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-[#40192C] pt-12 backdrop-blur-sm">
       {/* Conversation list - always visible on desktop, toggles on mobile */}
-      <div className={`md:block ${selectedConversation ? 'hidden' : 'w-full'} md:w-[380px] border-r border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300`}>
+      <div className={`md:block ${selectedConversation ? 'hidden' : 'w-full'} md:w-[380px] border-r-0 border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300`}>
         <ConversationList
           onSelectConversation={onSelectConversation}
           selectedConversationId={selectedConversation}
