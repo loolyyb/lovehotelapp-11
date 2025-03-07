@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 import { AlertService } from "@/services/AlertService";
 
+// Cache for messages to reduce database queries
+const messagesCache = new Map<string, any[]>();
+
 interface UseMessageRetrievalProps {
   conversationId: string;
   currentProfileId: string | null;
@@ -11,9 +14,60 @@ interface UseMessageRetrievalProps {
   toast: any;
 }
 
-// Cache for messages to reduce database queries
-const messagesCache = new Map<string, any[]>();
+interface UseMessageMarkerProps {
+  conversationId: string;
+  currentProfileId: string | null;
+}
 
+// Hook for marking messages as read
+export const useMessageMarker = ({
+  conversationId,
+  currentProfileId
+}: UseMessageMarkerProps) => {
+  // Mark all unread messages in conversation as read
+  const markMessagesAsRead = useCallback(async () => {
+    if (!conversationId || !currentProfileId) return;
+
+    try {
+      logger.info("Marking messages as read", {
+        conversationId,
+        currentProfileId,
+        component: "useMessageMarker"
+      });
+      
+      const { error } = await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .eq('read_at', null)
+        .neq('sender_id', currentProfileId);
+
+      if (error) {
+        logger.error("Error marking messages as read", {
+          error,
+          conversationId,
+          component: "useMessageMarker"
+        });
+      } else {
+        logger.info("Successfully marked messages as read", {
+          conversationId,
+          component: "useMessageMarker"
+        });
+      }
+    } catch (error: any) {
+      logger.error("Exception marking messages as read", {
+        error: error.message,
+        stack: error.stack,
+        conversationId,
+        component: "useMessageMarker"
+      });
+    }
+  }, [conversationId, currentProfileId]);
+
+  return { markMessagesAsRead };
+};
+
+// Hook for message fetching operations
 export const useMessageFetcher = ({ 
   conversationId, 
   currentProfileId, 
@@ -137,7 +191,7 @@ export const useMessageFetcher = ({
     } finally {
       setFetchInProgress(false);
     }
-  }, [conversationId, currentProfileId, setMessages, toast]);
+  }, [conversationId, currentProfileId, setMessages, toast, fetchInProgress]);
 
   const fetchMoreMessages = useCallback(async () => {
     if (!conversationId || !currentProfileId || !hasMoreMessages || isLoadingMore) return;
@@ -357,60 +411,4 @@ export const useMessageRetrieval = ({
     isFetchingMore,
     fetchInProgress
   };
-};
-
-import { useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { logger } from "@/services/LogService";
-
-interface UseMessageMarkerProps {
-  conversationId: string;
-  currentProfileId: string | null;
-}
-
-export const useMessageMarker = ({
-  conversationId,
-  currentProfileId
-}: UseMessageMarkerProps) => {
-  // Mark all unread messages in conversation as read
-  const markMessagesAsRead = useCallback(async () => {
-    if (!conversationId || !currentProfileId) return;
-
-    try {
-      logger.info("Marking messages as read", {
-        conversationId,
-        currentProfileId,
-        component: "useMessageMarker"
-      });
-      
-      const { error } = await supabase
-        .from('messages')
-        .update({ read_at: new Date().toISOString() })
-        .eq('conversation_id', conversationId)
-        .eq('read_at', null)
-        .neq('sender_id', currentProfileId);
-
-      if (error) {
-        logger.error("Error marking messages as read", {
-          error,
-          conversationId,
-          component: "useMessageMarker"
-        });
-      } else {
-        logger.info("Successfully marked messages as read", {
-          conversationId,
-          component: "useMessageMarker"
-        });
-      }
-    } catch (error: any) {
-      logger.error("Exception marking messages as read", {
-        error: error.message,
-        stack: error.stack,
-        conversationId,
-        component: "useMessageMarker"
-      });
-    }
-  }, [conversationId, currentProfileId]);
-
-  return { markMessagesAsRead };
 };
