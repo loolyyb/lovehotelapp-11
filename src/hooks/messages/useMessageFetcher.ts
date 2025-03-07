@@ -77,6 +77,15 @@ export const useMessageFetcher = ({
       }
 
       const isAdmin = userProfile?.role === 'admin';
+      const canAccessConversation = (isAdmin || userProfile?.id === currentProfileId);
+      
+      if (!canAccessConversation) {
+        logger.warn("User has no permission to access this conversation", {
+          requestedProfileId: currentProfileId,
+          userProfileId: userProfile?.id,
+          component: "useMessageFetcher"
+        });
+      }
       
       logger.info("User authenticated, checking conversation access", { 
         authUserId: user.id,

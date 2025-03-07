@@ -33,72 +33,46 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     try {
       logger.info("Fetching conversations for profile ID", { profileId: currentProfileId });
       
-      // Verify profile exists and get user role
-      const { data: profileCheck, error: profileError } = await supabase
+      // Get the current authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Vous devez être connecté pour voir vos conversations");
+      }
+      
+      // Get user's profile to check role
+      const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, username, full_name, user_id, role')
-        .eq('id', currentProfileId)
-        .maybeSingle();
+        .select('id, role')
+        .eq('user_id', user.id)
+        .single();
         
       if (profileError) {
-        logger.error("Error checking profile", { error: profileError });
-        throw new Error("Erreur lors de la vérification du profil");
+        logger.error("Error fetching user profile", { error: profileError });
+        throw new Error("Erreur lors de la récupération de votre profil");
       }
       
-      if (!profileCheck) {
-        logger.warn("Profile not found in database", { profileId: currentProfileId });
-        
-        // Try to get profile from auth user as fallback
-        const { data } = await supabase.auth.getUser();
-        if (data?.user) {
-          logger.info("Attempting to use auth user to find profile", { authId: data.user.id });
-          const profile = await getProfileByAuthId(data.user.id);
-          
-          if (profile) {
-            logger.warn("Found a profile for this auth user", {
-              requestedProfileId: currentProfileId,
-              foundProfileId: profile.id
-            });
-            
-            // Use the found profile ID but don't override the requested one
-            if (profile.id !== currentProfileId) {
-              logger.info("Using the requested profile ID, may require admin permissions", {
-                requestedProfileId: currentProfileId,
-                userProfileId: profile.id,
-                userRole: profile.role
-              });
-            }
-          }
-        }
-        
-        if (!profileCheck) {
-          throw new Error("Profil introuvable. Veuillez vous reconnecter.");
-        }
+      if (!userProfile) {
+        logger.error("No profile found for authenticated user", { userId: user.id });
+        throw new Error("Profil introuvable. Veuillez vous reconnecter.");
       }
-
-      const userRole = profileCheck?.role || 'user';
-      logger.info("Profile found, proceeding to fetch conversations", { 
-        profile: profileCheck,
-        role: userRole
+      
+      const isAdmin = userProfile.role === 'admin';
+      const isOwnProfileAccess = userProfile.id === currentProfileId;
+      
+      logger.info("User role and access check", { 
+        isAdmin, 
+        isOwnProfileAccess,
+        userProfileId: userProfile.id,
+        requestedProfileId: currentProfileId
       });
       
-      // Use findConversationsByProfileId which now properly respects the requested profile ID
-      // Row Level Security will handle access control
+      // Use the requested profile ID - RLS policies will handle access control
       const fetchedConversations = await findConversationsByProfileId(currentProfileId);
-      
-      // If no conversations found and user is not admin, we might want to create a test conversation
-      if (fetchedConversations.length === 0 && userRole !== 'admin') {
-        logger.warn("No conversations found for profile", {
-          profileId: currentProfileId,
-          authUserId: profileCheck?.user_id,
-          role: userRole
-        });
-      }
       
       logger.info("Setting conversations", { 
         count: fetchedConversations.length,
         profileId: currentProfileId,
-        role: userRole
+        role: userProfile.role
       });
       
       setConversations(fetchedConversations);

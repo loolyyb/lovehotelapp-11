@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 
@@ -231,8 +230,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
       component: "findConversationsByProfileId"
     });
     
-    // Proceed with the requested profileId without overriding
-    // Let RLS handle access control based on our policies
+    // Use the requested profileId directly - RLS policies will handle access control
     const { data, error } = await supabase
       .from('conversations')
       .select(`
