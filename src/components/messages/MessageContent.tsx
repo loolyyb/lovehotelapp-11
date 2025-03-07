@@ -1,229 +1,185 @@
 
-import { useRef, useEffect, useState, useMemo, useCallback } from "react";
-import { MessageBubble } from "./MessageBubble";
-import { LoadingState } from "./LoadingState";
-import { ErrorState } from "./ErrorState";
-import { EmptyConversation } from "./EmptyConversation";
-import { Button } from "../ui/button";
-import { ChevronUp } from "lucide-react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { MessageGroup } from "./MessageGroup";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 interface MessageContentProps {
-  isLoading: boolean;
-  isError: boolean;
   messages: any[];
   currentProfileId: string | null;
-  retryLoad: () => void;
-  loadMoreMessages?: () => void;
-  isLoadingMore?: boolean;
-  hasMoreMessages?: boolean;
+  loadMoreMessages: () => void;
+  isLoadingMore: boolean;
+  hasMoreMessages: boolean;
 }
 
-export function MessageContent({ 
-  isLoading,
-  isError,
+export function MessageContent({
   messages,
   currentProfileId,
-  retryLoad,
   loadMoreMessages,
-  isLoadingMore = false,
-  hasMoreMessages = false
+  isLoadingMore,
+  hasMoreMessages
 }: MessageContentProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [autoScroll, setAutoScroll] = useState(true);
-  const messageContainerRef = useRef<HTMLDivElement>(null);
-  const prevMessagesLengthRef = useRef<number>(0);
-  const prevLastMessageIdRef = useRef<string | null>(null);
-  const isUserAtBottomRef = useRef<boolean>(true);
-  const messagesRef = useRef<any[]>([]);
-  const scrollPositionRef = useRef<number>(0);
-  const isScrollingRef = useRef<boolean>(false);
-  const scrollTimeoutRef = useRef<number | null>(null);
-  const messageIdsRef = useRef<Set<string>>(new Set());
-
-  // Update messagesRef when messages prop changes
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
-
-  // Memoize unique messages to prevent unnecessary re-renders
-  const uniqueMessages = useMemo(() => {
-    // Create a deduplicated messages array with stable rendering
-    const seenIds = new Set<string>();
-    const seenOptimisticContents = new Set<string>();
-    
-    return messages.filter(message => {
-      if (message.optimistic) {
-        // For optimistic messages, check by content to avoid duplicates
-        const key = `opt-${message.content}`;
-        if (seenOptimisticContents.has(key)) {
-          return false;
-        }
-        seenOptimisticContents.add(key);
-        return true;
-      }
-      
-      // For regular messages, check by ID
-      if (message.id) {
-        if (seenIds.has(message.id)) {
-          return false;
-        }
-        seenIds.add(message.id);
-        return true;
-      }
-      
-      return true; // Include messages without ID (shouldn't happen but just in case)
-    });
-  }, [messages]);
-
-  // Save scroll position before updates
-  const saveScrollPosition = useCallback(() => {
-    if (messageContainerRef.current) {
-      scrollPositionRef.current = messageContainerRef.current.scrollTop;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [scrollCount, setScrollCount] = useState(0);
+  const [prevMessagesLength, setPrevMessagesLength] = useState(0);
+  
+  // Scroll to bottom function
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
     }
   }, []);
 
-  // Restore scroll position after updates
-  const restoreScrollPosition = useCallback(() => {
-    if (messageContainerRef.current && !autoScroll) {
-      messageContainerRef.current.scrollTop = scrollPositionRef.current;
+  // Check if we need to scroll based on message changes
+  useEffect(() => {
+    // If messages count increased - we got new messages
+    if (messages.length > prevMessagesLength) {
+      // Check if last message is from current user
+      const lastMessage = messages[messages.length - 1];
+      const isFromCurrentUser = lastMessage && lastMessage.sender_id === currentProfileId;
+      
+      // Always auto-scroll on new messages from current user
+      if (isFromCurrentUser) {
+        scrollToBottom();
+      } else {
+        // For other users' messages, only auto-scroll if near bottom
+        const container = containerRef.current;
+        if (container) {
+          const { scrollTop, scrollHeight, clientHeight } = container;
+          const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+          
+          if (isNearBottom) {
+            scrollToBottom();
+          } else {
+            setShowScrollButton(true);
+          }
+        }
+      }
     }
-  }, [autoScroll]);
+    
+    // Save current length for future comparison
+    setPrevMessagesLength(messages.length);
+  }, [messages.length, currentProfileId, scrollToBottom, prevMessagesLength]);
 
-  // Track if user has scrolled up with debouncing to prevent too many state updates
+  // Initial scroll when component mounts
+  useEffect(() => {
+    scrollToBottom('auto');
+  }, [scrollToBottom]);
+
+  // Track scroll position to show/hide scroll button
   const handleScroll = useCallback(() => {
-    if (!messageContainerRef.current || isScrollingRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
     
-    isScrollingRef.current = true;
-    saveScrollPosition();
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
     
-    const { scrollTop, scrollHeight, clientHeight } = messageContainerRef.current;
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
-    
-    // Update ref for use in useEffect
-    isUserAtBottomRef.current = isAtBottom;
-    
-    // Only change autoScroll if it's different from current value
-    if (autoScroll !== isAtBottom) {
-      setAutoScroll(isAtBottom);
-    }
-    
-    // Check if we need to load more messages when scrolling to top
-    if (scrollTop < 100 && hasMoreMessages && loadMoreMessages && !isLoadingMore) {
-      loadMoreMessages();
-    }
-    
-    // Debounce scroll handling
-    if (scrollTimeoutRef.current) {
-      window.clearTimeout(scrollTimeoutRef.current);
-    }
-    
-    scrollTimeoutRef.current = window.setTimeout(() => {
-      isScrollingRef.current = false;
-      scrollTimeoutRef.current = null;
-    }, 100) as unknown as number;
-  }, [autoScroll, hasMoreMessages, isLoadingMore, loadMoreMessages, saveScrollPosition]);
-
-  // Function to check for new messages
-  const hasNewMessages = useCallback(() => {
-    // No messages or empty array check
-    if (!messages || messages.length === 0) return false;
-    
-    // Check for more messages than before
-    const hasMoreMessages = messages.length > prevMessagesLengthRef.current;
-    prevMessagesLengthRef.current = messages.length;
-    
-    // Check for new message ID
-    const lastMessage = messages[messages.length - 1];
-    const lastMessageId = lastMessage?.id || null;
-    
-    // If we have a last message ID and it's different from the previous one
-    if (lastMessageId && lastMessageId !== prevLastMessageIdRef.current) {
-      prevLastMessageIdRef.current = lastMessageId;
-      
-      // Check if we've seen this message ID before
-      if (!messageIdsRef.current.has(lastMessageId)) {
-        messageIdsRef.current.add(lastMessageId);
-        return true;
-      }
-    }
-    
-    return hasMoreMessages;
-  }, [messages]);
-
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    if (!messages || !Array.isArray(messages)) return;
-    
-    const newMessagesArrived = hasNewMessages();
-    const shouldScrollToBottom = autoScroll || isUserAtBottomRef.current;
-    
-    if (newMessagesArrived && shouldScrollToBottom && !isLoadingMore) {
-      // Use requestAnimationFrame for smoother scrolling
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      });
-    } else if (!isLoadingMore) {
-      // Maintain scroll position if not scrolling to bottom
-      restoreScrollPosition();
-    }
-  }, [uniqueMessages, autoScroll, isLoadingMore, hasNewMessages, restoreScrollPosition]);
-
-  // Cleanup timeouts
-  useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) {
-        window.clearTimeout(scrollTimeoutRef.current);
-      }
-    };
+    setShowScrollButton(!isNearBottom);
   }, []);
 
-  if (isLoading && (!messages || messages.length === 0)) {
-    return <LoadingState />;
-  }
+  // Group messages by date
+  const groupedMessages = React.useMemo(() => {
+    const groups: any[] = [];
+    let currentGroup: any[] = [];
+    let currentSenderId: string | null = null;
+    
+    messages.forEach((message, index) => {
+      // Group messages from the same sender
+      if (message.sender_id !== currentSenderId) {
+        if (currentGroup.length > 0) {
+          groups.push({
+            id: `group-${currentSenderId}-${index}`,
+            senderId: currentSenderId,
+            messages: currentGroup
+          });
+        }
+        currentGroup = [message];
+        currentSenderId = message.sender_id;
+      } else {
+        currentGroup.push(message);
+      }
+    });
+    
+    // Add the last group
+    if (currentGroup.length > 0) {
+      groups.push({
+        id: `group-${currentSenderId}-${messages.length}`,
+        senderId: currentSenderId,
+        messages: currentGroup
+      });
+    }
+    
+    return groups;
+  }, [messages]);
 
-  if (isError) {
-    return <ErrorState retryLoad={retryLoad} />;
-  }
+  // Track scroll count to reattach scroll listeners
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll, scrollCount]);
 
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return <EmptyConversation />;
-  }
+  // Increment scroll count to force reattach of listeners
+  useEffect(() => {
+    setScrollCount(prev => prev + 1);
+  }, [messages.length]);
 
   return (
     <div 
-      className="flex flex-col space-y-1 p-4 overflow-y-auto h-full" 
-      ref={messageContainerRef}
-      onScroll={handleScroll}
+      ref={containerRef} 
+      className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-[#f3ebad]/20 scrollbar-track-transparent"
     >
-      {isLoadingMore && (
-        <div className="flex justify-center py-2">
-          <div className="animate-pulse text-[#f3ebad]/70">Chargement des messages...</div>
-        </div>
-      )}
-      
-      {hasMoreMessages && !isLoadingMore && (
+      {hasMoreMessages && (
         <div className="flex justify-center py-2">
           <Button 
-            variant="ghost" 
-            size="sm" 
+            variant="outline" 
+            size="sm"
             onClick={loadMoreMessages}
-            className="text-[#f3ebad]/70 hover:text-[#f3ebad] hover:bg-[#f3ebad]/10 flex items-center"
+            disabled={isLoadingMore}
+            className="text-[#f3ebad]/70 hover:text-[#f3ebad] border-[#f3ebad]/30"
           >
-            <ChevronUp className="h-4 w-4 mr-1" />
-            Charger plus de messages
+            {isLoadingMore ? (
+              <>
+                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                Chargement...
+              </>
+            ) : (
+              "Charger plus de messages"
+            )}
           </Button>
         </div>
       )}
+
+      {isLoadingMore && (
+        <div className="flex justify-center py-2">
+          <Loader2 className="h-4 w-4 text-[#f3ebad]/50 animate-spin" />
+        </div>
+      )}
       
-      {uniqueMessages.map((message) => (
-        <MessageBubble
-          key={message.id || `temp-${message.created_at}`}
-          message={message}
-          isCurrentUser={message.sender_id === currentProfileId}
+      {groupedMessages.map((group) => (
+        <MessageGroup 
+          key={group.id}
+          messages={group.messages}
+          isCurrentUser={group.senderId === currentProfileId}
         />
       ))}
       
+      {/* Element to scroll to */}
       <div ref={messagesEndRef} />
+      
+      {/* Scroll to bottom button */}
+      {showScrollButton && (
+        <Button
+          className="fixed bottom-20 right-6 rounded-full w-10 h-10 p-0 bg-[#f3ebad] hover:bg-[#f3ebad]/90 text-burgundy shadow-lg"
+          onClick={() => scrollToBottom()}
+        >
+          <ChevronDown className="h-5 w-5" />
+        </Button>
+      )}
     </div>
   );
 }

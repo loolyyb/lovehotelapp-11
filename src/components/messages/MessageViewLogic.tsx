@@ -1,42 +1,24 @@
 
-import React from "react";
-import { useMessageViewProps } from "./logic/useMessageViewProps";
-import { MessageViewRenderer } from "./logic/MessageViewRenderer";
+import React, { useEffect } from 'react';
+import { useMessageViewProps } from './logic/useMessageViewProps';
 
 interface MessageViewLogicProps {
   conversationId: string;
-  renderContent: (props: {
-    messages: any[];
-    currentProfileId: string | null;
-    otherUser: any;
-    isLoading: boolean;
-    isError: boolean;
-    retryLoad: () => void;
-    refreshMessages: () => void;
-    isRefreshing: boolean;
-    loadMoreMessages: () => void;
-    isLoadingMore: boolean;
-    hasMoreMessages: boolean;
-    newMessage: string;
-    setNewMessage: (message: string) => void;
-    sendMessage: (e: React.FormEvent) => void;
-  }) => React.ReactNode;
+  renderContent: (props: any) => React.ReactNode;
 }
 
-/**
- * Component that handles all the logic for the message view
- * and passes props to a render function for the UI
- */
-export function MessageViewLogic({ conversationId, renderContent }: MessageViewLogicProps) {
-  // Get all the props needed for the message view from our custom hook
-  const viewProps = useMessageViewProps(conversationId);
+export function MessageViewLogic({ 
+  conversationId, 
+  renderContent 
+}: MessageViewLogicProps) {
+  // Use the hook to get all the props needed for rendering
+  const props = useMessageViewProps(conversationId);
   
-  // Render the UI using the provided render function and our props
-  return (
-    <MessageViewRenderer
-      conversationId={conversationId}
-      viewProps={viewProps}
-      renderContent={renderContent}
-    />
-  );
+  // Debug render counts
+  useEffect(() => {
+    console.log(`MessageViewLogic rendered for conversation: ${conversationId}`);
+  }, [conversationId]);
+  
+  // Simply pass all the props to the render function
+  return <>{renderContent(props)}</>;
 }

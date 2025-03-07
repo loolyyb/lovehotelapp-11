@@ -1,150 +1,103 @@
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Send } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { SendIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 interface MessageInputProps {
   newMessage: string;
   setNewMessage: (message: string) => void;
-  onSend: (e: React.FormEvent) => void;
+  onSend: () => void;
   disabled?: boolean;
 }
 
 export function MessageInput({ 
-  newMessage: externalNewMessage, 
-  setNewMessage: externalSetNewMessage, 
-  onSend,
-  disabled = false
+  newMessage, 
+  setNewMessage, 
+  onSend, 
+  disabled = false 
 }: MessageInputProps) {
-  // Use internal state to prevent input loss during parent re-renders
-  const [internalNewMessage, setInternalNewMessage] = useState(externalNewMessage);
-  const [isTyping, setIsTyping] = useState(Boolean(externalNewMessage));
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const submitTimeoutRef = useRef<number | null>(null);
-  const lastSubmitTimeRef = useRef<number>(0);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const synchronizingRef = useRef<boolean>(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isSending, setIsSending] = useState(false);
+  
+  // Handle input change
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewMessage(e.target.value);
+  };
 
-  // Sync external and internal state carefully
-  useEffect(() => {
-    if (!synchronizingRef.current && externalNewMessage !== internalNewMessage) {
-      setInternalNewMessage(externalNewMessage);
-    }
-  }, [externalNewMessage, internalNewMessage]);
-
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    setInternalNewMessage(newValue);
-    setIsTyping(newValue.length > 0);
-    
-    // Prevent external state synchronization in next render cycle
-    synchronizingRef.current = true;
-    externalSetNewMessage(newValue);
-    
-    // Reset synchronization lock after a short delay
-    setTimeout(() => {
-      synchronizingRef.current = false;
-    }, 50);
-  }, [externalSetNewMessage]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !disabled && !isSubmitting) {
+  // Handle key press (Enter to send, Shift+Enter for new line)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && !disabled && newMessage.trim()) {
       e.preventDefault();
+      handleSend();
+    }
+  };
+
+  // Handle send button click
+  const handleSend = () => {
+    if (disabled || isSending || !newMessage.trim()) return;
+    
+    setIsSending(true);
+    onSend();
+    
+    // Reset sending state after a short delay
+    setTimeout(() => {
+      setIsSending(false);
       
-      const now = Date.now();
-      // Prevent rapid resubmissions (within 1000ms)
-      if (now - lastSubmitTimeRef.current < 1000) {
-        return;
+      // Focus back on textarea
+      if (textareaRef.current) {
+        textareaRef.current.focus();
       }
-      
-      if (internalNewMessage.trim()) {
-        lastSubmitTimeRef.current = now;
-        setIsSubmitting(true);
-        onSend(e as any);
-        
-        // Reset submission state after a short delay
-        if (submitTimeoutRef.current) {
-          clearTimeout(submitTimeoutRef.current);
-        }
-        
-        submitTimeoutRef.current = window.setTimeout(() => {
-          setIsSubmitting(false);
-          submitTimeoutRef.current = null;
-        }, 1000) as unknown as number;
-        
-        setIsTyping(false);
-      }
-    }
-  }, [internalNewMessage, onSend, disabled, isSubmitting]);
-
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const now = Date.now();
-    // Prevent rapid resubmissions (within 1000ms)
-    if (isSubmitting || disabled || !internalNewMessage.trim() || now - lastSubmitTimeRef.current < 1000) {
-      return;
-    }
-    
-    lastSubmitTimeRef.current = now;
-    setIsSubmitting(true);
-    onSend(e);
-    
-    // Reset submission state after a short delay
-    if (submitTimeoutRef.current) {
-      clearTimeout(submitTimeoutRef.current);
-    }
-    
-    submitTimeoutRef.current = window.setTimeout(() => {
-      setIsSubmitting(false);
-      submitTimeoutRef.current = null;
-    }, 1000) as unknown as number;
-  }, [internalNewMessage, onSend, disabled, isSubmitting]);
-
-  // Make sure input focuses when component mounts
+    }, 300);
+  };
+  
+  // Auto-resize the textarea based on content
   useEffect(() => {
-    const focusInput = () => {
-      if (inputRef.current && !disabled) {
-        inputRef.current.focus();
-      }
-    };
+    const textarea = textareaRef.current;
+    if (!textarea) return;
     
-    // Small delay to ensure DOM is ready
-    const timeout = setTimeout(focusInput, 100);
-    return () => clearTimeout(timeout);
-  }, [disabled]);
+    // Reset height to calculate properly
+    textarea.style.height = 'auto';
+    
+    // Set new height based on scrollHeight, but cap it at 150px
+    const newHeight = Math.min(textarea.scrollHeight, 150);
+    textarea.style.height = `${newHeight}px`;
+  }, [newMessage]);
 
-  // Cleanup effect
+  // Focus the textarea when the component mounts
   useEffect(() => {
-    return () => {
-      if (submitTimeoutRef.current) {
-        clearTimeout(submitTimeoutRef.current);
-      }
-    };
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
   }, []);
 
   return (
-    <form onSubmit={handleSubmit} className="relative">
-      <textarea
-        ref={inputRef}
-        className="w-full p-3 pr-12 bg-[#f3ebad]/10 border border-[#f3ebad]/20 rounded-md text-[#f3ebad] placeholder:text-[#f3ebad]/50 outline-none focus:border-[#f3ebad]/50 transition-colors resize-none"
-        placeholder={disabled ? "Chargement en cours..." : "Votre message..."}
-        rows={2}
-        value={internalNewMessage}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        disabled={disabled || isSubmitting}
-      />
-      <button
-        type="submit"
-        className={`absolute right-3 bottom-3 p-2 rounded-full ${
-          isTyping && !disabled && !isSubmitting
-            ? "bg-[#f3ebad] text-[#40192C]"
-            : "bg-[#f3ebad]/20 text-[#f3ebad]/50"
-        } transition-colors ${(disabled || isSubmitting) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-        disabled={!isTyping || disabled || isSubmitting}
-      >
-        <Send className="w-5 h-5" />
-      </button>
-    </form>
+    <div className="p-3 border-t border-[#f3ebad]/10 bg-[#40192C]/50">
+      <div className="flex items-end gap-2">
+        <div className="flex-1 relative">
+          <Textarea
+            ref={textareaRef}
+            value={newMessage}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Écrivez votre message..."
+            className="min-h-[40px] max-h-[150px] pr-12 bg-[#f3ebad]/5 border-[#f3ebad]/20 text-[#f3ebad] resize-none"
+            disabled={disabled || isSending}
+          />
+          <Button
+            className={`absolute bottom-1 right-1 h-8 w-8 p-0 rounded-full ${
+              !newMessage.trim() || disabled || isSending 
+                ? 'bg-[#f3ebad]/20 text-[#f3ebad]/30 hover:bg-[#f3ebad]/20 cursor-not-allowed' 
+                : 'bg-[#f3ebad] text-burgundy hover:bg-[#f3ebad]/90'
+            }`}
+            disabled={!newMessage.trim() || disabled || isSending}
+            onClick={handleSend}
+            type="button"
+          >
+            <SendIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

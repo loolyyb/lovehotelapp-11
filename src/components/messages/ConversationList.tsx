@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -283,9 +284,10 @@ export function ConversationList({
     } finally {
       setIsRetrying(false);
     }
-  }, [refetch, logger, toast, navigate]);
+  }, [refetch, logger, toast]);
 
   useEffect(() => {
+    // Periodic refresh of conversations
     const interval = setInterval(() => {
       if (!hasAuthError && authChecked) {
         logger.info("Periodic conversation refresh");
@@ -334,7 +336,8 @@ export function ConversationList({
   }
 
   if (error) {
-    return <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
         <AlertTriangle className="w-12 h-12 text-rose" />
         <h3 className="text-lg font-medium text-[#f3ebad]">Erreur de chargement</h3>
         <p className="text-sm text-[#f3ebad]/70">{error}</p>
@@ -352,7 +355,8 @@ export function ConversationList({
             "Réessayer"
           )}
         </Button>
-      </div>;
+      </div>
+    );
   }
 
   logger.info("Rendering conversation list", { 
@@ -360,7 +364,7 @@ export function ConversationList({
     currentUserProfileId: currentProfileId
   });
 
-  if (conversations.length === 0) {
+  if (!conversations || conversations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
         <div className="w-16 h-16 rounded-full bg-[#f3ebad]/10 flex items-center justify-center">
@@ -408,7 +412,8 @@ export function ConversationList({
   const activeConversationBgClass = "bg-[#5A293D]";
   const hoverClass = "hover:bg-rose/5";
 
-  return <div className="h-full flex flex-col">
+  return (
+    <div className="h-full flex flex-col">
       <div className="p-4 border-b border-rose/20">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-burgundy text-[#f3ebad]">Messages</h2>
@@ -430,10 +435,16 @@ export function ConversationList({
           const lastMessage = conversation.messages?.[0];
           const isActive = selectedConversationId === conversation.id;
           
+          // Count unread messages
+          const unreadCount = conversation.messages?.filter((msg: any) => 
+            !msg.read_at && msg.sender_id !== currentProfileId
+          )?.length || 0;
+          
           logger.debug("Rendering conversation", { 
             conversationId: conversation.id, 
             otherUserId: otherUser?.id,
             hasMessages: conversation.messages?.length > 0,
+            unreadCount,
             isActive
           });
           
@@ -465,14 +476,23 @@ export function ConversationList({
                         })}
                       </span>}
                   </div>
-                  {lastMessage && <p className="text-sm text-[#f3ebad]/70 truncate">
+                  <div className="flex justify-between items-center">
+                    {lastMessage && <p className="text-sm text-[#f3ebad]/70 truncate">
                       {lastMessage.content}
                     </p>}
+                    
+                    {unreadCount > 0 && (
+                      <span className="ml-2 bg-rose text-white text-xs font-medium px-2 py-0.5 rounded-full">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           );
         })}
       </div>
-    </div>;
+    </div>
+  );
 }

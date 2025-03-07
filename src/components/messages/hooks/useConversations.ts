@@ -84,22 +84,26 @@ export const useConversations = () => {
     
     // Fetch profile details
     const fetchProfile = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, full_name')
-        .eq('id', currentProfileId)
-        .single();
-        
-      if (error) {
-        logger.error("Error fetching profile details", { error });
-      } else if (data && isMountedRef.current) {
-        logger.info("User profile found", {
-          profileId: data.id,
-          username: data.username,
-          fullName: data.full_name
-        });
-        // Cache the profile
-        cacheProfile(data.id, data);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, username, full_name')
+          .eq('id', currentProfileId)
+          .single();
+          
+        if (error) {
+          logger.error("Error fetching profile details", { error });
+        } else if (data && isMountedRef.current) {
+          logger.info("User profile found", {
+            profileId: data.id,
+            username: data.username,
+            fullName: data.full_name
+          });
+          // Cache the profile
+          cacheProfile(data.id, data);
+        }
+      } catch (error) {
+        logger.error("Exception in fetchProfile", { error });
       }
     };
     
@@ -201,7 +205,13 @@ export const useConversations = () => {
   // Initial fetch - only run once, and when dependencies change
   useEffect(() => {
     if (currentProfileId && !fetchingRef.current) {
+      logger.info("currentProfileId is available, fetching conversations", { currentProfileId });
       fetchConversationsWithMessages();
+    } else {
+      logger.info("Waiting for currentProfileId before fetching", { 
+        hasCurrentProfileId: !!currentProfileId,
+        isFetching: fetchingRef.current
+      });
     }
     
     // Clear cache on component unmount
@@ -212,6 +222,47 @@ export const useConversations = () => {
       }
     };
   }, [fetchConversationsWithMessages, clearCache, currentProfileId]);
+
+  // Initialize profile and fetch conversations
+  useEffect(() => {
+    const initializeData = async () => {
+      if (fetchingRef.current) return;
+      
+      try {
+        logger.info("Initializing conversations data");
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        
+        if (!session) {
+          logger.warn("No session found during initialization");
+          setError("User not authenticated");
+          return;
+        }
+
+        // Get profile data
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+          
+        if (profileError) throw profileError;
+        
+        if (profile) {
+          logger.info("Profile found during initialization, fetching conversations", { profileId: profile.id });
+          setCurrentProfileId(profile.id);
+          await fetchConversations(false); // Force fresh fetch
+        } else {
+          logger.warn("No profile found for authenticated user", { userId: session.user.id });
+        }
+      } catch (error) {
+        logger.error("Error initializing conversations data", { error });
+        setError("Failed to load conversations");
+      }
+    };
+
+    initializeData();
+  }, []);
 
   // Handle conversation changes with debounce and throttling to prevent cascading updates
   const handleConversationChange = useCallback(() => {
@@ -235,7 +286,7 @@ export const useConversations = () => {
     }, 800);  // Increased debounce time to prevent rapid firing
   }, [logger, fetchConversationsWithMessages]);
 
-  // Handle message updates (the missing function)
+  // Handle message updates
   const handleMessageUpdate = useCallback((message: any) => {
     logger.info("Message update received", { 
       messageId: message.id, 
@@ -270,43 +321,6 @@ export const useConversations = () => {
     onNewMessage: realtimeMessageHandler,
     onMessageUpdate: handleMessageUpdate
   });
-
-  // Initialize profile and fetch conversations
-  useEffect(() => {
-    const initializeData = async () => {
-      if (fetchingRef.current) return;
-      
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        
-        if (!session) {
-          setError("User not authenticated");
-          return;
-        }
-
-        // Get profile data
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        if (profileError) throw profileError;
-        
-        if (profile) {
-          logger.info("Profile found, fetching conversations", { profileId: profile.id });
-          setCurrentProfileId(profile.id);
-          await fetchConversations(false); // Force fresh fetch
-        }
-      } catch (error) {
-        logger.error("Error initializing conversations data", { error });
-        setError("Failed to load conversations");
-      }
-    };
-
-    initializeData();
-  }, []);
 
   // Use memoized state to prevent unnecessary rerenders
   const result = useMemo(() => ({ 
