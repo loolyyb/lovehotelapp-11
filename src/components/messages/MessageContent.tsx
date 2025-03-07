@@ -1,5 +1,4 @@
-
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { LoadingState } from "./LoadingState";
 import { ErrorState } from "./ErrorState";
@@ -83,20 +82,17 @@ export function MessageContent({
     return hasMoreMessages || isNewMessageId;
   };
 
-  // Automatic scroll to last message on new messages
+  // Automatic scroll to last message on new messages - optimized
   useEffect(() => {
     if (!messages || !Array.isArray(messages)) return;
     
-    // Check if we received new messages
     const gotNewMessage = hasNewMessage();
     const userWantsAutoScroll = autoScroll || isUserAtBottomRef.current;
     
-    // Only scroll if we're at the bottom or if new messages came in
     if ((gotNewMessage && userWantsAutoScroll) && !isLoadingMore) {
-      const timeout = setTimeout(() => {
+      requestAnimationFrame(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-      return () => clearTimeout(timeout);
+      });
     }
   }, [messages, autoScroll, isLoadingMore]);
 
@@ -112,22 +108,22 @@ export function MessageContent({
     return <EmptyConversation />;
   }
 
-  // Filter out duplicate messages with the same ID
-  const uniqueMessages = messages.reduce((acc: any[], message) => {
-    // For optimistic messages, use content as the key
-    if (message.optimistic) {
-      if (!acc.some(m => m.optimistic && m.content === message.content)) {
+  // Memoize unique messages to prevent unnecessary re-renders
+  const uniqueMessages = useMemo(() => {
+    return messages.reduce((acc: any[], message) => {
+      if (message.optimistic) {
+        if (!acc.some(m => m.optimistic && m.content === message.content)) {
+          acc.push(message);
+        }
+        return acc;
+      }
+      
+      if (!acc.some(m => m.id === message.id)) {
         acc.push(message);
       }
       return acc;
-    }
-    
-    // For regular messages, use ID as the key
-    if (!acc.some(m => m.id === message.id)) {
-      acc.push(message);
-    }
-    return acc;
-  }, []);
+    }, []);
+  }, [messages]);
 
   return (
     <div 
