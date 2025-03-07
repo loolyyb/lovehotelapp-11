@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +6,7 @@ import { useConversationInit } from "@/hooks/useConversationInit";
 import { useMessageRefresh } from "@/hooks/useMessageRefresh";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useMessageHandlers } from "@/hooks/useMessageHandlers";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MessageViewLogicProps {
   conversationId: string;
