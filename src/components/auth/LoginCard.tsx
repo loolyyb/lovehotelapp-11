@@ -4,19 +4,30 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 type LoginCardProps = {
   title: string;
 }
 
 export const LoginCard: React.FC<LoginCardProps> = ({ title }) => {
+  const { isLoading, session, supabaseClient } = useSessionContext();
+
+  if (isLoading) {
+    return (
+      <Card className="p-8 space-y-4 backdrop-blur-sm bg-white/10 border-[0.5px] border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300">
+        <div className="text-center text-[#f3ebad]">Chargement...</div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-8 space-y-4 backdrop-blur-sm bg-white/10 border-[0.5px] border-[#f3ebad]/30 hover:shadow-lg transition-all duration-300">
       <h1 className="text-3xl font-cormorant text-center mb-6 text-[#f3ebad]">
         {title}
       </h1>
       <Auth
-        supabaseClient={supabase}
+        supabaseClient={supabaseClient || supabase}
         appearance={{
           theme: ThemeSupa,
           variables: {
