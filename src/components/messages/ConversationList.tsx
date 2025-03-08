@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { getProfileByAuthId } from "@/utils/conversationUtils";
+import { useProfileState } from "@/hooks/useProfileState";
 
 const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel-v2.jpg";
 
@@ -33,6 +33,7 @@ export function ConversationList({
   const logger = useLogger("ConversationList");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { profileId, isInitialized, refreshProfile } = useProfileState();
   
   const {
     conversations,
@@ -47,6 +48,15 @@ export function ConversationList({
     const checkAuth = async () => {
       try {
         logger.info("Checking authentication status");
+        
+        // Check if we already have profile from centralized state
+        if (isInitialized && profileId) {
+          logger.info("Using profile from centralized state", { profileId });
+          setHasAuthError(false);
+          setAuthChecked(true);
+          return;
+        }
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -71,21 +81,7 @@ export function ConversationList({
           return;
         }
         
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-          
-        if (profileError) {
-          logger.error("Error fetching profile", { error: profileError });
-          return;
-        }
-        
-        if (profileData) {
-          logger.info("Using existing profile", { profileId: profileData.id, userId: session.user.id });
-        }
-        
+        // Rest of the authentication logic is handled by useProfileState
         setHasAuthError(false);
       } catch (e) {
         logger.error("Error checking auth status", { error: e });
@@ -96,7 +92,7 @@ export function ConversationList({
     };
     
     checkAuth();
-  }, [logger, toast]);
+  }, [logger, toast, profileId, isInitialized]);
 
   const handleLogin = () => {
     logger.info("Redirecting to login page");
@@ -108,56 +104,35 @@ export function ConversationList({
     setIsRetrying(true);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "Non connecté",
-          description: "Vous n'êtes pas connecté. Veuillez vous reconnecter."
-        });
-        setHasAuthError(true);
-        return;
-      }
+      // Refresh profile from centralized state
+      await refreshProfile();
       
-      setHasAuthError(false);
-      
-      const profile = await getProfileByAuthId(user.id);
-      if (!profile) {
+      // If we have a profile, refresh conversations
+      if (profileId) {
+        setHasAuthError(false);
+        await refreshConversations(false); // Force fresh fetch
         toast({
-          variant: "destructive",
-          title: "Profil manquant",
-          description: "Création d'un profil en cours..."
+          title: "Rafraîchissement réussi",
+          description: "Vos conversations ont été mises à jour."
         });
-        
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert([{
-            id: crypto.randomUUID(),
-            user_id: user.id,
-            full_name: user.email?.split('@')[0] || 'Utilisateur',
-            username: user.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 1000),
-            role: 'user'
-          }]);
-          
-        if (insertError) {
-          logger.error("Error creating profile", { error: insertError });
+      } else {
+        // Still no profile after refresh
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
           toast({
             variant: "destructive",
-            title: "Erreur",
-            description: "Impossible de créer votre profil. Veuillez contacter le support."
+            title: "Non connecté",
+            description: "Vous n'êtes pas connecté. Veuillez vous reconnecter."
           });
-          return;
+          setHasAuthError(true);
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Erreur de profil",
+            description: "Impossible de récupérer votre profil. Veuillez réessayer."
+          });
         }
       }
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      await refreshConversations(false); // Force fresh fetch
-      
-      toast({
-        title: "Rafraîchissement réussi",
-        description: "Vos conversations ont été mises à jour."
-      });
     } catch (error) {
       logger.error("Error in retry", { error });
       toast({
@@ -168,18 +143,18 @@ export function ConversationList({
     } finally {
       setIsRetrying(false);
     }
-  }, [refreshConversations, logger, toast]);
+  }, [refreshConversations, refreshProfile, profileId, logger, toast]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!hasAuthError && authChecked) {
+      if (!hasAuthError && authChecked && profileId) {
         logger.info("Periodic conversation refresh");
         refreshConversations(true); // Use cache if available
       }
     }, 60000);
     
     return () => clearInterval(interval);
-  }, [refreshConversations, logger, hasAuthError, authChecked]);
+  }, [refreshConversations, logger, hasAuthError, authChecked, profileId]);
 
   if (hasAuthError) {
     return (

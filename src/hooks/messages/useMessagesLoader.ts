@@ -1,6 +1,7 @@
 
 import { useEffect, useCallback } from 'react';
 import { useLogger } from '@/hooks/useLogger';
+import { useProfileState } from '@/hooks/useProfileState';
 
 interface UseMessagesLoaderProps {
   conversationId: string;
@@ -33,6 +34,7 @@ export const useMessagesLoader = ({
   messages
 }: UseMessagesLoaderProps) => {
   const logger = useLogger('MessagesLoader');
+  const { isInitialized: isProfileReady } = useProfileState();
   
   // Load messages when dependencies are ready
   useEffect(() => {
@@ -42,7 +44,8 @@ export const useMessagesLoader = ({
       currentProfileId &&
       profileInitialized &&
       isAuthChecked &&
-      !isFetchingInitialMessages
+      !isFetchingInitialMessages &&
+      isProfileReady // Add check for centralized profile state
     ) {
       logger.info('Initial conditions met for fetching messages', {
         conversationId,
@@ -71,6 +74,7 @@ export const useMessagesLoader = ({
     profileInitialized,
     isAuthChecked,
     isFetchingInitialMessages,
+    isProfileReady, // Add dependency on centralized profile state
     setIsFetchingInitialMessages,
     fetchMessages,
     setIsError,

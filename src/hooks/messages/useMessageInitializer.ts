@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLogger } from "@/hooks/useLogger";
 import { AlertService } from "@/services/AlertService";
+import { useProfileState } from "@/hooks/useProfileState";
 
 interface UseMessageInitializerProps {
   conversationId: string;
@@ -31,6 +32,7 @@ export const useMessageInitializer = ({
 }: UseMessageInitializerProps) => {
   const logger = useLogger("useMessageInitializer");
   const { toast } = useToast();
+  const { profileId, isInitialized } = useProfileState();
 
   // Initialize profile setter function 
   const memoizedProfileSetter = useCallback((profileId: string | null) => {
@@ -51,6 +53,17 @@ export const useMessageInitializer = ({
       fetchingRef.current = true;
       
       try {
+        // Check if profile is already initialized from centralized state
+        if (isInitialized && profileId) {
+          logger.info("Using profile from centralized state", { profileId });
+          if (mounted) {
+            memoizedProfileSetter(profileId);
+            setIsAuthChecked(true);
+          }
+          fetchingRef.current = false;
+          return;
+        }
+
         // Check auth session first
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -65,6 +78,7 @@ export const useMessageInitializer = ({
               description: "Veuillez vous reconnecter pour accéder à vos messages"
             });
           }
+          fetchingRef.current = false;
           return;
         }
 
@@ -106,7 +120,20 @@ export const useMessageInitializer = ({
     return () => {
       mounted = false;
     };
-  }, [conversationId, getCurrentUser, setIsAuthChecked, setIsError, setIsLoading, firstLoad, fetchingRef, logger, toast]);
+  }, [
+    conversationId, 
+    getCurrentUser, 
+    setIsAuthChecked, 
+    setIsError, 
+    setIsLoading, 
+    firstLoad, 
+    fetchingRef, 
+    logger, 
+    toast, 
+    memoizedProfileSetter,
+    profileId,
+    isInitialized
+  ]);
 
   return { memoizedProfileSetter };
 };

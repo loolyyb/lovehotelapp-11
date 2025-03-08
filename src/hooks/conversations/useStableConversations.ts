@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useLogger } from "@/hooks/useLogger";
 import { useConversationsFetcher } from "./useConversationsFetcher";
 import { useConversationCache } from "./useConversationCache";
-import { useUserProfileRetrieval } from "./useUserProfileRetrieval";
+import { useProfileState } from "@/hooks/useProfileState";
 
 /**
  * Hook that provides stable conversation list display
@@ -19,12 +19,14 @@ export function useStableConversations() {
   const updatePendingRef = useRef(false);
   const lastDisplayUpdateRef = useRef(Date.now());
   
+  // Use the centralized profile state
   const {
-    currentProfileId,
+    profileId: currentProfileId,
     isLoading: profileLoading,
     error: profileError,
-    getUserProfile
-  } = useUserProfileRetrieval();
+    refreshProfile: getUserProfile,
+    isInitialized: profileInitialized
+  } = useProfileState();
 
   const {
     conversations: pendingConversations,
@@ -41,37 +43,6 @@ export function useStableConversations() {
     isCacheValid,
     clearCache
   } = useConversationCache();
-
-  // On initial mount, try to load the user profile
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        logger.info("Initial user profile load");
-        await getUserProfile();
-        logger.info("Initial user profile loaded", { profileId: currentProfileId });
-      } catch (err) {
-        logger.error("Error loading initial user profile", { error: err });
-        setError("Impossible de charger votre profil");
-      }
-    };
-    
-    loadProfile();
-  }, []);
-
-  // On initial mount, try to show cached conversations immediately
-  useEffect(() => {
-    if (!currentProfileId) return;
-    
-    // Try to get cached conversations to display immediately
-    const cachedConversations = getCachedConversations(currentProfileId);
-    if (cachedConversations && cachedConversations.length > 0) {
-      logger.info("Displaying cached conversations", { count: cachedConversations.length });
-      setDisplayedConversations(cachedConversations);
-      initialLoadCompleteRef.current = true;
-    } else {
-      logger.info("No cached conversations found, will fetch from server");
-    }
-  }, [currentProfileId, getCachedConversations, logger]);
 
   // Update loading state for better UX - only show loading state if we don't have any conversations to display
   useEffect(() => {
@@ -98,6 +69,24 @@ export function useStableConversations() {
       setError(newError);
     }
   }, [profileError, conversationsError, error]);
+
+  // Load conversations when profile is ready
+  useEffect(() => {
+    if (currentProfileId && profileInitialized) {
+      logger.info("Profile initialized, fetching conversations", { profileId: currentProfileId });
+      
+      // Try to get cached conversations to display immediately
+      const cachedConversations = getCachedConversations(currentProfileId);
+      if (cachedConversations && cachedConversations.length > 0) {
+        logger.info("Displaying cached conversations", { count: cachedConversations.length });
+        setDisplayedConversations(cachedConversations);
+        initialLoadCompleteRef.current = true;
+      }
+      
+      // Fetch fresh conversations
+      fetchConversations();
+    }
+  }, [currentProfileId, profileInitialized, fetchConversations, getCachedConversations, logger]);
 
   // Update displayed conversations when pending conversations are ready
   // with debounce to prevent rapid updates
@@ -135,9 +124,14 @@ export function useStableConversations() {
   // Refresh conversations, but preserve displayed list until new data is ready
   const refreshConversations = useCallback(async (useCache = true) => {
     if (!currentProfileId) {
-      logger.warn("No profile ID available, attempting to retrieve user profile");
+      logger.warn("No profile ID available, attempting to refresh profile");
       try {
         await getUserProfile();
+        if (!currentProfileId) {
+          logger.error("Still no profile ID after refresh");
+          setError("Impossible de charger votre profil");
+          return;
+        }
       } catch (err) {
         logger.error("Error retrieving user profile during refresh", { error: err });
         setError("Impossible de charger votre profil");
