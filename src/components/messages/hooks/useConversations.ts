@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
@@ -135,6 +136,7 @@ export const useConversations = () => {
         }
       }
 
+      // Fix the call to fetchConversations by explicitly passing the useCache parameter
       const fetchedConversations = await fetchConversations(useCache);
       
       if (!isMountedRef.current) {
@@ -228,6 +230,7 @@ export const useConversations = () => {
         if (profile) {
           logger.info("Profile found during initialization, fetching conversations", { profileId: profile.id });
           setCurrentProfileId(profile.id);
+          // Fix: Pass false to the fetchConversations call to avoid using the cache during initialization
           await fetchConversations(false);
         } else {
           logger.warn("No profile found for authenticated user", { userId: session.user.id });
@@ -254,6 +257,7 @@ export const useConversations = () => {
     
     debounceTimerRef.current = window.setTimeout(() => {
       if (!fetchingRef.current && isMountedRef.current) {
+        // Fix: Pass the correct useCache parameter (false) to refresh data
         fetchConversationsWithMessages(false);
       }
       debounceTimerRef.current = null;
