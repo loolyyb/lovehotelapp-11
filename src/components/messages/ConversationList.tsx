@@ -205,7 +205,7 @@ export function ConversationList({
         });
       }
       
-      await refetch();
+      await refreshConversations(false);
       
     } catch (error) {
       logger.error("Error creating test conversation", { error });
@@ -287,7 +287,6 @@ export function ConversationList({
   }, [refreshConversations, logger, toast]);
 
   useEffect(() => {
-    // Periodic refresh of conversations
     const interval = setInterval(() => {
       if (!hasAuthError && authChecked) {
         logger.info("Periodic conversation refresh");
