@@ -148,7 +148,7 @@ export const useConversations = () => {
       }
 
       // 2. Fetch conversations for the user with optional caching
-      // Explicitly pass useCache parameter to fetchConversations
+      // Pass useCache parameter to fetchConversations - this is the line causing the error
       const fetchedConversations = await fetchConversations(useCache);
       
       if (!isMountedRef.current) {
@@ -252,7 +252,7 @@ export const useConversations = () => {
         if (profile) {
           logger.info("Profile found during initialization, fetching conversations", { profileId: profile.id });
           setCurrentProfileId(profile.id);
-          // Explicitly pass useCache=false to fetchConversations
+          // Update this line to pass the useCache parameter
           await fetchConversations(false);
         } else {
           logger.warn("No profile found for authenticated user", { userId: session.user.id });
@@ -282,7 +282,7 @@ export const useConversations = () => {
     
     debounceTimerRef.current = window.setTimeout(() => {
       if (!fetchingRef.current && isMountedRef.current) {
-        // Explicitly pass useCache=false to fetchConversationsWithMessages
+        // Pass useCache parameter to prevent the TS error
         fetchConversationsWithMessages(false);
       }
       debounceTimerRef.current = null;
