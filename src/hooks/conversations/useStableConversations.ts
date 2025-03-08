@@ -29,6 +29,7 @@ export function useStableConversations() {
     isInitialized: profileInitialized
   } = useProfileState();
 
+  // Using memoized currentProfileId for the fetcher to prevent recreation
   const {
     conversations: pendingConversations,
     isLoading: conversationsLoading,
@@ -71,52 +72,34 @@ export function useStableConversations() {
     }
   }, [profileError, conversationsError, error]);
 
-  // Load conversations when profile is ready - log the current profile ID
+  // Load conversations when profile is ready - This effect was causing infinite loops
   useEffect(() => {
-    if (!profileInitialized) {
-      logger.info("Profile not yet initialized, waiting...");
+    // Only proceed if we have the necessary conditions and haven't loaded yet
+    if (!profileInitialized || initialLoadCompleteRef.current) {
       return;
     }
     
     logger.info("Profile state check:", { 
       profileId: currentProfileId, 
-      initialized: profileInitialized,
-      initialLoadComplete: initialLoadCompleteRef.current
+      initialized: profileInitialized
     });
     
-    if (!currentProfileId) {
-      logger.warn("No profile ID available after initialization");
-      return;
-    }
-    
-    if (initialLoadCompleteRef.current) {
-      logger.info("Initial load already completed, skipping");
-      return;
-    }
-    
-    logger.info("Profile initialized, fetching conversations", { profileId: currentProfileId });
-    
     // Try to get cached conversations to display immediately
-    const cachedConversations = getCachedConversations(currentProfileId);
-    if (cachedConversations && cachedConversations.length > 0) {
-      logger.info("Displaying cached conversations", { count: cachedConversations.length });
-      setDisplayedConversations(cachedConversations);
-      initialLoadCompleteRef.current = true;
+    if (currentProfileId) {
+      const cachedConversations = getCachedConversations(currentProfileId);
+      if (cachedConversations && cachedConversations.length > 0) {
+        logger.info("Displaying cached conversations", { count: cachedConversations.length });
+        setDisplayedConversations(cachedConversations);
+        initialLoadCompleteRef.current = true;
+      }
+      
+      // Fetch fresh conversations
+      fetchConversations();
     }
-    
-    // Fetch fresh conversations
-    fetchConversations();
-    
   }, [currentProfileId, profileInitialized, fetchConversations, getCachedConversations, logger]);
 
   // Update displayed conversations when pending conversations are ready
-  // with debounce to prevent rapid updates
   useEffect(() => {
-    logger.debug("Pending conversations update check", { 
-      count: pendingConversations.length,
-      updatePending: updatePendingRef.current
-    });
-    
     if (pendingConversations.length === 0 || updatePendingRef.current) return;
     
     // Don't update too frequently
@@ -155,17 +138,16 @@ export function useStableConversations() {
       periodicRefreshRef.current = null;
     }
     
-    if (!currentProfileId || !profileInitialized) {
-      return; // Exit early if conditions not met
+    // Only set up periodic refresh if we have a valid profile
+    if (currentProfileId && profileInitialized) {
+      logger.info("Setting up periodic conversation refresh");
+      
+      // Set a new interval for refreshing conversations
+      periodicRefreshRef.current = setInterval(() => {
+        logger.info("Performing periodic conversation refresh");
+        fetchConversations();
+      }, 60000); // Refresh every minute
     }
-    
-    logger.info("Setting up periodic conversation refresh");
-    
-    // Set a new interval for refreshing conversations
-    periodicRefreshRef.current = setInterval(() => {
-      logger.info("Performing periodic conversation refresh");
-      fetchConversations();
-    }, 60000); // Refresh every minute
     
     // Cleanup interval on unmount
     return () => {

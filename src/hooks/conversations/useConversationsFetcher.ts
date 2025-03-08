@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
 import { findConversationsByProfileId } from "@/utils/conversations";
@@ -19,21 +20,33 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     isCacheValid 
   } = useConversationCache();
   
+  // Use a ref to track if a fetch is already in progress to prevent duplicate requests
+  const fetchInProgressRef = useRef(false);
+  
   const PAGE_SIZE = 10;
   
-  // Auto-fetch when profile ID changes
+  // Auto-fetch when profile ID changes, but not on every render
   useEffect(() => {
     if (!currentProfileId) {
       logger.warn("No profile ID available, cannot fetch conversations");
       return;
     }
     
-    logger.info("Profile ID changed, fetching conversations", { profileId: currentProfileId });
-    fetchConversations();
-  }, [currentProfileId]); // Only include currentProfileId to prevent infinite loops
+    // Only fetch if not already fetching
+    if (!fetchInProgressRef.current) {
+      logger.info("Profile ID changed, fetching conversations", { profileId: currentProfileId });
+      fetchConversations();
+    }
+  }, [currentProfileId]); // Only depend on currentProfileId
 
   // Memoize the fetchConversations function to prevent recreating it on every render
   const fetchConversations = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (fetchInProgressRef.current) {
+      logger.info("Fetch already in progress, skipping");
+      return [];
+    }
+    
     if (!currentProfileId) {
       logger.warn("No profile ID provided, cannot fetch conversations", { reason: "missing_profile_id" });
       setError("Vous devez être connecté pour voir vos conversations");
@@ -55,6 +68,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
 
     setIsLoading(true);
     setError(null);
+    fetchInProgressRef.current = true;
 
     try {
       logger.info("Fetching conversations for profile ID", { profileId: currentProfileId });
@@ -111,6 +125,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           setConversations(fetchedConversations);
           cacheConversations(newProfileId, fetchedConversations);
           setIsLoading(false);
+          fetchInProgressRef.current = false;
           return fetchedConversations;
         } else {
           throw new Error("Erreur lors de la récupération de votre profil");
@@ -138,6 +153,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         
         setConversations(fetchedConversations);
         setIsLoading(false);
+        fetchInProgressRef.current = false;
         return fetchedConversations;
       } catch (fetchError: any) {
         logger.error("Error fetching conversations from utility", { 
@@ -145,6 +161,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           stack: fetchError.stack
         });
         setIsLoading(false);
+        fetchInProgressRef.current = false;
         throw new Error("Erreur lors du chargement des conversations");
       }
     } catch (error: any) {
@@ -154,15 +171,17 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       });
       setError(error.message || "Erreur lors du chargement des conversations");
       setIsLoading(false);
+      fetchInProgressRef.current = false;
       return [];
     }
   }, [currentProfileId, logger, getCachedConversations, cacheConversations, isCacheValid]);
 
   // Load more conversations
   const loadMoreConversations = useCallback(async () => {
-    if (!currentProfileId || !hasMore || isLoading) return;
+    if (!currentProfileId || !hasMore || isLoading || fetchInProgressRef.current) return;
     
     setIsLoading(true);
+    fetchInProgressRef.current = true;
     
     try {
       const nextPage = page + 1;
@@ -178,6 +197,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       logger.error("Error loading more conversations", { error: error.message });
     } finally {
       setIsLoading(false);
+      fetchInProgressRef.current = false;
     }
   }, [currentProfileId, page, hasMore, isLoading, logger]);
 
