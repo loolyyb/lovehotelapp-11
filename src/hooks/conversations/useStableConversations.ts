@@ -24,7 +24,7 @@ export function useStableConversations() {
     profileId: currentProfileId,
     isLoading: profileLoading,
     error: profileError,
-    refreshProfile: getUserProfile,
+    refreshProfile,
     isInitialized: profileInitialized
   } = useProfileState();
 
@@ -126,7 +126,7 @@ export function useStableConversations() {
     if (!currentProfileId) {
       logger.warn("No profile ID available, attempting to refresh profile");
       try {
-        await getUserProfile();
+        await refreshProfile();
         if (!currentProfileId) {
           logger.error("Still no profile ID after refresh");
           setError("Impossible de charger votre profil");
@@ -152,13 +152,14 @@ export function useStableConversations() {
         clearCache();
       }
       
-      await fetchConversations(useCache);
+      // Fix here: Call fetchConversations without arguments if it doesn't accept any
+      await fetchConversations();
     } catch (err) {
       logger.error("Error refreshing conversations", { error: err });
     } finally {
       setIsRefreshing(false);
     }
-  }, [currentProfileId, fetchConversations, getUserProfile, clearCache, logger]);
+  }, [currentProfileId, fetchConversations, refreshProfile, clearCache, logger]);
 
   return {
     conversations: displayedConversations,
