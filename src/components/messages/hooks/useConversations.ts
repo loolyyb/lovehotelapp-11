@@ -148,6 +148,7 @@ export const useConversations = () => {
       }
 
       // 2. Fetch conversations for the user with optional caching
+      // Fixed: Call fetchConversations with the useCache parameter to match the API
       const fetchedConversations = await fetchConversations(useCache);
       
       if (!isMountedRef.current) {
@@ -251,7 +252,8 @@ export const useConversations = () => {
         if (profile) {
           logger.info("Profile found during initialization, fetching conversations", { profileId: profile.id });
           setCurrentProfileId(profile.id);
-          await fetchConversations(false); // Force fresh fetch
+          // Fixed: Call fetchConversations with false parameter to match the API
+          await fetchConversations(false);
         } else {
           logger.warn("No profile found for authenticated user", { userId: session.user.id });
         }
@@ -280,7 +282,8 @@ export const useConversations = () => {
     
     debounceTimerRef.current = window.setTimeout(() => {
       if (!fetchingRef.current && isMountedRef.current) {
-        fetchConversationsWithMessages(false); // Force fresh fetch
+        // Fixed: Call fetchConversationsWithMessages with false parameter to match the API
+        fetchConversationsWithMessages(false);
       }
       debounceTimerRef.current = null;
     }, 800);  // Increased debounce time to prevent rapid firing
