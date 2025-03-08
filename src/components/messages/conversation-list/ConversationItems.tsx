@@ -19,10 +19,14 @@ export const ConversationItems = memo(function ConversationItems({
 }: ConversationItemsProps) {
   const logger = useLogger("ConversationItems");
   
-  logger.debug("Rendering conversation items", { 
+  logger.info("Rendering conversation items", { 
     count: conversations.length, 
     selectedId: selectedConversationId 
   });
+  
+  if (!conversations || conversations.length === 0) {
+    return null;
+  }
   
   return (
     <div className="flex-1 overflow-y-auto">

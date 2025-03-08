@@ -38,13 +38,11 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
-    // Fetch conversations directly using the provided profileId without additional validation
-    // We'll rely on RLS policies for security
+    // Fetch conversations with explicit OR condition using template literals to ensure proper formatting
     logger.info(`Fetching conversations for profile ID: ${profileId}`, {
       component: "findConversationsByProfileId"
     });
     
-    // Fetch conversations using proper Supabase filtering
     const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
@@ -92,7 +90,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
           .from('profiles')
           .select('id, username, full_name, avatar_url')
           .eq('id', otherUserId)
-          .single();
+          .maybeSingle();
           
         if (profileError) {
           logger.error(`Error fetching profile for user ${otherUserId}:`, {
@@ -125,7 +123,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
           // Return conversation with user data but no messages
           return {
             ...conversation,
-            otherUser: otherUserProfile,
+            otherUser: otherUserProfile || { id: otherUserId, username: 'Utilisateur inconnu' },
             messages: []
           };
         }
@@ -133,7 +131,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
         // Return full conversation data
         return {
           ...conversation,
-          otherUser: otherUserProfile,
+          otherUser: otherUserProfile || { id: otherUserId, username: 'Utilisateur inconnu' },
           messages: messages || []
         };
       } catch (error) {

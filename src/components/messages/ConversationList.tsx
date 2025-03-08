@@ -54,9 +54,10 @@ export function ConversationList({
       currentUserProfileId: currentProfileId,
       authChecked,
       hasAuthError,
-      isLoading
+      isLoading,
+      isRefreshing
     });
-  }, [conversations.length, currentProfileId, authChecked, hasAuthError, isLoading, logger]);
+  }, [conversations.length, currentProfileId, authChecked, hasAuthError, isLoading, isRefreshing, logger]);
 
   // Memoized handlers to prevent recreating functions on each render
   const handleLogin = useCallback(() => {
@@ -118,7 +119,7 @@ export function ConversationList({
   }
 
   // Loading state - show when we're still checking auth or loading profile
-  if (!authChecked || (isLoading && !currentProfileId)) {
+  if (!authChecked || isLoading) {
     logger.info("Showing loading state", { authChecked, isLoading, hasProfile: !!currentProfileId });
     return <LoadingState />;
   }
@@ -141,19 +142,6 @@ export function ConversationList({
     return (
       <EmptyConversationsState
         isRefreshingManually={isRefreshingManually}
-        handleRetry={handleRetry}
-      />
-    );
-  }
-
-  // If we still don't have a profile ID but we're not in a loading state and auth is checked
-  if (!currentProfileId && !isLoading && authChecked) {
-    logger.info("No profile ID available but auth checked and not loading - showing auth required state");
-    return (
-      <AuthRequiredState
-        isAuthRetrying={false}
-        isRefreshingManually={false}
-        handleLogin={handleLogin}
         handleRetry={handleRetry}
       />
     );
