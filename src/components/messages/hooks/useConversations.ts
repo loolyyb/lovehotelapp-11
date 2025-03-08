@@ -230,7 +230,7 @@ export const useConversations = () => {
         if (profile) {
           logger.info("Profile found during initialization, fetching conversations", { profileId: profile.id });
           setCurrentProfileId(profile.id);
-          // Fix: Pass false to the fetchConversations call to avoid using the cache during initialization
+          // Fix: Always explicitly pass a useCache parameter
           await fetchConversations(false);
         } else {
           logger.warn("No profile found for authenticated user", { userId: session.user.id });
@@ -299,6 +299,7 @@ export const useConversations = () => {
     conversations, 
     isLoading: profileLoading || conversationsLoading,
     error: error || profileError || conversationsError,
+    // Fix: Make sure refetch is calling fetchConversations with the required parameter
     refetch: () => fetchConversations(false),
     currentProfileId,
     loadMoreConversations,
