@@ -100,8 +100,9 @@ export function ConversationList({
   }, [refreshConversations, retryAuth, hasAuthError, logger, toast]);
 
   const handleRefresh = useCallback(() => {
+    logger.info("Manual refresh requested");
     refreshConversations(false); // Force fresh fetch on manual refresh
-  }, [refreshConversations]);
+  }, [refreshConversations, logger]);
 
   // Authentication error state - show this when we've confirmed there's an auth issue
   if (authChecked && hasAuthError) {

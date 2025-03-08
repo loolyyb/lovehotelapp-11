@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { RefreshCw, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface EmptyConversationsStateProps {
   isRefreshingManually: boolean;
@@ -11,6 +12,12 @@ export function EmptyConversationsState({
   isRefreshingManually,
   handleRetry
 }: EmptyConversationsStateProps) {
+  const navigate = useNavigate();
+  
+  const handleExploreProfiles = () => {
+    navigate("/profiles");
+  };
+
   return (
     <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
       <div className="w-16 h-16 rounded-full bg-[#f3ebad]/10 flex items-center justify-center">
@@ -35,6 +42,13 @@ export function EmptyConversationsState({
           ) : (
             "Actualiser"
           )}
+        </Button>
+        <Button
+          onClick={handleExploreProfiles}
+          className="bg-[#f3ebad] text-[#40192C] hover:bg-[#f3ebad]/90"
+        >
+          <UserPlus className="w-4 h-4 mr-2" />
+          Explorer les profils
         </Button>
       </div>
     </div>

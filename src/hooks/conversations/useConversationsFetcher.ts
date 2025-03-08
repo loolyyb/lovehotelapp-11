@@ -128,8 +128,10 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           
           setConversations(fetchedConversations);
           setError(null);
+          setIsLoading(false);
         }
         
+        fetchInProgressRef.current = false;
         return fetchedConversations;
       } catch (fetchError: any) {
         logger.error("Error fetching conversations from utility", { 
@@ -139,8 +141,10 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         
         if (isMountedRef.current) {
           setError("Erreur lors du chargement des conversations");
+          setIsLoading(false);
         }
         
+        fetchInProgressRef.current = false;
         throw new Error("Erreur lors du chargement des conversations");
       }
     } catch (error: any) {
@@ -151,14 +155,11 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       
       if (isMountedRef.current) {
         setError(error.message || "Erreur lors du chargement des conversations");
-      }
-      
-      return [];
-    } finally {
-      if (isMountedRef.current) {
         setIsLoading(false);
       }
+      
       fetchInProgressRef.current = false;
+      return [];
     }
   }, [currentProfileId, getCachedConversations, cacheConversations, isCacheValid, logger, conversations.length]);
 
@@ -179,15 +180,22 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       // to support pagination
       
       setPage(nextPage);
+      setIsLoading(false);
     } catch (error: any) {
       logger.error("Error loading more conversations", { error: error.message });
+      setIsLoading(false);
     } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-      }
       fetchInProgressRef.current = false;
     }
   }, [currentProfileId, page, hasMore, isLoading, logger]);
+
+  // Initial fetch when component mounts or profile ID changes
+  useEffect(() => {
+    if (currentProfileId && !fetchAttemptedRef.current) {
+      logger.info("Initial fetch triggered by profile ID change or mount", { profileId: currentProfileId });
+      fetchConversations();
+    }
+  }, [currentProfileId, fetchConversations, logger]);
 
   return {
     conversations,
