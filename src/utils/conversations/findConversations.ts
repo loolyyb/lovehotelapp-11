@@ -38,7 +38,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
-    // Fetch conversations with parameterized query for better security and performance
+    // Fetch conversations using proper Supabase filtering syntax
     const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
       .select(`

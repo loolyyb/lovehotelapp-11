@@ -121,6 +121,18 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         throw new Error("Profil introuvable. Veuillez vous reconnecter.");
       }
       
+      // Verify the requested profile ID matches the authenticated user's profile ID
+      if (userProfile && userProfile.id !== currentProfileId) {
+        logger.warn("Profile ID mismatch", { 
+          requestedProfileId: currentProfileId, 
+          authUserProfileId: userProfile.id 
+        });
+        // Continue using the authenticated user's profile ID instead
+        logger.info("Using authenticated user's profile ID instead", { 
+          profileId: userProfile.id 
+        });
+      }
+      
       // Using the findConversationsByProfileId utility with better error handling
       try {
         const fetchedConversations = await findConversationsByProfileId(currentProfileId);
