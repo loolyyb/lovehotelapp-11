@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
@@ -22,6 +23,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   // Use a ref to track if a fetch is already in progress to prevent duplicate requests
   const fetchInProgressRef = useRef(false);
   const isMountedRef = useRef(true);
+  const lastProfileIdRef = useRef<string | null>(null);
   
   const PAGE_SIZE = 10;
 
@@ -34,34 +36,55 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   }, []);
   
   // Memoize the fetchConversations function to prevent recreating it on every render
-  const fetchConversations = useCallback(async () => {
-    // Prevent concurrent fetches
-    if (fetchInProgressRef.current) {
-      logger.info("Fetch already in progress, skipping");
+  const fetchConversations = useCallback(async (forceFresh = false) => {
+    // Skip if no profile ID is provided
+    if (!currentProfileId) {
+      logger.warn("No profile ID provided, cannot fetch conversations", { reason: "missing_profile_id" });
+      if (isMountedRef.current) {
+        setError("Vous devez être connecté pour voir vos conversations");
+        setIsLoading(false);
+      }
       return [];
     }
     
-    if (!currentProfileId) {
-      logger.warn("No profile ID provided, cannot fetch conversations", { reason: "missing_profile_id" });
-      setError("Vous devez être connecté pour voir vos conversations");
-      return [];
+    // Prevent concurrent fetches
+    if (fetchInProgressRef.current) {
+      logger.info("Fetch already in progress, skipping");
+      return conversations;
     }
+    
+    // Check if we already fetched for this profile ID to avoid unnecessary refetches
+    if (currentProfileId === lastProfileIdRef.current && !forceFresh && conversations.length > 0) {
+      logger.info("Using existing conversations for the same profile", {
+        profileId: currentProfileId,
+        count: conversations.length
+      });
+      return conversations;
+    }
+    
+    // Update the last profile ID we fetched for
+    lastProfileIdRef.current = currentProfileId;
 
-    // Try to get from cache first if cache is valid
-    if (isCacheValid(currentProfileId)) {
+    // Try to get from cache first if cache is valid and we're not forcing a fresh fetch
+    if (!forceFresh && isCacheValid(currentProfileId)) {
       const cachedData = getCachedConversations(currentProfileId);
       if (cachedData && cachedData.length > 0) {
         logger.info("Using cached conversations", { 
           count: cachedData.length,
           profileId: currentProfileId
         });
-        setConversations(cachedData);
+        if (isMountedRef.current) {
+          setConversations(cachedData);
+          setError(null);
+        }
         return cachedData;
       }
     }
 
-    setIsLoading(true);
-    setError(null);
+    if (isMountedRef.current) {
+      setIsLoading(true);
+      setError(null);
+    }
     fetchInProgressRef.current = true;
 
     try {
@@ -127,7 +150,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       }
       fetchInProgressRef.current = false;
     }
-  }, [currentProfileId, logger, getCachedConversations, cacheConversations, isCacheValid]);
+  }, [currentProfileId, getCachedConversations, cacheConversations, isCacheValid, logger, conversations.length]);
 
   // Load more conversations
   const loadMoreConversations = useCallback(async () => {

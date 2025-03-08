@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
@@ -46,6 +46,15 @@ export function ConversationList({
   } = useStableConversations();
 
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
+
+  // Log profile status - helpful for debugging
+  useEffect(() => {
+    logger.info("Profile status in ConversationList", { 
+      hasProfileId: !!currentProfileId,
+      conversationsCount: conversations.length,
+      isLoading
+    });
+  }, [currentProfileId, conversations.length, isLoading, logger]);
 
   // Memoized handlers to prevent recreating functions on each render
   const handleLogin = useCallback(() => {
@@ -101,8 +110,8 @@ export function ConversationList({
     );
   }
 
-  // Loading state
-  if (isLoading && conversations.length === 0) {
+  // Loading state - only show if we don't have profile or conversations
+  if ((isLoading || !currentProfileId) && conversations.length === 0) {
     return <LoadingState />;
   }
 

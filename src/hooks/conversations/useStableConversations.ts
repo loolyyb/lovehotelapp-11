@@ -19,6 +19,7 @@ export function useStableConversations() {
   const updatePendingRef = useRef(false);
   const lastDisplayUpdateRef = useRef(Date.now());
   const periodicRefreshRef = useRef<NodeJS.Timeout | null>(null);
+  const initialFetchAttemptedRef = useRef(false);
   
   // Use the centralized profile state
   const {
@@ -45,6 +46,16 @@ export function useStableConversations() {
     isCacheValid,
     clearCache
   } = useConversationCache();
+
+  // Log profile state - helpful for debugging
+  useEffect(() => {
+    logger.info("Profile state in useStableConversations", { 
+      profileId: currentProfileId,
+      profileInitialized,
+      profileLoading,
+      initialFetchAttempted: initialFetchAttemptedRef.current
+    });
+  }, [currentProfileId, profileInitialized, profileLoading, logger]);
 
   // Update loading state for better UX - only show loading state if we don't have any conversations to display
   useEffect(() => {
@@ -74,20 +85,30 @@ export function useStableConversations() {
 
   // Load conversations when profile is ready
   useEffect(() => {
-    // Only proceed if profile is initialized
-    if (!profileInitialized) {
+    // Skip if we've already attempted initial fetch and don't have a profile yet
+    if (initialFetchAttemptedRef.current && !currentProfileId) {
+      logger.info("Skipping fetch - no profile ID available and initial fetch already attempted");
+      return;
+    }
+    
+    // Only proceed if profile is initialized or we have a valid profile ID
+    if (!profileInitialized && !currentProfileId) {
       logger.info("Profile not initialized yet, waiting...");
       return;
     }
     
     if (!currentProfileId) {
       logger.warn("Profile initialized but no ID available");
+      initialFetchAttemptedRef.current = true;
       return;
     }
     
-    logger.info("Profile initialized, attempting to load conversations", { 
-      profileId: currentProfileId
+    logger.info("Profile ready, attempting to load conversations", { 
+      profileId: currentProfileId,
+      isInitialized: profileInitialized
     });
+    
+    initialFetchAttemptedRef.current = true;
     
     // Try to get cached conversations to display immediately
     const cachedConversations = getCachedConversations(currentProfileId);
@@ -148,8 +169,10 @@ export function useStableConversations() {
       
       // Set a new interval for refreshing conversations
       periodicRefreshRef.current = setInterval(() => {
-        logger.info("Performing periodic conversation refresh");
-        fetchConversations();
+        if (currentProfileId) {
+          logger.info("Performing periodic conversation refresh");
+          fetchConversations();
+        }
       }, 60000); // Refresh every minute
     }
     
@@ -194,7 +217,7 @@ export function useStableConversations() {
       }
       
       // Call fetchConversations to refresh data
-      await fetchConversations();
+      await fetchConversations(true); // Force fresh fetch
     } catch (err) {
       logger.error("Error refreshing conversations", { error: err });
     } finally {
