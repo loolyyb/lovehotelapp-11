@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
@@ -148,7 +147,6 @@ export const useConversations = () => {
       }
 
       // 2. Fetch conversations for the user with optional caching
-      // Pass useCache parameter to fetchConversations - this is the line causing the error
       const fetchedConversations = await fetchConversations(useCache);
       
       if (!isMountedRef.current) {
@@ -252,7 +250,7 @@ export const useConversations = () => {
         if (profile) {
           logger.info("Profile found during initialization, fetching conversations", { profileId: profile.id });
           setCurrentProfileId(profile.id);
-          // Update this line to pass the useCache parameter
+          // Make sure to pass the useCache parameter here
           await fetchConversations(false);
         } else {
           logger.warn("No profile found for authenticated user", { userId: session.user.id });
