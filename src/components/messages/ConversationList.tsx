@@ -1,10 +1,9 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { useConversations } from "./hooks/useConversations";
+import { useStableConversations } from "@/hooks/conversations/useStableConversations";
 import { LoadingState } from "./LoadingState";
 import { EmptyState } from "./EmptyState";
 import { AlertTriangle, RefreshCw, UserPlus, UserX } from "lucide-react";
@@ -38,10 +37,11 @@ export function ConversationList({
   const {
     conversations,
     isLoading,
+    isRefreshing,
     error,
-    refetch,
+    refreshConversations,
     currentProfileId
-  } = useConversations();
+  } = useStableConversations();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -268,7 +268,7 @@ export function ConversationList({
       
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      await refetch();
+      await refreshConversations(false); // Force fresh fetch
       
       toast({
         title: "Rafraîchissement réussi",
@@ -284,19 +284,19 @@ export function ConversationList({
     } finally {
       setIsRetrying(false);
     }
-  }, [refetch, logger, toast]);
+  }, [refreshConversations, logger, toast]);
 
   useEffect(() => {
     // Periodic refresh of conversations
     const interval = setInterval(() => {
       if (!hasAuthError && authChecked) {
         logger.info("Periodic conversation refresh");
-        refetch();
+        refreshConversations(true); // Use cache if available
       }
     }, 60000);
     
     return () => clearInterval(interval);
-  }, [refetch, logger, hasAuthError, authChecked]);
+  }, [refreshConversations, logger, hasAuthError, authChecked]);
 
   if (hasAuthError) {
     return (
@@ -331,11 +331,11 @@ export function ConversationList({
     );
   }
 
-  if (isLoading) {
+  if (isLoading && conversations.length === 0) {
     return <LoadingState />;
   }
 
-  if (error) {
+  if (error && conversations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
         <AlertTriangle className="w-12 h-12 text-rose" />
@@ -417,15 +417,20 @@ export function ConversationList({
       <div className="p-4 border-b border-rose/20">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-burgundy text-[#f3ebad]">Messages</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRetry}
-            disabled={isRetrying}
-            className="text-[#f3ebad]/70 hover:text-[#f3ebad] hover:bg-[#f3ebad]/5"
-          >
-            <RefreshCw className={`h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
-          </Button>
+          <div className="flex items-center">
+            {isRefreshing && (
+              <span className="text-xs text-[#f3ebad]/50 mr-2">Actualisation...</span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => refreshConversations(false)}
+              disabled={isRetrying || isRefreshing}
+              className="text-[#f3ebad]/70 hover:text-[#f3ebad] hover:bg-[#f3ebad]/5"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -435,7 +440,6 @@ export function ConversationList({
           const lastMessage = conversation.messages?.[0];
           const isActive = selectedConversationId === conversation.id;
           
-          // Count unread messages
           const unreadCount = conversation.messages?.filter((msg: any) => 
             !msg.read_at && msg.sender_id !== currentProfileId
           )?.length || 0;

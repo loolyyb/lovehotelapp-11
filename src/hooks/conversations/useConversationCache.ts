@@ -1,13 +1,15 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { logger } from "@/services/LogService";
 
-// Global conversation cache
+// Global conversation cache with optimized storage
 const conversationsCache = new Map<string, any[]>();
 const profilesCache = new Map<string, any>();
+const lastUpdateTimes = new Map<string, number>();
 
 export const useConversationCache = () => {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const cacheOperationsInProgress = useRef(new Set<string>());
   
   // Cache timeout in milliseconds (5 minutes)
   const CACHE_TTL = 5 * 60 * 1000;
@@ -17,36 +19,68 @@ export const useConversationCache = () => {
     if (!conversationsCache.has(profileId)) return false;
     
     const now = new Date().getTime();
-    const lastUpdateTime = lastUpdate.getTime();
+    const lastUpdateTime = lastUpdateTimes.get(profileId) || 0;
     
     return (now - lastUpdateTime) < CACHE_TTL;
-  }, [lastUpdate]);
+  }, []);
   
-  // Get conversations from cache
+  // Get conversations from cache with proper validation
   const getCachedConversations = useCallback((profileId: string) => {
-    if (!profileId || !isCacheValid(profileId)) return null;
+    if (!profileId || !conversationsCache.has(profileId)) return null;
+    
+    const cachedData = conversationsCache.get(profileId);
+    if (!cachedData || cachedData.length === 0) return null;
+    
+    // Check if cache is still valid
+    if (!isCacheValid(profileId)) {
+      logger.info("Cache expired for profile", {
+        profileId,
+        component: "useConversationCache"
+      });
+      return null;
+    }
     
     logger.info("Using cached conversations", {
       profileId,
-      count: conversationsCache.get(profileId)?.length || 0,
+      count: cachedData.length,
       component: "useConversationCache"
     });
     
-    return conversationsCache.get(profileId);
+    return cachedData;
   }, [isCacheValid]);
   
-  // Cache conversations for a profile
+  // Cache conversations for a profile with operation deduplication
   const cacheConversations = useCallback((profileId: string, conversations: any[]) => {
-    if (!profileId) return;
+    if (!profileId || conversations.length === 0) return;
     
-    logger.info("Caching conversations", {
-      profileId,
-      count: conversations.length,
-      component: "useConversationCache"
-    });
+    // Skip if an operation is already in progress for this profile
+    const cacheKey = `cache_${profileId}`;
+    if (cacheOperationsInProgress.current.has(cacheKey)) {
+      logger.info("Cache operation already in progress, skipping", {
+        profileId,
+        component: "useConversationCache"
+      });
+      return;
+    }
     
-    conversationsCache.set(profileId, conversations);
-    setLastUpdate(new Date());
+    cacheOperationsInProgress.current.add(cacheKey);
+    
+    try {
+      logger.info("Caching conversations", {
+        profileId,
+        count: conversations.length,
+        component: "useConversationCache"
+      });
+      
+      conversationsCache.set(profileId, [...conversations]);
+      lastUpdateTimes.set(profileId, Date.now());
+      setLastUpdate(new Date());
+    } finally {
+      // Remove from in-progress set after a short delay
+      setTimeout(() => {
+        cacheOperationsInProgress.current.delete(cacheKey);
+      }, 300);
+    }
   }, []);
   
   // Update a specific conversation in cache
@@ -54,12 +88,27 @@ export const useConversationCache = () => {
     if (!profileId || !conversationsCache.has(profileId)) return;
     
     const conversations = conversationsCache.get(profileId) || [];
-    const updatedConversations = conversations.map(conv => 
-      conv.id === conversationId ? { ...conv, ...updatedData } : conv
-    );
+    
+    // Find the conversation index
+    const index = conversations.findIndex(conv => conv.id === conversationId);
+    if (index === -1) return;
+    
+    // Create a new array with the updated conversation
+    const updatedConversations = [
+      ...conversations.slice(0, index),
+      { ...conversations[index], ...updatedData },
+      ...conversations.slice(index + 1)
+    ];
     
     conversationsCache.set(profileId, updatedConversations);
+    lastUpdateTimes.set(profileId, Date.now());
     setLastUpdate(new Date());
+    
+    logger.info("Updated conversation in cache", {
+      profileId,
+      conversationId,
+      component: "useConversationCache"
+    });
   }, []);
   
   // Cache a user profile
@@ -79,7 +128,21 @@ export const useConversationCache = () => {
   const clearCache = useCallback(() => {
     conversationsCache.clear();
     profilesCache.clear();
+    lastUpdateTimes.clear();
     logger.info("Conversation and profile caches cleared", {
+      component: "useConversationCache"
+    });
+  }, []);
+  
+  // Refresh the cache TTL without changing the data
+  const refreshCacheTTL = useCallback((profileId: string) => {
+    if (!profileId || !conversationsCache.has(profileId)) return;
+    
+    lastUpdateTimes.set(profileId, Date.now());
+    setLastUpdate(new Date());
+    
+    logger.info("Refreshed cache TTL", {
+      profileId,
       component: "useConversationCache"
     });
   }, []);
@@ -91,6 +154,7 @@ export const useConversationCache = () => {
     isCacheValid,
     clearCache,
     cacheProfile,
-    getCachedProfile
+    getCachedProfile,
+    refreshCacheTTL
   };
 };
