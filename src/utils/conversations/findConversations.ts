@@ -43,7 +43,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
       component: "findConversationsByProfileId"
     });
     
-    // CRITICAL FIX: Use array-based filter instead of string concatenation
+    // CRITICAL FIX: Use proper string filter format instead of array-based filter
     const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
@@ -55,10 +55,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
         created_at,
         updated_at
       `)
-      .or([
-        { user1_id: profileId },
-        { user2_id: profileId }
-      ])
+      .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
       .eq('status', 'active');
       
     if (conversationsError) {
