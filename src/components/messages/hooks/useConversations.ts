@@ -111,7 +111,7 @@ export const useConversations = () => {
   }, [currentProfileId, logger, cacheProfile, getCachedProfile]);
 
   // Main fetch function with optimizations to prevent unnecessary renders
-  const fetchConversationsWithMessages = useCallback(async (useCache = true) => {
+  const fetchConversationsWithMessages = useCallback(async (useCache: boolean = true) => {
     // Use ref to prevent multiple simultaneous fetches
     if (fetchingRef.current || !isMountedRef.current) {
       logger.info("Fetch already in progress or component unmounted, skipping", { useCache });
