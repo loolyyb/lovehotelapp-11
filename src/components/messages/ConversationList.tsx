@@ -7,7 +7,7 @@ import { useStableConversations } from "@/hooks/conversations/useStableConversat
 import { useConversationAuth } from "@/hooks/conversations/useConversationAuth";
 import { LoadingState } from "./LoadingState";
 
-// Import our new components
+// Import our components
 import { AuthRequiredState } from "./conversation-list/AuthRequiredState";
 import { ErrorState } from "./conversation-list/ErrorState";
 import { EmptyConversationsState } from "./conversation-list/EmptyConversationsState";

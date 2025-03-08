@@ -48,7 +48,7 @@ export function useStableConversations() {
 
   // Update loading state for better UX - only show loading state if we don't have any conversations to display
   useEffect(() => {
-    if (conversationsLoading && profileLoading && !initialLoadCompleteRef.current) {
+    if ((conversationsLoading || profileLoading) && !initialLoadCompleteRef.current) {
       setIsVisiblyLoading(true);
     } else if (!conversationsLoading && !profileLoading) {
       setIsVisiblyLoading(false);
@@ -72,30 +72,34 @@ export function useStableConversations() {
     }
   }, [profileError, conversationsError, error]);
 
-  // Load conversations when profile is ready - This effect was causing infinite loops
+  // Load conversations when profile is ready
   useEffect(() => {
-    // Only proceed if we have the necessary conditions and haven't loaded yet
-    if (!profileInitialized || initialLoadCompleteRef.current) {
+    // Only proceed if profile is initialized
+    if (!profileInitialized) {
+      logger.info("Profile not initialized yet, waiting...");
       return;
     }
     
-    logger.info("Profile state check:", { 
-      profileId: currentProfileId, 
-      initialized: profileInitialized
+    if (!currentProfileId) {
+      logger.warn("Profile initialized but no ID available");
+      return;
+    }
+    
+    logger.info("Profile initialized, attempting to load conversations", { 
+      profileId: currentProfileId
     });
     
     // Try to get cached conversations to display immediately
-    if (currentProfileId) {
-      const cachedConversations = getCachedConversations(currentProfileId);
-      if (cachedConversations && cachedConversations.length > 0) {
-        logger.info("Displaying cached conversations", { count: cachedConversations.length });
-        setDisplayedConversations(cachedConversations);
-        initialLoadCompleteRef.current = true;
-      }
-      
-      // Fetch fresh conversations
-      fetchConversations();
+    const cachedConversations = getCachedConversations(currentProfileId);
+    if (cachedConversations && cachedConversations.length > 0) {
+      logger.info("Displaying cached conversations", { count: cachedConversations.length });
+      setDisplayedConversations(cachedConversations);
+      initialLoadCompleteRef.current = true;
     }
+    
+    // Fetch fresh conversations
+    fetchConversations();
+    
   }, [currentProfileId, profileInitialized, fetchConversations, getCachedConversations, logger]);
 
   // Update displayed conversations when pending conversations are ready
