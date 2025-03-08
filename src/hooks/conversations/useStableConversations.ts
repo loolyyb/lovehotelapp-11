@@ -71,9 +71,9 @@ export function useStableConversations() {
     }
   }, [profileError, conversationsError, error]);
 
-  // Load conversations when profile is ready
+  // Load conversations when profile is ready - with proper dependency array
   useEffect(() => {
-    if (currentProfileId && profileInitialized) {
+    if (currentProfileId && profileInitialized && !initialLoadCompleteRef.current) {
       logger.info("Profile initialized, fetching conversations", { profileId: currentProfileId });
       
       // Try to get cached conversations to display immediately
@@ -122,7 +122,7 @@ export function useStableConversations() {
     }
   }, [pendingConversations, currentProfileId, cacheConversations, logger]);
 
-  // Set up periodic refresh
+  // Set up periodic refresh with cleanup
   useEffect(() => {
     // Clear any existing interval first
     if (periodicRefreshRef.current) {
@@ -181,7 +181,7 @@ export function useStableConversations() {
         clearCache();
       }
       
-      // Call fetchConversations with no arguments, since the function doesn't take any
+      // Call fetchConversations with no arguments
       await fetchConversations();
     } catch (err) {
       logger.error("Error refreshing conversations", { error: err });

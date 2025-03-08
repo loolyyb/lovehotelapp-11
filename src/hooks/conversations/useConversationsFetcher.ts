@@ -99,7 +99,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
               id: newProfileId,
               user_id: user.id,
               full_name: user.email?.split('@')[0] || 'Utilisateur',
-              username: user.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 1000),
+              username: user.email?.split('@')[0] || `user_${Math.floor(Math.random() * 1000)}`,
               role: 'user'
             }]);
             
@@ -153,7 +153,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     } finally {
       setIsLoading(false);
     }
-  }, [currentProfileId, logger, toast, getCachedConversations, cacheConversations, isCacheValid]);
+  }, [currentProfileId, logger, getCachedConversations, cacheConversations, isCacheValid]);
 
   // Load more conversations
   const loadMoreConversations = useCallback(async () => {
