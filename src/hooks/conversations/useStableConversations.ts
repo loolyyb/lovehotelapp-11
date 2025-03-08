@@ -12,7 +12,7 @@ import { useProfileState } from "@/hooks/useProfileState";
 export function useStableConversations() {
   const logger = useLogger("useStableConversations");
   const [displayedConversations, setDisplayedConversations] = useState<any[]>([]);
-  const [isVisiblyLoading, setIsVisiblyLoading] = useState(false);
+  const [isVisiblyLoading, setIsVisiblyLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initialLoadCompleteRef = useRef(false);
@@ -53,18 +53,23 @@ export function useStableConversations() {
       profileId: currentProfileId,
       profileInitialized,
       profileLoading,
-      initialFetchAttempted: initialFetchAttemptedRef.current
+      initialFetchAttempted: initialFetchAttemptedRef.current,
+      conversationsLength: pendingConversations.length
     });
-  }, [currentProfileId, profileInitialized, profileLoading, logger]);
+  }, [currentProfileId, profileInitialized, profileLoading, logger, pendingConversations.length]);
 
-  // Update loading state for better UX - only show loading state if we don't have any conversations to display
+  // Update loading state for better UX
   useEffect(() => {
-    if ((conversationsLoading || profileLoading) && !initialLoadCompleteRef.current) {
-      setIsVisiblyLoading(true);
-    } else if (!conversationsLoading && !profileLoading) {
-      setIsVisiblyLoading(false);
-    }
-  }, [conversationsLoading, profileLoading]);
+    // Start with loading state and clear it when:
+    // 1. We have conversations to display
+    // 2. We've completed profile loading AND attempted to fetch conversations
+    const shouldBeLoading = 
+      (conversationsLoading || profileLoading) && 
+      !initialLoadCompleteRef.current && 
+      displayedConversations.length === 0;
+    
+    setIsVisiblyLoading(shouldBeLoading);
+  }, [conversationsLoading, profileLoading, displayedConversations.length]);
 
   // Set refreshing state for background updates
   useEffect(() => {
@@ -85,21 +90,24 @@ export function useStableConversations() {
 
   // Load conversations when profile is ready
   useEffect(() => {
-    // Skip if we've already attempted initial fetch and don't have a profile yet
-    if (initialFetchAttemptedRef.current && !currentProfileId) {
-      logger.info("Skipping fetch - no profile ID available and initial fetch already attempted");
+    // If we don't have a profile yet but profile loading is complete, mark fetch as attempted
+    if (!currentProfileId && !profileLoading && profileInitialized) {
+      if (!initialFetchAttemptedRef.current) {
+        logger.info("Profile loading complete but no ID available, marking fetch as attempted");
+        initialFetchAttemptedRef.current = true;
+      }
       return;
     }
     
-    // Only proceed if profile is initialized or we have a valid profile ID
-    if (!profileInitialized && !currentProfileId) {
-      logger.info("Profile not initialized yet, waiting...");
-      return;
-    }
-    
+    // Only proceed if we have a valid profile ID
     if (!currentProfileId) {
-      logger.warn("Profile initialized but no ID available");
-      initialFetchAttemptedRef.current = true;
+      logger.info("Waiting for profile ID before loading conversations");
+      return;
+    }
+    
+    // Skip if we've already attempted initial fetch with this profile ID
+    if (initialFetchAttemptedRef.current && !initialLoadCompleteRef.current) {
+      logger.info("Initial fetch already attempted, waiting for completion");
       return;
     }
     
@@ -121,10 +129,17 @@ export function useStableConversations() {
     // Fetch fresh conversations
     fetchConversations();
     
-  }, [currentProfileId, profileInitialized, fetchConversations, getCachedConversations, logger]);
+  }, [currentProfileId, profileInitialized, profileLoading, fetchConversations, getCachedConversations, logger]);
 
   // Update displayed conversations when pending conversations are ready
   useEffect(() => {
+    if (pendingConversations.length === 0 && !initialLoadCompleteRef.current && currentProfileId) {
+      // Mark initial load as complete even if there are no conversations
+      // This helps with showing the empty state instead of perpetual loading
+      initialLoadCompleteRef.current = true;
+      return;
+    }
+    
     if (pendingConversations.length === 0 || updatePendingRef.current) return;
     
     // Don't update too frequently

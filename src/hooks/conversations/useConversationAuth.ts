@@ -10,12 +10,16 @@ export function useConversationAuth() {
   const [isRetrying, setIsRetrying] = useState(false);
   const logger = useLogger("useConversationAuth");
   const { toast } = useToast();
-  const { profileId, isInitialized, refreshProfile } = useProfileState();
+  const { profileId, isInitialized, refreshProfile, isLoading: profileLoading } = useProfileState();
 
   // Check authentication status
   const checkAuth = useCallback(async () => {
     try {
-      logger.info("Checking authentication status");
+      logger.info("Checking authentication status", {
+        profileLoading,
+        profileInitialized: isInitialized,
+        hasProfileId: !!profileId
+      });
       
       // Check if we already have profile from centralized state
       if (isInitialized && profileId) {
@@ -24,7 +28,22 @@ export function useConversationAuth() {
         setAuthChecked(true);
         return true;
       }
+
+      // If profile is still loading, wait for it
+      if (profileLoading) {
+        logger.info("Profile is still loading, waiting");
+        return false;
+      }
       
+      // If profile is initialized but we don't have an ID, there's an auth issue
+      if (isInitialized && !profileId) {
+        logger.warn("Profile initialized but no ID found");
+        setHasAuthError(true);
+        setAuthChecked(true);
+        return false;
+      }
+      
+      // As a fallback, check session directly
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
@@ -35,6 +54,7 @@ export function useConversationAuth() {
           title: "Erreur d'authentification",
           description: "Votre session a expiré. Veuillez vous reconnecter."
         });
+        setAuthChecked(true);
         return false;
       }
       
@@ -46,20 +66,25 @@ export function useConversationAuth() {
           title: "Non connecté",
           description: "Veuillez vous connecter pour accéder à vos messages."
         });
+        setAuthChecked(true);
         return false;
       }
       
+      logger.info("Session found, but profile not loaded yet");
+      // We have a session but no profile, try refreshing profile
+      await refreshProfile();
+      
       // Rest of the authentication logic is handled by useProfileState
-      setHasAuthError(false);
-      return true;
+      setHasAuthError(!profileId);
+      setAuthChecked(true);
+      return !!profileId;
     } catch (e) {
       logger.error("Error checking auth status", { error: e });
       setHasAuthError(true);
-      return false;
-    } finally {
       setAuthChecked(true);
+      return false;
     }
-  }, [logger, toast, profileId, isInitialized]);
+  }, [logger, toast, profileId, isInitialized, refreshProfile, profileLoading]);
 
   // Retry authentication and profile loading
   const retryAuth = useCallback(async () => {
@@ -115,6 +140,18 @@ export function useConversationAuth() {
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Re-check auth when profile state changes
+  useEffect(() => {
+    if (isInitialized) {
+      logger.info("Profile state changed, rechecking auth", { 
+        hasProfileId: !!profileId, 
+        isInitialized 
+      });
+      setHasAuthError(!profileId);
+      setAuthChecked(true);
+    }
+  }, [profileId, isInitialized, logger]);
 
   return {
     authChecked,

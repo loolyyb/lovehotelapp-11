@@ -49,12 +49,11 @@ export function ConversationList({
 
   // Log profile status - helpful for debugging
   useEffect(() => {
-    logger.info("Profile status in ConversationList", { 
-      hasProfileId: !!currentProfileId,
+    logger.info("Rendering conversation list", { 
       conversationsCount: conversations.length,
-      isLoading
+      currentUserProfileId: currentProfileId
     });
-  }, [currentProfileId, conversations.length, isLoading, logger]);
+  }, [conversations.length, currentProfileId, logger]);
 
   // Memoized handlers to prevent recreating functions on each render
   const handleLogin = useCallback(() => {
@@ -110,8 +109,8 @@ export function ConversationList({
     );
   }
 
-  // Loading state - only show if we don't have profile or conversations
-  if ((isLoading || !currentProfileId) && conversations.length === 0) {
+  // Loading state - only show when profile initialization is in progress
+  if (isLoading && !currentProfileId) {
     return <LoadingState />;
   }
 
@@ -126,13 +125,8 @@ export function ConversationList({
     );
   }
 
-  logger.info("Rendering conversation list", { 
-    conversationsCount: conversations.length,
-    currentUserProfileId: currentProfileId
-  });
-
-  // Empty conversations state
-  if (!conversations || conversations.length === 0) {
+  // Empty conversations state - only show when profile is loaded
+  if (currentProfileId && (!conversations || conversations.length === 0)) {
     return (
       <EmptyConversationsState
         isRefreshingManually={isRefreshingManually}
@@ -141,19 +135,33 @@ export function ConversationList({
     );
   }
 
-  // Render the conversation list
+  // If we still don't have a profile ID but we're not in a loading state
+  if (!currentProfileId && !isLoading) {
+    return (
+      <AuthRequiredState
+        isAuthRetrying={false}
+        isRefreshingManually={false}
+        handleLogin={handleLogin}
+        handleRetry={handleRetry}
+      />
+    );
+  }
+
+  // Render the conversation list only when we have profile ID
   return (
     <div className="h-full flex flex-col">
       <ConversationListHeader
         isRefreshing={isRefreshing}
         handleRefresh={handleRefresh}
       />
-      <ConversationItems
-        conversations={conversations}
-        selectedConversationId={selectedConversationId}
-        currentProfileId={currentProfileId}
-        onSelectConversation={onSelectConversation}
-      />
+      {conversations.length > 0 && (
+        <ConversationItems
+          conversations={conversations}
+          selectedConversationId={selectedConversationId}
+          currentProfileId={currentProfileId}
+          onSelectConversation={onSelectConversation}
+        />
+      )}
     </div>
   );
 }

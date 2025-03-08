@@ -24,6 +24,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   const fetchInProgressRef = useRef(false);
   const isMountedRef = useRef(true);
   const lastProfileIdRef = useRef<string | null>(null);
+  const fetchAttemptedRef = useRef(false);
   
   const PAGE_SIZE = 10;
 
@@ -39,13 +40,22 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   const fetchConversations = useCallback(async (forceFresh = false) => {
     // Skip if no profile ID is provided
     if (!currentProfileId) {
+      if (fetchAttemptedRef.current) {
+        return conversations;
+      }
+      
+      fetchAttemptedRef.current = true;
       logger.warn("No profile ID provided, cannot fetch conversations", { reason: "missing_profile_id" });
+      
       if (isMountedRef.current) {
         setError("Vous devez être connecté pour voir vos conversations");
         setIsLoading(false);
       }
       return [];
     }
+
+    // Reset fetch attempted flag when we have a profile ID
+    fetchAttemptedRef.current = false;
     
     // Prevent concurrent fetches
     if (fetchInProgressRef.current) {
