@@ -136,8 +136,8 @@ export const useConversations = () => {
         }
       }
 
-      // Explicitly pass the useCache parameter to fetchConversations
-      const fetchedConversations = await fetchConversations(useCache);
+      // Fix: Call fetchConversations without arguments to match its definition
+      const fetchedConversations = await fetchConversations();
       
       if (!isMountedRef.current) {
         fetchingRef.current = false;
@@ -230,7 +230,8 @@ export const useConversations = () => {
         if (profile) {
           logger.info("Profile found during initialization, fetching conversations", { profileId: profile.id });
           setCurrentProfileId(profile.id);
-          await fetchConversations(true); // Explicitly pass the useCache parameter
+          // Fix: Call fetchConversations without arguments
+          await fetchConversations();
         } else {
           logger.warn("No profile found for authenticated user", { userId: session.user.id });
         }
@@ -297,7 +298,8 @@ export const useConversations = () => {
     conversations, 
     isLoading: profileLoading || conversationsLoading,
     error: error || profileError || conversationsError,
-    refetch: () => fetchConversations(false), // Explicitly pass the useCache parameter
+    // Fix: We need to make refetch take no arguments
+    refetch: () => fetchConversations(),
     currentProfileId,
     loadMoreConversations,
     hasMoreConversations: hasMore
