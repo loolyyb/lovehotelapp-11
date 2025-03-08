@@ -51,9 +51,12 @@ export function ConversationList({
   useEffect(() => {
     logger.info("Rendering conversation list", { 
       conversationsCount: conversations.length,
-      currentUserProfileId: currentProfileId
+      currentUserProfileId: currentProfileId,
+      authChecked,
+      hasAuthError,
+      isLoading
     });
-  }, [conversations.length, currentProfileId, logger]);
+  }, [conversations.length, currentProfileId, authChecked, hasAuthError, isLoading, logger]);
 
   // Memoized handlers to prevent recreating functions on each render
   const handleLogin = useCallback(() => {
@@ -68,11 +71,14 @@ export function ConversationList({
     try {
       // First try to fix auth if needed
       if (hasAuthError) {
+        logger.info("Auth error detected, attempting to recover");
         const authSuccess = await retryAuth();
         if (!authSuccess) {
+          logger.warn("Auth retry failed");
           setIsRefreshingManually(false);
           return;
         }
+        logger.info("Auth retry successful");
       }
       
       // Then refresh conversations
@@ -97,8 +103,9 @@ export function ConversationList({
     refreshConversations(false); // Force fresh fetch on manual refresh
   }, [refreshConversations]);
 
-  // Authentication error state
-  if (hasAuthError) {
+  // Authentication error state - show this when we've confirmed there's an auth issue
+  if (authChecked && hasAuthError) {
+    logger.info("Showing auth required state due to auth error");
     return (
       <AuthRequiredState
         isAuthRetrying={isAuthRetrying}
@@ -109,13 +116,15 @@ export function ConversationList({
     );
   }
 
-  // Loading state - only show when profile initialization is in progress
-  if (isLoading && !currentProfileId) {
+  // Loading state - show when we're still checking auth or loading profile
+  if (!authChecked || (isLoading && !currentProfileId)) {
+    logger.info("Showing loading state", { authChecked, isLoading, hasProfile: !!currentProfileId });
     return <LoadingState />;
   }
 
-  // Error state
+  // Error state - show when we have an error but auth is okay
   if (error && conversations.length === 0) {
+    logger.info("Showing error state", { error });
     return (
       <ErrorState
         error={error}
@@ -125,8 +134,9 @@ export function ConversationList({
     );
   }
 
-  // Empty conversations state - only show when profile is loaded
+  // Empty conversations state - show when profile is loaded but no conversations exist
   if (currentProfileId && (!conversations || conversations.length === 0)) {
+    logger.info("Showing empty conversations state");
     return (
       <EmptyConversationsState
         isRefreshingManually={isRefreshingManually}
@@ -135,8 +145,9 @@ export function ConversationList({
     );
   }
 
-  // If we still don't have a profile ID but we're not in a loading state
-  if (!currentProfileId && !isLoading) {
+  // If we still don't have a profile ID but we're not in a loading state and auth is checked
+  if (!currentProfileId && !isLoading && authChecked) {
+    logger.info("No profile ID available but auth checked and not loading - showing auth required state");
     return (
       <AuthRequiredState
         isAuthRetrying={false}
@@ -147,7 +158,7 @@ export function ConversationList({
     );
   }
 
-  // Render the conversation list only when we have profile ID
+  // Render the conversation list only when we have profile ID and conversations
   return (
     <div className="h-full flex flex-col">
       <ConversationListHeader

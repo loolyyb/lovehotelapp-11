@@ -78,9 +78,13 @@ export function useProfileState() {
 
   // Fetch fresh profile from Supabase
   const fetchProfile = useCallback(async (forceRefresh = false) => {
-    // Don't fetch if we're already loading
-    if (isLoading && !forceRefresh) return null;
+    // Don't fetch if we're already loading and not forcing refresh
+    if (isLoading && !forceRefresh) {
+      logger.info("Already loading profile, skipping fetch");
+      return null;
+    }
     
+    logger.info("Starting profile fetch", { forceRefresh });
     setIsLoading(true);
     setError(null);
     
@@ -93,6 +97,7 @@ export function useProfileState() {
           setProfileId(cachedProfile.id);
           setIsLoading(false);
           setIsInitialized(true);
+          logger.info("Using cached profile", { profileId: cachedProfile.id });
           return cachedProfile;
         }
       }
@@ -103,15 +108,20 @@ export function useProfileState() {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError) {
+        logger.error("Auth error retrieving user", { error: authError });
         throw authError;
       }
       
       if (!user) {
         logger.warn("No authenticated user found");
+        setProfileId(null);
+        setProfile(null);
         setIsLoading(false);
         setIsInitialized(true);
         return null;
       }
+      
+      logger.info("Auth user found, retrieving profile", { userId: user.id });
       
       // Get user's profile
       const { data: profileData, error: profileError } = await supabase
@@ -123,7 +133,7 @@ export function useProfileState() {
       if (profileError) {
         // If not found, try to create a profile
         if (profileError.code === 'PGRST116') {
-          logger.warn("Profile not found, creating one");
+          logger.warn("Profile not found, creating one", { userId: user.id });
           
           const newProfileId = crypto.randomUUID();
           const { data: newProfile, error: createError } = await supabase
@@ -139,6 +149,7 @@ export function useProfileState() {
             .single();
             
           if (createError) {
+            logger.error("Error creating profile", { error: createError });
             throw createError;
           }
           
@@ -151,6 +162,7 @@ export function useProfileState() {
           return newProfile;
         }
         
+        logger.error("Error retrieving profile", { error: profileError });
         throw profileError;
       }
       
@@ -179,19 +191,25 @@ export function useProfileState() {
 
   // Initial profile loading - run only once on mount
   useEffect(() => {
+    logger.info("Initial profile loading effect running");
     // First call to fetchProfile
     fetchProfile();
     
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      logger.info("Auth state changed", { event });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      logger.info("Auth state changed", { event, hasUser: !!session?.user });
       
       if (event === 'SIGNED_OUT') {
         setProfile(null);
         setProfileId(null);
         clearProfileCache();
-      } else if (event === 'SIGNED_IN') {
-        // Force refresh on sign in
+        setIsInitialized(true);
+        setIsLoading(false);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Force refresh on sign in or token refresh
+        fetchProfile(true);
+      } else if (event === 'USER_UPDATED') {
+        // Refresh profile when user is updated
         fetchProfile(true);
       }
     });
@@ -200,6 +218,19 @@ export function useProfileState() {
       subscription.unsubscribe();
     };
   }, [fetchProfile, clearProfileCache, logger]);
+
+  // Force initialization after a timeout to prevent hanging in loading state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isInitialized) {
+        logger.warn("Profile initialization timeout - forcing initialization");
+        setIsInitialized(true);
+        setIsLoading(false);
+      }
+    }, 5000); // 5 second timeout
+    
+    return () => clearTimeout(timer);
+  }, [isInitialized, logger]);
 
   return {
     profile,

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
@@ -61,11 +62,6 @@ export function useConversationAuth() {
       if (!session) {
         logger.warn("No active session found");
         setHasAuthError(true);
-        toast({
-          variant: "destructive",
-          title: "Non connecté",
-          description: "Veuillez vous connecter pour accéder à vos messages."
-        });
         setAuthChecked(true);
         return false;
       }
@@ -74,10 +70,18 @@ export function useConversationAuth() {
       // We have a session but no profile, try refreshing profile
       await refreshProfile();
       
-      // Rest of the authentication logic is handled by useProfileState
-      setHasAuthError(!profileId);
-      setAuthChecked(true);
-      return !!profileId;
+      // Check if profile loaded successfully
+      if (profileId) {
+        logger.info("Profile loaded successfully after refresh", { profileId });
+        setHasAuthError(false);
+        setAuthChecked(true);
+        return true;
+      } else {
+        logger.warn("Profile still not available after refresh");
+        setHasAuthError(true);
+        setAuthChecked(true);
+        return false;
+      }
     } catch (e) {
       logger.error("Error checking auth status", { error: e });
       setHasAuthError(true);
@@ -108,6 +112,17 @@ export function useConversationAuth() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           // We have a user but no profile, which is unusual
+          // Force a refresh of the profile one more time
+          await refreshProfile();
+          if (profileId) {
+            setHasAuthError(false);
+            toast({
+              title: "Connexion réussie",
+              description: "Votre session a été restaurée."
+            });
+            return true;
+          }
+          
           toast({
             variant: "destructive",
             title: "Erreur de profil",
