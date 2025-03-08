@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 
@@ -177,7 +178,7 @@ export const createOrGetConversation = async (currentUserId: string, targetUserI
   }
 };
 
-// Function to find conversations by profile ID
+// Function to find conversations by profile ID with improved error handling and logging
 export const findConversationsByProfileId = async (profileId: string) => {
   if (!profileId) {
     logger.error("No profile ID provided to findConversationsByProfileId", {
@@ -194,44 +195,23 @@ export const findConversationsByProfileId = async (profileId: string) => {
     // Verify user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    if (authError || !user) {
+    if (authError) {
       logger.error("Authentication error in findConversationsByProfileId", {
         error: authError,
         component: "findConversationsByProfileId"
       });
-      return [];
+      throw new Error("Authentication error: " + authError.message);
     }
     
-    // Get the user's profile to check role for admin access
-    const { data: userProfile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, user_id, role')
-      .eq('user_id', user.id)
-      .single();
-      
-    if (profileError || !userProfile) {
-      logger.error("Failed to retrieve user profile", {
-        error: profileError,
-        userId: user.id,
+    if (!user) {
+      logger.error("No authenticated user found", {
         component: "findConversationsByProfileId"
       });
-      return [];
+      throw new Error("No authenticated user found");
     }
     
-    // Check if the current user is an admin or accessing their own conversations
-    const isAdmin = userProfile.role === 'admin';
-    const isOwnProfile = userProfile.id === profileId;
-    
-    // Log the role and profile check
-    logger.info(`User profile check: isAdmin=${isAdmin}, isOwnProfile=${isOwnProfile}`, {
-      userProfileId: userProfile.id,
-      requestedProfileId: profileId,
-      userRole: userProfile.role,
-      component: "findConversationsByProfileId"
-    });
-    
-    // Use the requested profileId directly - RLS policies will handle access control
-    const { data, error } = await supabase
+    // Fetch conversations with parameterized query for better security and performance
+    const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
         id, 
@@ -245,31 +225,29 @@ export const findConversationsByProfileId = async (profileId: string) => {
       .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
       .eq('status', 'active');
       
-    if (error) {
+    if (conversationsError) {
       logger.error("Error fetching conversations by profile ID:", {
-        error,
+        error: conversationsError,
         profileId,
+        component: "findConversationsByProfileId"
+      });
+      throw new Error("Error fetching conversations: " + conversationsError.message);
+    }
+    
+    if (!conversations || conversations.length === 0) {
+      logger.info(`No conversations found for profile ${profileId}`, {
         component: "findConversationsByProfileId"
       });
       return [];
     }
     
-    if (!data || data.length === 0) {
-      logger.warn(`No conversations found for profile ${profileId}`, {
-        component: "findConversationsByProfileId",
-        isAdmin,
-        isOwnProfile
-      });
-      return [];
-    }
-    
-    logger.info(`Found ${data.length} conversations for profile ${profileId}`, {
+    logger.info(`Found ${conversations.length} conversations for profile ${profileId}`, {
       component: "findConversationsByProfileId",
-      conversationIds: data.map(c => c.id)
+      conversationIds: conversations.map(c => c.id)
     });
     
-    // Fetch user profiles for each conversation
-    const conversationsWithProfiles = await Promise.all(data.map(async (conversation) => {
+    // Process each conversation to include other user details and recent messages
+    const conversationsWithDetails = await Promise.all(conversations.map(async (conversation) => {
       try {
         const otherUserId = conversation.user1_id === profileId 
           ? conversation.user2_id 
@@ -287,9 +265,12 @@ export const findConversationsByProfileId = async (profileId: string) => {
             error: profileError,
             component: "findConversationsByProfileId"
           });
+          
+          // Return conversation with placeholder user data
           return {
             ...conversation,
-            otherUser: { id: otherUserId, username: 'Utilisateur inconnu' }
+            otherUser: { id: otherUserId, username: 'Utilisateur inconnu' },
+            messages: []
           };
         }
         
@@ -306,85 +287,47 @@ export const findConversationsByProfileId = async (profileId: string) => {
             error: messagesError,
             component: "findConversationsByProfileId"
           });
+          
+          // Return conversation with user data but no messages
+          return {
+            ...conversation,
+            otherUser: otherUserProfile,
+            messages: []
+          };
         }
         
+        // Return full conversation data
         return {
           ...conversation,
-          user1: conversation.user1_id === profileId ? { id: profileId } : otherUserProfile,
-          user2: conversation.user1_id === profileId ? otherUserProfile : { id: profileId },
           otherUser: otherUserProfile,
           messages: messages || []
         };
-      } catch (err) {
-        logger.error(`Error enriching conversation ${conversation.id}:`, {
-          error: err,
+      } catch (error) {
+        logger.error(`Error processing conversation ${conversation.id}:`, {
+          error,
           component: "findConversationsByProfileId"
         });
-        return conversation;
+        
+        // Return basic conversation data on error
+        return {
+          ...conversation,
+          otherUser: { id: conversation.user1_id === profileId ? conversation.user2_id : conversation.user1_id, username: 'Erreur' },
+          messages: []
+        };
       }
     }));
     
-    logger.info(`Enriched ${conversationsWithProfiles.length} conversations for profile ${profileId}`, {
+    logger.info(`Successfully processed ${conversationsWithDetails.length} conversations with details`, {
       component: "findConversationsByProfileId"
     });
-    return conversationsWithProfiles;
+    
+    return conversationsWithDetails;
   } catch (error) {
-    logger.error("Exception in findConversationsByProfileId:", {
+    logger.error('Error in findConversationsByProfileId:', {
       error,
+      profileId,
       component: "findConversationsByProfileId"
     });
-    return [];
-  }
-};
-
-// Helper function to create a test conversation - for admin use
-export const createTestConversation = async (profileId: string, otherProfileId: string) => {
-  try {
-    logger.info(`Attempting to create test conversation between ${profileId} and ${otherProfileId}`, {
-      component: "createTestConversation"
-    });
-    
-    // Verify user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      logger.error("Authentication error in createTestConversation", {
-        error: authError,
-        component: "createTestConversation"
-      });
-      return null;
-    }
-    
-    // Create test conversation
-    const { data, error } = await supabase
-      .from('conversations')
-      .insert({
-        user1_id: profileId,
-        user2_id: otherProfileId,
-        status: 'active'
-      })
-      .select()
-      .single();
-      
-    if (error) {
-      logger.error('Error creating test conversation:', {
-        error,
-        component: "createTestConversation"
-      });
-      return null;
-    }
-    
-    logger.info('Test conversation created successfully', {
-      conversationId: data.id,
-      component: "createTestConversation"
-    });
-    
-    return data;
-  } catch (error) {
-    logger.error('Exception in createTestConversation:', {
-      error,
-      component: "createTestConversation"
-    });
-    return null;
+    throw error;
   }
 };

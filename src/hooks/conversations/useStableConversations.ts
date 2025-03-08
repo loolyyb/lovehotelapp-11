@@ -38,8 +38,25 @@ export function useStableConversations() {
   const { 
     getCachedConversations, 
     cacheConversations, 
-    isCacheValid 
+    isCacheValid,
+    clearCache
   } = useConversationCache();
+
+  // On initial mount, try to load the user profile
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        logger.info("Initial user profile load");
+        await getUserProfile();
+        logger.info("Initial user profile loaded", { profileId: currentProfileId });
+      } catch (err) {
+        logger.error("Error loading initial user profile", { error: err });
+        setError("Impossible de charger votre profil");
+      }
+    };
+    
+    loadProfile();
+  }, []);
 
   // On initial mount, try to show cached conversations immediately
   useEffect(() => {
@@ -51,6 +68,8 @@ export function useStableConversations() {
       logger.info("Displaying cached conversations", { count: cachedConversations.length });
       setDisplayedConversations(cachedConversations);
       initialLoadCompleteRef.current = true;
+    } else {
+      logger.info("No cached conversations found, will fetch from server");
     }
   }, [currentProfileId, getCachedConversations, logger]);
 
@@ -115,19 +134,37 @@ export function useStableConversations() {
 
   // Refresh conversations, but preserve displayed list until new data is ready
   const refreshConversations = useCallback(async (useCache = true) => {
-    if (!currentProfileId) return;
+    if (!currentProfileId) {
+      logger.warn("No profile ID available, attempting to retrieve user profile");
+      try {
+        await getUserProfile();
+      } catch (err) {
+        logger.error("Error retrieving user profile during refresh", { error: err });
+        setError("Impossible de charger votre profil");
+        return;
+      }
+    }
     
-    logger.info("Refreshing conversations", { useCache });
+    logger.info("Refreshing conversations", { 
+      useCache, 
+      hasProfileId: !!currentProfileId 
+    });
+    
     setIsRefreshing(true);
     
     try {
+      if (!useCache) {
+        // Clear the cache if we're doing a forced refresh
+        clearCache();
+      }
+      
       await fetchConversations(useCache);
     } catch (err) {
       logger.error("Error refreshing conversations", { error: err });
     } finally {
       setIsRefreshing(false);
     }
-  }, [currentProfileId, fetchConversations, logger]);
+  }, [currentProfileId, fetchConversations, getUserProfile, clearCache, logger]);
 
   return {
     conversations: displayedConversations,

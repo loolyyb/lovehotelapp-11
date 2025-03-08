@@ -83,7 +83,7 @@ export function ConversationList({
         }
         
         if (profileData) {
-          logger.info("Using existing profile", { ...profileData });
+          logger.info("Using existing profile", { profileId: profileData.id, userId: session.user.id });
         }
         
         setHasAuthError(false);

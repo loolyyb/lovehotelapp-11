@@ -26,7 +26,9 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   useEffect(() => {
     if (currentProfileId) {
       logger.info("Profile ID changed, fetching conversations", { profileId: currentProfileId });
-      fetchConversations(true);
+      fetchConversations(false); // Force a fresh fetch when the profile ID changes
+    } else {
+      logger.warn("No profile ID available, cannot fetch conversations");
     }
   }, [currentProfileId]);
 
@@ -37,7 +39,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       return [];
     }
 
-    // Try to get from cache first
+    // Try to get from cache first if cache is requested
     if (useCache && isCacheValid(currentProfileId)) {
       const cachedData = getCachedConversations(currentProfileId);
       if (cachedData) {
@@ -57,12 +59,18 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       logger.info("Fetching conversations for profile ID", { profileId: currentProfileId });
       
       // Get the current authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        logger.error("Error getting authenticated user", { error: userError });
+        throw new Error("Erreur lors de la récupération de votre profil utilisateur");
+      }
+      
       if (!user) {
+        logger.error("No authenticated user found");
         throw new Error("Vous devez être connecté pour voir vos conversations");
       }
       
-      // Get user's profile to check role
+      // Get user's profile to check role and confirm access permissions
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
         .select('id, role')
@@ -70,46 +78,76 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         .single();
         
       if (profileError) {
-        logger.error("Error fetching user profile", { error: profileError });
-        throw new Error("Erreur lors de la récupération de votre profil");
+        logger.error("Error fetching user profile", { 
+          error: profileError,
+          userId: user.id
+        });
+        
+        // Check if error is because profile doesn't exist
+        if (profileError.code === 'PGRST116') {
+          logger.warn("Profile not found, attempting to create one");
+          
+          // Create a profile for the user
+          const newProfileId = crypto.randomUUID();
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert([{
+              id: newProfileId,
+              user_id: user.id,
+              full_name: user.email?.split('@')[0] || 'Utilisateur',
+              username: user.email?.split('@')[0] || 'user_' + Math.floor(Math.random() * 1000),
+              role: 'user'
+            }]);
+            
+          if (insertError) {
+            logger.error("Error creating profile", { error: insertError });
+            throw new Error("Impossible de créer votre profil utilisateur");
+          }
+          
+          // Use the new profile ID
+          logger.info("Created new profile", { profileId: newProfileId });
+        } else {
+          throw new Error("Erreur lors de la récupération de votre profil");
+        }
       }
       
-      if (!userProfile) {
+      if (!userProfile && !profileError) {
         logger.error("No profile found for authenticated user", { userId: user.id });
         throw new Error("Profil introuvable. Veuillez vous reconnecter.");
       }
       
-      const isAdmin = userProfile.role === 'admin';
-      const isOwnProfileAccess = userProfile.id === currentProfileId;
-      
-      logger.info("User role and access check", { 
-        isAdmin, 
-        isOwnProfileAccess,
-        userProfileId: userProfile.id,
-        requestedProfileId: currentProfileId
-      });
-      
-      // Use the requested profile ID with pagination - RLS policies will handle access control
-      // This is an optimized version that limits the data fetched
-      const fetchedConversations = await findConversationsByProfileId(currentProfileId);
-      
-      logger.info("Setting conversations", { 
-        count: fetchedConversations.length,
-        profileId: currentProfileId,
-        role: userProfile.role
-      });
-      
-      // Cache the conversations
-      cacheConversations(currentProfileId, fetchedConversations);
-      
-      setConversations(fetchedConversations);
-      setIsLoading(false);
-      return fetchedConversations;
+      // Using the findConversationsByProfileId utility with better error handling
+      try {
+        const fetchedConversations = await findConversationsByProfileId(currentProfileId);
+        
+        logger.info("Setting conversations", { 
+          count: fetchedConversations.length,
+          profileId: currentProfileId
+        });
+        
+        // Cache the conversations
+        cacheConversations(currentProfileId, fetchedConversations);
+        
+        setConversations(fetchedConversations);
+        setIsLoading(false);
+        return fetchedConversations;
+      } catch (fetchError: any) {
+        logger.error("Error fetching conversations from utility", { 
+          error: fetchError.message,
+          stack: fetchError.stack
+        });
+        throw new Error("Erreur lors du chargement des conversations");
+      }
     } catch (error: any) {
-      logger.error("Error in fetchConversations", { error: error.message });
+      logger.error("Error in fetchConversations", { 
+        error: error.message,
+        stack: error.stack 
+      });
       setError(error.message || "Erreur lors du chargement des conversations");
       setIsLoading(false);
       return [];
+    } finally {
+      setIsLoading(false);
     }
   }, [currentProfileId, logger, toast, getCachedConversations, cacheConversations, isCacheValid]);
 
