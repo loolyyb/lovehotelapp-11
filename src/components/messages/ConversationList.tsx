@@ -46,6 +46,27 @@ export function ConversationList({
   } = useStableConversations();
 
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
+  const [loadingTimeExceeded, setLoadingTimeExceeded] = useState(false);
+
+  // Add loading timeout to prevent infinite loading state
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    if (isLoading && !loadingTimeExceeded) {
+      timeoutId = setTimeout(() => {
+        logger.warn("Loading timeout exceeded, forcing UI update", {
+          hasConversations: conversations.length > 0
+        });
+        setLoadingTimeExceeded(true);
+      }, 8000); // 8 second timeout
+    }
+    
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [isLoading, loadingTimeExceeded, conversations.length, logger]);
 
   // Log state changes - helpful for debugging
   useEffect(() => {
@@ -56,9 +77,10 @@ export function ConversationList({
       authChecked,
       hasAuthError,
       isLoading,
-      isRefreshing
+      isRefreshing,
+      loadingTimeExceeded
     });
-  }, [conversations, currentProfileId, authChecked, hasAuthError, isLoading, isRefreshing, logger]);
+  }, [conversations, currentProfileId, authChecked, hasAuthError, isLoading, isRefreshing, loadingTimeExceeded, logger]);
 
   // Additional logging for loading state
   useEffect(() => {
@@ -133,8 +155,9 @@ export function ConversationList({
   }
 
   // Loading state - show when we're still checking auth or loading profile
-  if (!authChecked || isLoading) {
-    logger.info("Showing loading state", { authChecked, isLoading, hasProfile: !!currentProfileId });
+  // Only show loading if we haven't exceeded the timeout
+  if ((!authChecked || isLoading) && !loadingTimeExceeded) {
+    logger.info("Showing loading state", { authChecked, isLoading, hasProfile: !!currentProfileId, timeout: loadingTimeExceeded });
     return <LoadingState />;
   }
 

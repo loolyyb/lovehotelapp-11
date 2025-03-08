@@ -5,6 +5,7 @@ import { useLogger } from "@/hooks/useLogger";
 import { findConversationsByProfileId } from "@/utils/conversations";
 import { useToast } from "@/hooks/use-toast";
 import { useConversationCache } from "./useConversationCache";
+import { AlertService } from "@/services/AlertService";
 
 export function useConversationsFetcher(currentProfileId: string | null) {
   const [conversations, setConversations] = useState<any[]>([]);
@@ -27,6 +28,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   const fetchAttemptedRef = useRef(false);
   const retryCountRef = useRef(0);
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const maxRetries = 5;
   
   const PAGE_SIZE = 10;
 
@@ -149,6 +151,12 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           stack: fetchError.stack
         });
         
+        // Send to monitoring service
+        AlertService.captureException(fetchError, {
+          context: "fetchConversations",
+          profileId: currentProfileId
+        });
+        
         // Increment retry counter
         retryCountRef.current += 1;
         
@@ -212,18 +220,22 @@ export function useConversationsFetcher(currentProfileId: string | null) {
 
   // Add an automatic retry mechanism for initial load failures
   useEffect(() => {
-    if (error && currentProfileId && retryCountRef.current < 3) {
+    if (error && currentProfileId && retryCountRef.current < maxRetries) {
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
       
+      // Exponential backoff for retries
+      const delay = Math.min(3000 * (2 ** retryCountRef.current), 30000); // Max 30 seconds
+      
       fetchTimeoutRef.current = setTimeout(() => {
         logger.info("Automatically retrying conversation fetch after error", {
           profileId: currentProfileId,
-          retryCount: retryCountRef.current
+          retryCount: retryCountRef.current,
+          delay
         });
         fetchConversations(true);
-      }, 3000 * (retryCountRef.current + 1)); // Exponential backoff
+      }, delay);
       
       return () => {
         if (fetchTimeoutRef.current) {

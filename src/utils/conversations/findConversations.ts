@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
+import { AlertService } from "@/services/AlertService";
 
 /**
  * Finds all conversations for a given profile ID with detailed information
@@ -38,12 +39,12 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
-    // FIX: Using a proper query format that works reliably with Supabase
+    // First query - get conversation IDs this user participates in
     logger.info(`Fetching conversations for profile ID: ${profileId}`, {
       component: "findConversationsByProfileId"
     });
     
-    // CRITICAL FIX: Use proper string format for OR filter
+    // Use proper string format for the filter with template literals
     const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
@@ -64,6 +65,21 @@ export const findConversationsByProfileId = async (profileId: string) => {
         profileId,
         component: "findConversationsByProfileId"
       });
+      
+      // Check if this is an RLS error
+      if (conversationsError.message.includes("policy")) {
+        AlertService.captureException(new Error("RLS policy error fetching conversations"), {
+          profileId,
+          error: conversationsError.message,
+          component: "findConversationsByProfileId"
+        });
+        logger.error("Possible RLS policy violation", {
+          error: conversationsError,
+          profileId,
+          component: "findConversationsByProfileId"
+        });
+      }
+      
       throw new Error("Error fetching conversations: " + conversationsError.message);
     }
     
