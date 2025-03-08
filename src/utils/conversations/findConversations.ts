@@ -38,7 +38,36 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
-    // Fetch conversations using proper Supabase filtering syntax
+    // Get the authenticated user's profile to verify permission
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+      
+    if (profileError) {
+      logger.error("Error fetching user profile", {
+        error: profileError,
+        component: "findConversationsByProfileId"
+      });
+      throw new Error("Error fetching user profile: " + profileError.message);
+    }
+    
+    // For security, ensure the requested profileId matches the authenticated user's profile
+    const validProfileId = userProfile.id;
+    if (validProfileId !== profileId) {
+      logger.warn(`Requested profile ID (${profileId}) doesn't match authenticated user's profile (${validProfileId})`, {
+        component: "findConversationsByProfileId"
+      });
+      // Use the correct profile ID
+      profileId = validProfileId;
+    }
+    
+    logger.info(`Using validated profile ID: ${profileId} for conversation fetch`, {
+      component: "findConversationsByProfileId"
+    });
+    
+    // Fetch conversations using proper Supabase filtering
     const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
       .select(`

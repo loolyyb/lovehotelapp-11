@@ -2,10 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
-import { 
-  findConversationsByProfileId, 
-  getProfileByAuthId 
-} from "@/utils/conversations";
+import { findConversationsByProfileId } from "@/utils/conversations";
 import { useToast } from "@/hooks/use-toast";
 import { useConversationCache } from "./useConversationCache";
 
@@ -44,10 +41,10 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       return [];
     }
 
-    // Try to get from cache first if cache is requested
+    // Try to get from cache first if cache is valid
     if (isCacheValid(currentProfileId)) {
       const cachedData = getCachedConversations(currentProfileId);
-      if (cachedData) {
+      if (cachedData && cachedData.length > 0) {
         logger.info("Using cached conversations", { 
           count: cachedData.length,
           profileId: currentProfileId
@@ -75,10 +72,10 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         throw new Error("Vous devez être connecté pour voir vos conversations");
       }
       
-      // Get user's profile to check role and confirm access permissions
+      // Get user's profile to ensure we have the right profile ID
       const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, role')
+        .select('id')
         .eq('user_id', user.id)
         .single();
         
@@ -88,7 +85,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           userId: user.id
         });
         
-        // Check if error is because profile doesn't exist
+        // If profile doesn't exist, create one
         if (profileError.code === 'PGRST116') {
           logger.warn("Profile not found, attempting to create one");
           
@@ -109,49 +106,46 @@ export function useConversationsFetcher(currentProfileId: string | null) {
             throw new Error("Impossible de créer votre profil utilisateur");
           }
           
-          // Use the new profile ID
-          logger.info("Created new profile", { profileId: newProfileId });
+          // Use the new profile ID for fetching conversations
+          logger.info("Created new profile, using new ID for conversations", { profileId: newProfileId });
+          const fetchedConversations = await findConversationsByProfileId(newProfileId);
+          setConversations(fetchedConversations);
+          cacheConversations(newProfileId, fetchedConversations);
+          setIsLoading(false);
+          return fetchedConversations;
         } else {
           throw new Error("Erreur lors de la récupération de votre profil");
         }
       }
       
-      if (!userProfile && !profileError) {
-        logger.error("No profile found for authenticated user", { userId: user.id });
-        throw new Error("Profil introuvable. Veuillez vous reconnecter.");
-      }
-      
-      // Verify the requested profile ID matches the authenticated user's profile ID
-      if (userProfile && userProfile.id !== currentProfileId) {
-        logger.warn("Profile ID mismatch", { 
-          requestedProfileId: currentProfileId, 
-          authUserProfileId: userProfile.id 
-        });
-        // Continue using the authenticated user's profile ID instead
-        logger.info("Using authenticated user's profile ID instead", { 
-          profileId: userProfile.id 
-        });
-      }
+      // Use the verified profile ID to fetch conversations
+      const validProfileId = userProfile.id;
+      logger.info("Using verified profile ID for conversations", { 
+        requestedId: currentProfileId,
+        verifiedId: validProfileId
+      });
       
       // Using the findConversationsByProfileId utility with better error handling
       try {
-        const fetchedConversations = await findConversationsByProfileId(currentProfileId);
+        const fetchedConversations = await findConversationsByProfileId(validProfileId);
         
-        logger.info("Setting conversations", { 
+        logger.info("Successfully fetched conversations", { 
           count: fetchedConversations.length,
-          profileId: currentProfileId
+          profileId: validProfileId
         });
         
         // Cache the conversations
-        cacheConversations(currentProfileId, fetchedConversations);
+        cacheConversations(validProfileId, fetchedConversations);
         
         setConversations(fetchedConversations);
+        setIsLoading(false);
         return fetchedConversations;
       } catch (fetchError: any) {
         logger.error("Error fetching conversations from utility", { 
           error: fetchError.message,
           stack: fetchError.stack
         });
+        setIsLoading(false);
         throw new Error("Erreur lors du chargement des conversations");
       }
     } catch (error: any) {
@@ -160,9 +154,8 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         stack: error.stack 
       });
       setError(error.message || "Erreur lors du chargement des conversations");
-      return [];
-    } finally {
       setIsLoading(false);
+      return [];
     }
   }, [currentProfileId, logger, getCachedConversations, cacheConversations, isCacheValid]);
 

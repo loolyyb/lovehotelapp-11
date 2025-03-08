@@ -3,75 +3,86 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 
 /**
- * Retrieves a profile by its associated auth user ID
- * @param authUserId The auth user ID to look up
- * @returns The profile object or null if not found
+ * Get a user's profile by their auth ID
+ * @param authId The user's auth ID
+ * @returns The user's profile or null if not found
  */
-export const getProfileByAuthId = async (authUserId: string) => {
+export const getProfileByAuthId = async (authId: string) => {
+  if (!authId) {
+    logger.error("No auth ID provided to getProfileByAuthId", { component: "getProfileByAuthId" });
+    return null;
+  }
+  
   try {
+    logger.info(`Getting profile for auth ID: ${authId}`, { component: "getProfileByAuthId" });
+    
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('id, user_id, full_name, username, avatar_url, role')
-      .eq('user_id', authUserId)
+      .select('*')
+      .eq('user_id', authId)
       .single();
     
     if (error) {
-      logger.error('Error fetching profile by auth ID:', {
+      if (error.code === 'PGRST116') {
+        logger.warn(`No profile found for auth ID: ${authId}`, { component: "getProfileByAuthId" });
+        return null;
+      }
+      
+      logger.error("Error fetching profile by auth ID:", {
         error,
-        authUserId,
+        authId,
         component: "getProfileByAuthId"
       });
-      return null;
+      throw error;
     }
-
-    return profile;
-  } catch (error) {
-    logger.error('Exception in getProfileByAuthId:', {
-      error,
-      authUserId,
+    
+    logger.info(`Successfully retrieved profile for auth ID: ${authId}`, {
+      profileId: profile?.id,
       component: "getProfileByAuthId"
     });
-    return null;
+    
+    return profile;
+  } catch (error) {
+    logger.error("Exception in getProfileByAuthId:", {
+      error,
+      authId,
+      component: "getProfileByAuthId"
+    });
+    throw error;
   }
 };
 
 /**
- * Retrieves a profile by its ID
- * @param profileId The profile ID to look up
- * @returns Object with either error or data property
+ * Get the current user's profile
+ * @returns The current user's profile or null if not authenticated
  */
-export const getTargetUserId = async (profileId: string) => {
+export const getCurrentUserProfile = async () => {
   try {
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', profileId)
-      .single();
+    // Get the current user's auth ID
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    if (profileError) {
-      logger.error('Error fetching profile:', {
-        error: profileError,
-        profileId,
-        component: "getTargetUserId"
+    if (authError) {
+      logger.error("Auth error in getCurrentUserProfile", {
+        error: authError,
+        component: "getCurrentUserProfile"
       });
-      return { error: "Profile not found" };
+      throw authError;
     }
-
-    if (!profile) {
-      logger.error('No profile found with ID:', {
-        profileId,
-        component: "getTargetUserId"
+    
+    if (!user) {
+      logger.warn("No authenticated user in getCurrentUserProfile", {
+        component: "getCurrentUserProfile"
       });
-      return { error: "Profile not found" };
+      return null;
     }
-
-    return { data: profile.id };
+    
+    // Get the user's profile
+    return await getProfileByAuthId(user.id);
   } catch (error) {
-    logger.error('Error in getTargetUserId:', {
+    logger.error("Exception in getCurrentUserProfile:", {
       error,
-      profileId,
-      component: "getTargetUserId"
+      component: "getCurrentUserProfile"
     });
-    return { error: "Unable to retrieve user information" };
+    throw error;
   }
 };

@@ -1,15 +1,14 @@
 
 import { useState, useEffect } from "react";
-import { useLogger } from "@/hooks/useLogger";
 import { useStableConversations } from "@/hooks/conversations/useStableConversations";
+import { useLogger } from "@/hooks/useLogger";
 
 /**
- * A wrapper hook for useStableConversations that provides a simplified interface
- * for components that only need basic conversation functionality.
+ * A simplified hook for accessing conversations with initialization status
  */
 export function useConversations() {
-  const logger = useLogger("useConversations");
   const [isInitialized, setIsInitialized] = useState(false);
+  const logger = useLogger("useConversations");
   
   const {
     conversations,
@@ -19,21 +18,24 @@ export function useConversations() {
     refreshConversations,
     currentProfileId
   } = useStableConversations();
-
+  
+  // Set initialized after first load
   useEffect(() => {
-    if (!isInitialized && conversations) {
-      logger.info("Conversations initialized", { count: conversations.length });
-      setIsInitialized(true);
+    if (!isLoading && currentProfileId) {
+      if (!isInitialized) {
+        logger.info("Conversations initialized", { count: conversations.length });
+        setIsInitialized(true);
+      }
     }
-  }, [conversations, isInitialized, logger]);
-
+  }, [isLoading, conversations, currentProfileId, isInitialized, logger]);
+  
   return {
     conversations,
     isLoading,
     isRefreshing,
     error,
     refreshConversations,
-    currentProfileId,
-    isInitialized
+    isInitialized,
+    currentProfileId
   };
 }
