@@ -71,10 +71,27 @@ export function useStableConversations() {
     }
   }, [profileError, conversationsError, error]);
 
-  // Load conversations when profile is ready - with proper dependency array
+  // Load conversations when profile is ready - log the current profile ID
   useEffect(() => {
-    if (!currentProfileId || !profileInitialized || initialLoadCompleteRef.current) {
-      return; // Exit early if conditions not met or already loaded
+    if (!profileInitialized) {
+      logger.info("Profile not yet initialized, waiting...");
+      return;
+    }
+    
+    logger.info("Profile state check:", { 
+      profileId: currentProfileId, 
+      initialized: profileInitialized,
+      initialLoadComplete: initialLoadCompleteRef.current
+    });
+    
+    if (!currentProfileId) {
+      logger.warn("No profile ID available after initialization");
+      return;
+    }
+    
+    if (initialLoadCompleteRef.current) {
+      logger.info("Initial load already completed, skipping");
+      return;
     }
     
     logger.info("Profile initialized, fetching conversations", { profileId: currentProfileId });
@@ -95,6 +112,11 @@ export function useStableConversations() {
   // Update displayed conversations when pending conversations are ready
   // with debounce to prevent rapid updates
   useEffect(() => {
+    logger.debug("Pending conversations update check", { 
+      count: pendingConversations.length,
+      updatePending: updatePendingRef.current
+    });
+    
     if (pendingConversations.length === 0 || updatePendingRef.current) return;
     
     // Don't update too frequently
@@ -185,7 +207,7 @@ export function useStableConversations() {
         clearCache();
       }
       
-      // Call fetchConversations with no arguments
+      // Call fetchConversations to refresh data
       await fetchConversations();
     } catch (err) {
       logger.error("Error refreshing conversations", { error: err });
