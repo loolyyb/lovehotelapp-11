@@ -2,7 +2,11 @@
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUserId, getTargetUserId, createOrGetConversation } from "@/utils/conversationUtils";
+import { 
+  getCurrentUserId, 
+  getTargetUserId, 
+  createOrGetConversation 
+} from "@/utils/conversations";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useProfileActions(profileId: string) {

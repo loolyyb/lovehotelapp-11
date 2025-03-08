@@ -1,7 +1,11 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
-import { findConversationsByProfileId, getProfileByAuthId } from "@/utils/conversationUtils";
+import { 
+  findConversationsByProfileId, 
+  getProfileByAuthId 
+} from "@/utils/conversations";
 import { useToast } from "@/hooks/use-toast";
 import { useConversationCache } from "./useConversationCache";
 
