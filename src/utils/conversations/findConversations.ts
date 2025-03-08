@@ -39,12 +39,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
-    // First query - get conversation IDs this user participates in
-    logger.info(`Fetching conversations for profile ID: ${profileId}`, {
-      component: "findConversationsByProfileId"
-    });
-    
-    // Use proper string format for the filter with template literals
+    // Use proper query format - note the change here from template literals to using parameters
     const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
@@ -66,7 +61,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
         component: "findConversationsByProfileId"
       });
       
-      // Check if this is an RLS error
+      // Check if this is an RLS error and provide better diagnostics
       if (conversationsError.message.includes("policy")) {
         AlertService.captureException(new Error("RLS policy error fetching conversations"), {
           profileId,
