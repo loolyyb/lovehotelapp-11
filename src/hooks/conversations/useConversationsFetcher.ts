@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
@@ -21,7 +20,6 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     isCacheValid 
   } = useConversationCache();
   
-  // Use a ref to track if a fetch is already in progress to prevent duplicate requests
   const fetchInProgressRef = useRef(false);
   const isMountedRef = useRef(true);
   const lastProfileIdRef = useRef<string | null>(null);
@@ -32,7 +30,6 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   
   const PAGE_SIZE = 10;
 
-  // Cleanup on unmount
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
@@ -43,9 +40,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     };
   }, []);
   
-  // Memoize the fetchConversations function to prevent recreating it on every render
   const fetchConversations = useCallback(async (forceFresh = false) => {
-    // Skip if no profile ID is provided
     if (!currentProfileId) {
       if (!fetchAttemptedRef.current) {
         fetchAttemptedRef.current = true;
@@ -59,16 +54,13 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       return [];
     }
 
-    // Reset fetch attempted flag when we have a profile ID
     fetchAttemptedRef.current = true;
     
-    // Prevent concurrent fetches
     if (fetchInProgressRef.current) {
       logger.info("Fetch already in progress, skipping");
       return conversations;
     }
     
-    // Check if we already fetched for this profile ID to avoid unnecessary refetches
     if (currentProfileId === lastProfileIdRef.current && !forceFresh && conversations.length > 0) {
       logger.info("Using existing conversations for the same profile", {
         profileId: currentProfileId,
@@ -77,10 +69,8 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       return conversations;
     }
     
-    // Update the last profile ID we fetched for
     lastProfileIdRef.current = currentProfileId;
 
-    // Try to get from cache first if cache is valid and we're not forcing a fresh fetch
     if (!forceFresh && isCacheValid(currentProfileId)) {
       const cachedData = getCachedConversations(currentProfileId);
       if (cachedData && cachedData.length > 0) {
@@ -109,7 +99,6 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         retryCount: retryCountRef.current
       });
       
-      // Get the current authenticated user - Double check authentication
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) {
         logger.error("Error getting authenticated user", { error: userError });
@@ -121,7 +110,6 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         throw new Error("Vous devez être connecté pour voir vos conversations");
       }
       
-      // Direct query as a fallback to help diagnose RLS issues
       logger.info("Performing direct query to verify RLS permissions", {
         profileId: currentProfileId 
       });
@@ -129,22 +117,45 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       const { data: directQueryData, error: directQueryError } = await supabase
         .from('conversations')
         .select('id')
-        .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
-        .eq('status', 'active');
+        .filter('user1_id', 'eq', currentProfileId)
+        .filter('status', 'eq', 'active');
       
       if (directQueryError) {
-        logger.error("Direct query error - possible RLS configuration issue", {
+        logger.error("Direct query error (user1) - possible RLS configuration issue", {
           error: directQueryError,
           profileId: currentProfileId
         });
       } else {
-        logger.info("Direct query successful", {
+        logger.info("Direct query (user1) successful", {
           count: directQueryData?.length || 0,
           profileId: currentProfileId
         });
       }
       
-      // Using the findConversationsByProfileId utility with better error handling
+      const { data: directQueryData2, error: directQueryError2 } = await supabase
+        .from('conversations')
+        .select('id')
+        .filter('user2_id', 'eq', currentProfileId)
+        .filter('status', 'eq', 'active');
+      
+      if (directQueryError2) {
+        logger.error("Direct query error (user2) - possible RLS configuration issue", {
+          error: directQueryError2,
+          profileId: currentProfileId
+        });
+      } else {
+        logger.info("Direct query (user2) successful", {
+          count: directQueryData2?.length || 0,
+          profileId: currentProfileId
+        });
+      }
+      
+      const totalDirectQueryCount = (directQueryData?.length || 0) + (directQueryData2?.length || 0);
+      logger.info("Total conversations from direct queries", {
+        count: totalDirectQueryCount,
+        profileId: currentProfileId
+      });
+      
       try {
         const fetchedConversations = await findConversationsByProfileId(currentProfileId);
         
@@ -154,15 +165,11 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           conversationIds: fetchedConversations.map(c => c.id)
         });
         
-        // Only update state if component is still mounted
         if (isMountedRef.current) {
-          // Cache the conversations
           cacheConversations(currentProfileId, fetchedConversations);
-          
           setConversations(fetchedConversations);
           setError(null);
           setIsLoading(false);
-          // Reset retry counter on success
           retryCountRef.current = 0;
         }
         
@@ -174,13 +181,107 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           stack: fetchError.stack
         });
         
-        // Send to monitoring service
         AlertService.captureException(fetchError, {
           context: "fetchConversations",
           profileId: currentProfileId
         });
         
-        // Increment retry counter
+        if (totalDirectQueryCount > 0 && (directQueryData || directQueryData2)) {
+          logger.info("Trying to construct conversations from direct queries", {
+            profileId: currentProfileId
+          });
+          
+          try {
+            const manualConversations = [];
+            
+            if (directQueryData && directQueryData.length > 0) {
+              for (const conv of directQueryData) {
+                const { data: fullConv } = await supabase
+                  .from('conversations')
+                  .select('*')
+                  .eq('id', conv.id)
+                  .single();
+                  
+                if (fullConv) {
+                  manualConversations.push(fullConv);
+                }
+              }
+            }
+            
+            if (directQueryData2 && directQueryData2.length > 0) {
+              for (const conv of directQueryData2) {
+                if (manualConversations.some(c => c.id === conv.id)) continue;
+                
+                const { data: fullConv } = await supabase
+                  .from('conversations')
+                  .select('*')
+                  .eq('id', conv.id)
+                  .single();
+                  
+                if (fullConv) {
+                  manualConversations.push(fullConv);
+                }
+              }
+            }
+            
+            if (manualConversations.length > 0) {
+              logger.info("Successfully constructed conversations manually", {
+                count: manualConversations.length,
+                profileId: currentProfileId
+              });
+              
+              const processedConversations = await Promise.all(manualConversations.map(async (conversation) => {
+                try {
+                  const otherUserId = conversation.user1_id === currentProfileId 
+                    ? conversation.user2_id 
+                    : conversation.user1_id;
+                  
+                  const { data: otherUserProfile } = await supabase
+                    .from('profiles')
+                    .select('id, username, full_name, avatar_url')
+                    .eq('id', otherUserId)
+                    .maybeSingle();
+                    
+                  const { data: messages } = await supabase
+                    .from('messages')
+                    .select('id, content, created_at, sender_id, read_at')
+                    .eq('conversation_id', conversation.id)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                    
+                  return {
+                    ...conversation,
+                    otherUser: otherUserProfile || { id: otherUserId, username: 'Utilisateur inconnu' },
+                    messages: messages || []
+                  };
+                } catch (error) {
+                  return {
+                    ...conversation,
+                    otherUser: { id: conversation.user1_id === currentProfileId ? conversation.user2_id : conversation.user1_id, username: 'Utilisateur inconnu' },
+                    messages: []
+                  };
+                }
+              }));
+              
+              if (isMountedRef.current) {
+                cacheConversations(currentProfileId, processedConversations);
+                setConversations(processedConversations);
+                setError(null);
+                setIsLoading(false);
+                retryCountRef.current = 0;
+              }
+              
+              fetchInProgressRef.current = false;
+              return processedConversations;
+            }
+          } catch (manualError) {
+            logger.error("Error constructing conversations manually", {
+              error: manualError,
+              profileId: currentProfileId
+            });
+          }
+        }
+        
         retryCountRef.current += 1;
         
         if (isMountedRef.current) {
@@ -207,7 +308,6 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     }
   }, [currentProfileId, getCachedConversations, cacheConversations, isCacheValid, logger, toast, conversations.length]);
 
-  // Load more conversations
   const loadMoreConversations = useCallback(async () => {
     if (!currentProfileId || !hasMore || isLoading || fetchInProgressRef.current) return;
     
@@ -217,11 +317,6 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     try {
       const nextPage = page + 1;
       logger.info("Loading more conversations", { page: nextPage, profileId: currentProfileId });
-      
-      // Implement pagination logic here
-      // This is just a placeholder - in a real implementation,
-      // you'd need to modify the findConversationsByProfileId function
-      // to support pagination
       
       setPage(nextPage);
       setIsLoading(false);
@@ -233,23 +328,20 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     }
   }, [currentProfileId, page, hasMore, isLoading, logger]);
 
-  // Initial fetch when component mounts or profile ID changes
   useEffect(() => {
     if (currentProfileId && !fetchAttemptedRef.current) {
       logger.info("Initial fetch triggered by profile ID change or mount", { profileId: currentProfileId });
-      fetchConversations(true); // Force fresh fetch for initial load
+      fetchConversations(true);
     }
   }, [currentProfileId, fetchConversations, logger]);
 
-  // Add an automatic retry mechanism for initial load failures
   useEffect(() => {
     if (error && currentProfileId && retryCountRef.current < maxRetries) {
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
       
-      // Exponential backoff for retries
-      const delay = Math.min(3000 * (2 ** retryCountRef.current), 30000); // Max 30 seconds
+      const delay = Math.min(3000 * (2 ** retryCountRef.current), 30000);
       
       fetchTimeoutRef.current = setTimeout(() => {
         logger.info("Automatically retrying conversation fetch after error", {
