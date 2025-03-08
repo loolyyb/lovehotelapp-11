@@ -127,13 +127,14 @@ export function useStableConversations() {
     }
     
     // Fetch fresh conversations
-    fetchConversations();
+    fetchConversations(true); // Force fresh fetch for initial load
     
   }, [currentProfileId, profileInitialized, profileLoading, fetchConversations, getCachedConversations, logger]);
 
   // Update displayed conversations when pending conversations are ready
   useEffect(() => {
     if (pendingConversations.length === 0 && !initialLoadCompleteRef.current && currentProfileId) {
+      logger.info("No conversations found, marking initial load as complete");
       // Mark initial load as complete even if there are no conversations
       // This helps with showing the empty state instead of perpetual loading
       initialLoadCompleteRef.current = true;
@@ -141,6 +142,8 @@ export function useStableConversations() {
     }
     
     if (pendingConversations.length === 0 || updatePendingRef.current) return;
+    
+    logger.info("New conversations available to display", { count: pendingConversations.length });
     
     // Don't update too frequently
     const now = Date.now();

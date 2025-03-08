@@ -91,6 +91,10 @@ export function ConversationList({
       });
     } catch (error: any) {
       logger.error("Error in retry", { error });
+      // Notify parent about network error
+      if (onNetworkError) {
+        onNetworkError();
+      }
       toast({
         variant: "destructive",
         title: "Erreur de connexion",
@@ -99,7 +103,7 @@ export function ConversationList({
     } finally {
       setIsRefreshingManually(false);
     }
-  }, [refreshConversations, retryAuth, hasAuthError, logger, toast]);
+  }, [refreshConversations, retryAuth, hasAuthError, logger, toast, onNetworkError]);
 
   const handleRefresh = useCallback(() => {
     logger.info("Manual refresh requested");

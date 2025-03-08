@@ -25,6 +25,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   const isMountedRef = useRef(true);
   const lastProfileIdRef = useRef<string | null>(null);
   const fetchAttemptedRef = useRef(false);
+  const retryCountRef = useRef(0);
   
   const PAGE_SIZE = 10;
 
@@ -97,7 +98,10 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     fetchInProgressRef.current = true;
 
     try {
-      logger.info("Fetching conversations for profile ID", { profileId: currentProfileId });
+      logger.info("Fetching conversations for profile ID", { 
+        profileId: currentProfileId,
+        retryCount: retryCountRef.current
+      });
       
       // Get the current authenticated user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -117,7 +121,8 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         
         logger.info("Successfully fetched conversations", { 
           count: fetchedConversations.length,
-          profileId: currentProfileId
+          profileId: currentProfileId,
+          conversationIds: fetchedConversations.map(c => c.id)
         });
         
         // Only update state if component is still mounted
@@ -128,6 +133,8 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           setConversations(fetchedConversations);
           setError(null);
           setIsLoading(false);
+          // Reset retry counter on success
+          retryCountRef.current = 0;
         }
         
         fetchInProgressRef.current = false;
@@ -137,6 +144,9 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           error: fetchError.message,
           stack: fetchError.stack
         });
+        
+        // Increment retry counter
+        retryCountRef.current += 1;
         
         if (isMountedRef.current) {
           setError("Erreur lors du chargement des conversations");
@@ -195,6 +205,21 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       fetchConversations();
     }
   }, [currentProfileId, fetchConversations, logger]);
+
+  // Add an automatic retry mechanism for initial load failures
+  useEffect(() => {
+    if (error && currentProfileId && retryCountRef.current < 3) {
+      const retryTimer = setTimeout(() => {
+        logger.info("Automatically retrying conversation fetch after error", {
+          profileId: currentProfileId,
+          retryCount: retryCountRef.current
+        });
+        fetchConversations(true);
+      }, 3000 * (retryCountRef.current + 1)); // Exponential backoff
+      
+      return () => clearTimeout(retryTimer);
+    }
+  }, [error, currentProfileId, fetchConversations, logger]);
 
   return {
     conversations,
