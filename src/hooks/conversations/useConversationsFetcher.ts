@@ -32,8 +32,8 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     }
   }, [currentProfileId]);
 
-  // Update fetchConversations to explicitly define the useCache parameter
-  const fetchConversations = useCallback(async (useCache: boolean = true) => {
+  // Update fetchConversations to make useCache an optional parameter
+  const fetchConversations = useCallback(async (useCache = true) => {
     if (!currentProfileId) {
       logger.warn("No profile ID provided, cannot fetch conversations", { reason: "missing_profile_id" });
       setError("Vous devez être connecté pour voir vos conversations");
