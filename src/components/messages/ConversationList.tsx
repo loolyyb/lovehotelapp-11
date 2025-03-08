@@ -47,17 +47,18 @@ export function ConversationList({
 
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
-  // Log profile status - helpful for debugging
+  // Log state changes - helpful for debugging
   useEffect(() => {
-    logger.info("Rendering conversation list", { 
+    logger.info("ConversationList state update", { 
       conversationsCount: conversations.length,
-      currentUserProfileId: currentProfileId,
+      conversationIds: conversations.map(c => c.id),
+      currentProfileId,
       authChecked,
       hasAuthError,
       isLoading,
       isRefreshing
     });
-  }, [conversations.length, currentProfileId, authChecked, hasAuthError, isLoading, isRefreshing, logger]);
+  }, [conversations, currentProfileId, authChecked, hasAuthError, isLoading, isRefreshing, logger]);
 
   // Memoized handlers to prevent recreating functions on each render
   const handleLogin = useCallback(() => {

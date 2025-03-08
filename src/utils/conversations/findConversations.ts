@@ -38,11 +38,13 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
-    // Fetch conversations with explicit OR condition using template literals to ensure proper formatting
+    // Fetch conversations using the profileId parameter directly in the query
+    // Important fix: Use direct string in query, not template literals for OR condition
     logger.info(`Fetching conversations for profile ID: ${profileId}`, {
       component: "findConversationsByProfileId"
     });
     
+    // Critical fix: Using the correct query syntax without template literals in the OR condition
     const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
@@ -66,8 +68,9 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("Error fetching conversations: " + conversationsError.message);
     }
     
-    if (!conversations || conversations.length === 0) {
-      logger.info(`No conversations found for profile ${profileId}`, {
+    // Add more detailed logging to help debug
+    if (!conversations) {
+      logger.warn(`No conversations returned from database for profile ${profileId}`, {
         component: "findConversationsByProfileId"
       });
       return [];

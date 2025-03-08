@@ -1,5 +1,5 @@
 
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import { ConversationItem } from "./ConversationItem";
 import { useLogger } from "@/hooks/useLogger";
 
@@ -19,12 +19,17 @@ export const ConversationItems = memo(function ConversationItems({
 }: ConversationItemsProps) {
   const logger = useLogger("ConversationItems");
   
-  logger.info("Rendering conversation items", { 
-    count: conversations.length, 
-    selectedId: selectedConversationId 
-  });
+  // Log conversation details on render
+  useEffect(() => {
+    logger.info("Rendering conversation items with data", { 
+      count: conversations.length, 
+      selectedId: selectedConversationId,
+      conversationIds: conversations.map(c => c.id)
+    });
+  }, [conversations, selectedConversationId, logger]);
   
   if (!conversations || conversations.length === 0) {
+    logger.info("No conversations to render");
     return null;
   }
   
