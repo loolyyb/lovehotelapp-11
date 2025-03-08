@@ -21,6 +21,7 @@ export function useStableConversations() {
   const periodicRefreshRef = useRef<NodeJS.Timeout | null>(null);
   const initialFetchAttemptedRef = useRef(false);
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initialLoadFailedRef = useRef(false);
   
   // Use the centralized profile state
   const {
@@ -67,6 +68,7 @@ export function useStableConversations() {
     }
     
     // Set a timeout to ensure loading state doesn't persist indefinitely
+    // Reduced timeout from 10s to 8s
     loadTimeoutRef.current = setTimeout(() => {
       if (isVisiblyLoading && profileInitialized) {
         logger.warn("Loading state timeout reached - forcing completion", {
@@ -75,15 +77,26 @@ export function useStableConversations() {
         });
         setIsVisiblyLoading(false);
         initialLoadCompleteRef.current = true;
+        
+        // If we still don't have conversations, try one more time with cache cleared
+        if (pendingConversations.length === 0 && currentProfileId && !initialLoadFailedRef.current) {
+          logger.warn("No conversations loaded after timeout, attempting forced refresh", {
+            profileId: currentProfileId
+          });
+          initialLoadFailedRef.current = true;
+          // Clear cache and try again
+          clearCache();
+          fetchConversations(true);
+        }
       }
-    }, 10000); // 10 second timeout
+    }, 8000); // 8 second timeout (reduced from 10s)
     
     return () => {
       if (loadTimeoutRef.current) {
         clearTimeout(loadTimeoutRef.current);
       }
     };
-  }, [isVisiblyLoading, profileInitialized, currentProfileId, pendingConversations.length, logger]);
+  }, [isVisiblyLoading, profileInitialized, currentProfileId, pendingConversations.length, logger, clearCache, fetchConversations]);
 
   // Update loading state for better UX
   useEffect(() => {
@@ -267,6 +280,7 @@ export function useStableConversations() {
       if (!useCache) {
         // Clear the cache if we're doing a forced refresh
         clearCache();
+        logger.info("Cache cleared for forced refresh");
       }
       
       // Call fetchConversations to refresh data

@@ -109,7 +109,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         retryCount: retryCountRef.current
       });
       
-      // Get the current authenticated user
+      // Get the current authenticated user - Double check authentication
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) {
         logger.error("Error getting authenticated user", { error: userError });
@@ -119,6 +119,29 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       if (!user) {
         logger.error("No authenticated user found");
         throw new Error("Vous devez être connecté pour voir vos conversations");
+      }
+      
+      // Direct query as a fallback to help diagnose RLS issues
+      logger.info("Performing direct query to verify RLS permissions", {
+        profileId: currentProfileId 
+      });
+      
+      const { data: directQueryData, error: directQueryError } = await supabase
+        .from('conversations')
+        .select('id')
+        .or(`user1_id.eq.${currentProfileId},user2_id.eq.${currentProfileId}`)
+        .eq('status', 'active');
+      
+      if (directQueryError) {
+        logger.error("Direct query error - possible RLS configuration issue", {
+          error: directQueryError,
+          profileId: currentProfileId
+        });
+      } else {
+        logger.info("Direct query successful", {
+          count: directQueryData?.length || 0,
+          profileId: currentProfileId
+        });
       }
       
       // Using the findConversationsByProfileId utility with better error handling
@@ -182,7 +205,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       fetchInProgressRef.current = false;
       return [];
     }
-  }, [currentProfileId, getCachedConversations, cacheConversations, isCacheValid, logger, conversations.length]);
+  }, [currentProfileId, getCachedConversations, cacheConversations, isCacheValid, logger, toast, conversations.length]);
 
   // Load more conversations
   const loadMoreConversations = useCallback(async () => {

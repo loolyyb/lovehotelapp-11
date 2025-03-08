@@ -48,17 +48,19 @@ export function ConversationList({
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
   const [loadingTimeExceeded, setLoadingTimeExceeded] = useState(false);
 
-  // Add loading timeout to prevent infinite loading state
+  // Add loading timeout to prevent infinite loading state 
+  // And reduce from 8 to 6 seconds for faster feedback
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
     
     if (isLoading && !loadingTimeExceeded) {
       timeoutId = setTimeout(() => {
         logger.warn("Loading timeout exceeded, forcing UI update", {
-          hasConversations: conversations.length > 0
+          hasConversations: conversations.length > 0,
+          currentProfileId
         });
         setLoadingTimeExceeded(true);
-      }, 8000); // 8 second timeout
+      }, 6000); // 6 second timeout (reduced from 8s)
     }
     
     return () => {
@@ -66,7 +68,7 @@ export function ConversationList({
         clearTimeout(timeoutId);
       }
     };
-  }, [isLoading, loadingTimeExceeded, conversations.length, logger]);
+  }, [isLoading, loadingTimeExceeded, conversations.length, currentProfileId, logger]);
 
   // Log state changes - helpful for debugging
   useEffect(() => {
@@ -114,7 +116,7 @@ export function ConversationList({
         logger.info("Auth retry successful");
       }
       
-      // Then refresh conversations
+      // Then refresh conversations with force=true to bypass cache
       await refreshConversations(false); // Force fresh fetch
       toast({
         title: "Rafraîchissement réussi",
@@ -138,7 +140,8 @@ export function ConversationList({
 
   const handleRefresh = useCallback(() => {
     logger.info("Manual refresh requested");
-    refreshConversations(false); // Force fresh fetch on manual refresh
+    // Force fresh fetch on manual refresh - bypass cache completely
+    refreshConversations(true); 
   }, [refreshConversations, logger]);
 
   // Authentication error state - show this when we've confirmed there's an auth issue

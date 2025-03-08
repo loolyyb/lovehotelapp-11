@@ -39,7 +39,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
-    // Use parameter binding instead of string interpolation for better security and RLS handling
+    // FIXED: Use proper parameterized query instead of string interpolation
     const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
       .select(`
