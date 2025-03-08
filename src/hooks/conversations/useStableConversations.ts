@@ -84,7 +84,7 @@ export function useStableConversations() {
       }
       
       // Fetch fresh conversations
-      fetchConversations();
+      fetchConversations(true);
     }
   }, [currentProfileId, profileInitialized, fetchConversations, getCachedConversations, logger]);
 
@@ -152,8 +152,8 @@ export function useStableConversations() {
         clearCache();
       }
       
-      // Fix here: Call fetchConversations without arguments if it doesn't accept any
-      await fetchConversations();
+      // Explicitly passing useCache parameter to fetchConversations
+      await fetchConversations(useCache);
     } catch (err) {
       logger.error("Error refreshing conversations", { error: err });
     } finally {
