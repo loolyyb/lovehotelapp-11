@@ -43,7 +43,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
       component: "findConversationsByProfileId"
     });
     
-    // CRITICAL FIX: Use proper string filter format instead of array-based filter
+    // CRITICAL FIX: Use proper string format for OR filter
     const { data: conversations, error: conversationsError } = await supabase
       .from('conversations')
       .select(`

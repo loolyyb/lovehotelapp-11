@@ -60,6 +60,15 @@ export function ConversationList({
     });
   }, [conversations, currentProfileId, authChecked, hasAuthError, isLoading, isRefreshing, logger]);
 
+  // Additional logging for loading state
+  useEffect(() => {
+    logger.info("Showing loading state", { 
+      authChecked, 
+      isLoading, 
+      hasProfile: !!currentProfileId 
+    });
+  }, [isLoading, authChecked, currentProfileId, logger]);
+
   // Memoized handlers to prevent recreating functions on each render
   const handleLogin = useCallback(() => {
     logger.info("Redirecting to login page");

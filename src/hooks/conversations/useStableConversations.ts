@@ -20,6 +20,7 @@ export function useStableConversations() {
   const lastDisplayUpdateRef = useRef(Date.now());
   const periodicRefreshRef = useRef<NodeJS.Timeout | null>(null);
   const initialFetchAttemptedRef = useRef(false);
+  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Use the centralized profile state
   const {
@@ -58,6 +59,32 @@ export function useStableConversations() {
     });
   }, [currentProfileId, profileInitialized, profileLoading, logger, pendingConversations.length]);
 
+  // Ensure loading state clears after a timeout to prevent infinite loading
+  useEffect(() => {
+    // Clear any existing timeout
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+    }
+    
+    // Set a timeout to ensure loading state doesn't persist indefinitely
+    loadTimeoutRef.current = setTimeout(() => {
+      if (isVisiblyLoading && profileInitialized) {
+        logger.warn("Loading state timeout reached - forcing completion", {
+          profileId: currentProfileId,
+          hasConversations: pendingConversations.length > 0
+        });
+        setIsVisiblyLoading(false);
+        initialLoadCompleteRef.current = true;
+      }
+    }, 10000); // 10 second timeout
+    
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+    };
+  }, [isVisiblyLoading, profileInitialized, currentProfileId, pendingConversations.length, logger]);
+
   // Update loading state for better UX
   useEffect(() => {
     // Start with loading state and clear it when:
@@ -69,7 +96,12 @@ export function useStableConversations() {
       displayedConversations.length === 0;
     
     setIsVisiblyLoading(shouldBeLoading);
-  }, [conversationsLoading, profileLoading, displayedConversations.length]);
+    
+    // If loading takes too long, ensure we eventually display any results or an empty state
+    if (!shouldBeLoading && !initialLoadCompleteRef.current && profileInitialized) {
+      initialLoadCompleteRef.current = true;
+    }
+  }, [conversationsLoading, profileLoading, displayedConversations.length, profileInitialized]);
 
   // Set refreshing state for background updates
   useEffect(() => {
@@ -133,11 +165,12 @@ export function useStableConversations() {
 
   // Update displayed conversations when pending conversations are ready
   useEffect(() => {
-    if (pendingConversations.length === 0 && !initialLoadCompleteRef.current && currentProfileId) {
+    if (pendingConversations.length === 0 && !initialLoadCompleteRef.current && currentProfileId && !conversationsLoading) {
       logger.info("No conversations found, marking initial load as complete");
       // Mark initial load as complete even if there are no conversations
       // This helps with showing the empty state instead of perpetual loading
       initialLoadCompleteRef.current = true;
+      setIsVisiblyLoading(false);
       return;
     }
     
@@ -153,6 +186,7 @@ export function useStableConversations() {
         setTimeout(() => {
           setDisplayedConversations(pendingConversations);
           initialLoadCompleteRef.current = true;
+          setIsVisiblyLoading(false);
           lastDisplayUpdateRef.current = Date.now();
           updatePendingRef.current = false;
           logger.info("Updated displayed conversations (delayed)", { count: pendingConversations.length });
@@ -164,6 +198,7 @@ export function useStableConversations() {
     // Update displayed conversations and cache them
     setDisplayedConversations(pendingConversations);
     initialLoadCompleteRef.current = true;
+    setIsVisiblyLoading(false);
     lastDisplayUpdateRef.current = now;
     
     // Cache the conversations if they're valid
@@ -171,7 +206,7 @@ export function useStableConversations() {
       cacheConversations(currentProfileId, pendingConversations);
       logger.info("Updated displayed conversations and cache", { count: pendingConversations.length });
     }
-  }, [pendingConversations, currentProfileId, cacheConversations, logger]);
+  }, [pendingConversations, currentProfileId, cacheConversations, logger, conversationsLoading]);
 
   // Set up periodic refresh with cleanup
   useEffect(() => {

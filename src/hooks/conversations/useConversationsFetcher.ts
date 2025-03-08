@@ -26,6 +26,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   const lastProfileIdRef = useRef<string | null>(null);
   const fetchAttemptedRef = useRef(false);
   const retryCountRef = useRef(0);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const PAGE_SIZE = 10;
 
@@ -34,6 +35,9 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
     };
   }, []);
   
@@ -202,14 +206,18 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   useEffect(() => {
     if (currentProfileId && !fetchAttemptedRef.current) {
       logger.info("Initial fetch triggered by profile ID change or mount", { profileId: currentProfileId });
-      fetchConversations();
+      fetchConversations(true); // Force fresh fetch for initial load
     }
   }, [currentProfileId, fetchConversations, logger]);
 
   // Add an automatic retry mechanism for initial load failures
   useEffect(() => {
     if (error && currentProfileId && retryCountRef.current < 3) {
-      const retryTimer = setTimeout(() => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+      
+      fetchTimeoutRef.current = setTimeout(() => {
         logger.info("Automatically retrying conversation fetch after error", {
           profileId: currentProfileId,
           retryCount: retryCountRef.current
@@ -217,7 +225,11 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         fetchConversations(true);
       }, 3000 * (retryCountRef.current + 1)); // Exponential backoff
       
-      return () => clearTimeout(retryTimer);
+      return () => {
+        if (fetchTimeoutRef.current) {
+          clearTimeout(fetchTimeoutRef.current);
+        }
+      };
     }
   }, [error, currentProfileId, fetchConversations, logger]);
 
