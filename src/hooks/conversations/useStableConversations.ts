@@ -181,7 +181,7 @@ export function useStableConversations() {
         clearCache();
       }
       
-      // Call fetchConversations with the useCache parameter
+      // Call fetchConversations with no arguments, since the function doesn't take any
       await fetchConversations();
     } catch (err) {
       logger.error("Error refreshing conversations", { error: err });

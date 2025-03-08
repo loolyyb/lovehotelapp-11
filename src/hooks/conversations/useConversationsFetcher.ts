@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
@@ -33,7 +32,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   }, [currentProfileId]);
 
   // Memoize the fetchConversations function to prevent recreating it on every render
-  const fetchConversations = useCallback(async (useCache = true) => {
+  const fetchConversations = useCallback(async () => {
     if (!currentProfileId) {
       logger.warn("No profile ID provided, cannot fetch conversations", { reason: "missing_profile_id" });
       setError("Vous devez être connecté pour voir vos conversations");
@@ -41,7 +40,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
     }
 
     // Try to get from cache first if cache is requested
-    if (useCache && isCacheValid(currentProfileId)) {
+    if (isCacheValid(currentProfileId)) {
       const cachedData = getCachedConversations(currentProfileId);
       if (cachedData) {
         logger.info("Using cached conversations", { 
