@@ -136,7 +136,7 @@ export const useConversations = () => {
         }
       }
 
-      // Fix the call to fetchConversations by explicitly passing the useCache parameter
+      // Explicitly pass the useCache parameter to fetchConversations
       const fetchedConversations = await fetchConversations(useCache);
       
       if (!isMountedRef.current) {
@@ -230,8 +230,7 @@ export const useConversations = () => {
         if (profile) {
           logger.info("Profile found during initialization, fetching conversations", { profileId: profile.id });
           setCurrentProfileId(profile.id);
-          // Fix: Always explicitly pass a useCache parameter
-          await fetchConversations(false);
+          await fetchConversations(true); // Explicitly pass the useCache parameter
         } else {
           logger.warn("No profile found for authenticated user", { userId: session.user.id });
         }
@@ -257,8 +256,7 @@ export const useConversations = () => {
     
     debounceTimerRef.current = window.setTimeout(() => {
       if (!fetchingRef.current && isMountedRef.current) {
-        // Fix: Pass the correct useCache parameter (false) to refresh data
-        fetchConversationsWithMessages(false);
+        fetchConversationsWithMessages(false); // Pass false to force a refresh
       }
       debounceTimerRef.current = null;
     }, 800);
@@ -299,8 +297,7 @@ export const useConversations = () => {
     conversations, 
     isLoading: profileLoading || conversationsLoading,
     error: error || profileError || conversationsError,
-    // Fix: Make sure refetch is calling fetchConversations with the required parameter
-    refetch: () => fetchConversations(false),
+    refetch: () => fetchConversations(false), // Explicitly pass the useCache parameter
     currentProfileId,
     loadMoreConversations,
     hasMoreConversations: hasMore
