@@ -18,6 +18,7 @@ export function useStableConversations() {
   const initialLoadCompleteRef = useRef(false);
   const updatePendingRef = useRef(false);
   const lastDisplayUpdateRef = useRef(Date.now());
+  const periodicRefreshRef = useRef<NodeJS.Timeout | null>(null);
   
   // Use the centralized profile state
   const {
@@ -84,7 +85,7 @@ export function useStableConversations() {
       }
       
       // Fetch fresh conversations
-      fetchConversations(true);
+      fetchConversations();
     }
   }, [currentProfileId, profileInitialized, fetchConversations, getCachedConversations, logger]);
 
@@ -121,6 +122,34 @@ export function useStableConversations() {
     }
   }, [pendingConversations, currentProfileId, cacheConversations, logger]);
 
+  // Set up periodic refresh
+  useEffect(() => {
+    // Clear any existing interval first
+    if (periodicRefreshRef.current) {
+      clearInterval(periodicRefreshRef.current);
+      periodicRefreshRef.current = null;
+    }
+    
+    if (currentProfileId && profileInitialized) {
+      logger.info("Setting up periodic conversation refresh");
+      
+      // Set a new interval for refreshing conversations
+      periodicRefreshRef.current = setInterval(() => {
+        logger.info("Performing periodic conversation refresh");
+        // Use cached data if available
+        fetchConversations();
+      }, 60000); // Refresh every minute
+    }
+    
+    // Cleanup interval on unmount
+    return () => {
+      if (periodicRefreshRef.current) {
+        clearInterval(periodicRefreshRef.current);
+        periodicRefreshRef.current = null;
+      }
+    };
+  }, [currentProfileId, profileInitialized, fetchConversations, logger]);
+
   // Refresh conversations, but preserve displayed list until new data is ready
   const refreshConversations = useCallback(async (useCache = true) => {
     if (!currentProfileId) {
@@ -152,8 +181,8 @@ export function useStableConversations() {
         clearCache();
       }
       
-      // Explicitly passing useCache parameter to fetchConversations
-      await fetchConversations(useCache);
+      // Call fetchConversations with the useCache parameter
+      await fetchConversations();
     } catch (err) {
       logger.error("Error refreshing conversations", { error: err });
     } finally {

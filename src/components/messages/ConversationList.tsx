@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -9,10 +8,9 @@ import { EmptyState } from "./EmptyState";
 import { AlertTriangle, RefreshCw, UserPlus, UserX } from "lucide-react";
 import { useLogger } from "@/hooks/useLogger";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { getProfileByAuthId } from "@/utils/conversationUtils";
-import { useProfileState } from "@/hooks/useProfileState";
+import { useConversationAuth } from "@/hooks/conversations/useConversationAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_AVATAR_URL = "https://lovehotelapp.com/wp-content/uploads/2025/02/avatar-love-hotel-v2.jpg";
 
@@ -27,13 +25,16 @@ export function ConversationList({
   selectedConversationId,
   onNetworkError
 }: ConversationListProps) {
-  const [isRetrying, setIsRetrying] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [hasAuthError, setHasAuthError] = useState(false);
   const logger = useLogger("ConversationList");
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { profileId, isInitialized, refreshProfile } = useProfileState();
+  
+  const {
+    authChecked,
+    hasAuthError,
+    isRetrying: isAuthRetrying,
+    retryAuth
+  } = useConversationAuth();
   
   const {
     conversations,
@@ -44,96 +45,34 @@ export function ConversationList({
     currentProfileId
   } = useStableConversations();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        logger.info("Checking authentication status");
-        
-        // Check if we already have profile from centralized state
-        if (isInitialized && profileId) {
-          logger.info("Using profile from centralized state", { profileId });
-          setHasAuthError(false);
-          setAuthChecked(true);
-          return;
-        }
-        
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          logger.error("Session check error", { error });
-          setHasAuthError(true);
-          toast({
-            variant: "destructive",
-            title: "Erreur d'authentification",
-            description: "Votre session a expiré. Veuillez vous reconnecter."
-          });
-          return;
-        }
-        
-        if (!session) {
-          logger.warn("No active session found");
-          setHasAuthError(true);
-          toast({
-            variant: "destructive",
-            title: "Non connecté",
-            description: "Veuillez vous connecter pour accéder à vos messages."
-          });
-          return;
-        }
-        
-        // Rest of the authentication logic is handled by useProfileState
-        setHasAuthError(false);
-      } catch (e) {
-        logger.error("Error checking auth status", { error: e });
-        setHasAuthError(true);
-      } finally {
-        setAuthChecked(true);
-      }
-    };
-    
-    checkAuth();
-  }, [logger, toast, profileId, isInitialized]);
+  const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = useCallback(() => {
     logger.info("Redirecting to login page");
     navigate("/login", { state: { returnUrl: "/messages" } });
-  };
+  }, [navigate, logger]);
 
   const handleRetry = useCallback(async () => {
     logger.info("Manually retrying conversation fetch");
-    setIsRetrying(true);
+    setIsRefreshingManually(true);
     
     try {
-      // Refresh profile from centralized state
-      await refreshProfile();
-      
-      // If we have a profile, refresh conversations
-      if (profileId) {
-        setHasAuthError(false);
-        await refreshConversations(false); // Force fresh fetch
-        toast({
-          title: "Rafraîchissement réussi",
-          description: "Vos conversations ont été mises à jour."
-        });
-      } else {
-        // Still no profile after refresh
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          toast({
-            variant: "destructive",
-            title: "Non connecté",
-            description: "Vous n'êtes pas connecté. Veuillez vous reconnecter."
-          });
-          setHasAuthError(true);
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Erreur de profil",
-            description: "Impossible de récupérer votre profil. Veuillez réessayer."
-          });
+      // First try to fix auth if needed
+      if (hasAuthError) {
+        const authSuccess = await retryAuth();
+        if (!authSuccess) {
+          setIsRefreshingManually(false);
+          return;
         }
       }
-    } catch (error) {
+      
+      // Then refresh conversations
+      await refreshConversations(false); // Force fresh fetch
+      toast({
+        title: "Rafraîchissement réussi",
+        description: "Vos conversations ont été mises à jour."
+      });
+    } catch (error: any) {
       logger.error("Error in retry", { error });
       toast({
         variant: "destructive",
@@ -141,20 +80,13 @@ export function ConversationList({
         description: "Problème de connexion au serveur. Veuillez réessayer plus tard."
       });
     } finally {
-      setIsRetrying(false);
+      setIsRefreshingManually(false);
     }
-  }, [refreshConversations, refreshProfile, profileId, logger, toast]);
+  }, [refreshConversations, retryAuth, hasAuthError, logger, toast]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!hasAuthError && authChecked && profileId) {
-        logger.info("Periodic conversation refresh");
-        refreshConversations(true); // Use cache if available
-      }
-    }, 60000);
-    
-    return () => clearInterval(interval);
-  }, [refreshConversations, logger, hasAuthError, authChecked, profileId]);
+  const handleRefresh = useCallback(() => {
+    refreshConversations(false); // Force fresh fetch on manual refresh
+  }, [refreshConversations]);
 
   if (hasAuthError) {
     return (
@@ -173,9 +105,9 @@ export function ConversationList({
             onClick={handleRetry} 
             variant="outline"
             className="px-4 py-2 text-sm font-medium text-[#f3ebad] border-[#f3ebad]/30 rounded-md hover:bg-[#f3ebad]/10 transition-colors"
-            disabled={isRetrying}
+            disabled={isAuthRetrying || isRefreshingManually}
           >
-            {isRetrying ? (
+            {(isAuthRetrying || isRefreshingManually) ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                 Vérification...
@@ -202,9 +134,9 @@ export function ConversationList({
         <Button 
           onClick={handleRetry} 
           className="px-4 py-2 text-sm font-medium text-white bg-rose rounded-md hover:bg-rose/90 transition-colors"
-          disabled={isRetrying}
+          disabled={isRefreshingManually}
         >
-          {isRetrying ? (
+          {isRefreshingManually ? (
             <>
               <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
               Chargement...
@@ -237,9 +169,9 @@ export function ConversationList({
             onClick={handleRetry} 
             variant="outline"
             className="border-[#f3ebad]/30 text-[#f3ebad] hover:bg-[#f3ebad]/10"
-            disabled={isRetrying}
+            disabled={isRefreshingManually}
           >
-            {isRetrying ? (
+            {isRefreshingManually ? (
               <>
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                 Actualisation...
@@ -268,8 +200,8 @@ export function ConversationList({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => refreshConversations(false)}
-              disabled={isRetrying || isRefreshing}
+              onClick={handleRefresh}
+              disabled={isRefreshingManually || isRefreshing}
               className="text-[#f3ebad]/70 hover:text-[#f3ebad] hover:bg-[#f3ebad]/5"
             >
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />

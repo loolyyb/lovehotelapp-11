@@ -26,13 +26,13 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   useEffect(() => {
     if (currentProfileId) {
       logger.info("Profile ID changed, fetching conversations", { profileId: currentProfileId });
-      fetchConversations(); // No parameters here, using default
+      fetchConversations();
     } else {
       logger.warn("No profile ID available, cannot fetch conversations");
     }
   }, [currentProfileId]);
 
-  // Update fetchConversations to make useCache an optional parameter
+  // Memoize the fetchConversations function to prevent recreating it on every render
   const fetchConversations = useCallback(async (useCache = true) => {
     if (!currentProfileId) {
       logger.warn("No profile ID provided, cannot fetch conversations", { reason: "missing_profile_id" });
