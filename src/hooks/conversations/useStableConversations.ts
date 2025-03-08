@@ -73,20 +73,23 @@ export function useStableConversations() {
 
   // Load conversations when profile is ready - with proper dependency array
   useEffect(() => {
-    if (currentProfileId && profileInitialized && !initialLoadCompleteRef.current) {
-      logger.info("Profile initialized, fetching conversations", { profileId: currentProfileId });
-      
-      // Try to get cached conversations to display immediately
-      const cachedConversations = getCachedConversations(currentProfileId);
-      if (cachedConversations && cachedConversations.length > 0) {
-        logger.info("Displaying cached conversations", { count: cachedConversations.length });
-        setDisplayedConversations(cachedConversations);
-        initialLoadCompleteRef.current = true;
-      }
-      
-      // Fetch fresh conversations
-      fetchConversations();
+    if (!currentProfileId || !profileInitialized || initialLoadCompleteRef.current) {
+      return; // Exit early if conditions not met or already loaded
     }
+    
+    logger.info("Profile initialized, fetching conversations", { profileId: currentProfileId });
+    
+    // Try to get cached conversations to display immediately
+    const cachedConversations = getCachedConversations(currentProfileId);
+    if (cachedConversations && cachedConversations.length > 0) {
+      logger.info("Displaying cached conversations", { count: cachedConversations.length });
+      setDisplayedConversations(cachedConversations);
+      initialLoadCompleteRef.current = true;
+    }
+    
+    // Fetch fresh conversations
+    fetchConversations();
+    
   }, [currentProfileId, profileInitialized, fetchConversations, getCachedConversations, logger]);
 
   // Update displayed conversations when pending conversations are ready
@@ -130,16 +133,17 @@ export function useStableConversations() {
       periodicRefreshRef.current = null;
     }
     
-    if (currentProfileId && profileInitialized) {
-      logger.info("Setting up periodic conversation refresh");
-      
-      // Set a new interval for refreshing conversations
-      periodicRefreshRef.current = setInterval(() => {
-        logger.info("Performing periodic conversation refresh");
-        // Use cached data if available
-        fetchConversations();
-      }, 60000); // Refresh every minute
+    if (!currentProfileId || !profileInitialized) {
+      return; // Exit early if conditions not met
     }
+    
+    logger.info("Setting up periodic conversation refresh");
+    
+    // Set a new interval for refreshing conversations
+    periodicRefreshRef.current = setInterval(() => {
+      logger.info("Performing periodic conversation refresh");
+      fetchConversations();
+    }, 60000); // Refresh every minute
     
     // Cleanup interval on unmount
     return () => {

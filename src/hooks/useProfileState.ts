@@ -78,6 +78,9 @@ export function useProfileState() {
 
   // Fetch fresh profile from Supabase
   const fetchProfile = useCallback(async (forceRefresh = false) => {
+    // Don't fetch if we're already loading
+    if (isLoading && !forceRefresh) return null;
+    
     setIsLoading(true);
     setError(null);
     
@@ -172,10 +175,11 @@ export function useProfileState() {
       
       return null;
     }
-  }, [logger, toast, getCachedProfile, cacheProfile]);
+  }, [getCachedProfile, cacheProfile, logger, toast, isLoading]);
 
-  // Initial profile loading
+  // Initial profile loading - run only once on mount
   useEffect(() => {
+    // First call to fetchProfile
     fetchProfile();
     
     // Listen for auth state changes
@@ -187,6 +191,7 @@ export function useProfileState() {
         setProfileId(null);
         clearProfileCache();
       } else if (event === 'SIGNED_IN') {
+        // Force refresh on sign in
         fetchProfile(true);
       }
     });

@@ -27,13 +27,14 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   
   // Auto-fetch when profile ID changes
   useEffect(() => {
-    if (currentProfileId) {
-      logger.info("Profile ID changed, fetching conversations", { profileId: currentProfileId });
-      fetchConversations();
-    } else {
+    if (!currentProfileId) {
       logger.warn("No profile ID available, cannot fetch conversations");
+      return;
     }
-  }, [currentProfileId]);
+    
+    logger.info("Profile ID changed, fetching conversations", { profileId: currentProfileId });
+    fetchConversations();
+  }, [currentProfileId]); // Only include currentProfileId to prevent infinite loops
 
   // Memoize the fetchConversations function to prevent recreating it on every render
   const fetchConversations = useCallback(async () => {
@@ -133,7 +134,6 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         cacheConversations(currentProfileId, fetchedConversations);
         
         setConversations(fetchedConversations);
-        setIsLoading(false);
         return fetchedConversations;
       } catch (fetchError: any) {
         logger.error("Error fetching conversations from utility", { 
@@ -148,7 +148,6 @@ export function useConversationsFetcher(currentProfileId: string | null) {
         stack: error.stack 
       });
       setError(error.message || "Erreur lors du chargement des conversations");
-      setIsLoading(false);
       return [];
     } finally {
       setIsLoading(false);
@@ -171,9 +170,9 @@ export function useConversationsFetcher(currentProfileId: string | null) {
       // to support pagination
       
       setPage(nextPage);
-      setIsLoading(false);
     } catch (error: any) {
       logger.error("Error loading more conversations", { error: error.message });
+    } finally {
       setIsLoading(false);
     }
   }, [currentProfileId, page, hasMore, isLoading, logger]);
