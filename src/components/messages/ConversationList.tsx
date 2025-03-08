@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,7 +28,6 @@ export function ConversationList({
   onNetworkError
 }: ConversationListProps) {
   const [isRetrying, setIsRetrying] = useState(false);
-  const [isCreatingTestConversation, setIsCreatingTestConversation] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [hasAuthError, setHasAuthError] = useState(false);
   const logger = useLogger("ConversationList");
@@ -101,122 +101,6 @@ export function ConversationList({
   const handleLogin = () => {
     logger.info("Redirecting to login page");
     navigate("/login", { state: { returnUrl: "/messages" } });
-  };
-
-  const handleCreateTestConversation = async () => {
-    if (!currentProfileId) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté pour créer une conversation."
-      });
-      return;
-    }
-    
-    setIsCreatingTestConversation(true);
-    
-    try {
-      logger.info("Creating a test conversation", { profileId: currentProfileId });
-      
-      const { data: otherProfiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .neq('id', currentProfileId)
-        .limit(1);
-        
-      if (profilesError) {
-        throw profilesError;
-      }
-      
-      if (!otherProfiles || otherProfiles.length === 0) {
-        logger.warn("No other users found to create conversation with");
-        
-        const { data: newProfile, error: newProfileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: crypto.randomUUID(),
-            user_id: crypto.randomUUID(),
-            full_name: 'Support',
-            username: 'support',
-            role: 'user'
-          })
-          .select('id')
-          .single();
-          
-        if (newProfileError) {
-          throw newProfileError;
-        }
-        
-        const { data: conversation, error: convError } = await supabase
-          .from('conversations')
-          .insert({
-            user1_id: currentProfileId,
-            user2_id: newProfile.id,
-            status: 'active'
-          })
-          .select()
-          .single();
-          
-        if (convError) {
-          throw convError;
-        }
-        
-        await supabase
-          .from('messages')
-          .insert({
-            conversation_id: conversation.id,
-            sender_id: newProfile.id,
-            content: "Bonjour ! Je suis le support. Comment puis-je vous aider ?"
-          });
-          
-        toast({
-          title: "Conversation créée",
-          description: "Une conversation de test a été créée avec l'équipe de support."
-        });
-      } else {
-        const otherUser = otherProfiles[0];
-        logger.info("Creating conversation with user", { userId: otherUser.id });
-        
-        const { data: conversation, error: convError } = await supabase
-          .from('conversations')
-          .insert({
-            user1_id: currentProfileId,
-            user2_id: otherUser.id,
-            status: 'active'
-          })
-          .select()
-          .single();
-          
-        if (convError) {
-          throw convError;
-        }
-        
-        await supabase
-          .from('messages')
-          .insert({
-            conversation_id: conversation.id,
-            sender_id: otherUser.id,
-            content: "Bonjour ! Comment puis-je vous aider ?"
-          });
-          
-        toast({
-          title: "Conversation créée",
-          description: `Une conversation de test a été créée avec ${otherUser.username || 'un autre utilisateur'}.`
-        });
-      }
-      
-      await refreshConversations(false);
-      
-    } catch (error) {
-      logger.error("Error creating test conversation", { error });
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de créer une conversation de test. Veuillez réessayer."
-      });
-    } finally {
-      setIsCreatingTestConversation(false);
-    }
   };
 
   const handleRetry = useCallback(async () => {
@@ -371,23 +255,9 @@ export function ConversationList({
         </div>
         <h3 className="text-lg font-medium text-[#f3ebad]">Aucune conversation</h3>
         <p className="text-sm text-[#f3ebad]/70 max-w-sm">
-          Vous n'avez pas encore de conversations. Explorez les profils pour commencer une discussion ou créez une conversation de test.
+          Vous n'avez pas encore de conversations. Explorez les profils pour commencer une discussion.
         </p>
         <div className="flex space-x-3">
-          <Button 
-            onClick={handleCreateTestConversation}
-            className="bg-[#f3ebad] text-burgundy hover:bg-[#f3ebad]/90"
-            disabled={isCreatingTestConversation}
-          >
-            {isCreatingTestConversation ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Création...
-              </>
-            ) : (
-              "Créer une conversation test"
-            )}
-          </Button>
           <Button 
             onClick={handleRetry} 
             variant="outline"
