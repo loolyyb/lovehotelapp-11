@@ -1,5 +1,5 @@
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLogger } from "@/hooks/useLogger";
 import { useMessageRetrieval } from "@/hooks/messages/useMessageRetrieval";
@@ -10,12 +10,17 @@ import { useMessageHandlers } from "@/hooks/useMessageHandlers";
 import { useMessageViewState } from "@/hooks/messages/useMessageViewState";
 import { useMessageInitializer } from "@/hooks/messages/useMessageInitializer";
 import { useMessagesLoader } from "@/hooks/messages/useMessagesLoader";
+import { useProfileState } from "@/hooks/useProfileState";
 
 /**
  * Hook to prepare all props needed for the MessageView component
  */
 export function useMessageViewProps(conversationId: string) {
   const { toast } = useToast();
+  const logger = useLogger("useMessageViewProps");
+  
+  // Connect to centralized profile state
+  const { profileId, profile, isLoading: profileLoading, error: profileError, isInitialized: profileStateInitialized } = useProfileState();
   
   // Use the message view state hook to manage state
   const {
@@ -37,8 +42,18 @@ export function useMessageViewProps(conversationId: string) {
     setIsFetchingInitialMessages,
     fetchingRef,
     firstLoad,
-    logger
+    logger: stateLogger
   } = useMessageViewState();
+
+  // Synchronize with centralized profile state
+  useEffect(() => {
+    if (profileId && profileStateInitialized) {
+      logger.info("Setting profile ID from central state", { profileId });
+      setCurrentProfileId(profileId);
+      setProfileInitialized(true);
+      setIsAuthChecked(true);
+    }
+  }, [profileId, profileStateInitialized, setCurrentProfileId, setProfileInitialized, setIsAuthChecked, logger]);
 
   // Setup conversation initialization
   const { getCurrentUser } = useConversationInit({
@@ -54,7 +69,7 @@ export function useMessageViewProps(conversationId: string) {
     setIsLoading,
   });
 
-  // Initialize message authentication
+  // Initialize message authentication if not already done via the central profile state
   const { memoizedProfileSetter } = useMessageInitializer({
     conversationId,
     fetchingRef,
@@ -98,7 +113,7 @@ export function useMessageViewProps(conversationId: string) {
     currentProfileId,
   });
 
-  // Setup message loading
+  // Setup message loading with enhanced debug
   const { handleRefresh } = useMessagesLoader({
     conversationId,
     currentProfileId,
@@ -110,7 +125,8 @@ export function useMessageViewProps(conversationId: string) {
     setIsError,
     fetchMessages,
     markMessagesAsRead,
-    messages
+    messages,
+    logger
   });
 
   // Message realtime update handlers - Improved for better UI updates
@@ -181,11 +197,48 @@ export function useMessageViewProps(conversationId: string) {
     trackSentMessage
   });
 
+  // Create an auth status string for debugging
+  const authStatus = useMemo(() => {
+    return `profileId:${!!profileId}|current:${!!currentProfileId}|initialized:${profileInitialized}|checked:${isAuthChecked}`;
+  }, [profileId, currentProfileId, profileInitialized, isAuthChecked]);
+
   // Combined loading state
   const showLoader = useMemo(() => 
     isLoading && (!messages.length || !isAuthChecked || !profileInitialized || isFetchingInitialMessages),
     [isLoading, messages.length, isAuthChecked, profileInitialized, isFetchingInitialMessages]
   );
+
+  // Force message fetch if we have all required data but no messages
+  useEffect(() => {
+    if (
+      currentProfileId && 
+      profileInitialized && 
+      isAuthChecked && 
+      !isFetchingInitialMessages && 
+      !isError && 
+      messages.length === 0 && 
+      !showLoader
+    ) {
+      logger.info("Force fetching messages - we have auth but no messages", {
+        conversationId,
+        currentProfileId,
+        profileInitialized,
+        isAuthChecked
+      });
+      handleRefresh();
+    }
+  }, [
+    currentProfileId, 
+    profileInitialized, 
+    isAuthChecked, 
+    isFetchingInitialMessages, 
+    messages.length, 
+    isError, 
+    showLoader, 
+    conversationId, 
+    handleRefresh,
+    logger
+  ]);
 
   // Prepare render props
   return useMemo(() => ({
@@ -202,7 +255,8 @@ export function useMessageViewProps(conversationId: string) {
     hasMoreMessages,
     newMessage,
     setNewMessage,
-    sendMessage
+    sendMessage,
+    authStatus // Add auth status for debugging
   }), [
     messages,
     currentProfileId,
@@ -218,6 +272,7 @@ export function useMessageViewProps(conversationId: string) {
     hasMoreMessages,
     newMessage,
     setNewMessage,
-    sendMessage
+    sendMessage,
+    authStatus
   ]);
 }

@@ -22,7 +22,8 @@ export function MessageViewLogic({
       currentProfileId: props.currentProfileId,
       hasOtherUser: !!props.otherUser,
       isLoading: props.isLoading,
-      isError: props.isError
+      isError: props.isError,
+      authStatus: props.authStatus // Log the new auth status property
     });
   }, [
     conversationId, 
@@ -30,7 +31,8 @@ export function MessageViewLogic({
     props.currentProfileId, 
     props.otherUser, 
     props.isLoading, 
-    props.isError
+    props.isError,
+    props.authStatus
   ]);
   
   // Simply pass all the props to the render function

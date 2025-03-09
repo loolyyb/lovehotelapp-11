@@ -26,6 +26,7 @@ export const useMessageRetrieval = ({
   const isMountedRef = useRef(true);
   const fetchingMessagesRef = useRef(false);
   const permissionVerifiedRef = useRef(false);
+  const attemptCountRef = useRef(0);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -44,6 +45,7 @@ export const useMessageRetrieval = ({
     setPermissionVerified(false);
     fetchingMessagesRef.current = false;
     permissionVerifiedRef.current = false;
+    attemptCountRef.current = 0;
 
     // Also reset failed attempts for this conversation
     if (conversationId) {
@@ -104,6 +106,16 @@ export const useMessageRetrieval = ({
           conversation,
           component: "useMessageRetrieval.verifyConversationPermission"
         });
+        
+        // Also log the raw IDs to help with debugging
+        logger.error("Permission check details", {
+          user1_id: conversation?.user1_id,
+          user2_id: conversation?.user2_id,
+          currentProfileId,
+          matches1: conversation?.user1_id === currentProfileId,
+          matches2: conversation?.user2_id === currentProfileId,
+          component: "useMessageRetrieval.verifyConversationPermission"
+        });
       } else {
         permissionVerifiedRef.current = true;
         setPermissionVerified(true);
@@ -144,6 +156,15 @@ export const useMessageRetrieval = ({
       });
       return null;
     }
+
+    // Increment attempt counter
+    attemptCountRef.current++;
+    
+    logger.info(`Fetching messages attempt #${attemptCountRef.current}`, {
+      conversationId, 
+      currentProfileId,
+      component: "useMessageRetrieval.fetchMessages"
+    });
 
     fetchingMessagesRef.current = true;
 
@@ -190,6 +211,66 @@ export const useMessageRetrieval = ({
           conversationId,
           component: "useMessageRetrieval.fetchMessages"
         });
+        
+        // If no messages were returned, try a direct query as a last resort
+        logger.info("Attempting direct messages query as fallback", {
+          conversationId,
+          component: "useMessageRetrieval.fetchMessages"
+        });
+        
+        try {
+          const { data: directMessages, error: directError } = await supabase
+            .from('messages')
+            .select(`
+              id,
+              content,
+              created_at,
+              read_at,
+              sender_id,
+              conversation_id,
+              media_type,
+              media_url
+            `)
+            .eq('conversation_id', conversationId)
+            .order('created_at', { ascending: true });
+          
+          if (directError) {
+            logger.error("Direct messages query failed", {
+              error: directError,
+              conversationId,
+              component: "useMessageRetrieval.fetchMessages"
+            });
+          } else if (directMessages && directMessages.length > 0) {
+            logger.info(`Direct query succeeded with ${directMessages.length} messages`, {
+              conversationId,
+              component: "useMessageRetrieval.fetchMessages"
+            });
+            
+            if (isMountedRef.current) {
+              setMessages(directMessages);
+              
+              // Auto-mark messages as read after a short delay
+              setTimeout(() => {
+                if (isMountedRef.current) {
+                  markMessagesAsRead();
+                }
+              }, 1000);
+              
+              return directMessages;
+            }
+          } else {
+            logger.info("Direct query returned no messages", {
+              conversationId,
+              component: "useMessageRetrieval.fetchMessages"
+            });
+          }
+        } catch (directQueryError) {
+          logger.error("Exception in direct messages query", {
+            error: directQueryError,
+            conversationId,
+            component: "useMessageRetrieval.fetchMessages"
+          });
+        }
       }
 
       if (isMountedRef.current && messagesData) {
@@ -215,7 +296,7 @@ export const useMessageRetrieval = ({
     } finally {
       fetchingMessagesRef.current = false;
     }
-  }, [conversationId, currentProfileId, setMessages, toast, verifyConversationPermission]);
+  }, [conversationId, currentProfileId, setMessages, toast, verifyConversationPermission, markMessagesAsRead]);
 
   // Load more (older) messages
   const loadMoreMessages = useCallback(async () => {
