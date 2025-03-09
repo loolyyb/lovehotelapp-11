@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { SendIcon } from "lucide-react";
@@ -89,7 +88,7 @@ export function MessageInput({
             className={`absolute bottom-1 right-1 h-8 w-8 p-0 rounded-full ${
               !newMessage.trim() || disabled || isSending 
                 ? 'bg-[#f3ebad]/20 text-[#f3ebad]/30 hover:bg-[#f3ebad]/20 cursor-not-allowed' 
-                : 'bg-[#f3ebad] text-burgundy hover:bg-[#f3ebad]/90'
+                : 'bg-[#CD0067] text-white hover:bg-[#CD0067]/90'
             }`}
             disabled={!newMessage.trim() || disabled || isSending}
             onClick={handleSend}
