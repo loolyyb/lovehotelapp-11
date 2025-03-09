@@ -16,7 +16,7 @@ export const useAuthSession = () => {
   // Function to create a new profile if needed
   const createProfile = async (userId: string) => {
     try {
-      logger.info("Creating new profile for user:", userId);
+      logger.info("Creating new profile for user", { userId });
       const { data: newProfile, error: createError } = await supabase
         .from('profiles')
         .insert([
@@ -51,10 +51,10 @@ export const useAuthSession = () => {
 
       if (prefError) throw prefError;
 
-      logger.info("New profile created successfully:", newProfile);
+      logger.info("New profile created successfully", { newProfile });
       return newProfile;
     } catch (error) {
-      logger.error('Error creating profile:', error);
+      logger.error('Error creating profile', { error });
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -72,7 +72,7 @@ export const useAuthSession = () => {
     }
     
     try {
-      logger.info("Fetching profile for user:", userId);
+      logger.info("Fetching profile for user", { userId });
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -93,7 +93,7 @@ export const useAuthSession = () => {
       setUserProfile(profile);
       logger.info("Profile fetched successfully", { profileId: profile.id });
     } catch (error: any) {
-      logger.error('Error fetching user profile:', error);
+      logger.error('Error fetching user profile', { error });
       
       // Implement retry logic with exponential backoff
       if (retryCount < 3) {
@@ -111,7 +111,7 @@ export const useAuthSession = () => {
         });
       }
     }
-  }, [toast, logger]);
+  }, [toast, logger, session]);
 
   // Function to refresh the session token
   const refreshSession = useCallback(async () => {
@@ -120,7 +120,7 @@ export const useAuthSession = () => {
       const { data, error } = await supabase.auth.refreshSession();
       
       if (error) {
-        logger.error("Error refreshing session:", error);
+        logger.error("Error refreshing session", { error });
         setRefreshError(error);
         return false;
       }
@@ -134,7 +134,7 @@ export const useAuthSession = () => {
         return false;
       }
     } catch (error: any) {
-      logger.error("Exception during session refresh:", error);
+      logger.error("Exception during session refresh", { error });
       setRefreshError(error);
       return false;
     }
@@ -179,7 +179,7 @@ export const useAuthSession = () => {
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
-          logger.error("Error getting initial session:", error);
+          logger.error("Error getting initial session", { error });
           if (mounted) {
             setLoading(false);
           }
@@ -187,7 +187,7 @@ export const useAuthSession = () => {
         }
         
         if (mounted) {
-          logger.info("Initial session retrieved:", { hasSession: !!initialSession });
+          logger.info("Initial session retrieved", { hasSession: !!initialSession });
           setSession(initialSession);
           
           if (initialSession?.user) {
@@ -198,7 +198,7 @@ export const useAuthSession = () => {
           setLoading(false);
         }
       } catch (error) {
-        logger.error("Exception during session initialization:", error);
+        logger.error("Exception during session initialization", { error });
         if (mounted) {
           setLoading(false);
         }
@@ -211,7 +211,7 @@ export const useAuthSession = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      logger.info("Auth state changed:", event, newSession?.user?.id);
+      logger.info("Auth state changed", { event, userId: newSession?.user?.id });
       
       if (mounted) {
         setSession(newSession);

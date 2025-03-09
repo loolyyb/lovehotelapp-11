@@ -136,7 +136,50 @@ export function useProfileState() {
           throw retryError || new Error("Failed to get user after session refresh");
         }
         
-        user = refreshedUser;
+        // Update current scope with refreshed user
+        const currentUser = refreshedUser;
+        
+        if (!currentUser) {
+          logger.warn("No authenticated user found");
+          setProfileId(null);
+          setProfile(null);
+          setIsLoading(false);
+          setIsInitialized(true);
+          fetchInProgressRef.current = false;
+          return null;
+        }
+        
+        logger.info("Auth user found after refresh, retrieving profile", { userId: currentUser.id });
+        
+        // Continue with the refreshed user
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, user_id, username, full_name, avatar_url, role')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+          
+        if (profileError) {
+          // Handle profile error after refresh
+          logger.error("Error retrieving profile after refresh", { error: profileError });
+          throw profileError;
+        }
+        
+        if (!profileData) {
+          logger.warn("Profile not found after refresh", { userId: currentUser.id });
+          // Handle creating a new profile if needed
+          // ... (similar to the code below)
+          return null;
+        }
+        
+        logger.info("Profile retrieved successfully after refresh", { profileId: profileData.id });
+        setProfile(profileData);
+        setProfileId(profileData.id);
+        cacheProfile(profileData);
+        setIsLoading(false);
+        setIsInitialized(true);
+        fetchInProgressRef.current = false;
+        retryCountRef.current = 0;
+        return profileData;
       }
       
       if (!user) {

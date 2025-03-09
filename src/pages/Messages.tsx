@@ -110,10 +110,13 @@ export default function Messages() {
   return (
     <div className="container h-screen flex flex-col p-4">
       <MessagesContainer
-        selectedConversationId={selectedConversation}
+        selectedConversation={selectedConversation}
         onSelectConversation={handleSelectConversation}
         onBack={handleBack}
         onNetworkError={() => setIsNetworkError(true)}
+        onRefresh={handleRefreshConversations}
+        isRefreshing={isCheckingConnection}
+        isNetworkError={isNetworkError}
       />
     </div>
   );

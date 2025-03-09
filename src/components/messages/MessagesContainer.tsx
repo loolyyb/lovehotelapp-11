@@ -8,18 +8,20 @@ interface MessagesContainerProps {
   selectedConversation: string | null;
   onSelectConversation: (conversationId: string) => void;
   onBack: () => void;
-  onRefresh: () => void;
-  isRefreshing: boolean;
-  isNetworkError: boolean;
+  onNetworkError: () => void;
+  isRefreshing?: boolean;
+  isNetworkError?: boolean;
+  onRefresh?: () => void;
 }
 
 export function MessagesContainer({
   selectedConversation,
   onSelectConversation,
   onBack,
-  onRefresh,
-  isRefreshing,
-  isNetworkError
+  onNetworkError,
+  isRefreshing = false,
+  isNetworkError = false,
+  onRefresh = () => {}
 }: MessagesContainerProps) {
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-[#40192C] pt-12 backdrop-blur-sm">
@@ -28,7 +30,7 @@ export function MessagesContainer({
         <ConversationList
           onSelectConversation={onSelectConversation}
           selectedConversationId={selectedConversation}
-          onNetworkError={() => {}} // This will be handled at a higher level
+          onNetworkError={onNetworkError}
         />
       </div>
       
