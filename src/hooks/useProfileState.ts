@@ -30,10 +30,6 @@ export function useProfileState() {
   const logger = useLogger("useProfileState");
   const { toast } = useToast();
   const initialFetchAttemptedRef = useRef(false);
-  const fetchInProgressRef = useRef(false);
-  const retryCountRef = useRef(0);
-  const maxRetries = 3;
-  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get cached profile from localStorage
   const getCachedProfile = useCallback(() => {
@@ -84,14 +80,13 @@ export function useProfileState() {
   // Fetch fresh profile from Supabase
   const fetchProfile = useCallback(async (forceRefresh = false) => {
     // Prevent multiple concurrent fetch attempts
-    if (fetchInProgressRef.current && !forceRefresh) {
-      logger.info("Fetch already in progress, skipping redundant fetch");
+    if (initialFetchAttemptedRef.current && !forceRefresh) {
+      logger.info("Initial fetch already attempted, skipping redundant fetch");
       return null;
     }
     
-    fetchInProgressRef.current = true;
     initialFetchAttemptedRef.current = true;
-    logger.info("Starting profile fetch", { forceRefresh, retryCount: retryCountRef.current });
+    logger.info("Starting profile fetch", { forceRefresh });
     setIsLoading(true);
     setError(null);
     
@@ -104,8 +99,6 @@ export function useProfileState() {
           setProfileId(cachedProfile.id);
           setIsLoading(false);
           setIsInitialized(true);
-          fetchInProgressRef.current = false;
-          retryCountRef.current = 0;
           logger.info("Using cached profile", { profileId: cachedProfile.id });
           return cachedProfile;
         }
@@ -118,68 +111,7 @@ export function useProfileState() {
       
       if (authError) {
         logger.error("Auth error retrieving user", { error: authError });
-        
-        // Try to refresh the session if there's an auth error
-        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-        
-        if (refreshError || !refreshData.session) {
-          logger.error("Failed to refresh session", { error: refreshError });
-          throw authError;
-        }
-        
-        logger.info("Session refreshed successfully, retrying profile fetch");
-        // Use the refreshed session to get the user
-        const { data: { user: refreshedUser }, error: retryError } = await supabase.auth.getUser();
-        
-        if (retryError || !refreshedUser) {
-          logger.error("Auth error after session refresh", { error: retryError });
-          throw retryError || new Error("Failed to get user after session refresh");
-        }
-        
-        // Update current scope with refreshed user
-        const currentUser = refreshedUser;
-        
-        if (!currentUser) {
-          logger.warn("No authenticated user found");
-          setProfileId(null);
-          setProfile(null);
-          setIsLoading(false);
-          setIsInitialized(true);
-          fetchInProgressRef.current = false;
-          return null;
-        }
-        
-        logger.info("Auth user found after refresh, retrieving profile", { userId: currentUser.id });
-        
-        // Continue with the refreshed user
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, user_id, username, full_name, avatar_url, role')
-          .eq('user_id', currentUser.id)
-          .maybeSingle();
-          
-        if (profileError) {
-          // Handle profile error after refresh
-          logger.error("Error retrieving profile after refresh", { error: profileError });
-          throw profileError;
-        }
-        
-        if (!profileData) {
-          logger.warn("Profile not found after refresh", { userId: currentUser.id });
-          // Handle creating a new profile if needed
-          // ... (similar to the code below)
-          return null;
-        }
-        
-        logger.info("Profile retrieved successfully after refresh", { profileId: profileData.id });
-        setProfile(profileData);
-        setProfileId(profileData.id);
-        cacheProfile(profileData);
-        setIsLoading(false);
-        setIsInitialized(true);
-        fetchInProgressRef.current = false;
-        retryCountRef.current = 0;
-        return profileData;
+        throw authError;
       }
       
       if (!user) {
@@ -188,7 +120,6 @@ export function useProfileState() {
         setProfile(null);
         setIsLoading(false);
         setIsInitialized(true);
-        fetchInProgressRef.current = false;
         return null;
       }
       
@@ -230,8 +161,6 @@ export function useProfileState() {
           cacheProfile(newProfile);
           setIsLoading(false);
           setIsInitialized(true);
-          fetchInProgressRef.current = false;
-          retryCountRef.current = 0;
           return newProfile;
         }
         
@@ -245,40 +174,18 @@ export function useProfileState() {
       cacheProfile(profileData);
       setIsLoading(false);
       setIsInitialized(true);
-      fetchInProgressRef.current = false;
-      retryCountRef.current = 0;
       return profileData;
     } catch (error: any) {
       logger.error("Error fetching profile", { error: error.message });
       setError(error.message);
       setIsLoading(false);
       setIsInitialized(true);
-      fetchInProgressRef.current = false;
       
-      // Implement retry with exponential backoff
-      retryCountRef.current += 1;
-      
-      if (retryCountRef.current <= maxRetries) {
-        const delayMs = Math.min(1000 * Math.pow(2, retryCountRef.current), 10000);
-        logger.info(`Scheduling retry ${retryCountRef.current}/${maxRetries} in ${delayMs}ms`);
-        
-        // Clear any existing timeout
-        if (retryTimeoutRef.current) {
-          clearTimeout(retryTimeoutRef.current);
-        }
-        
-        // Schedule a retry
-        retryTimeoutRef.current = setTimeout(() => {
-          logger.info(`Executing retry ${retryCountRef.current}/${maxRetries}`);
-          fetchProfile(true);
-        }, delayMs);
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Erreur de profil",
-          description: "Impossible de récupérer votre profil. Veuillez vous reconnecter."
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Erreur de profil",
+        description: "Impossible de récupérer votre profil. Veuillez vous reconnecter."
+      });
       
       return null;
     }
@@ -325,11 +232,6 @@ export function useProfileState() {
     return () => {
       subscription.unsubscribe();
       clearTimeout(timer);
-      
-      // Clear any pending retry timeouts
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
     };
   }, [fetchProfile, clearProfileCache, logger, isInitialized]);
 

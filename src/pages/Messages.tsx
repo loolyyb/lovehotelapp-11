@@ -86,38 +86,36 @@ export default function Messages() {
         });
       }
     } catch (error) {
-      logger.error("Error refreshing conversations:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible d'actualiser les conversations."
-      });
+      logger.error("Error during refresh", { error });
+      
+      if (mountedRef.current) {
+        toast({
+          variant: "destructive",
+          title: "Erreur de connexion",
+          description: "Impossible de récupérer votre profil. Veuillez réessayer."
+        });
+      }
     }
-  }, [checkConnectionStatus, connectionError, isNetworkError, setIsNetworkError, logger, toast]);
+  }, [connectionError, isNetworkError, logger, toast, checkConnectionStatus, setIsNetworkError]);
 
-  // If we have a network error, show the connection error state
-  if (isNetworkError && !isCheckingConnection) {
+  if (connectionError) {
     return (
-      <div className="container h-screen flex flex-col p-4">
-        <ConnectionErrorState 
-          onRetry={handleRefreshConversations} 
-          isRetrying={isCheckingConnection} 
-        />
-      </div>
+      <ConnectionErrorState
+        errorMessage={connectionError}
+        isCheckingConnection={isCheckingConnection}
+        onRetry={checkConnectionStatus}
+      />
     );
   }
 
   return (
-    <div className="container h-screen flex flex-col p-4">
-      <MessagesContainer
-        selectedConversation={selectedConversation}
-        onSelectConversation={handleSelectConversation}
-        onBack={handleBack}
-        onNetworkError={() => setIsNetworkError(true)}
-        onRefresh={handleRefreshConversations}
-        isRefreshing={isCheckingConnection}
-        isNetworkError={isNetworkError}
-      />
-    </div>
+    <MessagesContainer
+      selectedConversation={selectedConversation}
+      onSelectConversation={handleSelectConversation}
+      onBack={handleBack}
+      onRefresh={handleRefreshConversations}
+      isRefreshing={isCheckingConnection}
+      isNetworkError={isNetworkError}
+    />
   );
 }
