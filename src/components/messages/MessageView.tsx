@@ -60,10 +60,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
               />
             }
           >
-            {/* Debug element - will help during development */}
-            <div className="text-xs opacity-40 px-4 py-1">
-              Auth: {authStatus}
-            </div>
+            {/* Debug element removed */}
             
             {isLoading ? (
               <MessageLoadingState />
