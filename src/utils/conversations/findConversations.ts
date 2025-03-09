@@ -39,8 +39,9 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
-    // FIXED: Use proper parameterized query instead of string interpolation
-    const { data: conversations, error: conversationsError } = await supabase
+    // Try to get conversations with two separate queries first
+    // Query 1: Get conversations where user is user1_id
+    const { data: conversationsAsUser1, error: user1Error } = await supabase
       .from('conversations')
       .select(`
         id, 
@@ -51,45 +52,100 @@ export const findConversationsByProfileId = async (profileId: string) => {
         created_at,
         updated_at
       `)
-      .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
+      .eq('user1_id', profileId)
       .eq('status', 'active');
       
-    if (conversationsError) {
-      logger.error("Error fetching conversations by profile ID:", {
-        error: conversationsError,
+    if (user1Error) {
+      logger.error("Error fetching conversations where user is user1_id", {
+        error: user1Error,
         profileId,
         component: "findConversationsByProfileId"
       });
+    }
+    
+    // Query 2: Get conversations where user is user2_id
+    const { data: conversationsAsUser2, error: user2Error } = await supabase
+      .from('conversations')
+      .select(`
+        id, 
+        status,
+        blocked_by,
+        user1_id,
+        user2_id,
+        created_at,
+        updated_at
+      `)
+      .eq('user2_id', profileId)
+      .eq('status', 'active');
       
-      // Add additional debugging for RLS policy issues
-      if (conversationsError.message.includes("policy")) {
-        AlertService.captureException(new Error("RLS policy error fetching conversations"), {
-          profileId,
-          error: conversationsError.message,
-          component: "findConversationsByProfileId"
-        });
-        logger.error("Possible RLS policy violation", {
-          error: conversationsError,
-          profileId,
-          component: "findConversationsByProfileId"
-        });
-      }
-      
-      throw new Error("Error fetching conversations: " + conversationsError.message);
+    if (user2Error) {
+      logger.error("Error fetching conversations where user is user2_id", {
+        error: user2Error,
+        profileId,
+        component: "findConversationsByProfileId"
+      });
+    }
+    
+    // Combine the results
+    let conversations = [];
+    
+    if (conversationsAsUser1) {
+      conversations = [...conversationsAsUser1];
+    }
+    
+    if (conversationsAsUser2) {
+      // Add only non-duplicate conversations from user2 query
+      const existingIds = new Set(conversations.map(c => c.id));
+      const uniqueConversationsAsUser2 = conversationsAsUser2.filter(c => !existingIds.has(c.id));
+      conversations = [...conversations, ...uniqueConversationsAsUser2];
     }
     
     // Add more detailed logging to help debug
-    if (!conversations) {
-      logger.warn(`No conversations returned from database for profile ${profileId}`, {
-        component: "findConversationsByProfileId"
+    if (conversations.length === 0) {
+      logger.warn(`No conversations found for profile ${profileId} using separate queries`, {
+        component: "findConversationsByProfileId",
+        user1QueryError: !!user1Error,
+        user2QueryError: !!user2Error
       });
-      return [];
+      
+      // Fallback to the OR query as a last attempt
+      const { data: fallbackConversations, error: fallbackError } = await supabase
+        .from('conversations')
+        .select(`
+          id, 
+          status,
+          blocked_by,
+          user1_id,
+          user2_id,
+          created_at,
+          updated_at
+        `)
+        .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
+        .eq('status', 'active');
+        
+      if (fallbackError) {
+        logger.error("Error in fallback OR query for conversations", {
+          error: fallbackError,
+          profileId,
+          component: "findConversationsByProfileId"
+        });
+      } else if (fallbackConversations && fallbackConversations.length > 0) {
+        logger.info(`Found ${fallbackConversations.length} conversations using fallback OR query`, {
+          component: "findConversationsByProfileId"
+        });
+        conversations = fallbackConversations;
+      } else {
+        logger.warn(`No conversations returned from fallback query for profile ${profileId}`, {
+          component: "findConversationsByProfileId"
+        });
+        return [];
+      }
+    } else {
+      logger.info(`Found ${conversations.length} conversations for profile ${profileId} using separate queries`, {
+        component: "findConversationsByProfileId",
+        conversationIds: conversations.map(c => c.id)
+      });
     }
-    
-    logger.info(`Found ${conversations.length} conversations for profile ${profileId}`, {
-      component: "findConversationsByProfileId",
-      conversationIds: conversations.map(c => c.id)
-    });
     
     // Process each conversation to include other user details and recent messages
     const conversationsWithDetails = await Promise.all(conversations.map(async (conversation) => {
@@ -163,7 +219,8 @@ export const findConversationsByProfileId = async (profileId: string) => {
     }));
     
     logger.info(`Successfully processed ${conversationsWithDetails.length} conversations with details`, {
-      component: "findConversationsByProfileId"
+      component: "findConversationsByProfileId",
+      conversationIds: conversationsWithDetails.map(c => c.id)
     });
     
     return conversationsWithDetails;

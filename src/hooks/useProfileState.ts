@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,7 @@ export function useProfileState() {
   const [isInitialized, setIsInitialized] = useState(false);
   const logger = useLogger("useProfileState");
   const { toast } = useToast();
+  const initialFetchAttemptedRef = useRef(false);
 
   // Get cached profile from localStorage
   const getCachedProfile = useCallback(() => {
@@ -78,12 +79,13 @@ export function useProfileState() {
 
   // Fetch fresh profile from Supabase
   const fetchProfile = useCallback(async (forceRefresh = false) => {
-    // Don't fetch if we're already loading and not forcing refresh
-    if (isLoading && !forceRefresh) {
-      logger.info("Already loading profile, skipping fetch");
+    // Prevent multiple concurrent fetch attempts
+    if (initialFetchAttemptedRef.current && !forceRefresh) {
+      logger.info("Initial fetch already attempted, skipping redundant fetch");
       return null;
     }
     
+    initialFetchAttemptedRef.current = true;
     logger.info("Starting profile fetch", { forceRefresh });
     setIsLoading(true);
     setError(null);
@@ -128,7 +130,7 @@ export function useProfileState() {
         .from('profiles')
         .select('id, user_id, username, full_name, avatar_url, role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
         
       if (profileError) {
         // If not found, try to create a profile
@@ -187,13 +189,17 @@ export function useProfileState() {
       
       return null;
     }
-  }, [getCachedProfile, cacheProfile, logger, toast, isLoading]);
+  }, [getCachedProfile, cacheProfile, logger, toast]);
 
   // Initial profile loading - run only once on mount
   useEffect(() => {
+    const isMounted = true;
     logger.info("Initial profile loading effect running");
-    // First call to fetchProfile
-    fetchProfile();
+    
+    // Only run this effect once using the initialFetchAttemptedRef
+    if (!initialFetchAttemptedRef.current) {
+      fetchProfile();
+    }
     
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -214,23 +220,20 @@ export function useProfileState() {
       }
     });
     
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [fetchProfile, clearProfileCache, logger]);
-
-  // Force initialization after a timeout to prevent hanging in loading state
-  useEffect(() => {
+    // Force initialization after a timeout to prevent hanging in loading state
     const timer = setTimeout(() => {
       if (!isInitialized) {
         logger.warn("Profile initialization timeout - forcing initialization");
         setIsInitialized(true);
         setIsLoading(false);
       }
-    }, 5000); // 5 second timeout
+    }, 3000); // 3 second timeout (reduced from 5s)
     
-    return () => clearTimeout(timer);
-  }, [isInitialized, logger]);
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timer);
+    };
+  }, [fetchProfile, clearProfileCache, logger, isInitialized]);
 
   return {
     profile,
