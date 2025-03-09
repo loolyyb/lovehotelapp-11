@@ -59,44 +59,58 @@ export const enableRealtimeSubscriptions = async () => {
     const channelId = `public-conversations-${userId}-${Date.now()}`;
     logger.info(`Creating channel with ID: ${channelId}`, { component: logComponent });
     
-    // Créer un canal pour les tables conversations et messages
-    const channel = supabase.channel(channelId)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'conversations',
-        filter: `user1_id=eq.${userId}` 
-      }, (payload) => {
-        logger.info("Received conversation change - user1", { component: logComponent, payload });
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'conversations',
-        filter: `user2_id=eq.${userId}`
-      }, (payload) => {
-        logger.info("Received conversation change - user2", { component: logComponent, payload });
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'messages',
-        filter: `sender_id=eq.${userId}`
-      }, (payload) => {
-        logger.info("Received message change - sent by user", { component: logComponent, payload });
-      })
-      .subscribe((status) => {
-        logger.info("Subscription status", { component: logComponent, status, channelId });
+    // Use separate channels for each table to avoid issues
+    try {
+      // Create a channel for conversations where user is user1
+      const user1Channel = supabase.channel(`conv-user1-${userId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'conversations',
+          filter: `user1_id=eq.${userId}` 
+        }, (payload) => {
+          logger.info("Received conversation change - user1", { component: logComponent, payload });
+        })
+        .subscribe((status) => {
+          logger.info("Subscription status - user1", { component: logComponent, status });
+        });
         
-        if (status === 'SUBSCRIBED') {
-          logger.info("Successfully subscribed to realtime changes", { component: logComponent });
-        } else if (status === 'CHANNEL_ERROR') {
-          logger.error("Error subscribing to realtime changes", { component: logComponent });
-        }
-      });
+      // Create a channel for conversations where user is user2
+      const user2Channel = supabase.channel(`conv-user2-${userId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'conversations',
+          filter: `user2_id=eq.${userId}`
+        }, (payload) => {
+          logger.info("Received conversation change - user2", { component: logComponent, payload });
+        })
+        .subscribe((status) => {
+          logger.info("Subscription status - user2", { component: logComponent, status });
+        });
       
-    // Nous retournons le canal pour pouvoir se désinscrire si nécessaire
-    return channel;
+      // Create a channel for messages sent by the user
+      const messagesChannel = supabase.channel(`messages-${userId}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `sender_id=eq.${userId}`
+        }, (payload) => {
+          logger.info("Received message change", { component: logComponent, payload });
+        })
+        .subscribe((status) => {
+          logger.info("Subscription status - messages", { component: logComponent, status });
+        });
+        
+      logger.info("Successfully set up all realtime channels", { component: logComponent });
+      
+      // Return channels for cleanup if needed
+      return [user1Channel, user2Channel, messagesChannel];
+    } catch (error) {
+      logger.error("Error setting up channel subscriptions", { component: logComponent, error });
+      return null;
+    }
   } catch (error) {
     logger.error("Error setting up realtime subscriptions", { component: logComponent, error });
     return null;

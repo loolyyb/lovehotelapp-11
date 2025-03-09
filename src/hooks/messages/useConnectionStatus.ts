@@ -18,11 +18,12 @@ export function useConnectionStatus() {
     try {
       logger.info("Checking connection status");
       
-      // Try to make a lightweight request to Supabase
+      // Use a different, more reliable query for checking connection
       const startTime = Date.now();
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .select('count(*)', { count: 'exact', head: true });
+        .select('id')
+        .limit(1);
       
       const requestTime = Date.now() - startTime;
       
