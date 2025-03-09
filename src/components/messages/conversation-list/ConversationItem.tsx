@@ -61,7 +61,7 @@ export function ConversationItem({
             </p>}
             
             {unreadCount > 0 && (
-              <span className="ml-2 bg-rose text-white text-xs font-medium px-2 py-0.5 rounded-full">
+              <span className="ml-2 bg-[#CD0067] text-white text-xs font-medium px-2 py-0.5 rounded-full">
                 {unreadCount}
               </span>
             )}
