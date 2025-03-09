@@ -138,6 +138,69 @@ export const useMessageRetrieval = ({
     }
   }, [conversationId, currentProfileId]);
 
+  // Mark messages as read - Define this function before it's used
+  const markMessagesAsRead = useCallback(async () => {
+    if (!conversationId || !currentProfileId) return;
+
+    try {
+      // Find unread messages for this conversation that were sent by the other user
+      const { data: unreadMessages, error: fetchError } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', currentProfileId)
+        .is('read_at', null);
+
+      if (fetchError) {
+        logger.error("Error finding unread messages", {
+          error: fetchError,
+          conversationId,
+          component: "useMessageRetrieval.markMessagesAsRead"
+        });
+        return;
+      }
+
+      if (!unreadMessages || unreadMessages.length === 0) {
+        logger.info("No unread messages to mark as read", {
+          conversationId,
+          component: "useMessageRetrieval.markMessagesAsRead"
+        });
+        return;
+      }
+
+      logger.info(`Marking ${unreadMessages.length} messages as read`, {
+        conversationId,
+        component: "useMessageRetrieval.markMessagesAsRead"
+      });
+
+      // Mark them all as read
+      const { error: updateError } = await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .in('id', unreadMessages.map(msg => msg.id));
+
+      if (updateError) {
+        logger.error("Error marking messages as read", {
+          error: updateError,
+          conversationId,
+          component: "useMessageRetrieval.markMessagesAsRead"
+        });
+      } else {
+        logger.info("Successfully marked messages as read", {
+          count: unreadMessages.length,
+          conversationId,
+          component: "useMessageRetrieval.markMessagesAsRead"
+        });
+      }
+    } catch (error) {
+      logger.error("Exception in markMessagesAsRead", {
+        error,
+        conversationId,
+        component: "useMessageRetrieval.markMessagesAsRead"
+      });
+    }
+  }, [conversationId, currentProfileId]);
+
   // Fetch messages with permission verification
   const fetchMessages = useCallback(async (useCache = true) => {
     if (!conversationId || !currentProfileId) {
@@ -363,69 +426,6 @@ export const useMessageRetrieval = ({
     toast,
     verifyConversationPermission
   ]);
-
-  // Mark messages as read
-  const markMessagesAsRead = useCallback(async () => {
-    if (!conversationId || !currentProfileId) return;
-
-    try {
-      // Find unread messages for this conversation that were sent by the other user
-      const { data: unreadMessages, error: fetchError } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', currentProfileId)
-        .is('read_at', null);
-
-      if (fetchError) {
-        logger.error("Error finding unread messages", {
-          error: fetchError,
-          conversationId,
-          component: "useMessageRetrieval.markMessagesAsRead"
-        });
-        return;
-      }
-
-      if (!unreadMessages || unreadMessages.length === 0) {
-        logger.info("No unread messages to mark as read", {
-          conversationId,
-          component: "useMessageRetrieval.markMessagesAsRead"
-        });
-        return;
-      }
-
-      logger.info(`Marking ${unreadMessages.length} messages as read`, {
-        conversationId,
-        component: "useMessageRetrieval.markMessagesAsRead"
-      });
-
-      // Mark them all as read
-      const { error: updateError } = await supabase
-        .from('messages')
-        .update({ read_at: new Date().toISOString() })
-        .in('id', unreadMessages.map(msg => msg.id));
-
-      if (updateError) {
-        logger.error("Error marking messages as read", {
-          error: updateError,
-          conversationId,
-          component: "useMessageRetrieval.markMessagesAsRead"
-        });
-      } else {
-        logger.info("Successfully marked messages as read", {
-          count: unreadMessages.length,
-          conversationId,
-          component: "useMessageRetrieval.markMessagesAsRead"
-        });
-      }
-    } catch (error) {
-      logger.error("Exception in markMessagesAsRead", {
-        error,
-        conversationId,
-        component: "useMessageRetrieval.markMessagesAsRead"
-      });
-    }
-  }, [conversationId, currentProfileId]);
 
   // Add new message to cache and state
   const addMessageToCache = useCallback((message: any) => {
