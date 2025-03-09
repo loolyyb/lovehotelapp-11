@@ -41,7 +41,7 @@ export function MessageHeader({
   }
 
   return (
-    <div className="py-4 px-4 border-b border-[#f3ebad]/30 flex items-center hover:shadow-lg transition-all duration-300">
+    <div className="pt-4 pb-[15px] px-4 border-b border-[#f3ebad]/30 flex items-center hover:shadow-lg transition-all duration-300">
       <button 
         onClick={onBack}
         className="md:hidden mr-2 p-2 hover:bg-white/10 rounded-full transition-colors"
