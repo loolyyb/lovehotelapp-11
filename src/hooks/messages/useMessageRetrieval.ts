@@ -22,6 +22,7 @@ export const useMessageRetrieval = ({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [permissionVerified, setPermissionVerified] = useState(false);
   const isMountedRef = useRef(true);
   const fetchingMessagesRef = useRef(false);
   const permissionVerifiedRef = useRef(false);
@@ -40,6 +41,7 @@ export const useMessageRetrieval = ({
     setHasMoreMessages(true);
     setIsLoadingMore(false);
     setIsFetchingMore(false);
+    setPermissionVerified(false);
     fetchingMessagesRef.current = false;
     permissionVerifiedRef.current = false;
 
@@ -51,17 +53,28 @@ export const useMessageRetrieval = ({
 
   // Verify user permission for the conversation
   const verifyConversationPermission = useCallback(async () => {
-    if (!conversationId || !currentProfileId || permissionVerifiedRef.current) {
-      return permissionVerifiedRef.current;
+    if (!conversationId || !currentProfileId) {
+      logger.info("Cannot verify permission: missing required data", {
+        conversationId: !!conversationId,
+        profileId: !!currentProfileId,
+        component: "useMessageRetrieval.verifyConversationPermission"
+      });
+      return false;
+    }
+
+    // If we already verified permission, return early
+    if (permissionVerifiedRef.current) {
+      return true;
     }
 
     try {
       logger.info("Verifying conversation permission", {
         conversationId,
         profileId: currentProfileId,
-        component: "useMessageRetrieval"
+        component: "useMessageRetrieval.verifyConversationPermission"
       });
 
+      // Direct query to conversations table
       const { data: conversation, error } = await supabase
         .from('conversations')
         .select('user1_id, user2_id, status')
@@ -73,7 +86,7 @@ export const useMessageRetrieval = ({
           error,
           conversationId,
           profileId: currentProfileId,
-          component: "useMessageRetrieval"
+          component: "useMessageRetrieval.verifyConversationPermission"
         });
         return false;
       }
@@ -89,14 +102,15 @@ export const useMessageRetrieval = ({
           conversationId,
           profileId: currentProfileId,
           conversation,
-          component: "useMessageRetrieval"
+          component: "useMessageRetrieval.verifyConversationPermission"
         });
       } else {
         permissionVerifiedRef.current = true;
+        setPermissionVerified(true);
         logger.info("User has permission for this conversation", {
           conversationId,
           profileId: currentProfileId,
-          component: "useMessageRetrieval"
+          component: "useMessageRetrieval.verifyConversationPermission"
         });
       }
 
@@ -106,7 +120,7 @@ export const useMessageRetrieval = ({
         error,
         conversationId,
         profileId: currentProfileId,
-        component: "useMessageRetrieval"
+        component: "useMessageRetrieval.verifyConversationPermission"
       });
       return false;
     }
@@ -114,7 +128,20 @@ export const useMessageRetrieval = ({
 
   // Fetch messages with permission verification
   const fetchMessages = useCallback(async (useCache = true) => {
-    if (!conversationId || !currentProfileId || fetchingMessagesRef.current) {
+    if (!conversationId || !currentProfileId) {
+      logger.info("Cannot fetch messages: missing required data", {
+        conversationId: !!conversationId,
+        profileId: !!currentProfileId,
+        component: "useMessageRetrieval.fetchMessages"
+      });
+      return null;
+    }
+
+    if (fetchingMessagesRef.current) {
+      logger.info("Already fetching messages, skipping duplicate request", {
+        conversationId,
+        component: "useMessageRetrieval.fetchMessages"
+      });
       return null;
     }
 
@@ -127,7 +154,7 @@ export const useMessageRetrieval = ({
         logger.error("Permission denied for fetching messages", {
           conversationId,
           profileId: currentProfileId,
-          component: "useMessageRetrieval"
+          component: "useMessageRetrieval.fetchMessages"
         });
         
         if (isMountedRef.current) {
@@ -141,11 +168,29 @@ export const useMessageRetrieval = ({
         return null;
       }
 
+      logger.info("Permission verified, fetching messages", {
+        conversationId,
+        profileId: currentProfileId,
+        component: "useMessageRetrieval.fetchMessages"
+      });
+
       const messagesData = await MessagesFetcher.fetchInitialMessages(
         conversationId,
         currentProfileId,
         useCache
       );
+
+      if (messagesData) {
+        logger.info(`Fetched ${messagesData.length} messages`, {
+          conversationId,
+          component: "useMessageRetrieval.fetchMessages"
+        });
+      } else {
+        logger.warn("No messages returned from fetcher", {
+          conversationId,
+          component: "useMessageRetrieval.fetchMessages"
+        });
+      }
 
       if (isMountedRef.current && messagesData) {
         setMessages(messagesData);
@@ -164,7 +209,7 @@ export const useMessageRetrieval = ({
       logger.error("Error in fetchMessages", {
         error,
         conversationId,
-        component: "useMessageRetrieval"
+        component: "useMessageRetrieval.fetchMessages"
       });
       return null;
     } finally {
@@ -211,7 +256,7 @@ export const useMessageRetrieval = ({
       logger.error("Error in loadMoreMessages", {
         error,
         conversationId,
-        component: "useMessageRetrieval"
+        component: "useMessageRetrieval.loadMoreMessages"
       });
       
       if (isMountedRef.current) {
@@ -251,11 +296,26 @@ export const useMessageRetrieval = ({
         .neq('sender_id', currentProfileId)
         .is('read_at', null);
 
-      if (fetchError || !unreadMessages || unreadMessages.length === 0) return;
+      if (fetchError) {
+        logger.error("Error finding unread messages", {
+          error: fetchError,
+          conversationId,
+          component: "useMessageRetrieval.markMessagesAsRead"
+        });
+        return;
+      }
+
+      if (!unreadMessages || unreadMessages.length === 0) {
+        logger.info("No unread messages to mark as read", {
+          conversationId,
+          component: "useMessageRetrieval.markMessagesAsRead"
+        });
+        return;
+      }
 
       logger.info(`Marking ${unreadMessages.length} messages as read`, {
         conversationId,
-        component: "useMessageRetrieval"
+        component: "useMessageRetrieval.markMessagesAsRead"
       });
 
       // Mark them all as read
@@ -268,14 +328,20 @@ export const useMessageRetrieval = ({
         logger.error("Error marking messages as read", {
           error: updateError,
           conversationId,
-          component: "useMessageRetrieval"
+          component: "useMessageRetrieval.markMessagesAsRead"
+        });
+      } else {
+        logger.info("Successfully marked messages as read", {
+          count: unreadMessages.length,
+          conversationId,
+          component: "useMessageRetrieval.markMessagesAsRead"
         });
       }
     } catch (error) {
       logger.error("Exception in markMessagesAsRead", {
         error,
         conversationId,
-        component: "useMessageRetrieval"
+        component: "useMessageRetrieval.markMessagesAsRead"
       });
     }
   }, [conversationId, currentProfileId]);
@@ -294,6 +360,7 @@ export const useMessageRetrieval = ({
     addMessageToCache,
     isLoadingMore,
     hasMoreMessages,
-    isFetchingMore
+    isFetchingMore,
+    permissionVerified
   };
 };

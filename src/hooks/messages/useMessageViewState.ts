@@ -1,5 +1,5 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLogger } from "@/hooks/useLogger";
 
 /**
@@ -24,6 +24,30 @@ export const useMessageViewState = () => {
   const fetchingRef = useRef(false);
   const firstLoad = useRef(true);
   const logger = useLogger("useMessageViewState");
+
+  // Enhanced debugging
+  useEffect(() => {
+    if (messages.length > 0) {
+      logger.info("Messages updated", {
+        messageCount: messages.length,
+        firstMessageId: messages[0]?.id,
+        lastMessageId: messages[messages.length - 1]?.id
+      });
+    }
+  }, [messages, logger]);
+
+  useEffect(() => {
+    logger.info("Current profile ID updated", { currentProfileId });
+  }, [currentProfileId, logger]);
+
+  useEffect(() => {
+    if (otherUser) {
+      logger.info("Other user updated", {
+        otherUserId: otherUser.id,
+        otherUsername: otherUser.username
+      });
+    }
+  }, [otherUser, logger]);
   
   return {
     // Message state

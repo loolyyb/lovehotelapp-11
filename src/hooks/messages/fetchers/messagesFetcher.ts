@@ -142,9 +142,9 @@ export const MessagesFetcher = {
           // First verify the user has permission to access this conversation
           const { data: conversation, error: convError } = await supabase
             .from('conversations')
-            .select('user1_id, user2_id')
+            .select('user1_id, user2_id, status')
             .eq('id', conversationId)
-            .single();
+            .maybeSingle();
             
           if (convError) {
             logger.error("Error verifying conversation access", {
@@ -156,14 +156,25 @@ export const MessagesFetcher = {
           }
             
           // Check if user is part of this conversation
-          if (!conversation || (conversation.user1_id !== currentProfileId && conversation.user2_id !== currentProfileId)) {
-            logger.error("Access denied: User not part of conversation", {
+          if (!conversation || conversation.status !== 'active' || 
+              (conversation.user1_id !== currentProfileId && conversation.user2_id !== currentProfileId)) {
+            logger.error("Access denied: User not part of conversation or conversation not active", {
               conversationId,
               currentProfileId,
+              conversation,
               component: "messagesFetcher"
             });
             throw new Error("You don't have permission to access this conversation");
           }
+          
+          // Debug log the conversation details
+          logger.info("Conversation access verified", {
+            conversationId,
+            user1_id: conversation.user1_id,
+            user2_id: conversation.user2_id,
+            currentProfileId,
+            component: "messagesFetcher"
+          });
           
           // Optimize query to select only necessary fields and limit result size
           const { data: messagesData, error } = await supabase
@@ -185,7 +196,7 @@ export const MessagesFetcher = {
               component: "messagesFetcher" 
             });
             
-            // Try fallback approach with direct join query
+            // Try fallback approach with simpler query
             logger.info("Attempting fallback approach for messages", {
               conversationId,
               component: "messagesFetcher"
@@ -213,7 +224,55 @@ export const MessagesFetcher = {
                 conversationId,
                 component: "messagesFetcher"
               });
-              return null;
+              
+              // Try one more approach - direct RPC call
+              logger.info("Attempting direct SQL function call", {
+                conversationId,
+                component: "messagesFetcher"
+              });
+              
+              // Get messages directly with raw query
+              try {
+                const { data: directData, error: directError } = await supabase
+                  .rpc('get_conversation_messages', { 
+                    conversation_id_param: conversationId,
+                    limit_param: INITIAL_PAGE_SIZE
+                  });
+                
+                if (directError || !directData) {
+                  logger.error("Direct method also failed", {
+                    error: directError,
+                    conversationId,
+                    component: "messagesFetcher"
+                  });
+                  return null;
+                }
+                
+                logger.info("Direct method succeeded", {
+                  count: directData.length,
+                  conversationId,
+                  component: "messagesFetcher"
+                });
+                
+                // Sort in ascending order for display
+                const sortedDirectMessages = directData.sort((a: any, b: any) => 
+                  new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                );
+                
+                // Cache the results
+                if (sortedDirectMessages && sortedDirectMessages.length > 0) {
+                  MessageCache.set(conversationId, sortedDirectMessages);
+                }
+                
+                return sortedDirectMessages;
+              } catch (directException) {
+                logger.error("Exception in direct method", {
+                  error: directException,
+                  conversationId,
+                  component: "messagesFetcher"
+                });
+                return null;
+              }
             }
             
             // Manually enrich with sender profiles
@@ -274,6 +333,7 @@ export const MessagesFetcher = {
           logger.info("Successfully fetched messages", { 
             count: sortedMessages?.length || 0, 
             conversationId,
+            firstMessage: sortedMessages[0]?.id,
             component: "messagesFetcher" 
           });
           

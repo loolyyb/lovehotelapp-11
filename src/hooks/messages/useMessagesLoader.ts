@@ -35,28 +35,41 @@ export const useMessagesLoader = ({
   useEffect(() => {
     // Only run this effect when we have the required data
     if (!conversationId || !currentProfileId || !profileInitialized || !isAuthChecked) {
+      console.log("useMessagesLoader: Not ready to load messages yet", {
+        conversationId: !!conversationId,
+        currentProfileId: !!currentProfileId,
+        profileInitialized,
+        isAuthChecked
+      });
       return;
     }
     
     // Prevent duplicate fetches
     if (isFetchingInitialMessages) {
+      console.log("useMessagesLoader: Already fetching messages, skipping");
       return;
     }
     
     // Skip if we already have messages
     if (messages.length > 0) {
+      console.log("useMessagesLoader: Already have messages, skipping");
       return;
     }
     
     const loadInitialMessages = async () => {
+      console.log("useMessagesLoader: Loading initial messages for conversation", conversationId);
       setIsFetchingInitialMessages(true);
       
       try {
-        await fetchMessages(true);
-        setIsError(false);
+        const result = await fetchMessages(true);
+        console.log("useMessagesLoader: Initial messages fetch result", { 
+          success: !!result, 
+          messageCount: result?.length || 0 
+        });
+        setIsError(!result);
       } catch (error) {
+        console.error("useMessagesLoader: Error loading initial messages:", error);
         setIsError(true);
-        console.error("Error loading initial messages:", error);
       } finally {
         setIsLoading(false);
         setIsFetchingInitialMessages(false);
@@ -80,6 +93,7 @@ export const useMessagesLoader = ({
   // When messages are loaded, mark them as read
   useEffect(() => {
     if (messages.length > 0 && currentProfileId && conversationId) {
+      console.log("useMessagesLoader: Marking messages as read");
       markMessagesAsRead();
     }
   }, [messages.length, currentProfileId, conversationId, markMessagesAsRead]);
@@ -87,17 +101,23 @@ export const useMessagesLoader = ({
   // Handle manual refresh
   const handleRefresh = useCallback(async () => {
     if (!conversationId || !currentProfileId) {
+      console.log("useMessagesLoader: Cannot refresh without conversation or profile ID");
       return;
     }
     
+    console.log("useMessagesLoader: Manual refresh requested");
     setIsLoading(true);
     
     try {
-      await fetchMessages(false); // Skip cache on manual refresh
-      setIsError(false);
+      const result = await fetchMessages(false); // Skip cache on manual refresh
+      console.log("useMessagesLoader: Manual refresh result", { 
+        success: !!result, 
+        messageCount: result?.length || 0 
+      });
+      setIsError(!result);
     } catch (error) {
+      console.error("useMessagesLoader: Error refreshing messages:", error);
       setIsError(true);
-      console.error("Error refreshing messages:", error);
     } finally {
       setIsLoading(false);
     }
