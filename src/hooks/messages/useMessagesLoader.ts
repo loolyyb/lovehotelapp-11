@@ -1,7 +1,5 @@
 
 import { useEffect, useCallback } from 'react';
-import { useLogger } from '@/hooks/useLogger';
-import { useProfileState } from '@/hooks/useProfileState';
 
 interface UseMessagesLoaderProps {
   conversationId: string;
@@ -18,7 +16,7 @@ interface UseMessagesLoaderProps {
 }
 
 /**
- * Hook to handle message loading logic with optimized performance
+ * Hook to handle loading messages at the appropriate time
  */
 export const useMessagesLoader = ({
   conversationId,
@@ -33,99 +31,77 @@ export const useMessagesLoader = ({
   markMessagesAsRead,
   messages
 }: UseMessagesLoaderProps) => {
-  const logger = useLogger('MessagesLoader');
-  const { isInitialized: isProfileReady } = useProfileState();
-  
-  // Load messages when dependencies are ready
+  // On mount or when auth and profile are initialized, fetch messages
   useEffect(() => {
-    // Only proceed if we have required data and aren't already fetching
-    if (
-      conversationId &&
-      currentProfileId &&
-      profileInitialized &&
-      isAuthChecked &&
-      !isFetchingInitialMessages &&
-      isProfileReady // Add check for centralized profile state
-    ) {
-      logger.info('Initial conditions met for fetching messages', {
-        conversationId,
-        profileId: currentProfileId
-      });
-      
+    // Only run this effect when we have the required data
+    if (!conversationId || !currentProfileId || !profileInitialized || !isAuthChecked) {
+      return;
+    }
+    
+    // Prevent duplicate fetches
+    if (isFetchingInitialMessages) {
+      return;
+    }
+    
+    // Skip if we already have messages
+    if (messages.length > 0) {
+      return;
+    }
+    
+    const loadInitialMessages = async () => {
       setIsFetchingInitialMessages(true);
       
-      // Fetch messages (with a slight delay to prevent UI jank)
-      setTimeout(async () => {
-        try {
-          await fetchMessages(true);
-          setIsError(false);
-        } catch (error) {
-          logger.error('Error fetching initial messages', { error });
-          setIsError(true);
-        } finally {
-          setIsFetchingInitialMessages(false);
-          setIsLoading(false);
-        }
-      }, 100);
-    }
+      try {
+        await fetchMessages(true);
+        setIsError(false);
+      } catch (error) {
+        setIsError(true);
+        console.error("Error loading initial messages:", error);
+      } finally {
+        setIsLoading(false);
+        setIsFetchingInitialMessages(false);
+      }
+    };
+    
+    loadInitialMessages();
   }, [
     conversationId,
     currentProfileId,
     profileInitialized,
     isAuthChecked,
     isFetchingInitialMessages,
-    isProfileReady, // Add dependency on centralized profile state
-    setIsFetchingInitialMessages,
     fetchMessages,
     setIsError,
     setIsLoading,
-    logger
+    setIsFetchingInitialMessages,
+    messages.length
   ]);
   
-  // Mark messages as read when they're loaded
+  // When messages are loaded, mark them as read
   useEffect(() => {
-    if (
-      messages.length > 0 &&
-      currentProfileId &&
-      conversationId &&
-      !isFetchingInitialMessages
-    ) {
-      // Small delay to prioritize UI rendering first
-      const timer = setTimeout(() => {
-        markMessagesAsRead();
-      }, 1000);
-      
-      return () => clearTimeout(timer);
+    if (messages.length > 0 && currentProfileId && conversationId) {
+      markMessagesAsRead();
     }
-  }, [
-    messages.length,
-    currentProfileId,
-    conversationId,
-    isFetchingInitialMessages,
-    markMessagesAsRead
-  ]);
+  }, [messages.length, currentProfileId, conversationId, markMessagesAsRead]);
   
-  // Handle refresh - optimized to prevent unnecessary renders
+  // Handle manual refresh
   const handleRefresh = useCallback(async () => {
-    // Only refresh if we have the necessary data
     if (!conversationId || !currentProfileId) {
-      logger.warn('Cannot refresh messages, missing required data', {
-        hasConversationId: !!conversationId,
-        hasProfileId: !!currentProfileId
-      });
       return;
     }
     
-    logger.info('Refreshing messages', { conversationId });
+    setIsLoading(true);
     
     try {
-      // Skip cache for manual refresh
-      await fetchMessages(false);
+      await fetchMessages(false); // Skip cache on manual refresh
+      setIsError(false);
     } catch (error) {
-      logger.error('Error refreshing messages', { error });
       setIsError(true);
+      console.error("Error refreshing messages:", error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [conversationId, currentProfileId, fetchMessages, setIsError, logger]);
+  }, [conversationId, currentProfileId, fetchMessages, setIsError, setIsLoading]);
   
   return { handleRefresh };
 };

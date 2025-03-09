@@ -230,6 +230,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
       profileId,
       component: "findConversationsByProfileId"
     });
+    AlertService.captureException(error);
     throw error;
   }
 };

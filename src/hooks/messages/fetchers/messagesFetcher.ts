@@ -139,6 +139,32 @@ export const MessagesFetcher = {
       // Create a new query and store the promise
       const queryPromise = (async () => {
         try {
+          // First verify the user has permission to access this conversation
+          const { data: conversation, error: convError } = await supabase
+            .from('conversations')
+            .select('user1_id, user2_id')
+            .eq('id', conversationId)
+            .single();
+            
+          if (convError) {
+            logger.error("Error verifying conversation access", {
+              error: convError,
+              conversationId,
+              component: "messagesFetcher"
+            });
+            throw new Error("Failed to verify conversation access");
+          }
+            
+          // Check if user is part of this conversation
+          if (!conversation || (conversation.user1_id !== currentProfileId && conversation.user2_id !== currentProfileId)) {
+            logger.error("Access denied: User not part of conversation", {
+              conversationId,
+              currentProfileId,
+              component: "messagesFetcher"
+            });
+            throw new Error("You don't have permission to access this conversation");
+          }
+          
           // Optimize query to select only necessary fields and limit result size
           const { data: messagesData, error } = await supabase
             .from('messages')
@@ -158,7 +184,82 @@ export const MessagesFetcher = {
               attempts,
               component: "messagesFetcher" 
             });
-            return null;
+            
+            // Try fallback approach with direct join query
+            logger.info("Attempting fallback approach for messages", {
+              conversationId,
+              component: "messagesFetcher"
+            });
+            
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from('messages')
+              .select(`
+                id, 
+                content, 
+                created_at, 
+                read_at, 
+                sender_id, 
+                conversation_id,
+                media_type,
+                media_url
+              `)
+              .eq('conversation_id', conversationId)
+              .order('created_at', { ascending: false })
+              .limit(INITIAL_PAGE_SIZE);
+              
+            if (fallbackError || !fallbackData) {
+              logger.error("Fallback approach also failed", {
+                error: fallbackError,
+                conversationId,
+                component: "messagesFetcher"
+              });
+              return null;
+            }
+            
+            // Manually enrich with sender profiles
+            const enrichedMessages = await Promise.all(fallbackData.map(async (message) => {
+              try {
+                const { data: senderData } = await supabase
+                  .from('profiles')
+                  .select('id, username, full_name, avatar_url')
+                  .eq('id', message.sender_id)
+                  .maybeSingle();
+                  
+                return {
+                  ...message,
+                  sender: senderData || { 
+                    id: message.sender_id,
+                    username: 'Unknown User'
+                  }
+                };
+              } catch (error) {
+                return {
+                  ...message,
+                  sender: { 
+                    id: message.sender_id,
+                    username: 'Unknown User'
+                  }
+                };
+              }
+            }));
+            
+            // Now sort in ascending order for display
+            const sortedMessages = [...enrichedMessages].sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
+            
+            logger.info("Fallback approach succeeded", {
+              count: sortedMessages.length,
+              conversationId,
+              component: "messagesFetcher"
+            });
+            
+            // Cache the results
+            if (sortedMessages && sortedMessages.length > 0) {
+              MessageCache.set(conversationId, sortedMessages);
+            }
+            
+            return sortedMessages;
           }
           
           // Success - reset failed attempts counter
