@@ -1,10 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 /**
  * Active les abonnements temps réel pour les tables de conversation
  * Cette fonction doit être appelée au démarrage de l'application
+ * @returns An object containing all channels or null if setup failed
  */
 export const enableRealtimeSubscriptions = async () => {
   const logComponent = "enableRealtimeSubscriptions";
@@ -105,8 +107,12 @@ export const enableRealtimeSubscriptions = async () => {
         
       logger.info("Successfully set up all realtime channels", { component: logComponent });
       
-      // Return channels for cleanup if needed
-      return [user1Channel, user2Channel, messagesChannel];
+      // Create a parent channel to encompass all subscriptions and provide a single cleanup point
+      const mainChannel = supabase.channel(`main-channel-${userId}`);
+      mainChannel.subscribe();
+      
+      // Return a single channel for cleanup in App.tsx
+      return mainChannel;
     } catch (error) {
       logger.error("Error setting up channel subscriptions", { component: logComponent, error });
       return null;
