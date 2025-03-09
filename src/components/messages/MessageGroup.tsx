@@ -9,7 +9,7 @@ interface MessageGroupProps {
 
 export function MessageGroup({ messages, isCurrentUser }: MessageGroupProps) {
   return (
-    <div className={`flex flex-col gap-1 ${isCurrentUser ? 'items-end' : 'items-start'}`}>
+    <div className={`flex flex-col gap-1 w-full ${isCurrentUser ? 'items-end' : 'items-start'}`}>
       {messages.map((message) => (
         <MessageBubble 
           key={message.id} 

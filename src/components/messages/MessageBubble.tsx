@@ -32,9 +32,9 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
     : null;
 
   return (
-    <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} w-full`}>
       <div
-        className={`max-w-[70%] p-3 pr-5 rounded-lg backdrop-blur-sm hover:shadow-lg transition-all duration-300 ${
+        className={`max-w-[70%] min-w-0 p-3 pr-5 rounded-lg backdrop-blur-sm hover:shadow-lg transition-all duration-300 ${
           isCurrentUser
             ? 'bg-[#f3ebad]/20 text-[#f3ebad] rounded-br-none border-[0.5px] border-[#f3ebad]/30'
             : 'bg-white/10 text-[#f3ebad] rounded-bl-none border-[0.5px] border-[#f3ebad]/30'
