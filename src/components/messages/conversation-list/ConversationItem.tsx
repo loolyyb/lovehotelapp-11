@@ -28,8 +28,12 @@ export function ConversationItem({
   
   const [previousUnreadCount, setPreviousUnreadCount] = useState(unreadCount);
   const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [showUnreadBadge, setShowUnreadBadge] = useState(true);
+  const [isFading, setIsFading] = useState(false);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Effect for new message animation
   useEffect(() => {
     // Check if unread count increased since last render
     if (unreadCount > previousUnreadCount && previousUnreadCount !== 0) {
@@ -56,9 +60,46 @@ export function ConversationItem({
       }
     };
   }, [unreadCount, previousUnreadCount]);
+
+  // Effect to handle badge fading when conversation is active
+  useEffect(() => {
+    // When conversation becomes active and has unread messages
+    if (isActive && unreadCount > 0 && showUnreadBadge) {
+      // Set a timeout to start fading after 15 seconds
+      fadeTimeoutRef.current = setTimeout(() => {
+        setIsFading(true);
+        
+        // Set another timeout to hide badge after fade animation completes
+        setTimeout(() => {
+          setShowUnreadBadge(false);
+        }, 1000); // Fade out animation duration
+      }, 15000); // 15 seconds delay before starting fade
+    }
+    
+    // Reset states when conversation becomes inactive
+    if (!isActive) {
+      setIsFading(false);
+      setShowUnreadBadge(true);
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
+    }
+    
+    // Cleanup timeout on component unmount or when props change
+    return () => {
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
+    };
+  }, [isActive, unreadCount, showUnreadBadge]);
   
   const activeConversationBgClass = "bg-[#5A293D]";
   const hoverClass = "hover:bg-rose/5";
+  
+  // Custom click handler to track conversation selection
+  const handleSelect = () => {
+    onSelect();
+  };
   
   return (
     <div 
@@ -67,7 +108,7 @@ export function ConversationItem({
           ? `${activeConversationBgClass} border-r-0` 
           : hoverClass
       }`} 
-      onClick={onSelect}
+      onClick={handleSelect}
     >
       <div className="flex items-center space-x-3">
         <Avatar>
@@ -92,10 +133,12 @@ export function ConversationItem({
               {lastMessage.content}
             </p>}
             
-            {unreadCount > 0 && (
+            {unreadCount > 0 && showUnreadBadge && (
               <span 
                 className={`ml-2 bg-[#CD0067] text-white text-xs font-medium px-2 py-0.5 rounded-full transition-all duration-300 ${
                   hasNewMessages ? 'animate-pulse shadow-lg shadow-[#CD0067]/30' : ''
+                } ${
+                  isFading ? 'opacity-0 transition-opacity duration-1000' : 'opacity-100'
                 }`}
               >
                 {unreadCount}
