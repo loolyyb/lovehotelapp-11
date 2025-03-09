@@ -32,8 +32,11 @@ export const useMessageHandlers = ({
   const messageIdSentRef = useRef<Set<string>>(new Set());
   const pendingOptimisticMessagesRef = useRef<Set<string>>(new Set());
 
-  const sendMessage = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendMessage = useCallback(async (e?: React.FormEvent) => {
+    // Only prevent default if an event is actually passed
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     
     // Store the message to be sent immediately to prevent it from being lost
     const messageToSend = newMessage.trim();
@@ -69,11 +72,6 @@ export const useMessageHandlers = ({
     // Mark this message as being processed
     messageIdSentRef.current.add(messageToSend);
     pendingOptimisticMessagesRef.current.add(messageToSend);
-    
-    // Clear this message from the sent set after a while
-    setTimeout(() => {
-      messageIdSentRef.current.delete(messageToSend);
-    }, 5000);
     
     // Optimistically clear the input field right away for better UX
     // This is safe since we've already captured messageToSend

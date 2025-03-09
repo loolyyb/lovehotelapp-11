@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface MessageInputProps {
   newMessage: string;
   setNewMessage: (message: string) => void;
-  onSend: () => void;
+  onSend: (e?: React.FormEvent) => void;
   disabled?: boolean;
 }
 
@@ -38,6 +38,7 @@ export function MessageInput({
     if (disabled || isSending || !newMessage.trim()) return;
     
     setIsSending(true);
+    // Call onSend without passing an event argument since it's a button click
     onSend();
     
     // Reset sending state after a short delay

@@ -240,6 +240,12 @@ export function useMessageViewProps(conversationId: string) {
     logger
   ]);
 
+  // Create a wrapped sendMessage function that handles undefined event properly
+  const handleSendMessage = useCallback((e?: React.FormEvent) => {
+    // Call the actual sendMessage function with the event, which now properly handles optional events
+    sendMessage(e);
+  }, [sendMessage]);
+
   // Prepare render props
   return useMemo(() => ({
     messages,
@@ -255,7 +261,7 @@ export function useMessageViewProps(conversationId: string) {
     hasMoreMessages,
     newMessage,
     setNewMessage,
-    sendMessage,
+    sendMessage: handleSendMessage,
     authStatus // Add auth status for debugging
   }), [
     messages,
@@ -272,7 +278,7 @@ export function useMessageViewProps(conversationId: string) {
     hasMoreMessages,
     newMessage,
     setNewMessage,
-    sendMessage,
+    handleSendMessage,
     authStatus
   ]);
 }
