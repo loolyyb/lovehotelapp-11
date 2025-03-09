@@ -3,6 +3,8 @@ import React, { useRef, useEffect, useState, useCallback } from "react";
 import { MessageGroup } from "./MessageGroup";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Loader2 } from "lucide-react";
+import { DateSeparator } from "./DateSeparator";
+import { format } from "date-fns";
 
 interface MessageContentProps {
   messages: any[];
@@ -85,39 +87,78 @@ export function MessageContent({
     setShowScrollButton(!isNearBottom);
   }, []);
 
-  // Group messages by date
-  const groupedMessages = React.useMemo(() => {
-    const groups: any[] = [];
+  // Group messages by date and sender
+  const groupedContent = React.useMemo(() => {
+    const result: {
+      type: 'date' | 'messages';
+      date?: Date;
+      senderId?: string | null;
+      messages?: any[];
+      key: string;
+    }[] = [];
+    
+    let currentDate: string | null = null;
     let currentGroup: any[] = [];
     let currentSenderId: string | null = null;
     
     messages.forEach((message, index) => {
-      // Group messages from the same sender
-      if (message.sender_id !== currentSenderId) {
+      const messageDate = new Date(message.created_at);
+      const messageDateStr = format(messageDate, 'yyyy-MM-dd');
+      
+      // If the date has changed, add a new date separator
+      if (messageDateStr !== currentDate) {
+        // First, finish the current message group if it exists
         if (currentGroup.length > 0) {
-          groups.push({
-            id: `group-${currentSenderId}-${index}`,
+          result.push({
+            type: 'messages',
             senderId: currentSenderId,
-            messages: currentGroup
+            messages: [...currentGroup],
+            key: `group-${currentSenderId}-${index}`
+          });
+          currentGroup = [];
+        }
+        
+        // Add the date separator
+        result.push({
+          type: 'date',
+          date: messageDate,
+          key: `date-${messageDateStr}`
+        });
+        
+        currentDate = messageDateStr;
+        currentSenderId = message.sender_id;
+        currentGroup = [message];
+      } 
+      // If only the sender has changed
+      else if (message.sender_id !== currentSenderId) {
+        if (currentGroup.length > 0) {
+          result.push({
+            type: 'messages',
+            senderId: currentSenderId,
+            messages: [...currentGroup],
+            key: `group-${currentSenderId}-${index}`
           });
         }
         currentGroup = [message];
         currentSenderId = message.sender_id;
-      } else {
+      } 
+      // Same date and same sender, just add to current group
+      else {
         currentGroup.push(message);
       }
     });
     
-    // Add the last group
+    // Add the last group if it exists
     if (currentGroup.length > 0) {
-      groups.push({
-        id: `group-${currentSenderId}-${messages.length}`,
+      result.push({
+        type: 'messages',
         senderId: currentSenderId,
-        messages: currentGroup
+        messages: currentGroup,
+        key: `group-${currentSenderId}-${messages.length}`
       });
     }
     
-    return groups;
+    return result;
   }, [messages]);
 
   // Track scroll count to reattach scroll listeners
@@ -166,12 +207,18 @@ export function MessageContent({
         </div>
       )}
       
-      {groupedMessages.map((group) => (
-        <MessageGroup 
-          key={group.id}
-          messages={group.messages}
-          isCurrentUser={group.senderId === currentProfileId}
-        />
+      {groupedContent.map((item) => (
+        <React.Fragment key={item.key}>
+          {item.type === 'date' && item.date && (
+            <DateSeparator date={item.date} />
+          )}
+          {item.type === 'messages' && item.messages && (
+            <MessageGroup 
+              messages={item.messages}
+              isCurrentUser={item.senderId === currentProfileId}
+            />
+          )}
+        </React.Fragment>
       ))}
       
       {/* Element to scroll to */}
