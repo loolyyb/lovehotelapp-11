@@ -1,4 +1,5 @@
 
+import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +25,37 @@ export function ConversationItem({
   const unreadCount = conversation.messages?.filter((msg: any) => 
     !msg.read_at && msg.sender_id !== currentProfileId
   )?.length || 0;
+  
+  const [previousUnreadCount, setPreviousUnreadCount] = useState(unreadCount);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  useEffect(() => {
+    // Check if unread count increased since last render
+    if (unreadCount > previousUnreadCount && previousUnreadCount !== 0) {
+      setHasNewMessages(true);
+      
+      // Clear any existing timeout
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      
+      // Set timeout to remove animation after 3 seconds
+      animationTimeoutRef.current = setTimeout(() => {
+        setHasNewMessages(false);
+      }, 3000);
+    }
+    
+    // Update previous count for next comparison
+    setPreviousUnreadCount(unreadCount);
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, [unreadCount, previousUnreadCount]);
   
   const activeConversationBgClass = "bg-[#5A293D]";
   const hoverClass = "hover:bg-rose/5";
@@ -61,7 +93,11 @@ export function ConversationItem({
             </p>}
             
             {unreadCount > 0 && (
-              <span className="ml-2 bg-[#CD0067] text-white text-xs font-medium px-2 py-0.5 rounded-full">
+              <span 
+                className={`ml-2 bg-[#CD0067] text-white text-xs font-medium px-2 py-0.5 rounded-full transition-all duration-300 ${
+                  hasNewMessages ? 'animate-pulse shadow-lg shadow-[#CD0067]/30' : ''
+                }`}
+              >
                 {unreadCount}
               </span>
             )}
