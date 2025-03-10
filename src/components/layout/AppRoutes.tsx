@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";
@@ -22,6 +23,7 @@ import { QualificationJourney } from "@/components/qualification/QualificationJo
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/services/LogService";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -35,8 +37,14 @@ const isPreviewEnvironment = () => {
 export const AppRoutes = ({ session }: AppRoutesProps) => {
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
   const { toast } = useToast();
+  const routeLogger = logger.createLogger('AppRoutes');
 
   useEffect(() => {
+    routeLogger.info("AppRoutes mounted", { 
+      isAuthenticated: !!session,
+      currentPath: window.location.pathname
+    });
+
     if (session?.user && !isPreviewEnvironment()) {
       checkQualificationStatus();
     }
@@ -85,6 +93,11 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
   }
 
   const ProtectedRoute = ({ element }: { element: React.ReactNode }) => {
+    routeLogger.info("Protected route accessed", { 
+      isAuthenticated: !!session,
+      path: window.location.pathname 
+    });
+    
     if (isPreviewEnvironment()) {
       return <>{element}</>;
     }
@@ -93,6 +106,12 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
 
   return (
     <Routes>
+      {/* Admin route - explicitly placed first for priority matching */}
+      <Route
+        path="/admin"
+        element={<ProtectedRoute element={<Admin />} />}
+      />
+      
       <Route
         path="/"
         element={session ? <Dashboard /> : <Landing />}
@@ -158,12 +177,14 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
         element={<RestaurantDuLove />}
       />
       <Route
-        path="/admin"
-        element={<Admin />}
-      />
-      <Route
         path="/announcements"
         element={<ProtectedRoute element={<Announcements />} />}
+      />
+      
+      {/* Catch-all route for unknown paths */}
+      <Route
+        path="*"
+        element={<Navigate to="/" replace />}
       />
     </Routes>
   );
