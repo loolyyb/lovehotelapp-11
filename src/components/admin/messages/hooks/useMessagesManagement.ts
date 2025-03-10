@@ -1,10 +1,9 @@
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useLogger } from "@/hooks/useLogger";
 
 export const MESSAGES_PER_PAGE = 10;
 
@@ -13,15 +12,11 @@ export function useMessagesManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const { toast } = useToast();
-  const logger = useLogger("useMessagesManagement");
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["admin-messages", currentPage, debouncedSearchTerm],
     queryFn: async () => {
-      logger.info("Fetching messages for page:", { 
-        page: currentPage, 
-        search: debouncedSearchTerm 
-      });
+      console.log("Fetching messages for page:", currentPage, "search:", debouncedSearchTerm);
       
       // Build the base query to get total count
       let countQuery = supabase
@@ -33,25 +28,19 @@ export function useMessagesManagement() {
         countQuery = countQuery.ilike('content', `%${debouncedSearchTerm}%`);
       }
       
-      const { count, error: countError } = await countQuery;
-      
-      if (countError) {
-        logger.error("Error counting messages:", { error: countError });
-        throw countError;
-      }
+      const { count } = await countQuery;
 
       // Build the main query
       let messagesQuery = supabase
         .from("messages")
         .select(`
           *,
-          sender:profiles!messages_sender_id_fkey(id, username, full_name, avatar_url),
+          sender:profiles!messages_sender_id_fkey(username, full_name, avatar_url),
           conversation:conversations!messages_conversation_id_fkey(
-            id,
             user1_id,
             user2_id,
-            receiver1:profiles!conversations_user1_id_fkey(id, username, full_name),
-            receiver2:profiles!conversations_user2_id_fkey(id, username, full_name)
+            receiver1:profiles!conversations_user1_id_fkey(username, full_name),
+            receiver2:profiles!conversations_user2_id_fkey(username, full_name)
           )
         `)
         .order("created_at", { ascending: false });
@@ -70,7 +59,7 @@ export function useMessagesManagement() {
       const { data: messages, error } = await messagesQuery;
 
       if (error) {
-        logger.error("Error fetching messages:", { error });
+        console.error("Error fetching messages:", error);
         throw error;
       }
 
@@ -90,28 +79,18 @@ export function useMessagesManagement() {
         };
       });
       
-      logger.info(`Processed ${processedMessages?.length || 0} messages`, {
-        totalCount: count
-      });
-      
-      return { messages: processedMessages || [], totalCount: count || 0 };
+      return { messages: processedMessages, totalCount: count };
     },
-    refetchOnWindowFocus: false,
   });
 
   const markAsRead = async (messageId: string) => {
     try {
-      logger.info("Marking message as read:", { messageId });
-      
       const { error } = await supabase
         .from('messages')
         .update({ read_at: new Date().toISOString() })
         .eq('id', messageId);
       
-      if (error) {
-        logger.error("Error marking message as read:", { error });
-        throw error;
-      }
+      if (error) throw error;
       
       toast({
         title: "Message marqué comme lu",
@@ -120,7 +99,7 @@ export function useMessagesManagement() {
       
       refetch();
     } catch (error) {
-      logger.error("Error marking message as read:", { error });
+      console.error("Error marking message as read:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -129,10 +108,8 @@ export function useMessagesManagement() {
     }
   };
 
-  const getConversationMessages = useCallback(async (conversationId: string) => {
+  const getConversationMessages = async (conversationId: string) => {
     try {
-      logger.info("Fetching conversation messages:", { conversationId });
-      
       const { data, error } = await supabase
         .from("messages")
         .select(`
@@ -142,15 +119,11 @@ export function useMessagesManagement() {
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: true });
       
-      if (error) {
-        logger.error("Error fetching conversation messages:", { error });
-        throw error;
-      }
+      if (error) throw error;
       
-      logger.info(`Retrieved ${data?.length || 0} conversation messages`);
       return data || [];
     } catch (error) {
-      logger.error("Error in getConversationMessages:", { error });
+      console.error("Error fetching conversation messages:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -158,11 +131,11 @@ export function useMessagesManagement() {
       });
       return [];
     }
-  }, [toast, logger]);
+  };
 
   const messages = data?.messages || [];
   const totalCount = data?.totalCount || 0;
-  const totalPages = Math.max(1, Math.ceil(totalCount / MESSAGES_PER_PAGE));
+  const totalPages = Math.ceil(totalCount / MESSAGES_PER_PAGE);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
