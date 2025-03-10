@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Check, CheckCheck, Loader2, TriangleAlert, X } from "lucide-react";
+import { Check, CheckCheck, Loader2, TriangleAlert, X, RefreshCw } from "lucide-react";
 import { MessageBubble } from "@/components/messages/MessageBubble";
 import {
   Dialog,
@@ -33,24 +33,53 @@ export function ConversationDialog({
 }: ConversationDialogProps) {
   const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const [showOnlySuspicious, setShowOnlySuspicious] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isMounted = useRef(true);
 
   const user1Name = user1?.username || user1?.full_name || "Utilisateur 1";
   const user2Name = user2?.username || user2?.full_name || "Utilisateur 2";
 
-  useEffect(() => {
-    if (isOpen && conversationId) {
-      setIsLoading(true);
-      getConversationMessages(conversationId).then((data) => {
+  const fetchMessages = async () => {
+    if (!conversationId || !isOpen) return;
+    
+    setIsLoading(true);
+    setIsError(false);
+    
+    try {
+      console.log("Fetching conversation messages:", conversationId);
+      const data = await getConversationMessages(conversationId);
+      
+      if (isMounted.current) {
         setMessages(data);
-        setIsLoading(false);
         setTimeout(() => {
           messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 100);
-      });
+      }
+    } catch (error) {
+      console.error("Error fetching conversation messages:", error);
+      if (isMounted.current) {
+        setIsError(true);
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
     }
-  }, [isOpen, conversationId, getConversationMessages]);
+  };
+
+  useEffect(() => {
+    isMounted.current = true;
+    
+    if (isOpen && conversationId) {
+      fetchMessages();
+    }
+    
+    return () => {
+      isMounted.current = false;
+    };
+  }, [isOpen, conversationId]);
 
   const suspiciousMessagesCount = messages.filter(message => 
     detectSuspiciousKeywords(message.content).hasSuspiciousKeywords
@@ -67,9 +96,20 @@ export function ConversationDialog({
           <DialogTitle className="text-[#f3ebad]">
             Conversation: {user1Name} et {user2Name}
           </DialogTitle>
-          <DialogClose className="text-[#f3ebad] hover:text-white">
-            <X className="h-4 w-4" />
-          </DialogClose>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={fetchMessages}
+              title="Actualiser"
+              className="h-8 w-8 text-[#f3ebad]/60 hover:text-[#f3ebad] hover:bg-[#f3ebad]/5"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <DialogClose className="text-[#f3ebad] hover:text-white">
+              <X className="h-4 w-4" />
+            </DialogClose>
+          </div>
         </DialogHeader>
 
         {suspiciousMessagesCount > 0 && (
@@ -98,6 +138,19 @@ export function ConversationDialog({
             <div className="flex items-center justify-center h-40">
               <Loader2 className="h-8 w-8 text-[#f3ebad] animate-spin" />
             </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center h-40 text-amber-500">
+              <TriangleAlert className="h-8 w-8 mb-2" />
+              <p className="text-center">Erreur lors du chargement des messages</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2 border-amber-500/30"
+                onClick={fetchMessages}
+              >
+                Réessayer
+              </Button>
+            </div>
           ) : displayMessages.length > 0 ? (
             <>
               {displayMessages.map((message) => {
@@ -116,7 +169,7 @@ export function ConversationDialog({
                           })}
                         </span>
                         <span className="text-xs font-semibold text-[#f3ebad]">
-                          {message.sender.username || message.sender.full_name}:
+                          {message.sender?.username || message.sender?.full_name || "Utilisateur inconnu"}:
                         </span>
                       </div>
                       
@@ -138,13 +191,12 @@ export function ConversationDialog({
                     <div className="flex justify-end mt-1">
                       {message.read_at ? (
                         <span className="text-xs text-emerald-400 flex items-center">
-                          <CheckCheck className="w-3 h-3 mr-1" /> Lu le{" "}
-                          {format(new Date(message.read_at), "dd/MM HH:mm", {
+                          <CheckCheck className="w-3 h-3 mr-1" /> Lu le {format(new Date(message.read_at), "dd/MM/yyyy HH:mm", {
                             locale: fr,
                           })}
                         </span>
                       ) : (
-                        <span className="text-xs text-[#f3ebad]/50 flex items-center">
+                        <span className="text-xs text-gray-400 flex items-center">
                           <Check className="w-3 h-3 mr-1" /> Non lu
                         </span>
                       )}
@@ -155,10 +207,8 @@ export function ConversationDialog({
               <div ref={messagesEndRef} />
             </>
           ) : (
-            <div className="text-center text-[#f3ebad]/50">
-              {showOnlySuspicious 
-                ? "Aucun message suspect dans cette conversation" 
-                : "Aucun message dans cette conversation"}
+            <div className="flex items-center justify-center h-40 text-[#f3ebad]/50">
+              <p>Aucun message dans cette conversation</p>
             </div>
           )}
         </div>

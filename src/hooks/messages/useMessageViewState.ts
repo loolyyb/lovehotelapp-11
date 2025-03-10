@@ -1,6 +1,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useLogger } from "@/hooks/useLogger";
+import { useProfileState } from "@/hooks/useProfileState";
 
 /**
  * Centralized state management for the message view component
@@ -10,7 +11,8 @@ export const useMessageViewState = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
   
-  // User information
+  // User information - now using useProfileState for central profile management
+  const { profileId: centralProfileId, isInitialized: profileStateInitialized } = useProfileState();
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<any>(null);
   
@@ -25,6 +27,16 @@ export const useMessageViewState = () => {
   const firstLoad = useRef(true);
   const logger = useLogger("useMessageViewState");
 
+  // Sync with central profile state
+  useEffect(() => {
+    if (centralProfileId && profileStateInitialized && !currentProfileId) {
+      logger.info("Syncing with central profile state", { centralProfileId });
+      setCurrentProfileId(centralProfileId);
+      setProfileInitialized(true);
+      setIsAuthChecked(true);
+    }
+  }, [centralProfileId, profileStateInitialized, currentProfileId, logger]);
+
   // Enhanced debugging
   useEffect(() => {
     if (messages.length > 0) {
@@ -37,8 +49,13 @@ export const useMessageViewState = () => {
   }, [messages, logger]);
 
   useEffect(() => {
-    logger.info("Current profile ID updated", { currentProfileId });
-  }, [currentProfileId, logger]);
+    logger.info("Current profile ID updated", { 
+      currentProfileId,
+      centralProfileId,
+      profileInitialized,
+      profileStateInitialized
+    });
+  }, [currentProfileId, centralProfileId, profileInitialized, profileStateInitialized, logger]);
 
   useEffect(() => {
     if (otherUser) {

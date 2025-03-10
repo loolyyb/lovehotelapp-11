@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useMessageViewProps } from './logic/useMessageViewProps';
 
 interface MessageViewLogicProps {
@@ -13,18 +13,29 @@ export function MessageViewLogic({
 }: MessageViewLogicProps) {
   // Use the hook to get all the props needed for rendering
   const props = useMessageViewProps(conversationId);
+  const renderCountRef = useRef(0);
   
-  // Debug render counts and state
+  // Enhanced debug render counts and state
   useEffect(() => {
-    console.log(`MessageViewLogic rendered for conversation: ${conversationId}`, {
+    renderCountRef.current += 1;
+    console.log(`MessageViewLogic rendered for conversation: ${conversationId} (render #${renderCountRef.current})`, {
       hasMessages: props.messages.length > 0,
       messageCount: props.messages.length,
       currentProfileId: props.currentProfileId,
       hasOtherUser: !!props.otherUser,
       isLoading: props.isLoading,
       isError: props.isError,
-      authStatus: props.authStatus // Log the new auth status property
+      authStatus: props.authStatus,
+      profileInitialized: props.profileInitialized
     });
+    
+    // Additional auth check logging
+    if (!props.currentProfileId) {
+      console.warn('MessageViewLogic rendered without a profile ID', {
+        conversationId,
+        authStatus: props.authStatus
+      });
+    }
   }, [
     conversationId, 
     props.messages.length, 
@@ -32,7 +43,8 @@ export function MessageViewLogic({
     props.otherUser, 
     props.isLoading, 
     props.isError,
-    props.authStatus
+    props.authStatus,
+    props.profileInitialized
   ]);
   
   // Simply pass all the props to the render function
