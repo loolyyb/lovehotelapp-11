@@ -60,8 +60,6 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
               />
             }
           >
-            {/* Debug element removed */}
-            
             {isLoading ? (
               <MessageLoadingState />
             ) : isError ? (

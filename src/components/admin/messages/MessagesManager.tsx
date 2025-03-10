@@ -24,7 +24,7 @@ export function MessagesManager() {
     clearSearch
   } = useMessagesManagement();
 
-  // Compter les messages avec des mots-clés suspects
+  // Count messages with suspicious keywords
   const suspiciousCount = messages.filter(
     message => detectSuspiciousKeywords(message.content).hasSuspiciousKeywords
   ).length;
