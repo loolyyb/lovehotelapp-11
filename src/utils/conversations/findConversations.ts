@@ -39,6 +39,27 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
+    // Get the latest message time for each conversation using our new view
+    const { data: latestMessageTimes, error: timesError } = await supabase
+      .from('latest_message_times')
+      .select('conversation_id, latest_message_time');
+      
+    if (timesError) {
+      logger.error("Error fetching latest message times", {
+        error: timesError,
+        component: "findConversationsByProfileId"
+      });
+      // Continue with the original approach if the view query fails
+    }
+    
+    // Create a map of conversation_id to latest_message_time
+    const messageTimeMap = new Map();
+    if (latestMessageTimes) {
+      latestMessageTimes.forEach(item => {
+        messageTimeMap.set(item.conversation_id, item.latest_message_time);
+      });
+    }
+    
     // Try to get conversations with two separate queries first
     // Query 1: Get conversations where user is user1_id
     const { data: conversationsAsUser1, error: user1Error } = await supabase
@@ -171,7 +192,8 @@ export const findConversationsByProfileId = async (profileId: string) => {
           return {
             ...conversation,
             otherUser: { id: otherUserId, username: 'Utilisateur inconnu' },
-            messages: []
+            messages: [],
+            latest_message_time: messageTimeMap.get(conversation.id) || conversation.updated_at
           };
         }
         
@@ -193,7 +215,8 @@ export const findConversationsByProfileId = async (profileId: string) => {
           return {
             ...conversation,
             otherUser: otherUserProfile || { id: otherUserId, username: 'Utilisateur inconnu' },
-            messages: []
+            messages: [],
+            latest_message_time: messageTimeMap.get(conversation.id) || conversation.updated_at
           };
         }
         
@@ -201,7 +224,8 @@ export const findConversationsByProfileId = async (profileId: string) => {
         return {
           ...conversation,
           otherUser: otherUserProfile || { id: otherUserId, username: 'Utilisateur inconnu' },
-          messages: messages || []
+          messages: messages || [],
+          latest_message_time: messageTimeMap.get(conversation.id) || (messages?.[0]?.created_at || conversation.updated_at)
         };
       } catch (error) {
         logger.error(`Error processing conversation ${conversation.id}:`, {
@@ -213,17 +237,25 @@ export const findConversationsByProfileId = async (profileId: string) => {
         return {
           ...conversation,
           otherUser: { id: conversation.user1_id === profileId ? conversation.user2_id : conversation.user1_id, username: 'Erreur' },
-          messages: []
+          messages: [],
+          latest_message_time: messageTimeMap.get(conversation.id) || conversation.updated_at
         };
       }
     }));
     
-    logger.info(`Successfully processed ${conversationsWithDetails.length} conversations with details`, {
-      component: "findConversationsByProfileId",
-      conversationIds: conversationsWithDetails.map(c => c.id)
+    // Sort conversations by the latest message time
+    const sortedConversations = conversationsWithDetails.sort((a, b) => {
+      const timeA = new Date(a.latest_message_time || a.updated_at).getTime();
+      const timeB = new Date(b.latest_message_time || b.updated_at).getTime();
+      return timeB - timeA; // Most recent first
     });
     
-    return conversationsWithDetails;
+    logger.info(`Successfully processed ${sortedConversations.length} conversations with details`, {
+      component: "findConversationsByProfileId",
+      conversationIds: sortedConversations.map(c => c.id)
+    });
+    
+    return sortedConversations;
   } catch (error) {
     logger.error('Error in findConversationsByProfileId:', {
       error,

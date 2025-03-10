@@ -24,9 +24,10 @@ export const ConversationItems = memo(function ConversationItems({
     logger.info("Rendering conversation items with data", { 
       count: conversations.length, 
       selectedId: selectedConversationId,
-      conversationIds: conversations.map(c => c.id)
+      conversationIds: conversations.map(c => c.id),
+      hasCurrentProfile: !!currentProfileId
     });
-  }, [conversations, selectedConversationId, logger]);
+  }, [conversations, selectedConversationId, currentProfileId, logger]);
   
   if (!conversations || conversations.length === 0) {
     logger.info("No conversations to render");

@@ -233,20 +233,27 @@ export function useConversationsFetcher(currentProfileId: string | null) {
             }
           }));
           
+          // Sort conversations by most recent message
+          const sortedConversations = processedConversations.sort((a, b) => {
+            const latestMessageA = a.messages?.[0]?.created_at || a.updated_at;
+            const latestMessageB = b.messages?.[0]?.created_at || b.updated_at;
+            return new Date(latestMessageB).getTime() - new Date(latestMessageA).getTime();
+          });
+          
           if (isMountedRef.current) {
-            cacheConversations(currentProfileId, processedConversations);
-            setConversations(processedConversations);
+            cacheConversations(currentProfileId, sortedConversations);
+            setConversations(sortedConversations);
             setError(null);
             setIsLoading(false);
             retryCountRef.current = 0;
           }
           
           fetchInProgressRef.current = false;
-          return processedConversations;
+          return sortedConversations;
         }
         
         // If all attempts failed
-        throw new Error("Impossible de récupérer vos conversations via l'API");
+        throw new Error("Impossible de récupérer vos conversations");
       }
     } catch (error: any) {
       logger.error("Error in fetchConversations", { 
@@ -305,7 +312,7 @@ export function useConversationsFetcher(currentProfileId: string | null) {
   useEffect(() => {
     if (currentProfileId && !fetchAttemptedRef.current) {
       logger.info("Initial fetch triggered by profile ID change or mount", { profileId: currentProfileId });
-      fetchConversations(true);
+      fetchConversations(false); // Use cache for initial load for better performance
     }
   }, [currentProfileId, fetchConversations, logger]);
 

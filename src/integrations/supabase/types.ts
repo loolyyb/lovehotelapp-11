@@ -1246,6 +1246,21 @@ export type Database = {
           },
         ]
       }
+      latest_message_times: {
+        Row: {
+          conversation_id: string | null
+          latest_message_time: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       create_demo_user: {

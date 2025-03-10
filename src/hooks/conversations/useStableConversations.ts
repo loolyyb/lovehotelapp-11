@@ -68,7 +68,7 @@ export function useStableConversations() {
     }
     
     // Set a timeout to ensure loading state doesn't persist indefinitely
-    // Reduced timeout from 10s to 8s
+    // Reduced timeout from 8s to 6s for faster feedback
     loadTimeoutRef.current = setTimeout(() => {
       if (isVisiblyLoading && profileInitialized) {
         logger.warn("Loading state timeout reached - forcing completion", {
@@ -89,7 +89,7 @@ export function useStableConversations() {
           fetchConversations(true);
         }
       }
-    }, 8000); // 8 second timeout (reduced from 10s)
+    }, 6000); // 6 second timeout (reduced from 8s)
     
     return () => {
       if (loadTimeoutRef.current) {
@@ -172,7 +172,7 @@ export function useStableConversations() {
     }
     
     // Fetch fresh conversations
-    fetchConversations(true); // Force fresh fetch for initial load
+    fetchConversations(false); // Use cache for initial load to improve speed
     
   }, [currentProfileId, profileInitialized, profileLoading, fetchConversations, getCachedConversations, logger]);
 
@@ -284,7 +284,7 @@ export function useStableConversations() {
       }
       
       // Call fetchConversations to refresh data
-      await fetchConversations(true); // Force fresh fetch
+      await fetchConversations(!useCache); // Force fresh fetch if not using cache
     } catch (err) {
       logger.error("Error refreshing conversations", { error: err });
     } finally {

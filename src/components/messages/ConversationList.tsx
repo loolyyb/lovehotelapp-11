@@ -48,8 +48,7 @@ export function ConversationList({
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
   const [loadingTimeExceeded, setLoadingTimeExceeded] = useState(false);
 
-  // Add loading timeout to prevent infinite loading state 
-  // And reduce from 8 to 6 seconds for faster feedback
+  // Add loading timeout to prevent infinite loading state - reduced to 6 seconds
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
     
@@ -83,15 +82,6 @@ export function ConversationList({
       loadingTimeExceeded
     });
   }, [conversations, currentProfileId, authChecked, hasAuthError, isLoading, isRefreshing, loadingTimeExceeded, logger]);
-
-  // Additional logging for loading state
-  useEffect(() => {
-    logger.info("Showing loading state", { 
-      authChecked, 
-      isLoading, 
-      hasProfile: !!currentProfileId 
-    });
-  }, [isLoading, authChecked, currentProfileId, logger]);
 
   // Memoized handlers to prevent recreating functions on each render
   const handleLogin = useCallback(() => {
@@ -130,8 +120,8 @@ export function ConversationList({
       }
       toast({
         variant: "destructive",
-        title: "Erreur de connexion",
-        description: "Problème de connexion au serveur. Veuillez réessayer plus tard."
+        title: "Erreur de chargement",
+        description: "Problème lors du chargement de vos conversations. Veuillez réessayer plus tard."
       });
     } finally {
       setIsRefreshingManually(false);
@@ -141,7 +131,7 @@ export function ConversationList({
   const handleRefresh = useCallback(() => {
     logger.info("Manual refresh requested");
     // Force fresh fetch on manual refresh - bypass cache completely
-    refreshConversations(true); 
+    refreshConversations(false); 
   }, [refreshConversations, logger]);
 
   // Authentication error state - show this when we've confirmed there's an auth issue
@@ -191,7 +181,7 @@ export function ConversationList({
   return (
     <div className="h-full flex flex-col">
       <ConversationListHeader
-        isRefreshing={isRefreshing}
+        isRefreshing={isRefreshing || isRefreshingManually}
         handleRefresh={handleRefresh}
       />
       {conversations.length > 0 && (
