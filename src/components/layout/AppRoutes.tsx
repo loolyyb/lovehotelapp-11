@@ -1,5 +1,5 @@
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";
 import Profile from "@/pages/Profile";
@@ -93,100 +93,62 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     return <QualificationJourney onComplete={() => setNeedsQualification(false)} />;
   }
 
-  const ProtectedRoute = ({ element }: { element: React.ReactNode }) => {
+  // Improved ProtectedRoute that properly handles authentication
+  const ProtectedRoute = () => {
     info("Protected route accessed", { 
       isAuthenticated: !!session,
       path: window.location.pathname 
     });
     
     if (isPreviewEnvironment()) {
-      return <>{element}</>;
+      return <Outlet />;
     }
-    return session ? <>{element}</> : <Navigate to="/login" replace />;
+    
+    return session ? <Outlet /> : <Navigate to="/login" replace />;
   };
 
   return (
     <Routes>
       {/* Admin route - explicitly placed first for priority matching */}
-      <Route
-        path="/admin"
-        element={<ProtectedRoute element={<Admin />} />}
-      />
+      <Route path="/admin" element={<Admin />} />
       
       <Route
         path="/"
         element={session ? <Dashboard /> : <Landing />}
       />
+
       <Route
         path="/login"
         element={!session ? <Login /> : <Navigate to="/" replace />}
       />
+
       <Route
         path="/password-reset"
         element={<PasswordReset />}
       />
-      <Route
-        path="/profile"
-        element={<ProtectedRoute element={<Profile />} />}
-      />
-      <Route
-        path="/profiles"
-        element={<ProtectedRoute element={<Navigate to="/matching-scores" replace />} />}
-      />
-      <Route
-        path="/profile/:id"
-        element={<ProtectedRoute element={<ProfileDetails />} />}
-      />
-      <Route
-        path="/messages"
-        element={<ProtectedRoute element={<Messages />} />}
-      />
-      <Route
-        path="/matching-scores"
-        element={<ProtectedRoute element={<MatchingScores />} />}
-      />
-      <Route
-        path="/events"
-        element={<ProtectedRoute element={<Events />} />}
-      />
-      <Route
-        path="/challenges"
-        element={<ProtectedRoute element={<Challenges />} />}
-      />
-      <Route
-        path="/features"
-        element={<Features />}
-      />
-      <Route
-        path="/options"
-        element={<Options />}
-      />
-      <Route
-        path="/lover-coin"
-        element={<LoverCoin />}
-      />
-      <Route
-        path="/reserver-room"
-        element={<ProtectedRoute element={<ReserverRoom />} />}
-      />
-      <Route
-        path="/rideaux-ouverts"
-        element={<RideauxOuverts />}
-      />
-      <Route
-        path="/restaurant-du-love"
-        element={<RestaurantDuLove />}
-      />
-      <Route
-        path="/announcements"
-        element={<ProtectedRoute element={<Announcements />} />}
-      />
+
+      {/* Group protected routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profiles" element={<Navigate to="/matching-scores" replace />} />
+        <Route path="/profile/:id" element={<ProfileDetails />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/matching-scores" element={<MatchingScores />} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/challenges" element={<Challenges />} />
+        <Route path="/reserver-room" element={<ReserverRoom />} />
+        <Route path="/announcements" element={<Announcements />} />
+      </Route>
+
+      {/* Public routes */}
+      <Route path="/features" element={<Features />} />
+      <Route path="/options" element={<Options />} />
+      <Route path="/lover-coin" element={<LoverCoin />} />
+      <Route path="/rideaux-ouverts" element={<RideauxOuverts />} />
+      <Route path="/restaurant-du-love" element={<RestaurantDuLove />} />
       
       {/* Catch-all route for unknown paths */}
-      <Route
-        path="*"
-        element={<Navigate to="/" replace />}
-      />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { AlertService } from "@/services/AlertService";
+import { useLogger } from "@/hooks/useLogger";
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -15,22 +16,23 @@ export default function Admin() {
   const [errorMessage, setErrorMessage] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { info, error } = useLogger('AdminPage');
 
   // Check if the user is authenticated and is an admin
   useEffect(() => {
-    console.log("Admin page: Checking authentication");
+    info("Admin page: Checking authentication");
     const checkAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error("Session error:", error);
-          throw error;
+        if (sessionError) {
+          error("Session error:", { error: sessionError });
+          throw sessionError;
         }
         
         if (!session) {
           // Not authenticated
-          console.log("Admin page: User not authenticated");
+          info("Admin page: User not authenticated");
           setIsAuthenticated(false);
           setIsAdmin(false);
           toast({
@@ -42,7 +44,7 @@ export default function Admin() {
           return;
         }
         
-        console.log("Admin page: User authenticated, checking if admin");
+        info("Admin page: User authenticated, checking if admin");
         setIsAuthenticated(true);
         
         // Check if user is admin
@@ -53,7 +55,7 @@ export default function Admin() {
           .single();
         
         if (profileError) {
-          console.error("Error fetching profile:", profileError);
+          error("Error fetching profile:", { error: profileError });
           setIsAdmin(false);
           setIsError(true);
           setErrorMessage("Impossible de vérifier votre rôle d'administrateur");
@@ -65,10 +67,10 @@ export default function Admin() {
         }
         
         const isUserAdmin = profile?.role === 'admin';
-        console.log("Admin page: User is admin:", isUserAdmin);
+        info("Admin page: User is admin:", { isAdmin: isUserAdmin });
         setIsAdmin(isUserAdmin);
       } catch (error: any) {
-        console.error("Auth error:", error);
+        error("Auth error:", { error });
         setIsError(true);
         setErrorMessage(error.message || "Une erreur est survenue lors de la vérification de votre session");
         AlertService.captureException(error as Error, {
@@ -118,12 +120,12 @@ export default function Admin() {
   }
   
   if (!isAuthenticated) {
-    console.log("Admin page: Redirecting to login");
+    info("Admin page: Redirecting to login");
     return null; // The navigate in useEffect will redirect to login
   }
   
   if (!isAdmin) {
-    console.log("Admin page: User is not admin, showing access restricted");
+    info("Admin page: User is not admin, showing access restricted");
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50">
         <div className="text-center p-8 bg-[#302234] rounded-lg border border-[#f3ebad]/20 max-w-md">
@@ -136,7 +138,7 @@ export default function Admin() {
     );
   }
   
-  console.log("Admin page: Showing password check or dashboard");
+  info("Admin page: Showing password check or dashboard");
   
   if (!isPasswordValid) {
     return <AdminPasswordCheck onPasswordValid={() => setIsPasswordValid(true)} />;
