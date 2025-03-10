@@ -85,7 +85,14 @@ export function useConversationsFetcher(currentProfileId: string | null) {
           profileId: currentProfileId
         });
         if (isMountedRef.current) {
-          setConversations(cachedData);
+          // Ensure cached conversations are properly sorted
+          const sortedCachedData = [...cachedData].sort((a, b) => {
+            const timeA = new Date(a.latest_message_time || a.updated_at || a.created_at).getTime();
+            const timeB = new Date(b.latest_message_time || b.updated_at || b.created_at).getTime();
+            return timeB - timeA; // Descending order (newest first)
+          });
+          
+          setConversations(sortedCachedData);
           setError(null);
           setIsLoading(false);
         }
@@ -219,30 +226,44 @@ export function useConversationsFetcher(currentProfileId: string | null) {
                 .order('created_at', { ascending: false })
                 .limit(10);
                 
+              // Find the latest message timestamp
+              const latestMessageTime = messages && messages.length > 0 
+                ? messages[0].created_at 
+                : conversation.updated_at || conversation.created_at;
+                
               return {
                 ...conversation,
                 otherUser: otherUserProfile || { id: otherUserId, username: 'Utilisateur inconnu' },
-                messages: messages || []
+                messages: messages || [],
+                latest_message_time: latestMessageTime
               };
             } catch (error) {
               return {
                 ...conversation,
                 otherUser: { id: conversation.user1_id === currentProfileId ? conversation.user2_id : conversation.user1_id, username: 'Utilisateur inconnu' },
-                messages: []
+                messages: [],
+                latest_message_time: conversation.updated_at || conversation.created_at
               };
             }
           }));
           
+          // Sort by latest message time
+          const sortedProcessedConversations = processedConversations.sort((a, b) => {
+            const timeA = new Date(a.latest_message_time || a.updated_at || a.created_at).getTime();
+            const timeB = new Date(b.latest_message_time || b.updated_at || b.created_at).getTime();
+            return timeB - timeA; // Descending order (newest first)
+          });
+          
           if (isMountedRef.current) {
-            cacheConversations(currentProfileId, processedConversations);
-            setConversations(processedConversations);
+            cacheConversations(currentProfileId, sortedProcessedConversations);
+            setConversations(sortedProcessedConversations);
             setError(null);
             setIsLoading(false);
             retryCountRef.current = 0;
           }
           
           fetchInProgressRef.current = false;
-          return processedConversations;
+          return sortedProcessedConversations;
         }
         
         // If all attempts failed
