@@ -3,12 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 import { AlertService } from "@/services/AlertService";
 
+// Define an interface for the conversation with all necessary properties
+interface ConversationWithOtherUser {
+  id: string;
+  status: string;
+  blocked_by: string | null;
+  otherUser: any;
+  created_at: string;
+  updated_at: string;
+  latest_message_time: string;
+  latestMessage?: any | null;
+  hasUnread?: boolean;
+}
+
 /**
  * Finds all conversations for a given profile ID with detailed information
  * @param profileId The profile ID to find conversations for
  * @returns Array of conversations with other user details and messages
  */
-export const findConversationsByProfileId = async (profileId: string) => {
+export const findConversationsByProfileId = async (profileId: string): Promise<ConversationWithOtherUser[]> => {
   if (!profileId) {
     logger.error("No profile ID provided to findConversationsByProfileId", {
       component: "findConversationsByProfileId"
@@ -77,7 +90,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
     }
     
     // Transform results to match expected format
-    const allConversations = (conversationsWithTimes || []).map(conv => {
+    const allConversations: ConversationWithOtherUser[] = (conversationsWithTimes || []).map(conv => {
       const otherUser = conv.user1_id === profileId ? conv.user2 : conv.user1;
       return {
         id: conv.id,
@@ -86,7 +99,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
         otherUser,
         created_at: conv.created_at,
         updated_at: conv.updated_at,
-        latest_message_time: conv.latest_message.latest_message_time || conv.updated_at
+        latest_message_time: conv.latest_message?.latest_message_time || conv.updated_at
       };
     });
     

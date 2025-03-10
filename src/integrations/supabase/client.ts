@@ -19,9 +19,9 @@ export const supabase = createClient<Database>(
       headers: {
         'x-application-name': 'rencontre.lovehotelapp',
       },
-      fetch: (...args) => {
+      fetch: (url, options) => {
         // Use a custom fetch with timeout and retry logic
-        return fetch(...args).catch(err => {
+        return fetch(url, options).catch(err => {
           console.error('Fetch error with Supabase:', err);
           throw err;
         });
