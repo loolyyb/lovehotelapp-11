@@ -36,13 +36,17 @@ export const hashPassword = (password: string): string => {
  * Verify if a provided password matches the expected hash
  */
 export const verifyPassword = (password: string, storedHash: string): boolean => {
+  console.log("Verifying password against stored hash");
+  
   // Support legacy hash format (simple hash function)
   if (!storedHash.includes(':')) {
+    console.log("Using legacy verification method");
     // Legacy verification
     const legacyHash = legacyHashPassword(password);
     return legacyHash === storedHash;
   }
   
+  console.log("Using secure verification method");
   // For new hash format (salt:hash)
   const [salt, hash] = storedHash.split(':');
   
@@ -91,12 +95,14 @@ export const migratePassword = (password: string, legacyHash: string): string =>
 
 /**
  * Updates the admin password in the database directly
- * @param newPassword The new password to set
+ * @param newPassword The new password to set, defaults to "Reussite888!"
  */
-export async function updateAdminPassword(newPassword: string = "Reussite888!"): Promise<boolean> {
+export async function updateAdminPassword(newPassword: string = "Reussite888!"): Promise<string> {
+  console.log("Updating admin password in database");
   try {
     // Generate a secure hash for the new password
     const secureHash = hashPassword(newPassword);
+    console.log("Generated secure hash for admin password");
     
     // Update the admin_settings table with the new hash
     const { error } = await supabase
@@ -110,12 +116,13 @@ export async function updateAdminPassword(newPassword: string = "Reussite888!"):
     
     if (error) {
       console.error("Failed to update admin password:", error);
-      return false;
+      throw error;
     }
     
-    return true;
+    console.log("Admin password updated successfully");
+    return secureHash;
   } catch (error) {
     console.error("Error updating admin password:", error);
-    return false;
+    throw error;
   }
 }

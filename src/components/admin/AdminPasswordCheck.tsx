@@ -1,10 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { supabase, safeQuerySingle } from "@/integrations/supabase/client";
-import { verifyPassword, migratePassword } from "@/utils/crypto";
+import { verifyPassword, updateAdminPassword } from "@/utils/crypto";
 import { useToast } from "@/hooks/use-toast";
 import { AlertService } from "@/services/AlertService";
 
@@ -17,6 +17,39 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // When component mounts, ensure admin password exists
+  useEffect(() => {
+    const ensureAdminPasswordExists = async () => {
+      try {
+        console.log("Checking for admin password hash in database");
+        const { data: adminSettings, error: settingsError } = await supabase
+          .from('admin_settings')
+          .select('value')
+          .eq('key', 'admin_password_hash')
+          .single();
+        
+        if (settingsError) {
+          console.log("Admin password hash not found, creating default");
+          // If no admin password hash found, set the default one
+          const updateResult = await updateAdminPassword();
+          console.log("Admin password update result:", updateResult);
+        } else {
+          console.log("Admin password hash found in database");
+        }
+      } catch (err) {
+        console.error("Error during admin password initialization:", err);
+        AlertService.captureException(err as Error, {
+          context: "AdminPasswordCheck.ensureAdminPasswordExists"
+        });
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    ensureAdminPasswordExists();
+  }, []);
 
   const checkPassword = async () => {
     setIsLoading(true);
@@ -37,6 +70,7 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
         .single();
 
       if (profileError) {
+        console.error("Profile check error:", profileError);
         AlertService.captureException(new Error("Admin profile check failed"), {
           context: "AdminPasswordCheck",
           error: profileError
@@ -47,11 +81,13 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
       const typedProfile = safeQuerySingle<{ role: string }>(profile);
       
       if (!typedProfile) {
+        console.error("Profile not found for user:", session.user.id);
         throw new Error("Profil introuvable");
       }
 
       // Check if user is admin
       if (typedProfile.role !== 'admin') {
+        console.warn("Non-admin access attempt:", session.user.id);
         AlertService.captureMessage("Non-admin attempted to access admin area", "warning", {
           userId: session.user.id
         });
@@ -66,16 +102,26 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
         .single();
       
       if (settingsError) {
+        console.error("Failed to retrieve admin password hash:", settingsError);
         AlertService.captureException(new Error("Failed to retrieve admin settings"), {
           context: "AdminPasswordCheck",
           error: settingsError
         });
-        console.error("Failed to retrieve admin password hash:", settingsError);
+        throw new Error("Impossible de récupérer les paramètres d'admin");
+      }
+      
+      console.log("Admin settings retrieved:", adminSettings ? "found" : "not found");
+      
+      if (!adminSettings?.value?.hash) {
+        console.error("Admin password hash is missing or invalid");
+        throw new Error("Configuration admin incorrecte, contactez le support");
       }
       
       // Default to hardcoded hash if no settings found
       // This hash should be for "Reussite888!" after running the script
-      const ADMIN_PASSWORD_HASH = adminSettings?.value?.hash || "2c1743a391305fbf367df8e4f069f9f9";
+      const ADMIN_PASSWORD_HASH = adminSettings.value.hash;
+      
+      console.log("Verifying password with hash");
       
       // Verify password using the crypto utility
       if (verifyPassword(password, ADMIN_PASSWORD_HASH)) {
@@ -83,24 +129,24 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
         if (!ADMIN_PASSWORD_HASH.includes(':')) {
           try {
             // Generate a new secure hash
-            const newHash = migratePassword(password, ADMIN_PASSWORD_HASH);
+            console.log("Migrating from legacy hash to secure hash");
             
             // Update the hash in the database
             const { error: updateError } = await supabase
               .from('admin_settings')
               .upsert({
                 key: 'admin_password_hash',
-                value: { hash: newHash },
+                value: { hash: await updateAdminPassword(password) },
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               }, { onConflict: 'key' });
             
             if (updateError) {
+              console.error("Failed to migrate password:", updateError);
               AlertService.captureException(new Error("Failed to update admin password hash"), {
                 context: "AdminPasswordCheck.migrationUpdate",
                 error: updateError
               });
-              console.error("Failed to migrate password:", updateError);
             } else {
               console.log("Successfully migrated admin password to secure hash");
               AlertService.captureMessage("Admin password migrated to secure hash", "info");
@@ -114,12 +160,14 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
           }
         }
         
+        console.log("Password verified successfully, granting access");
         toast({
           title: "Accès accordé",
           description: "Bienvenue dans le panneau d'administration"
         });
         onPasswordValid();
       } else {
+        console.warn("Invalid admin password attempt");
         AlertService.captureMessage("Failed admin login attempt", "warning", {
           userId: session.user.id
         });
@@ -137,6 +185,19 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
       setIsLoading(false);
     }
   };
+
+  // Show loading state while initializing
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50">
+        <Card className="w-full max-w-md p-6 bg-[#302234] border-[#f3ebad]/20">
+          <div className="text-center text-[#f3ebad]">
+            Initialisation en cours...
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50">
