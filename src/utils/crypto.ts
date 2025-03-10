@@ -2,6 +2,8 @@
 // Robust utility for password hashing and verification using bcrypt standards
 import * as CryptoJS from 'crypto-js';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/services/LogService';
+import { AlertService } from '@/services/AlertService';
 
 /**
  * Constants for hashing
@@ -11,98 +13,73 @@ const PEPPER = 'lovehotel_secure_pepper'; // Server-side secret
 
 /**
  * Secure hash function for passwords
- * Uses PBKDF2 with SHA-256 and a high iteration count for security
  */
 export const hashPassword = (password: string): string => {
-  // Generate a random salt
-  const salt = CryptoJS.lib.WordArray.random(16).toString();
-  
-  // Apply PBKDF2 with high iteration count 
-  const hash = CryptoJS.PBKDF2(
-    password + PEPPER, 
-    salt, 
-    { 
-      keySize: 256 / 32, 
-      iterations: 10000,
-      hasher: CryptoJS.algo.SHA256
-    }
-  ).toString();
-  
-  // Store both the salt and hash together
-  return `${salt}:${hash}`;
+  try {
+    // Generate a random salt
+    const salt = CryptoJS.lib.WordArray.random(16).toString();
+    
+    // Apply PBKDF2 with high iteration count 
+    const hash = CryptoJS.PBKDF2(
+      password + PEPPER, 
+      salt, 
+      { 
+        keySize: 256 / 32, 
+        iterations: 10000,
+        hasher: CryptoJS.algo.SHA256
+      }
+    ).toString();
+    
+    // Store both the salt and hash together
+    return `${salt}:${hash}`;
+  } catch (error) {
+    logger.error('Error in hashPassword:', { error });
+    throw error;
+  }
 };
 
 /**
  * Verify if a provided password matches the expected hash
  */
 export const verifyPassword = (password: string, storedHash: string): boolean => {
-  console.log("Verifying password against stored hash");
+  logger.info("Verifying password");
   
-  // Support legacy hash format (simple hash function)
-  if (!storedHash.includes(':')) {
-    console.log("Using legacy verification method");
-    // Legacy verification
-    const legacyHash = legacyHashPassword(password);
-    return legacyHash === storedHash;
-  }
-  
-  console.log("Using secure verification method");
-  // For new hash format (salt:hash)
-  const [salt, hash] = storedHash.split(':');
-  
-  const calculatedHash = CryptoJS.PBKDF2(
-    password + PEPPER, 
-    salt, 
-    { 
-      keySize: 256 / 32, 
-      iterations: 10000,
-      hasher: CryptoJS.algo.SHA256
+  try {
+    if (!storedHash || !storedHash.includes(':')) {
+      logger.warn("Invalid hash format", { storedHash });
+      return false;
     }
-  ).toString();
-  
-  return calculatedHash === hash;
-};
-
-/**
- * Legacy hash function for password compatibility
- * @deprecated Use hashPassword instead
- */
-const legacyHashPassword = (password: string): string => {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+    
+    const [salt, hash] = storedHash.split(':');
+    
+    const calculatedHash = CryptoJS.PBKDF2(
+      password + PEPPER, 
+      salt, 
+      { 
+        keySize: 256 / 32, 
+        iterations: 10000,
+        hasher: CryptoJS.algo.SHA256
+      }
+    ).toString();
+    
+    const isValid = calculatedHash === hash;
+    logger.info("Password verification result", { isValid });
+    return isValid;
+  } catch (error) {
+    logger.error('Error in verifyPassword:', { error });
+    return false;
   }
-  return hash.toString(16);
-};
-
-/**
- * Migrate a password from legacy format to new secure format
- * Returns the new hash that should be stored
- */
-export const migratePassword = (password: string, legacyHash: string): string => {
-  // Verify the password matches the legacy hash first
-  const legacyVerified = legacyHashPassword(password) === legacyHash;
-  
-  if (!legacyVerified) {
-    throw new Error("Password does not match legacy hash");
-  }
-  
-  // Return a new secure hash
-  return hashPassword(password);
 };
 
 /**
  * Updates the admin password in the database directly
- * @param newPassword The new password to set, defaults to "Reussite888!"
  */
 export async function updateAdminPassword(newPassword: string = "Reussite888!"): Promise<string> {
-  console.log("Updating admin password in database");
+  logger.info("Updating admin password in database");
   try {
     // Generate a secure hash for the new password
     const secureHash = hashPassword(newPassword);
-    console.log("Generated secure hash for admin password");
+    logger.info("Generated secure hash for admin password");
     
     // Update the admin_settings table with the new hash
     const { error } = await supabase
@@ -112,17 +89,26 @@ export async function updateAdminPassword(newPassword: string = "Reussite888!"):
         value: { hash: secureHash },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      }, { onConflict: 'key' });
+      }, { 
+        onConflict: 'key'
+      });
     
     if (error) {
-      console.error("Failed to update admin password:", error);
+      logger.error("Failed to update admin password:", { error });
+      AlertService.captureException(error as Error, {
+        context: "updateAdminPassword"
+      });
       throw error;
     }
     
-    console.log("Admin password updated successfully");
+    logger.info("Admin password updated successfully");
     return secureHash;
   } catch (error) {
-    console.error("Error updating admin password:", error);
+    logger.error("Error updating admin password:", { error });
+    AlertService.captureException(error as Error, {
+      context: "updateAdminPassword"
+    });
     throw error;
   }
 }
+

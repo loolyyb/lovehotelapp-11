@@ -1,12 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { supabase, safeQuerySingle } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { verifyPassword, updateAdminPassword } from "@/utils/crypto";
 import { useToast } from "@/hooks/use-toast";
 import { AlertService } from "@/services/AlertService";
+import { logger } from '@/services/LogService';
 
 interface AdminPasswordCheckProps {
   onPasswordValid: () => void;
@@ -15,31 +15,32 @@ interface AdminPasswordCheckProps {
 export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [isInitializing, setIsInitializing] = useState(true);
 
   // When component mounts, ensure admin password exists
   useEffect(() => {
     const ensureAdminPasswordExists = async () => {
       try {
-        console.log("Checking for admin password hash in database");
+        logger.info("Checking for admin password hash");
+        
         const { data: adminSettings, error: settingsError } = await supabase
           .from('admin_settings')
           .select('value')
           .eq('key', 'admin_password_hash')
           .single();
-        
+
         if (settingsError) {
-          console.log("Admin password hash not found, creating default");
+          logger.warn("Admin password hash not found, creating default");
           // If no admin password hash found, set the default one
-          const updateResult = await updateAdminPassword();
-          console.log("Admin password update result:", updateResult);
+          await updateAdminPassword();
+          logger.info("Default admin password created");
         } else {
-          console.log("Admin password hash found in database");
+          logger.info("Admin password hash found");
         }
       } catch (err) {
-        console.error("Error during admin password initialization:", err);
+        logger.error("Error during admin password initialization:", { error: err });
         AlertService.captureException(err as Error, {
           context: "AdminPasswordCheck.ensureAdminPasswordExists"
         });
@@ -56,6 +57,8 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
     setError(null);
 
     try {
+      logger.info("Starting password verification process");
+      
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -70,31 +73,20 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
         .single();
 
       if (profileError) {
-        console.error("Profile check error:", profileError);
+        logger.error("Profile check error:", { error: profileError });
         AlertService.captureException(new Error("Admin profile check failed"), {
           context: "AdminPasswordCheck",
           error: profileError
         });
         throw new Error("Impossible de vérifier votre profil");
       }
-      
-      const typedProfile = safeQuerySingle<{ role: string }>(profile);
-      
-      if (!typedProfile) {
-        console.error("Profile not found for user:", session.user.id);
-        throw new Error("Profil introuvable");
-      }
 
-      // Check if user is admin
-      if (typedProfile.role !== 'admin') {
-        console.warn("Non-admin access attempt:", session.user.id);
-        AlertService.captureMessage("Non-admin attempted to access admin area", "warning", {
-          userId: session.user.id
-        });
+      if (!profile || profile.role !== 'admin') {
+        logger.warn("Non-admin access attempt", { userId: session.user.id });
         throw new Error("Vous n'avez pas les droits pour accéder à cette page");
       }
 
-      // Get admin password hash from database
+      // Get admin password hash
       const { data: adminSettings, error: settingsError } = await supabase
         .from('admin_settings')
         .select('value')
@@ -102,79 +94,30 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
         .single();
       
       if (settingsError) {
-        console.error("Failed to retrieve admin password hash:", settingsError);
-        AlertService.captureException(new Error("Failed to retrieve admin settings"), {
-          context: "AdminPasswordCheck",
-          error: settingsError
-        });
+        logger.error("Failed to retrieve admin password hash:", { error: settingsError });
         throw new Error("Impossible de récupérer les paramètres d'admin");
       }
-      
-      console.log("Admin settings retrieved:", adminSettings ? "found" : "not found");
-      
+
       if (!adminSettings?.value?.hash) {
-        console.error("Admin password hash is missing or invalid");
-        throw new Error("Configuration admin incorrecte, contactez le support");
+        logger.error("Admin password hash is missing");
+        throw new Error("Configuration admin incorrecte");
       }
+
+      const isValid = verifyPassword(password, adminSettings.value.hash);
       
-      // Default to hardcoded hash if no settings found
-      // This hash should be for "Reussite888!" after running the script
-      const ADMIN_PASSWORD_HASH = adminSettings.value.hash;
-      
-      console.log("Verifying password with hash");
-      
-      // Verify password using the crypto utility
-      if (verifyPassword(password, ADMIN_PASSWORD_HASH)) {
-        // If using the legacy hash, migrate to the new format
-        if (!ADMIN_PASSWORD_HASH.includes(':')) {
-          try {
-            // Generate a new secure hash
-            console.log("Migrating from legacy hash to secure hash");
-            
-            // Update the hash in the database
-            const { error: updateError } = await supabase
-              .from('admin_settings')
-              .upsert({
-                key: 'admin_password_hash',
-                value: { hash: await updateAdminPassword(password) },
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              }, { onConflict: 'key' });
-            
-            if (updateError) {
-              console.error("Failed to migrate password:", updateError);
-              AlertService.captureException(new Error("Failed to update admin password hash"), {
-                context: "AdminPasswordCheck.migrationUpdate",
-                error: updateError
-              });
-            } else {
-              console.log("Successfully migrated admin password to secure hash");
-              AlertService.captureMessage("Admin password migrated to secure hash", "info");
-            }
-          } catch (migrationError: any) {
-            console.error("Failed to migrate password:", migrationError);
-            AlertService.captureException(migrationError, {
-              context: "AdminPasswordCheck.migration"
-            });
-            // Continue even if migration fails
-          }
-        }
-        
-        console.log("Password verified successfully, granting access");
+      if (isValid) {
+        logger.info("Admin password verified successfully");
         toast({
           title: "Accès accordé",
           description: "Bienvenue dans le panneau d'administration"
         });
         onPasswordValid();
       } else {
-        console.warn("Invalid admin password attempt");
-        AlertService.captureMessage("Failed admin login attempt", "warning", {
-          userId: session.user.id
-        });
+        logger.warn("Invalid admin password attempt");
         throw new Error("Mot de passe incorrect");
       }
     } catch (error: any) {
-      console.error("Auth error:", error);
+      logger.error("Auth error:", { error });
       setError(error.message || "Une erreur est survenue");
       toast({
         variant: "destructive",
