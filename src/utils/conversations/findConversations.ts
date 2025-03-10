@@ -39,127 +39,55 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
-    // Use Promise.all to parallelize the two conversation queries
-    const [latestMessageTimesResult, conversationsAsUser1Result, conversationsAsUser2Result] = await Promise.all([
-      // 1. Get the latest message times from the view
-      supabase.from('latest_message_times').select('conversation_id, latest_message_time'),
+    // More efficient query - joining the view directly to get data in a single query
+    const { data: conversationsWithTimes, error: conversationsError } = await supabase
+      .from('conversations')
+      .select(`
+        id, 
+        status,
+        blocked_by,
+        user1_id,
+        user2_id,
+        created_at,
+        updated_at,
+        user1:profiles!conversations_user1_id_fkey(
+          id, 
+          username, 
+          avatar_url, 
+          full_name
+        ),
+        user2:profiles!conversations_user2_id_fkey(
+          id, 
+          username, 
+          avatar_url, 
+          full_name
+        ),
+        latest_message:latest_message_times!inner(latest_message_time)
+      `)
+      .or(`user1_id.eq.${profileId},user2_id.eq.${profileId}`)
+      .eq('status', 'active')
+      .order('latest_message_time', { foreignTable: 'latest_message_times', ascending: false });
       
-      // 2. Get conversations where user is user1_id
-      supabase.from('conversations')
-        .select(`
-          id, 
-          status,
-          blocked_by,
-          user1_id,
-          user2_id,
-          created_at,
-          updated_at,
-          user2:profiles!conversations_user2_id_fkey(
-            id, 
-            username, 
-            avatar_url, 
-            full_name
-          )
-        `)
-        .eq('user1_id', profileId)
-        .eq('status', 'active'),
-        
-      // 3. Get conversations where user is user2_id  
-      supabase.from('conversations')
-        .select(`
-          id, 
-          status,
-          blocked_by,
-          user1_id,
-          user2_id,
-          created_at,
-          updated_at,
-          user1:profiles!conversations_user1_id_fkey(
-            id, 
-            username, 
-            avatar_url, 
-            full_name
-          )
-        `)
-        .eq('user2_id', profileId)
-        .eq('status', 'active')
-    ]);
-    
-    const { data: latestMessageTimes, error: timesError } = latestMessageTimesResult;
-    const { data: conversationsAsUser1, error: user1Error } = conversationsAsUser1Result;
-    const { data: conversationsAsUser2, error: user2Error } = conversationsAsUser2Result;
-    
-    if (timesError) {
-      logger.error("Error fetching latest message times", {
-        error: timesError,
+    if (conversationsError) {
+      logger.error("Error fetching conversations", {
+        error: conversationsError,
         component: "findConversationsByProfileId"
       });
-      // Continue without the message times data
+      throw conversationsError;
     }
     
-    if (user1Error) {
-      logger.error("Error fetching conversations as user1", {
-        error: user1Error,
-        component: "findConversationsByProfileId"
-      });
-      // Continue with empty conversations as user1
-    }
-    
-    if (user2Error) {
-      logger.error("Error fetching conversations as user2", {
-        error: user2Error,
-        component: "findConversationsByProfileId"
-      });
-      // Continue with empty conversations as user2
-    }
-    
-    // Create a map of conversation_id to latest_message_time
-    const messageTimeMap = new Map();
-    if (latestMessageTimes) {
-      latestMessageTimes.forEach(item => {
-        messageTimeMap.set(item.conversation_id, item.latest_message_time);
-      });
-    }
-    
-    // Combine both result sets
-    let allConversations: any[] = [];
-    
-    // Process conversations where user is user1_id
-    if (conversationsAsUser1) {
-      allConversations = allConversations.concat(
-        conversationsAsUser1.map(conv => ({
-          id: conv.id,
-          status: conv.status,
-          blocked_by: conv.blocked_by,
-          otherUser: conv.user2,
-          created_at: conv.created_at,
-          updated_at: conv.updated_at,
-          latest_message_time: messageTimeMap.get(conv.id) || conv.updated_at
-        }))
-      );
-    }
-    
-    // Process conversations where user is user2_id
-    if (conversationsAsUser2) {
-      allConversations = allConversations.concat(
-        conversationsAsUser2.map(conv => ({
-          id: conv.id,
-          status: conv.status,
-          blocked_by: conv.blocked_by,
-          otherUser: conv.user1,
-          created_at: conv.created_at,
-          updated_at: conv.updated_at,
-          latest_message_time: messageTimeMap.get(conv.id) || conv.updated_at
-        }))
-      );
-    }
-    
-    // Optimize sort for better performance
-    allConversations.sort((a, b) => {
-      // Convert once outside the comparison to avoid repeated conversions
-      const timeA = new Date(a.latest_message_time).getTime();
-      const timeB = new Date(b.latest_message_time).getTime();
-      return timeB - timeA; // Newest first
+    // Transform results to match expected format
+    const allConversations = (conversationsWithTimes || []).map(conv => {
+      const otherUser = conv.user1_id === profileId ? conv.user2 : conv.user1;
+      return {
+        id: conv.id,
+        status: conv.status,
+        blocked_by: conv.blocked_by,
+        otherUser,
+        created_at: conv.created_at,
+        updated_at: conv.updated_at,
+        latest_message_time: conv.latest_message.latest_message_time || conv.updated_at
+      };
     });
     
     logger.info(`Found ${allConversations.length} conversations for profile ${profileId}`, {
@@ -172,19 +100,12 @@ export const findConversationsByProfileId = async (profileId: string) => {
         // Get all conversation IDs to fetch messages
         const conversationIds = allConversations.map(c => c.id);
         
-        // Efficient query to get latest message per conversation
+        // Efficient query to get latest message per conversation using a window function
         const { data: latestMessages, error: messagesError } = await supabase
-          .from('messages')
-          .select(`
-            id,
-            conversation_id,
-            content,
-            created_at,
-            read_at,
-            sender_id
-          `)
-          .in('conversation_id', conversationIds)
-          .order('created_at', { ascending: false });
+          .rpc('get_latest_messages_per_conversation', { 
+            profile_id: profileId,
+            conversation_ids: conversationIds
+          });
           
         if (messagesError) {
           logger.error("Error fetching latest messages", {
@@ -196,21 +117,16 @@ export const findConversationsByProfileId = async (profileId: string) => {
           // Create a Map to find the latest message for each conversation efficiently
           const messagesByConversation = new Map();
           latestMessages.forEach(msg => {
-            if (!messagesByConversation.has(msg.conversation_id)) {
-              messagesByConversation.set(msg.conversation_id, msg);
-            }
+            messagesByConversation.set(msg.conversation_id, msg);
           });
           
           // Add latest message to each conversation
-          allConversations = allConversations.map(conv => {
+          allConversations.forEach(conv => {
             const latestMessage = messagesByConversation.get(conv.id);
-            return {
-              ...conv,
-              latestMessage: latestMessage || null,
-              hasUnread: latestMessage ? 
-                (latestMessage.sender_id !== profileId && !latestMessage.read_at) : 
-                false
-            };
+            conv.latestMessage = latestMessage || null;
+            conv.hasUnread = latestMessage ? 
+              (latestMessage.sender_id !== profileId && !latestMessage.read_at) : 
+              false;
           });
         }
       } catch (error) {

@@ -16,19 +16,32 @@ export const MessageCacheStore = {
     updateAgeOnGet: true,
     updateAgeOnHas: false,
     allowStale: false,
+    // Added new options for better performance
+    noDisposeOnSet: false,
+    disposeAfter: (value, key) => {
+      logger.info(`Cache entry expired for key: ${key}`, { component: "MessageCacheStore" });
+    }
   }),
 
-  // Get messages from cache with automatic stale check
+  // Get messages from cache with automatic stale check and stats logging
   get(conversationId: string): any[] | undefined {
     if (!conversationId) return undefined;
     
     const cacheKey = getCacheKey(conversationId);
     const cached = this._cache.get(cacheKey);
     
-    if (!cached) return undefined;
+    if (!cached) {
+      logger.info(`Cache miss for conversation: ${conversationId}`, { component: "MessageCacheStore" });
+      return undefined;
+    }
     
     // Update timestamp on access for LRU behavior
     cached.timestamp = Date.now();
+    logger.info(`Cache hit for conversation: ${conversationId}, found ${cached.messages.length} messages`, { 
+      component: "MessageCacheStore",
+      cacheAge: Math.round((Date.now() - cached.timestamp) / 1000) + 's'
+    });
+    
     return cached.messages;
   },
   
@@ -45,7 +58,8 @@ export const MessageCacheStore = {
     logger.info("Cache updated for conversation", { 
       conversationId, 
       messageCount: messages.length, 
-      component: "MessageCacheStore" 
+      component: "MessageCacheStore",
+      cacheSize: this._cache.size
     });
   },
   
@@ -79,5 +93,15 @@ export const MessageCacheStore = {
       }
     }
     return result;
+  },
+  
+  // Get cache stats for monitoring
+  getStats() {
+    return {
+      size: this._cache.size,
+      maxSize: MAX_CACHE_SIZE,
+      itemCount: this._cache.size,
+      remaining: MAX_CACHE_SIZE - this._cache.size
+    };
   }
 };

@@ -22,6 +22,8 @@ export const useRealtimeMessages = ({
   const subscriptionConnectedRef = useRef<boolean>(false);
   const subscriptionIdRef = useRef<string>("");
   const messageProcessingLockRef = useRef<Map<string, boolean>>(new Map());
+  const connectionRetryCountRef = useRef<number>(0);
+  const MAX_RETRY_COUNT = 5;
 
   // Track messages that this client has sent
   const trackSentMessage = useCallback((messageId: string) => {
@@ -32,10 +34,11 @@ export const useRealtimeMessages = ({
     }, 10000);
   }, []);
 
-  useEffect(() => {
+  // Handle subscription connection with automatic retries
+  const setupSubscription = useCallback(() => {
     if (!currentProfileId) {
       logger.info("No profile ID, skipping realtime subscription");
-      return;
+      return () => {};
     }
 
     // Clean up existing subscription if it exists
@@ -104,6 +107,22 @@ export const useRealtimeMessages = ({
 
           try {
             if (payload.new && payload.new.sender_id) {
+              // Filter to only process messages for conversations this user is part of
+              if (payload.new.conversation_id) {
+                const { data: conversation } = await supabase
+                  .from('conversations')
+                  .select('user1_id, user2_id')
+                  .eq('id', payload.new.conversation_id)
+                  .single();
+                  
+                if (!conversation || 
+                    (conversation.user1_id !== currentProfileId && 
+                     conversation.user2_id !== currentProfileId)) {
+                  logger.info("Message not for current user's conversation, ignoring", { messageId });
+                  return;
+                }
+              }
+              
               // Fetch sender profile data only if not already included
               if (!payload.new.sender) {
                 const { data: sender } = await supabase
@@ -174,14 +193,47 @@ export const useRealtimeMessages = ({
         }
       )
       .subscribe((status) => {
+        const wasConnected = subscriptionConnectedRef.current;
         subscriptionConnectedRef.current = status === 'SUBSCRIBED';
+        
         logger.info("Realtime subscription status changed", { 
           channelName, 
           status, 
-          connected: subscriptionConnectedRef.current 
+          connected: subscriptionConnectedRef.current,
+          previouslyConnected: wasConnected
         });
+        
+        // Handle reconnection attempts with backoff
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          if (connectionRetryCountRef.current < MAX_RETRY_COUNT) {
+            const backoff = Math.pow(2, connectionRetryCountRef.current) * 1000;
+            connectionRetryCountRef.current++;
+            
+            logger.info(`Subscription error, retrying in ${backoff}ms`, {
+              attempt: connectionRetryCountRef.current,
+              maxAttempts: MAX_RETRY_COUNT
+            });
+            
+            setTimeout(() => {
+              if (channelRef.current) {
+                supabase.removeChannel(channelRef.current);
+              }
+              setupSubscription();
+            }, backoff);
+          } else {
+            logger.error("Max realtime reconnection attempts reached", {
+              maxAttempts: MAX_RETRY_COUNT
+            });
+          }
+        }
+        
+        // Reset retry count on successful connection
+        if (status === 'SUBSCRIBED') {
+          connectionRetryCountRef.current = 0;
+        }
       });
 
+    // Return cleanup function
     return () => {
       logger.info("Cleaning up realtime subscription", { channelName });
       if (channelRef.current) {
@@ -190,6 +242,14 @@ export const useRealtimeMessages = ({
       }
     };
   }, [currentProfileId, onNewMessage, onMessageUpdate, logger]);
+
+  useEffect(() => {
+    // Setup subscription and get cleanup function
+    const cleanup = setupSubscription();
+    
+    // Use the cleanup function when component unmounts or dependencies change
+    return cleanup;
+  }, [setupSubscription]);
 
   return { 
     handleNewMessage: onNewMessage, 

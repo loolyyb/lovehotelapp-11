@@ -4,10 +4,10 @@
  */
 
 // Set a maximum cache size to prevent memory issues
-export const MAX_CACHE_SIZE = 100; // Increased from 50
+export const MAX_CACHE_SIZE = 500; // Increased from 100
 
-// Increase cache retention time to 20 minutes
-export const MAX_CACHE_AGE_MS = 20 * 60 * 1000; // Increased from 10 minutes
+// Increase cache retention time to 60 minutes
+export const MAX_CACHE_AGE_MS = 60 * 60 * 1000; // Increased from 20 minutes
 
 // Cache key format helper
 export const getCacheKey = (conversationId: string): string => 

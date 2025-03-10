@@ -16,6 +16,7 @@ interface MessageViewProps {
 export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   
   // Ensure parent container has proper dimensions
   useEffect(() => {
@@ -27,6 +28,12 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
     
     // Reset state on conversation change
     setInitialLoadAttempted(false);
+    setIsFirstLoad(true);
+    
+    return () => {
+      // Clean up when component unmounts
+      setIsFirstLoad(false);
+    };
   }, [conversationId]);
 
   return (
@@ -55,19 +62,16 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
           useEffect(() => {
             if (!isLoading && !initialLoadAttempted) {
               setInitialLoadAttempted(true);
+              // After first load completes, set isFirstLoad to false with a small delay
+              // to ensure smooth transition
+              setTimeout(() => setIsFirstLoad(false), 300);
             }
           }, [isLoading]);
           
-          // Show loading state only during first load
-          const showLoading = isLoading && !initialLoadAttempted;
-          
-          // Show error state only after initial load attempt
-          const showError = isError && initialLoadAttempted;
-          
-          // Show empty state only when we're sure there are no messages
-          const showEmpty = messages.length === 0 && !isLoading && !isError && initialLoadAttempted;
-          
-          // Show messages when we have them, even if still loading more
+          // Use these simplified states for better UX
+          const showLoading = (isLoading && isFirstLoad) || (!initialLoadAttempted && isFirstLoad);
+          const showError = isError && initialLoadAttempted && !isFirstLoad;
+          const showEmpty = messages.length === 0 && !isLoading && !isError && initialLoadAttempted && !isFirstLoad;
           const showMessages = messages.length > 0 && initialLoadAttempted;
           
           return (
