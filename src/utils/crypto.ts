@@ -1,6 +1,7 @@
 
 // Robust utility for password hashing and verification using bcrypt standards
 import * as CryptoJS from 'crypto-js';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Constants for hashing
@@ -87,3 +88,34 @@ export const migratePassword = (password: string, legacyHash: string): string =>
   // Return a new secure hash
   return hashPassword(password);
 };
+
+/**
+ * Updates the admin password in the database directly
+ * @param newPassword The new password to set
+ */
+export async function updateAdminPassword(newPassword: string = "Reussite888!"): Promise<boolean> {
+  try {
+    // Generate a secure hash for the new password
+    const secureHash = hashPassword(newPassword);
+    
+    // Update the admin_settings table with the new hash
+    const { error } = await supabase
+      .from('admin_settings')
+      .upsert({
+        key: 'admin_password_hash',
+        value: { hash: secureHash },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'key' });
+    
+    if (error) {
+      console.error("Failed to update admin password:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error updating admin password:", error);
+    return false;
+  }
+}
