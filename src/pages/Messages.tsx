@@ -21,12 +21,13 @@ export default function Messages() {
   const refreshAttemptRef = useRef(0);
   const lastVisibleTimeRef = useRef(Date.now());
   const conversationsRefreshedRef = useRef(false);
+  const initRetryAttemptRef = useRef(0);
 
   // Track page visibility
   const { isVisible, wasHidden, setWasHidden } = usePageVisibility();
   
   // Access central profile state
-  const { profileId, refreshProfile, isInitialized } = useProfileState();
+  const { profileId, refreshProfile, isInitialized, isLoading: profileLoading } = useProfileState();
 
   const { 
     isCheckingConnection, 
@@ -36,11 +37,34 @@ export default function Messages() {
     checkConnectionStatus 
   } = useConnectionStatus();
 
-  // Effect to initialize and cleanup component
+  // Debug mount information
   useEffect(() => {
-    logger.info("Messages page mounted");
+    logger.info("Messages page mounted", {
+      locationState: location.state,
+      hasProfile: !!profileId,
+      profileInitialized: isInitialized,
+      profileLoading
+    });
+    
     mountedRef.current = true;
-    checkConnectionStatus();
+    
+    // Check connection status with retry logic
+    const checkConnection = async () => {
+      try {
+        await checkConnectionStatus();
+      } catch (error) {
+        // If we fail to check connection, retry up to 3 times with increasing delays
+        if (initRetryAttemptRef.current < 3) {
+          const delay = Math.pow(2, initRetryAttemptRef.current) * 1000;
+          logger.info(`Retrying connection check in ${delay}ms (attempt ${initRetryAttemptRef.current + 1}/3)`);
+          
+          initRetryAttemptRef.current++;
+          setTimeout(checkConnection, delay);
+        }
+      }
+    };
+    
+    checkConnection();
     
     if (location.state?.conversationId) {
       logger.info("Setting conversation from location state", { conversationId: location.state.conversationId });
@@ -50,7 +74,7 @@ export default function Messages() {
     return () => {
       mountedRef.current = false;
     };
-  }, [location.state, logger, checkConnectionStatus]);
+  }, [location.state, logger, checkConnectionStatus, profileId, isInitialized, profileLoading]);
 
   // Handle visibility changes - refresh data when returning to the page
   useEffect(() => {
@@ -94,6 +118,20 @@ export default function Messages() {
     }
   }, [isVisible, wasHidden, logger, refreshProfile, setWasHidden, selectedConversation, profileId]);
 
+  // Monitor profile state
+  useEffect(() => {
+    logger.info("Profile state updated in Messages page", {
+      profileId,
+      isInitialized,
+      profileLoading
+    });
+    
+    // If profile initialized but no ID, might need to show login
+    if (isInitialized && !profileLoading && !profileId) {
+      logger.warn("Profile initialized but no ID available - user might need to log in");
+    }
+  }, [profileId, isInitialized, profileLoading, logger]);
+
   const handleSelectConversation = useCallback((conversationId: string) => {
     if (selectedConversation === conversationId) {
       logger.info("Conversation already selected, ignoring", { conversationId });
@@ -131,13 +169,42 @@ export default function Messages() {
       
       if (!connectionError && isNetworkError && mountedRef.current && currentAttempt === refreshAttemptRef.current) {
         setIsNetworkError(false);
+        logger.info("Network recovered, reloading page");
         window.location.reload();
         return;
       }
       
+      // Try to get the current session
       if (!connectionError && mountedRef.current && currentAttempt === refreshAttemptRef.current) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("No authenticated user");
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+          logger.error("Auth error during refresh", { error: authError });
+          
+          // Retry authentication if it might be a temporary issue
+          if (authError.message.includes('JWT expired') || authError.message.includes('token')) {
+            logger.info("JWT issue detected, refreshing session");
+            
+            const { data: session, error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              logger.error("Failed to refresh session", { error: refreshError });
+              throw refreshError;
+            }
+            
+            if (!session.session) {
+              logger.warn("No valid session after refresh");
+              throw new Error("No valid session available");
+            }
+            
+            // Successfully refreshed session, continue
+            logger.info("Session refreshed successfully");
+          } else {
+            throw authError;
+          }
+        } else if (!user) {
+          logger.warn("No authenticated user during refresh");
+          throw new Error("No authenticated user");
+        }
         
         // If we have a valid user, don't show a toast for automatic refreshes due to tab visibility
         if (!wasHidden && !force) {

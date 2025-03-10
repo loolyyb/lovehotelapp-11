@@ -60,15 +60,47 @@ export function useMessageViewProps(conversationId: string) {
     conversationIdRef.current = conversationId;
   }, [conversationId, conversationIdRef]);
 
-  // Synchronize with centralized profile state
+  // Synchronize with centralized profile state with improved error handling
   useEffect(() => {
-    if (profileId && profileStateInitialized) {
-      logger.info("Setting profile ID from central state", { profileId });
+    // Only attempt to set profile if we have a valid profile and it's different from currentProfileId
+    if (profileId && profileStateInitialized && (!currentProfileId || profileId !== currentProfileId)) {
+      logger.info("Setting profile ID from central state", { 
+        profileId, 
+        currentProfileId,
+        isInitialized: profileStateInitialized 
+      });
+      
       setCurrentProfileId(profileId);
       setProfileInitialized(true);
       setIsAuthChecked(true);
+    } else if (!profileId && profileStateInitialized && !profileLoading) {
+      // Handle case where profile state is initialized but no profile ID is available
+      logger.warn("Profile state initialized but no profile ID available", {
+        profileId,
+        currentProfileId,
+        profileStateInitialized,
+        profileLoading
+      });
+      
+      // If we're supposed to have auth but don't, try to refresh the session
+      if (!currentProfileId) {
+        logger.info("Attempting to refresh session to retrieve profile");
+        checkAndRefreshSession().then(valid => {
+          logger.info("Session refresh result", { valid });
+        });
+      }
     }
-  }, [profileId, profileStateInitialized, setCurrentProfileId, setProfileInitialized, setIsAuthChecked, logger]);
+  }, [
+    profileId, 
+    profileStateInitialized, 
+    currentProfileId, 
+    setCurrentProfileId, 
+    setProfileInitialized, 
+    setIsAuthChecked, 
+    logger,
+    profileLoading,
+    checkAndRefreshSession
+  ]);
 
   // Setup conversation initialization
   const { getCurrentUser } = useConversationInit({
@@ -222,7 +254,7 @@ export function useMessageViewProps(conversationId: string) {
     return `profileId:${!!profileId}|current:${!!currentProfileId}|initialized:${profileInitialized}|checked:${isAuthChecked}|permVerified:${permissionVerified}`;
   }, [profileId, currentProfileId, profileInitialized, isAuthChecked, permissionVerified]);
 
-  // Combined loading state
+  // Combined loading state with improved loading detection
   const showLoader = useMemo(() => 
     isLoading && (!messages.length || !isAuthChecked || !profileInitialized || isFetchingInitialMessages),
     [isLoading, messages.length, isAuthChecked, profileInitialized, isFetchingInitialMessages]

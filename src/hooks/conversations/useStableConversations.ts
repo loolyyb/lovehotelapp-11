@@ -22,6 +22,7 @@ export function useStableConversations() {
   const initialFetchAttemptedRef = useRef(false);
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initialLoadFailedRef = useRef(false);
+  const waitingForProfileRef = useRef(false);
   
   // Use the centralized profile state
   const {
@@ -56,8 +57,15 @@ export function useStableConversations() {
       profileInitialized,
       profileLoading,
       initialFetchAttempted: initialFetchAttemptedRef.current,
-      conversationsLength: pendingConversations.length
+      conversationsLength: pendingConversations.length,
+      waitingForProfile: waitingForProfileRef.current
     });
+    
+    // If we were waiting for profile and now we have it, mark flag as false
+    if (waitingForProfileRef.current && currentProfileId && profileInitialized) {
+      waitingForProfileRef.current = false;
+      logger.info("Profile now available, can proceed with conversation loading");
+    }
   }, [currentProfileId, profileInitialized, profileLoading, logger, pendingConversations.length]);
 
   // Ensure loading state clears after a timeout to prevent infinite loading
@@ -68,12 +76,13 @@ export function useStableConversations() {
     }
     
     // Set a timeout to ensure loading state doesn't persist indefinitely
-    // Reduced timeout from 8s to 6s for faster feedback
+    // Increased timeout from 6s to 15s for more reliable loading
     loadTimeoutRef.current = setTimeout(() => {
-      if (isVisiblyLoading && profileInitialized) {
+      if (isVisiblyLoading) {
         logger.warn("Loading state timeout reached - forcing completion", {
           profileId: currentProfileId,
-          hasConversations: pendingConversations.length > 0
+          hasConversations: pendingConversations.length > 0,
+          profileInitialized
         });
         setIsVisiblyLoading(false);
         initialLoadCompleteRef.current = true;
@@ -89,7 +98,7 @@ export function useStableConversations() {
           fetchConversations(true);
         }
       }
-    }, 6000); // 6 second timeout (reduced from 8s)
+    }, 15000); // 15 second timeout (increased from 6s)
     
     return () => {
       if (loadTimeoutRef.current) {
@@ -100,11 +109,17 @@ export function useStableConversations() {
 
   // Update loading state for better UX
   useEffect(() => {
+    // If profile is still loading and not yet initialized, mark as waiting for profile
+    if (profileLoading && !profileInitialized && !waitingForProfileRef.current) {
+      waitingForProfileRef.current = true;
+      logger.info("Waiting for profile to initialize before loading conversations");
+    }
+    
     // Start with loading state and clear it when:
     // 1. We have conversations to display
     // 2. We've completed profile loading AND attempted to fetch conversations
     const shouldBeLoading = 
-      (conversationsLoading || profileLoading) && 
+      (conversationsLoading || (profileLoading && !profileInitialized && !currentProfileId)) && 
       !initialLoadCompleteRef.current && 
       displayedConversations.length === 0;
     
@@ -114,7 +129,7 @@ export function useStableConversations() {
     if (!shouldBeLoading && !initialLoadCompleteRef.current && profileInitialized) {
       initialLoadCompleteRef.current = true;
     }
-  }, [conversationsLoading, profileLoading, displayedConversations.length, profileInitialized]);
+  }, [conversationsLoading, profileLoading, displayedConversations.length, profileInitialized, currentProfileId, logger]);
 
   // Set refreshing state for background updates
   useEffect(() => {

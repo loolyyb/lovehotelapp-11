@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
@@ -30,6 +31,7 @@ export function useProfileState() {
   const { toast } = useToast();
   const initialFetchAttemptedRef = useRef(false);
   const lastRefreshTime = useRef(Date.now());
+  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get cached profile from localStorage
   const getCachedProfile = useCallback(() => {
@@ -117,11 +119,30 @@ export function useProfileState() {
       
       logger.info("Fetching fresh profile from Supabase");
       
-      // Get authenticated user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      // Get authenticated user with retries
+      let user = null;
+      let authError = null;
+      let retryCount = 0;
+      const maxRetries = 2;
       
-      if (authError) {
-        logger.error("Auth error retrieving user", { error: authError });
+      while (!user && retryCount <= maxRetries) {
+        const { data, error } = await supabase.auth.getUser();
+        if (error) {
+          authError = error;
+          logger.warn(`Auth error retrieving user (attempt ${retryCount + 1}/${maxRetries + 1})`, { error });
+          retryCount++;
+          if (retryCount <= maxRetries) {
+            // Add exponential backoff
+            await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retryCount)));
+          }
+        } else {
+          user = data.user;
+          break;
+        }
+      }
+      
+      if (authError && !user) {
+        logger.error("Auth error retrieving user after retries", { error: authError });
         throw authError;
       }
       
@@ -136,47 +157,67 @@ export function useProfileState() {
       
       logger.info("Auth user found, retrieving profile", { userId: user.id });
       
-      // Get user's profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, user_id, username, full_name, avatar_url, role')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Get user's profile with retries
+      let profileData = null;
+      let profileError = null;
+      retryCount = 0;
+      
+      while (!profileData && retryCount <= maxRetries) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, user_id, username, full_name, avatar_url, role')
+          .eq('user_id', user.id)
+          .maybeSingle();
         
-      if (profileError) {
-        // If not found, try to create a profile
-        if (profileError.code === 'PGRST116') {
-          logger.warn("Profile not found, creating one", { userId: user.id });
-          
-          const newProfileId = crypto.randomUUID();
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert([{
-              id: newProfileId,
-              user_id: user.id,
-              full_name: user.email?.split('@')[0] || 'Utilisateur',
-              username: user.email?.split('@')[0] || `user_${Math.floor(Math.random() * 10000)}`,
-              role: 'user'
-            }])
-            .select()
-            .single();
-            
-          if (createError) {
-            logger.error("Error creating profile", { error: createError });
-            throw createError;
+        if (error && error.code !== 'PGRST116') {
+          profileError = error;
+          logger.warn(`Error retrieving profile (attempt ${retryCount + 1}/${maxRetries + 1})`, { error });
+          retryCount++;
+          if (retryCount <= maxRetries) {
+            // Add exponential backoff
+            await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retryCount)));
           }
+        } else {
+          profileData = data;
+          profileError = error;
+          break;
+        }
+      }
+      
+      if (profileError && profileError.code !== 'PGRST116') {
+        logger.error("Error retrieving profile after retries", { error: profileError });
+        throw profileError;
+      }
+        
+      if (!profileData) {
+        // Create profile if it doesn't exist
+        logger.warn("Profile not found, creating one", { userId: user.id });
+        
+        const newProfileId = crypto.randomUUID();
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: newProfileId,
+            user_id: user.id,
+            full_name: user.email?.split('@')[0] || 'Utilisateur',
+            username: user.email?.split('@')[0] || `user_${Math.floor(Math.random() * 10000)}`,
+            role: 'user'
+          }])
+          .select()
+          .single();
           
-          logger.info("New profile created", { profileId: newProfileId });
-          setProfile(newProfile);
-          setProfileId(newProfileId);
-          cacheProfile(newProfile);
-          setIsLoading(false);
-          setIsInitialized(true);
-          return newProfile;
+        if (createError) {
+          logger.error("Error creating profile", { error: createError });
+          throw createError;
         }
         
-        logger.error("Error retrieving profile", { error: profileError });
-        throw profileError;
+        logger.info("New profile created", { profileId: newProfileId });
+        setProfile(newProfile);
+        setProfileId(newProfileId);
+        cacheProfile(newProfile);
+        setIsLoading(false);
+        setIsInitialized(true);
+        return newProfile;
       }
       
       logger.info("Profile retrieved successfully", { profileId: profileData.id });
@@ -231,18 +272,29 @@ export function useProfileState() {
       }
     });
     
+    // Clear any existing timeout
+    if (initTimeoutRef.current) {
+      clearTimeout(initTimeoutRef.current);
+      initTimeoutRef.current = null;
+    }
+    
     // Force initialization after a timeout to prevent hanging in loading state
-    const timer = setTimeout(() => {
+    // Increased from 3s to 10s to give more time for fetch
+    initTimeoutRef.current = setTimeout(() => {
       if (!isInitialized) {
         logger.warn("Profile initialization timeout - forcing initialization");
         setIsInitialized(true);
         setIsLoading(false);
       }
-    }, 3000); // 3 second timeout (reduced from 5s)
+    }, 10000); // 10 second timeout (increased from 3s)
     
     return () => {
       subscription.unsubscribe();
-      clearTimeout(timer);
+      // Clear timeout on unmount
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current);
+        initTimeoutRef.current = null;
+      }
     };
   }, [fetchProfile, clearProfileCache, logger, isInitialized]);
 

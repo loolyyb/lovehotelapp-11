@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 
 interface UseMessagesLoaderProps {
   conversationId: string;
@@ -37,6 +37,11 @@ export const useMessagesLoader = ({
   permissionVerified,
   forceRefresh
 }: UseMessagesLoaderProps) => {
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fetchingRef = useRef(false);
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 2;
+
   // On mount or when auth and profile are initialized, fetch messages
   useEffect(() => {
     const log = logger?.info || console.log;
@@ -53,7 +58,7 @@ export const useMessagesLoader = ({
     }
     
     // Prevent duplicate fetches
-    if (isFetchingInitialMessages) {
+    if (isFetchingInitialMessages || fetchingRef.current) {
       log("useMessagesLoader: Already fetching messages, skipping");
       return;
     }
@@ -71,6 +76,26 @@ export const useMessagesLoader = ({
       });
       
       setIsFetchingInitialMessages(true);
+      fetchingRef.current = true;
+      
+      // Set a timeout to catch hanging fetch operations
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+      
+      fetchTimeoutRef.current = setTimeout(() => {
+        log("useMessagesLoader: Fetch operation timeout after 20 seconds");
+        if (fetchingRef.current && isFetchingInitialMessages) {
+          setIsFetchingInitialMessages(false);
+          fetchingRef.current = false;
+          setIsLoading(false);
+          
+          // Only set error if we don't have messages
+          if (messages.length === 0) {
+            setIsError(true);
+          }
+        }
+      }, 20000); // 20 second timeout
       
       try {
         // Use forceRefresh if permission is not verified yet
@@ -116,14 +141,45 @@ export const useMessagesLoader = ({
         }
       } catch (error) {
         log("useMessagesLoader: Error loading initial messages:", error);
-        setIsError(true);
+        
+        // Retry on failure with exponential backoff
+        if (retryCountRef.current < MAX_RETRIES) {
+          retryCountRef.current++;
+          const delay = Math.pow(2, retryCountRef.current) * 1000;
+          log(`useMessagesLoader: Retrying in ${delay}ms (attempt ${retryCountRef.current}/${MAX_RETRIES})`);
+          
+          setTimeout(() => {
+            fetchingRef.current = false;
+            setIsFetchingInitialMessages(false);
+            // Reset the effect dependency to trigger a retry
+            setIsLoading(true);
+          }, delay);
+        } else {
+          setIsError(true);
+          retryCountRef.current = 0;
+        }
       } finally {
+        // Clear the timeout
+        if (fetchTimeoutRef.current) {
+          clearTimeout(fetchTimeoutRef.current);
+          fetchTimeoutRef.current = null;
+        }
+        
         setIsLoading(false);
         setIsFetchingInitialMessages(false);
+        fetchingRef.current = false;
       }
     };
     
     loadInitialMessages();
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+        fetchTimeoutRef.current = null;
+      }
+    };
   }, [
     conversationId,
     currentProfileId,

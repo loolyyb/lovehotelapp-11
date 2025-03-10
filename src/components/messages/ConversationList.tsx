@@ -47,19 +47,52 @@ export function ConversationList({
 
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
   const [loadingTimeExceeded, setLoadingTimeExceeded] = useState(false);
+  const [retryAttempt, setRetryAttempt] = useState(0);
 
-  // Add loading timeout to prevent infinite loading state - reduced to 6 seconds
+  // Add detailed logging for state changes
+  useEffect(() => {
+    logger.info("ConversationList main state update", {
+      hasConversations: conversations.length > 0,
+      conversationCount: conversations.length,
+      hasProfileId: !!currentProfileId,
+      isLoading,
+      isRefreshing,
+      hasAuthError,
+      authChecked,
+      error: error || null,
+      loadingTimeExceeded,
+      selectedId: selectedConversationId
+    });
+  }, [
+    conversations.length,
+    currentProfileId,
+    isLoading,
+    isRefreshing,
+    hasAuthError,
+    authChecked,
+    error,
+    loadingTimeExceeded,
+    selectedConversationId,
+    logger
+  ]);
+
+  // Add loading timeout to prevent infinite loading state - increased to 15 seconds
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
     
     if (isLoading && !loadingTimeExceeded) {
+      logger.info("Starting loading timeout", {
+        hasConversations: conversations.length > 0,
+        currentProfileId
+      });
+      
       timeoutId = setTimeout(() => {
         logger.warn("Loading timeout exceeded, forcing UI update", {
           hasConversations: conversations.length > 0,
           currentProfileId
         });
         setLoadingTimeExceeded(true);
-      }, 6000); // 6 second timeout (reduced from 8s)
+      }, 15000); // 15 second timeout (increased from 6s)
     }
     
     return () => {
@@ -68,20 +101,6 @@ export function ConversationList({
       }
     };
   }, [isLoading, loadingTimeExceeded, conversations.length, currentProfileId, logger]);
-
-  // Log state changes - helpful for debugging
-  useEffect(() => {
-    logger.info("ConversationList state update", { 
-      conversationsCount: conversations.length,
-      conversationIds: conversations.map(c => c.id),
-      currentProfileId,
-      authChecked,
-      hasAuthError,
-      isLoading,
-      isRefreshing,
-      loadingTimeExceeded
-    });
-  }, [conversations, currentProfileId, authChecked, hasAuthError, isLoading, isRefreshing, loadingTimeExceeded, logger]);
 
   // Memoized handlers to prevent recreating functions on each render
   const handleLogin = useCallback(() => {
@@ -92,6 +111,7 @@ export function ConversationList({
   const handleRetry = useCallback(async () => {
     logger.info("Manually retrying conversation fetch");
     setIsRefreshingManually(true);
+    setRetryAttempt(prev => prev + 1);
     
     try {
       // First try to fix auth if needed
@@ -101,6 +121,12 @@ export function ConversationList({
         if (!authSuccess) {
           logger.warn("Auth retry failed");
           setIsRefreshingManually(false);
+          
+          toast({
+            variant: "destructive",
+            title: "Erreur d'authentification",
+            description: "Veuillez vous reconnecter pour accéder à vos messages."
+          });
           return;
         }
         logger.info("Auth retry successful");
@@ -150,7 +176,13 @@ export function ConversationList({
   // Loading state - show when we're still checking auth or loading profile
   // Only show loading if we haven't exceeded the timeout
   if ((!authChecked || isLoading) && !loadingTimeExceeded) {
-    logger.info("Showing loading state", { authChecked, isLoading, hasProfile: !!currentProfileId, timeout: loadingTimeExceeded });
+    logger.info("Showing loading state", { 
+      authChecked, 
+      isLoading, 
+      hasProfile: !!currentProfileId, 
+      timeout: loadingTimeExceeded,
+      retryAttempt
+    });
     return <LoadingState />;
   }
 
