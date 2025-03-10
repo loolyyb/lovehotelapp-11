@@ -1,26 +1,19 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Check, CheckCheck, Loader2, TriangleAlert, X } from "lucide-react";
-import { MessageBubble } from "@/components/messages/MessageBubble";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { detectSuspiciousKeywords } from "../utils/keywordDetection";
-import { Button } from "@/components/ui/button";
+import { useLogger } from "@/hooks/useLogger";
 
 interface ConversationDialogProps {
   isOpen: boolean;
   onClose: () => void;
   conversationId: string;
-  user1: { username?: string; full_name?: string } | null;
-  user2: { username?: string; full_name?: string } | null;
-  getConversationMessages: (id: string) => Promise<any[]>;
+  user1: any;
+  user2: any;
+  getConversationMessages: (conversationId: string) => Promise<any[]>;
 }
 
 export function ConversationDialog({
@@ -33,132 +26,97 @@ export function ConversationDialog({
 }: ConversationDialogProps) {
   const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showOnlySuspicious, setShowOnlySuspicious] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const user1Name = user1?.username || user1?.full_name || "Utilisateur 1";
-  const user2Name = user2?.username || user2?.full_name || "Utilisateur 2";
+  const logger = useLogger("ConversationDialog");
 
   useEffect(() => {
-    if (isOpen && conversationId) {
+    let mounted = true;
+    
+    async function fetchMessages() {
+      if (!isOpen || !conversationId) return;
+      
       setIsLoading(true);
-      getConversationMessages(conversationId).then((data) => {
-        setMessages(data);
-        setIsLoading(false);
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      });
+      
+      try {
+        logger.info("Fetching conversation messages", { conversationId });
+        const conversationMessages = await getConversationMessages(conversationId);
+        
+        if (mounted) {
+          setMessages(conversationMessages);
+          logger.info(`Loaded ${conversationMessages.length} messages`);
+        }
+      } catch (error) {
+        logger.error("Error fetching conversation messages", { error });
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
     }
-  }, [isOpen, conversationId, getConversationMessages]);
 
-  const suspiciousMessagesCount = messages.filter(message => 
-    detectSuspiciousKeywords(message.content).hasSuspiciousKeywords
-  ).length;
+    fetchMessages();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [conversationId, isOpen, getConversationMessages, logger]);
 
-  const displayMessages = showOnlySuspicious 
-    ? messages.filter(message => detectSuspiciousKeywords(message.content).hasSuspiciousKeywords)
-    : messages;
+  const getInitials = (name: string) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-2 mb-2">
-          <DialogTitle className="text-[#f3ebad]">
-            Conversation: {user1Name} et {user2Name}
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="bg-[#40192C] border-[#f3ebad]/20 text-[#f3ebad] max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-[#f3ebad] font-cormorant text-xl">
+            Conversation entre {user1?.username || "Utilisateur 1"} et{" "}
+            {user2?.username || "Utilisateur 2"}
           </DialogTitle>
-          <DialogClose className="text-[#f3ebad] hover:text-white">
-            <X className="h-4 w-4" />
-          </DialogClose>
         </DialogHeader>
 
-        {suspiciousMessagesCount > 0 && (
-          <div className="bg-amber-950/20 text-amber-400 p-2 mb-2 rounded-md flex items-center justify-between">
-            <div className="flex items-center">
-              <TriangleAlert className="h-4 w-4 mr-2" />
-              <span className="text-sm font-medium">
-                {suspiciousMessagesCount} message{suspiciousMessagesCount > 1 ? 's' : ''} avec mots-clés suspects
-              </span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className={`text-xs border-amber-500/30 ${
-                showOnlySuspicious ? 'bg-amber-500/20' : ''
-              }`}
-              onClick={() => setShowOnlySuspicious(!showOnlySuspicious)}
-            >
-              {showOnlySuspicious ? 'Afficher tous' : 'Filtrer suspects'}
-            </Button>
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto p-2 space-y-4">
+        <div className="overflow-y-auto flex-1 mt-4">
           {isLoading ? (
-            <div className="flex items-center justify-center h-40">
-              <Loader2 className="h-8 w-8 text-[#f3ebad] animate-spin" />
+            <div className="text-center py-8 text-[#f3ebad]/60">
+              Chargement de la conversation...
             </div>
-          ) : displayMessages.length > 0 ? (
-            <>
-              {displayMessages.map((message) => {
-                const { detectedKeywords } = detectSuspiciousKeywords(message.content);
-                const hasSuspiciousContent = detectedKeywords.length > 0;
-                
-                return (
-                  <div key={message.id} className={`message-container ${
-                    hasSuspiciousContent ? 'bg-amber-950/20 p-2 rounded-md' : ''
-                  }`}>
-                    <div className="flex justify-between mb-1">
-                      <div className="flex items-center">
-                        <span className="text-xs text-[#f3ebad]/70 mr-2">
-                          {format(new Date(message.created_at), "dd/MM/yyyy HH:mm", {
-                            locale: fr,
-                          })}
-                        </span>
-                        <span className="text-xs font-semibold text-[#f3ebad]">
-                          {message.sender.username || message.sender.full_name}:
-                        </span>
-                      </div>
-                      
-                      {hasSuspiciousContent && (
-                        <div className="flex items-center text-amber-500">
-                          <TriangleAlert className="h-3 w-3 mr-1" />
-                          <span className="text-xs">
-                            {detectedKeywords.join(', ')}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <MessageBubble 
-                      message={message} 
-                      isCurrentUser={false} 
+          ) : messages.length > 0 ? (
+            <div className="space-y-4">
+              {messages.map((message) => (
+                <div key={message.id} className="flex items-start gap-3">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarImage
+                      src={message.sender?.avatar_url}
+                      alt={message.sender?.username || "User"}
                     />
-                    
-                    <div className="flex justify-end mt-1">
-                      {message.read_at ? (
-                        <span className="text-xs text-emerald-400 flex items-center">
-                          <CheckCheck className="w-3 h-3 mr-1" /> Lu le{" "}
-                          {format(new Date(message.read_at), "dd/MM HH:mm", {
-                            locale: fr,
-                          })}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-[#f3ebad]/50 flex items-center">
-                          <Check className="w-3 h-3 mr-1" /> Non lu
-                        </span>
-                      )}
+                    <AvatarFallback className="bg-[#f3ebad]/10 text-[#f3ebad]">
+                      {getInitials(message.sender?.username || message.sender?.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex gap-2 items-baseline">
+                      <span className="text-[#f3ebad] font-semibold">
+                        {message.sender?.username || "Utilisateur"}
+                      </span>
+                      <span className="text-xs text-[#f3ebad]/50">
+                        {format(new Date(message.created_at), "Pp", {
+                          locale: fr,
+                        })}
+                      </span>
                     </div>
+                    <p className="text-[#f3ebad]/80 mt-1">{message.content}</p>
                   </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </>
+                </div>
+              ))}
+            </div>
           ) : (
-            <div className="text-center text-[#f3ebad]/50">
-              {showOnlySuspicious 
-                ? "Aucun message suspect dans cette conversation" 
-                : "Aucun message dans cette conversation"}
+            <div className="text-center py-8 text-[#f3ebad]/60">
+              Aucun message dans cette conversation
             </div>
           )}
         </div>

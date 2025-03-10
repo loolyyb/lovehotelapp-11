@@ -16,6 +16,7 @@ import {
 import { ConversationDialog } from "./ConversationDialog";
 import { KeywordAlert } from "./KeywordAlert";
 import { detectSuspiciousKeywords } from "../utils/keywordDetection";
+import { useLogger } from "@/hooks/useLogger";
 
 interface MessagesTableProps {
   messages: any[];
@@ -36,8 +37,15 @@ export function MessagesTable({
     user1: any;
     user2: any;
   } | null>(null);
+  const logger = useLogger("MessagesTable");
 
   const handleViewConversation = (message: any) => {
+    logger.info("Viewing conversation:", { 
+      conversationId: message.conversation_id,
+      sender: message.sender?.username,
+      recipient: message.recipient?.username
+    });
+    
     setSelectedConversation({
       id: message.conversation_id,
       user1: message.sender,
@@ -77,6 +85,11 @@ export function MessagesTable({
             </TableRow>
           ) : messages.length > 0 ? (
             messages.map((message: any) => {
+              if (!message || !message.content) {
+                logger.warn("Invalid message data:", { message });
+                return null;
+              }
+              
               const { detectedKeywords } = detectSuspiciousKeywords(message.content);
               const hasSuspiciousContent = detectedKeywords.length > 0;
               
