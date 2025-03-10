@@ -92,6 +92,14 @@ export const findConversationsByProfileId = async (profileId: string): Promise<C
     // Transform results to match expected format
     const allConversations: ConversationWithOtherUser[] = (conversationsWithTimes || []).map(conv => {
       const otherUser = conv.user1_id === profileId ? conv.user2 : conv.user1;
+      
+      // Fix the latest_message_time access - properly handle the latest_message object
+      const latestMessageTime = conv.latest_message && 
+                               typeof conv.latest_message === 'object' && 
+                               'latest_message_time' in conv.latest_message ? 
+                               conv.latest_message.latest_message_time : 
+                               conv.updated_at;
+      
       return {
         id: conv.id,
         status: conv.status,
@@ -99,7 +107,9 @@ export const findConversationsByProfileId = async (profileId: string): Promise<C
         otherUser,
         created_at: conv.created_at,
         updated_at: conv.updated_at,
-        latest_message_time: conv.latest_message?.latest_message_time || conv.updated_at
+        latest_message_time: latestMessageTime,
+        latestMessage: null, // Will be populated later
+        hasUnread: false // Will be populated later
       };
     });
     
