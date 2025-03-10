@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { supabase, safeQuerySingle } from "@/integrations/supabase/client";
-import { verifyPassword } from "@/utils/crypto";
+import { verifyPassword, migratePassword } from "@/utils/crypto";
 import { useToast } from "@/hooks/use-toast";
 
 interface AdminPasswordCheckProps {
@@ -50,11 +50,41 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
         throw new Error("Vous n'avez pas les droits pour accéder à cette page");
       }
 
-      // For this demo, we'll use a hardcoded password hash
-      // In a real app, you would get this from the database
-      const ADMIN_PASSWORD_HASH = "2c1743a391305fbf367df8e4f069f9f9";
+      // Get admin password hash from database
+      const { data: adminSettings, error: settingsError } = await supabase
+        .from('admin_settings')
+        .select('value')
+        .eq('key', 'admin_password_hash')
+        .single();
       
+      // Default to hardcoded hash if no settings found
+      const ADMIN_PASSWORD_HASH = adminSettings?.value?.hash || "2c1743a391305fbf367df8e4f069f9f9";
+      
+      // Verify password using the crypto utility
       if (verifyPassword(password, ADMIN_PASSWORD_HASH)) {
+        // If using the legacy hash, migrate to the new format
+        if (!ADMIN_PASSWORD_HASH.includes(':')) {
+          try {
+            // Generate a new secure hash
+            const newHash = migratePassword(password, ADMIN_PASSWORD_HASH);
+            
+            // Update the hash in the database
+            await supabase
+              .from('admin_settings')
+              .upsert({
+                key: 'admin_password_hash',
+                value: { hash: newHash },
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'key' });
+            
+            console.log("Successfully migrated admin password to secure hash");
+          } catch (migrationError) {
+            console.error("Failed to migrate password:", migrationError);
+            // Continue even if migration fails
+          }
+        }
+        
         toast({
           title: "Accès accordé",
           description: "Bienvenue dans le panneau d'administration"
