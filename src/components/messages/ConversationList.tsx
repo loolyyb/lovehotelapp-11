@@ -76,7 +76,7 @@ export function ConversationList({
     logger
   ]);
 
-  // Add loading timeout to prevent infinite loading state - increased to 15 seconds
+  // Faster loading timeout for better UX
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
     
@@ -86,13 +86,23 @@ export function ConversationList({
         currentProfileId
       });
       
+      // Two-tier timeout system
+      // 1. Show loading spinner for 8 seconds
+      // 2. If we have conversations but still loading other data, show them anyway
       timeoutId = setTimeout(() => {
-        logger.warn("Loading timeout exceeded, forcing UI update", {
-          hasConversations: conversations.length > 0,
-          currentProfileId
-        });
+        if (conversations.length > 0) {
+          logger.info("Loading timeout exceeded but have conversations, showing them", {
+            count: conversations.length,
+            currentProfileId
+          });
+        } else {
+          logger.warn("Loading timeout exceeded, forcing UI update", {
+            hasConversations: conversations.length > 0,
+            currentProfileId
+          });
+        }
         setLoadingTimeExceeded(true);
-      }, 15000); // 15 second timeout (increased from 6s)
+      }, 8000); // 8 second timeout (reduced from 15s)
     }
     
     return () => {
@@ -102,12 +112,7 @@ export function ConversationList({
     };
   }, [isLoading, loadingTimeExceeded, conversations.length, currentProfileId, logger]);
 
-  // Memoized handlers to prevent recreating functions on each render
-  const handleLogin = useCallback(() => {
-    logger.info("Redirecting to login page");
-    navigate("/login", { state: { returnUrl: "/messages" } });
-  }, [navigate, logger]);
-
+  // Enhanced retry logic
   const handleRetry = useCallback(async () => {
     logger.info("Manually retrying conversation fetch");
     setIsRefreshingManually(true);
@@ -132,8 +137,8 @@ export function ConversationList({
         logger.info("Auth retry successful");
       }
       
-      // Then refresh conversations with force=true to bypass cache
-      await refreshConversations(false); // Force fresh fetch
+      // Then force refresh conversations to bypass cache
+      await refreshConversations(false);
       toast({
         title: "Rafraîchissement réussi",
         description: "Vos conversations ont été mises à jour."
@@ -154,13 +159,25 @@ export function ConversationList({
     }
   }, [refreshConversations, retryAuth, hasAuthError, logger, toast, onNetworkError]);
 
+  // Memoized handlers to prevent recreating functions on each render
+  const handleLogin = useCallback(() => {
+    logger.info("Redirecting to login page");
+    navigate("/login", { state: { returnUrl: "/messages" } });
+  }, [navigate, logger]);
+
   const handleRefresh = useCallback(() => {
     logger.info("Manual refresh requested");
     // Force fresh fetch on manual refresh - bypass cache completely
     refreshConversations(false); 
   }, [refreshConversations, logger]);
 
-  // Authentication error state - show this when we've confirmed there's an auth issue
+  // Show conversations more eagerly to improve UX
+  const shouldShowConversations = useMemo(() => {
+    // Show if we have conversations and loading has exceeded timeout
+    return conversations.length > 0 && (loadingTimeExceeded || !isLoading);
+  }, [conversations.length, loadingTimeExceeded, isLoading]);
+
+  // Authentication error state
   if (authChecked && hasAuthError) {
     logger.info("Showing auth required state due to auth error");
     return (
@@ -173,20 +190,20 @@ export function ConversationList({
     );
   }
 
-  // Loading state - show when we're still checking auth or loading profile
-  // Only show loading if we haven't exceeded the timeout
-  if ((!authChecked || isLoading) && !loadingTimeExceeded) {
+  // Loading state with faster timeout
+  if ((!authChecked || isLoading) && !loadingTimeExceeded && !shouldShowConversations) {
     logger.info("Showing loading state", { 
       authChecked, 
       isLoading, 
       hasProfile: !!currentProfileId, 
       timeout: loadingTimeExceeded,
-      retryAttempt
+      retryAttempt,
+      conversationCount: conversations.length
     });
     return <LoadingState />;
   }
 
-  // Error state - show when we have an error but auth is okay
+  // Error state - only show if no conversations available
   if (error && conversations.length === 0) {
     logger.info("Showing error state", { error });
     return (
@@ -198,7 +215,7 @@ export function ConversationList({
     );
   }
 
-  // Empty conversations state - show when profile is loaded but no conversations exist
+  // Empty conversations state
   if (currentProfileId && (!conversations || conversations.length === 0)) {
     logger.info("Showing empty conversations state");
     return (
@@ -209,14 +226,14 @@ export function ConversationList({
     );
   }
 
-  // Render the conversation list only when we have profile ID and conversations
+  // Render the conversation list
   return (
     <div className="h-full flex flex-col">
       <ConversationListHeader
         isRefreshing={isRefreshing || isRefreshingManually}
         handleRefresh={handleRefresh}
       />
-      {conversations.length > 0 && (
+      {shouldShowConversations && (
         <ConversationItems
           conversations={conversations}
           selectedConversationId={selectedConversationId}

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { MessageViewLogic } from "./MessageViewLogic";
 import { MessageViewContainer } from "./MessageViewContainer";
 import { MessageContent } from "./MessageContent";
@@ -15,6 +15,7 @@ interface MessageViewProps {
 
 export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
   
   // Ensure parent container has proper dimensions
   useEffect(() => {
@@ -23,7 +24,10 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       containerRef.current.style.display = 'flex';
       containerRef.current.style.flexDirection = 'column';
     }
-  }, []);
+    
+    // Reset state on conversation change
+    setInitialLoadAttempted(false);
+  }, [conversationId]);
 
   return (
     <div ref={containerRef} className="h-full flex flex-col">
@@ -44,42 +48,64 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
           newMessage,
           setNewMessage,
           sendMessage,
-          authStatus
-        }) => (
-          <MessageViewContainer
-            onBack={onBack}
-            refreshMessages={refreshMessages}
-            isRefreshing={isRefreshing}
-            otherUser={otherUser}
-            footer={
-              <MessageInput
-                newMessage={newMessage}
-                setNewMessage={setNewMessage}
-                onSend={sendMessage}
-                disabled={isLoading || isError || !currentProfileId}
-              />
+          authStatus,
+          profileInitialized
+        }) => {
+          // Track initial load attempt to avoid flashing states
+          useEffect(() => {
+            if (!isLoading && !initialLoadAttempted) {
+              setInitialLoadAttempted(true);
             }
-          >
-            {isLoading ? (
-              <MessageLoadingState />
-            ) : isError ? (
-              <MessageErrorState retryLoad={retryLoad} />
-            ) : messages.length === 0 ? (
-              <EmptyState onRefresh={refreshMessages} isRefreshing={isRefreshing} />
-            ) : (
-              <MessageContent 
-                messages={messages}
-                currentProfileId={currentProfileId}
-                loadMoreMessages={loadMoreMessages}
-                isLoadingMore={isLoadingMore}
-                hasMoreMessages={hasMoreMessages}
-                isLoading={isLoading}
-                isError={isError}
-                retryLoad={retryLoad}
-              />
-            )}
-          </MessageViewContainer>
-        )}
+          }, [isLoading]);
+          
+          // Show loading state only during first load
+          const showLoading = isLoading && !initialLoadAttempted;
+          
+          // Show error state only after initial load attempt
+          const showError = isError && initialLoadAttempted;
+          
+          // Show empty state only when we're sure there are no messages
+          const showEmpty = messages.length === 0 && !isLoading && !isError && initialLoadAttempted;
+          
+          // Show messages when we have them, even if still loading more
+          const showMessages = messages.length > 0 && initialLoadAttempted;
+          
+          return (
+            <MessageViewContainer
+              onBack={onBack}
+              refreshMessages={refreshMessages}
+              isRefreshing={isRefreshing}
+              otherUser={otherUser}
+              footer={
+                <MessageInput
+                  newMessage={newMessage}
+                  setNewMessage={setNewMessage}
+                  onSend={sendMessage}
+                  disabled={showLoading || showError || !currentProfileId}
+                />
+              }
+            >
+              {showLoading ? (
+                <MessageLoadingState />
+              ) : showError ? (
+                <MessageErrorState retryLoad={retryLoad} />
+              ) : showEmpty ? (
+                <EmptyState onRefresh={refreshMessages} isRefreshing={isRefreshing} />
+              ) : showMessages ? (
+                <MessageContent 
+                  messages={messages}
+                  currentProfileId={currentProfileId}
+                  loadMoreMessages={loadMoreMessages}
+                  isLoadingMore={isLoadingMore}
+                  hasMoreMessages={hasMoreMessages}
+                  isLoading={isLoading}
+                  isError={isError}
+                  retryLoad={retryLoad}
+                />
+              ) : null}
+            </MessageViewContainer>
+          );
+        }}
       />
     </div>
   );

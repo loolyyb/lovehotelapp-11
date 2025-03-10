@@ -4,11 +4,15 @@
  */
 
 // Set a maximum cache size to prevent memory issues
-export const MAX_CACHE_SIZE = 50;
+export const MAX_CACHE_SIZE = 100; // Increased from 50
 
-// How long messages should be kept in cache (10 minutes)
-export const MAX_CACHE_AGE_MS = 10 * 60 * 1000;
+// Increase cache retention time to 20 minutes
+export const MAX_CACHE_AGE_MS = 20 * 60 * 1000; // Increased from 10 minutes
 
 // Cache key format helper
 export const getCacheKey = (conversationId: string): string => 
   `${conversationId}_messages`;
+
+// Get timestamp for freshness check
+export const getCacheTimestampKey = (conversationId: string): string =>
+  `${conversationId}_timestamp`;

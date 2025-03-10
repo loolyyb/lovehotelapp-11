@@ -20,6 +20,7 @@ interface UseMessagesLoaderProps {
 
 /**
  * Hook to handle loading messages at the appropriate time
+ * with improved error handling and retry logic
  */
 export const useMessagesLoader = ({
   conversationId,
@@ -40,7 +41,8 @@ export const useMessagesLoader = ({
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fetchingRef = useRef(false);
   const retryCountRef = useRef(0);
-  const MAX_RETRIES = 2;
+  const MAX_RETRIES = 3; // Increased from 2
+  const permissionCheckedRef = useRef(false);
 
   // On mount or when auth and profile are initialized, fetch messages
   useEffect(() => {
@@ -64,7 +66,7 @@ export const useMessagesLoader = ({
     }
     
     // Skip if we already have messages and permission verified
-    if (messages.length > 0 && permissionVerified) {
+    if (messages.length > 0 && permissionVerified && permissionCheckedRef.current) {
       log("useMessagesLoader: Already have messages and permission verified, skipping");
       return;
     }
@@ -72,7 +74,8 @@ export const useMessagesLoader = ({
     const loadInitialMessages = async () => {
       log("useMessagesLoader: Loading initial messages for conversation", {
         conversationId,
-        hasPermission: permissionVerified
+        hasPermission: permissionVerified,
+        profileId: currentProfileId
       });
       
       setIsFetchingInitialMessages(true);
@@ -83,8 +86,9 @@ export const useMessagesLoader = ({
         clearTimeout(fetchTimeoutRef.current);
       }
       
+      // Increased timeout for more reliable loading
       fetchTimeoutRef.current = setTimeout(() => {
-        log("useMessagesLoader: Fetch operation timeout after 20 seconds");
+        log("useMessagesLoader: Fetch operation timeout after 30 seconds");
         if (fetchingRef.current && isFetchingInitialMessages) {
           setIsFetchingInitialMessages(false);
           fetchingRef.current = false;
@@ -95,25 +99,29 @@ export const useMessagesLoader = ({
             setIsError(true);
           }
         }
-      }, 20000); // 20 second timeout
+      }, 30000); // 30 second timeout (increased from 20s)
       
       try {
-        // Use forceRefresh if permission is not verified yet
+        // Choose the appropriate fetch method based on permission status
         let result = null;
+        
         if (permissionVerified) {
+          // If permission is verified, use regular fetch with cache
           result = await fetchMessages(true);
           log("useMessagesLoader: Fetched messages with verified permission", {
             success: !!result,
             messageCount: result?.length || 0
           });
+          permissionCheckedRef.current = true;
         } else if (forceRefresh) {
-          // If permission not verified, use force refresh
+          // If permission not verified, use force refresh to check permissions
           log("useMessagesLoader: Using forceRefresh because permission not verified");
           result = await forceRefresh();
           log("useMessagesLoader: Force refresh result", {
             success: !!result,
             messageCount: result?.length || 0
           });
+          permissionCheckedRef.current = true;
         } else {
           // Fallback to normal fetch
           log("useMessagesLoader: Using normal fetch as fallback");
@@ -123,7 +131,8 @@ export const useMessagesLoader = ({
         log("useMessagesLoader: Initial messages fetch result", { 
           success: !!result, 
           messageCount: result?.length || 0,
-          permissionVerified 
+          permissionVerified,
+          conversationId
         });
         
         if (!result || result.length === 0) {
@@ -205,7 +214,7 @@ export const useMessagesLoader = ({
     }
   }, [messages.length, currentProfileId, conversationId, markMessagesAsRead, logger]);
   
-  // Handle manual refresh
+  // Handle manual refresh with improved error handling
   const handleRefresh = useCallback(async () => {
     const log = logger?.info || console.log;
     
@@ -223,10 +232,10 @@ export const useMessagesLoader = ({
     setIsLoading(true);
     
     try {
-      // Use forceRefresh if permission verification is missing
+      // Choose appropriate refresh method based on permissions
       let result = null;
       if (permissionVerified) {
-        result = await fetchMessages(false);
+        result = await fetchMessages(false); // Skip cache on manual refresh
         log("useMessagesLoader: Refreshed messages with regular fetch", {
           success: !!result,
           messageCount: result?.length || 0
@@ -246,7 +255,8 @@ export const useMessagesLoader = ({
         
       log("useMessagesLoader: Manual refresh result", { 
         success: !!result, 
-        messageCount: result?.length || 0 
+        messageCount: result?.length || 0,
+        conversationId
       });
       
       setIsError(!result);

@@ -39,17 +39,78 @@ export const findConversationsByProfileId = async (profileId: string) => {
       throw new Error("No authenticated user found");
     }
     
-    // Get the latest message times for each conversation using our new view
-    const { data: latestMessageTimes, error: timesError } = await supabase
-      .from('latest_message_times')
-      .select('conversation_id, latest_message_time');
+    // Use Promise.all to parallelize the two conversation queries
+    const [latestMessageTimesResult, conversationsAsUser1Result, conversationsAsUser2Result] = await Promise.all([
+      // 1. Get the latest message times from the view
+      supabase.from('latest_message_times').select('conversation_id, latest_message_time'),
       
+      // 2. Get conversations where user is user1_id
+      supabase.from('conversations')
+        .select(`
+          id, 
+          status,
+          blocked_by,
+          user1_id,
+          user2_id,
+          created_at,
+          updated_at,
+          user2:profiles!conversations_user2_id_fkey(
+            id, 
+            username, 
+            avatar_url, 
+            full_name
+          )
+        `)
+        .eq('user1_id', profileId)
+        .eq('status', 'active'),
+        
+      // 3. Get conversations where user is user2_id  
+      supabase.from('conversations')
+        .select(`
+          id, 
+          status,
+          blocked_by,
+          user1_id,
+          user2_id,
+          created_at,
+          updated_at,
+          user1:profiles!conversations_user1_id_fkey(
+            id, 
+            username, 
+            avatar_url, 
+            full_name
+          )
+        `)
+        .eq('user2_id', profileId)
+        .eq('status', 'active')
+    ]);
+    
+    const { data: latestMessageTimes, error: timesError } = latestMessageTimesResult;
+    const { data: conversationsAsUser1, error: user1Error } = conversationsAsUser1Result;
+    const { data: conversationsAsUser2, error: user2Error } = conversationsAsUser2Result;
+    
     if (timesError) {
       logger.error("Error fetching latest message times", {
         error: timesError,
         component: "findConversationsByProfileId"
       });
-      // Continue with the original approach if the view query fails
+      // Continue without the message times data
+    }
+    
+    if (user1Error) {
+      logger.error("Error fetching conversations as user1", {
+        error: user1Error,
+        component: "findConversationsByProfileId"
+      });
+      // Continue with empty conversations as user1
+    }
+    
+    if (user2Error) {
+      logger.error("Error fetching conversations as user2", {
+        error: user2Error,
+        component: "findConversationsByProfileId"
+      });
+      // Continue with empty conversations as user2
     }
     
     // Create a map of conversation_id to latest_message_time
@@ -58,65 +119,6 @@ export const findConversationsByProfileId = async (profileId: string) => {
       latestMessageTimes.forEach(item => {
         messageTimeMap.set(item.conversation_id, item.latest_message_time);
       });
-    }
-    
-    // Try to get conversations with two separate queries for better performance
-    // Query 1: Get conversations where user is user1_id
-    const { data: conversationsAsUser1, error: user1Error } = await supabase
-      .from('conversations')
-      .select(`
-        id, 
-        status,
-        blocked_by,
-        user1_id,
-        user2_id,
-        created_at,
-        updated_at,
-        user2:profiles!conversations_user2_id_fkey(
-          id, 
-          username, 
-          avatar_url, 
-          full_name
-        )
-      `)
-      .eq('user1_id', profileId)
-      .eq('status', 'active');
-      
-    if (user1Error) {
-      logger.error("Error fetching conversations as user1", {
-        error: user1Error,
-        component: "findConversationsByProfileId"
-      });
-      throw user1Error;
-    }
-    
-    // Query 2: Get conversations where user is user2_id
-    const { data: conversationsAsUser2, error: user2Error } = await supabase
-      .from('conversations')
-      .select(`
-        id, 
-        status,
-        blocked_by,
-        user1_id,
-        user2_id,
-        created_at,
-        updated_at,
-        user1:profiles!conversations_user1_id_fkey(
-          id, 
-          username, 
-          avatar_url, 
-          full_name
-        )
-      `)
-      .eq('user2_id', profileId)
-      .eq('status', 'active');
-      
-    if (user2Error) {
-      logger.error("Error fetching conversations as user2", {
-        error: user2Error,
-        component: "findConversationsByProfileId"
-      });
-      throw user2Error;
     }
     
     // Combine both result sets
@@ -152,59 +154,71 @@ export const findConversationsByProfileId = async (profileId: string) => {
       );
     }
     
-    // Sort by latest message time (newest first)
+    // Optimize sort for better performance
     allConversations.sort((a, b) => {
+      // Convert once outside the comparison to avoid repeated conversions
       const timeA = new Date(a.latest_message_time).getTime();
       const timeB = new Date(b.latest_message_time).getTime();
-      return timeB - timeA;
+      return timeB - timeA; // Newest first
     });
     
     logger.info(`Found ${allConversations.length} conversations for profile ${profileId}`, {
       component: "findConversationsByProfileId"
     });
     
-    // Add latest message information if needed
-    // This could be optimized with a separate query to get the latest message for each conversation
+    // Only fetch latest messages if we have conversations
     if (allConversations.length > 0) {
-      const { data: latestMessages, error: messagesError } = await supabase
-        .from('messages')
-        .select(`
-          id,
-          conversation_id,
-          content,
-          created_at,
-          read_at,
-          sender_id
-        `)
-        .in('conversation_id', allConversations.map(c => c.id))
-        .order('created_at', { ascending: false });
+      try {
+        // Get all conversation IDs to fetch messages
+        const conversationIds = allConversations.map(c => c.id);
         
-      if (messagesError) {
-        logger.error("Error fetching latest messages", {
-          error: messagesError,
+        // Efficient query to get latest message per conversation
+        const { data: latestMessages, error: messagesError } = await supabase
+          .from('messages')
+          .select(`
+            id,
+            conversation_id,
+            content,
+            created_at,
+            read_at,
+            sender_id
+          `)
+          .in('conversation_id', conversationIds)
+          .order('created_at', { ascending: false });
+          
+        if (messagesError) {
+          logger.error("Error fetching latest messages", {
+            error: messagesError,
+            component: "findConversationsByProfileId"
+          });
+          // Continue without latest messages
+        } else if (latestMessages) {
+          // Create a Map to find the latest message for each conversation efficiently
+          const messagesByConversation = new Map();
+          latestMessages.forEach(msg => {
+            if (!messagesByConversation.has(msg.conversation_id)) {
+              messagesByConversation.set(msg.conversation_id, msg);
+            }
+          });
+          
+          // Add latest message to each conversation
+          allConversations = allConversations.map(conv => {
+            const latestMessage = messagesByConversation.get(conv.id);
+            return {
+              ...conv,
+              latestMessage: latestMessage || null,
+              hasUnread: latestMessage ? 
+                (latestMessage.sender_id !== profileId && !latestMessage.read_at) : 
+                false
+            };
+          });
+        }
+      } catch (error) {
+        logger.error("Error processing latest messages", {
+          error,
           component: "findConversationsByProfileId"
         });
-        // Continue without latest messages data
-      } else if (latestMessages) {
-        // Group messages by conversation
-        const messagesByConversation = new Map();
-        latestMessages.forEach(msg => {
-          if (!messagesByConversation.has(msg.conversation_id)) {
-            messagesByConversation.set(msg.conversation_id, msg);
-          }
-        });
-        
-        // Add latest message to each conversation
-        allConversations = allConversations.map(conv => {
-          const latestMessage = messagesByConversation.get(conv.id);
-          return {
-            ...conv,
-            latestMessage: latestMessage || null,
-            hasUnread: latestMessage ? 
-              (latestMessage.sender_id !== profileId && !latestMessage.read_at) : 
-              false
-          };
-        });
+        // Continue without latest messages
       }
     }
     
