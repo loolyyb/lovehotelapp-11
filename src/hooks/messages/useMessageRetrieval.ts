@@ -11,22 +11,30 @@ interface UseMessageRetrievalProps {
   currentProfileId: string | null;
   setMessages: React.Dispatch<React.SetStateAction<any[]>>;
   toast: any;
+  permissionVerified: boolean; 
+  setPermissionVerified: (value: boolean) => void;
 }
 
 export const useMessageRetrieval = ({
   conversationId,
   currentProfileId,
   setMessages,
-  toast
+  toast,
+  permissionVerified,
+  setPermissionVerified
 }: UseMessageRetrievalProps) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [permissionVerified, setPermissionVerified] = useState(false);
   const isMountedRef = useRef(true);
   const fetchingMessagesRef = useRef(false);
   const permissionVerifiedRef = useRef(false);
   const attemptCountRef = useRef(0);
+
+  // Update ref when prop changes
+  useEffect(() => {
+    permissionVerifiedRef.current = permissionVerified;
+  }, [permissionVerified]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -42,19 +50,18 @@ export const useMessageRetrieval = ({
     setHasMoreMessages(true);
     setIsLoadingMore(false);
     setIsFetchingMore(false);
-    setPermissionVerified(false);
     fetchingMessagesRef.current = false;
-    permissionVerifiedRef.current = false;
+    permissionVerifiedRef.current = permissionVerified;
     attemptCountRef.current = 0;
 
     // Also reset failed attempts for this conversation
     if (conversationId) {
       MessagesFetcher.resetFailedAttempts(conversationId);
     }
-  }, [conversationId]);
+  }, [conversationId, permissionVerified]);
 
   // Verify user permission for the conversation
-  const verifyConversationPermission = useCallback(async () => {
+  const verifyConversationPermission = useCallback(async (force = false) => {
     if (!conversationId || !currentProfileId) {
       logger.info("Cannot verify permission: missing required data", {
         conversationId: !!conversationId,
@@ -64,8 +71,13 @@ export const useMessageRetrieval = ({
       return false;
     }
 
-    // If we already verified permission, return early
-    if (permissionVerifiedRef.current) {
+    // If we already verified permission and aren't forcing a recheck, return early
+    if (permissionVerifiedRef.current && !force) {
+      logger.info("Using cached permission verification", {
+        conversationId,
+        profileId: currentProfileId,
+        component: "useMessageRetrieval.verifyConversationPermission"
+      });
       return true;
     }
 
@@ -136,7 +148,7 @@ export const useMessageRetrieval = ({
       });
       return false;
     }
-  }, [conversationId, currentProfileId]);
+  }, [conversationId, currentProfileId, setPermissionVerified]);
 
   // Mark messages as read - Define this function before it's used
   const markMessagesAsRead = useCallback(async () => {
@@ -202,7 +214,7 @@ export const useMessageRetrieval = ({
   }, [conversationId, currentProfileId]);
 
   // Fetch messages with permission verification
-  const fetchMessages = useCallback(async (useCache = true) => {
+  const fetchMessages = useCallback(async (useCache = true, forcePermissionCheck = false) => {
     if (!conversationId || !currentProfileId) {
       logger.info("Cannot fetch messages: missing required data", {
         conversationId: !!conversationId,
@@ -226,6 +238,8 @@ export const useMessageRetrieval = ({
     logger.info(`Fetching messages attempt #${attemptCountRef.current}`, {
       conversationId, 
       currentProfileId,
+      permissionVerified: permissionVerifiedRef.current,
+      forcePermissionCheck,
       component: "useMessageRetrieval.fetchMessages"
     });
 
@@ -233,7 +247,7 @@ export const useMessageRetrieval = ({
 
     try {
       // Verify permission first
-      const hasPermission = await verifyConversationPermission();
+      const hasPermission = await verifyConversationPermission(forcePermissionCheck);
       if (!hasPermission) {
         logger.error("Permission denied for fetching messages", {
           conversationId,
@@ -434,11 +448,24 @@ export const useMessageRetrieval = ({
     return MessageCache.addMessage(conversationId, message);
   }, [conversationId]);
 
+  // Force re-verification and message refresh
+  const forceRefresh = useCallback(async () => {
+    logger.info("Forcing message refresh", { conversationId });
+    
+    // First reset permission verification
+    setPermissionVerified(false);
+    permissionVerifiedRef.current = false;
+    
+    // Then fetch messages with forced permission check and no cache
+    return fetchMessages(false, true);
+  }, [conversationId, fetchMessages, setPermissionVerified, logger]);
+
   return {
     fetchMessages,
     loadMoreMessages,
     markMessagesAsRead,
     addMessageToCache,
+    forceRefresh,
     isLoadingMore,
     hasMoreMessages,
     isFetchingMore,

@@ -9,6 +9,7 @@ import { MessagesContainer } from "@/components/messages/MessagesContainer";
 import { useConnectionStatus } from "@/hooks/messages/useConnectionStatus";
 import { usePageVisibility } from "@/hooks/usePageVisibility";
 import { useProfileState } from "@/hooks/useProfileState";
+import { MessageCache } from "@/hooks/messages/cache";
 
 export default function Messages() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -19,12 +20,13 @@ export default function Messages() {
   const mountedRef = useRef(true);
   const refreshAttemptRef = useRef(0);
   const lastVisibleTimeRef = useRef(Date.now());
+  const conversationsRefreshedRef = useRef(false);
 
   // Track page visibility
   const { isVisible, wasHidden, setWasHidden } = usePageVisibility();
   
   // Access central profile state
-  const { profileId, refreshProfile } = useProfileState();
+  const { profileId, refreshProfile, isInitialized } = useProfileState();
 
   const { 
     isCheckingConnection, 
@@ -55,17 +57,29 @@ export default function Messages() {
     if (isVisible && wasHidden) {
       const timeSinceLastVisible = Date.now() - lastVisibleTimeRef.current;
       logger.info("Page became visible again after being hidden", { 
-        timeSinceLastVisible: `${Math.round(timeSinceLastVisible / 1000)}s`
+        timeSinceLastVisible: `${Math.round(timeSinceLastVisible / 1000)}s`,
+        selectedConversation,
+        profileId
       });
       
-      // Only force refresh if it's been hidden for more than 30 seconds
-      if (timeSinceLastVisible > 30000) {
+      // Only force refresh if it's been hidden for more than 10 seconds
+      if (timeSinceLastVisible > 10000) {
         logger.info("Tab was hidden for a significant time, refreshing state");
         
         // Refresh profile to ensure we have the latest state
         refreshProfile().then(() => {
+          // Reset the permission verification state for conversations
+          if (selectedConversation) {
+            logger.info("Clearing message cache for active conversation after tab hidden", {
+              conversationId: selectedConversation
+            });
+            MessageCache.clearConversation(selectedConversation);
+          }
+          
           // Force a refresh of conversations
-          handleRefreshConversations();
+          conversationsRefreshedRef.current = false;
+          handleRefreshConversations(true);
+          
           // Reset the hidden state
           setWasHidden(false);
         });
@@ -78,7 +92,7 @@ export default function Messages() {
     if (isVisible) {
       lastVisibleTimeRef.current = Date.now();
     }
-  }, [isVisible, wasHidden, logger, refreshProfile, setWasHidden]);
+  }, [isVisible, wasHidden, logger, refreshProfile, setWasHidden, selectedConversation, profileId]);
 
   const handleSelectConversation = useCallback((conversationId: string) => {
     if (selectedConversation === conversationId) {
@@ -100,8 +114,14 @@ export default function Messages() {
     setSelectedConversation(null);
   }, [logger]);
 
-  const handleRefreshConversations = useCallback(async () => {
-    logger.info("Manually refreshing conversations");
+  const handleRefreshConversations = useCallback(async (force = false) => {
+    logger.info("Manually refreshing conversations", { force });
+    
+    // Skip if we've already refreshed and this isn't a forced refresh
+    if (conversationsRefreshedRef.current && !force) {
+      logger.info("Skipping refresh as conversations were already refreshed");
+      return;
+    }
     
     refreshAttemptRef.current += 1;
     const currentAttempt = refreshAttemptRef.current;
@@ -120,12 +140,15 @@ export default function Messages() {
         if (!user) throw new Error("No authenticated user");
         
         // If we have a valid user, don't show a toast for automatic refreshes due to tab visibility
-        if (!wasHidden) {
+        if (!wasHidden && !force) {
           toast({
             title: "Actualisation réussie",
             description: "Vos conversations ont été actualisées"
           });
         }
+        
+        // Mark conversations as refreshed
+        conversationsRefreshedRef.current = true;
       }
     } catch (error) {
       logger.error("Error during refresh", { error });

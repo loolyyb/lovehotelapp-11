@@ -19,7 +19,14 @@ export function useMessageViewProps(conversationId: string) {
   const logger = useLogger("useMessageViewProps");
   
   // Connect to centralized profile state
-  const { profileId, profile, isLoading: profileLoading, error: profileError, isInitialized: profileStateInitialized } = useProfileState();
+  const { 
+    profileId, 
+    profile, 
+    isLoading: profileLoading, 
+    error: profileError, 
+    isInitialized: profileStateInitialized,
+    checkAndRefreshSession
+  } = useProfileState();
   
   // Use the message view state hook to manage state
   const {
@@ -39,10 +46,18 @@ export function useMessageViewProps(conversationId: string) {
     setProfileInitialized,
     isFetchingInitialMessages,
     setIsFetchingInitialMessages,
+    permissionVerified,
+    setPermissionVerified,
     fetchingRef,
     firstLoad,
-    logger: stateLogger
+    logger: stateLogger,
+    conversationIdRef
   } = useMessageViewState();
+
+  // Keep track of the current conversation ID for visibility handling
+  useEffect(() => {
+    conversationIdRef.current = conversationId;
+  }, [conversationId, conversationIdRef]);
 
   // Synchronize with centralized profile state
   useEffect(() => {
@@ -80,12 +95,13 @@ export function useMessageViewProps(conversationId: string) {
     getCurrentUser,
   });
 
-  // Setup message retrieval
+  // Setup message retrieval with permission verification state
   const { 
     fetchMessages, 
     loadMoreMessages, 
     markMessagesAsRead, 
     addMessageToCache,
+    forceRefresh,
     isLoadingMore,
     hasMoreMessages,
     isFetchingMore
@@ -93,7 +109,9 @@ export function useMessageViewProps(conversationId: string) {
     conversationId, 
     currentProfileId, 
     setMessages, 
-    toast 
+    toast,
+    permissionVerified,
+    setPermissionVerified
   });
 
   // Setup message refresh
@@ -125,7 +143,9 @@ export function useMessageViewProps(conversationId: string) {
     fetchMessages,
     markMessagesAsRead,
     messages,
-    logger
+    logger,
+    permissionVerified,
+    forceRefresh
   });
 
   // Message realtime update handlers - Improved for better UI updates
@@ -198,8 +218,8 @@ export function useMessageViewProps(conversationId: string) {
 
   // Create an auth status string for debugging
   const authStatus = useMemo(() => {
-    return `profileId:${!!profileId}|current:${!!currentProfileId}|initialized:${profileInitialized}|checked:${isAuthChecked}`;
-  }, [profileId, currentProfileId, profileInitialized, isAuthChecked]);
+    return `profileId:${!!profileId}|current:${!!currentProfileId}|initialized:${profileInitialized}|checked:${isAuthChecked}|permVerified:${permissionVerified}`;
+  }, [profileId, currentProfileId, profileInitialized, isAuthChecked, permissionVerified]);
 
   // Combined loading state
   const showLoader = useMemo(() => 
@@ -222,9 +242,16 @@ export function useMessageViewProps(conversationId: string) {
         conversationId,
         currentProfileId,
         profileInitialized,
-        isAuthChecked
+        isAuthChecked,
+        permissionVerified
       });
-      handleRefresh();
+      
+      // Use forceRefresh for more aggressive refresh when needed
+      if (!permissionVerified) {
+        forceRefresh();
+      } else {
+        handleRefresh();
+      }
     }
   }, [
     currentProfileId, 
@@ -234,8 +261,37 @@ export function useMessageViewProps(conversationId: string) {
     messages.length, 
     isError, 
     showLoader, 
-    conversationId, 
+    conversationId,
+    permissionVerified,
     handleRefresh,
+    forceRefresh,
+    logger
+  ]);
+
+  // Force permission verification when lost
+  useEffect(() => {
+    if (
+      currentProfileId && 
+      profileInitialized && 
+      isAuthChecked && 
+      !permissionVerified && 
+      !isFetchingInitialMessages
+    ) {
+      logger.info("Forcing permission verification", {
+        conversationId,
+        currentProfileId
+      });
+      
+      forceRefresh();
+    }
+  }, [
+    currentProfileId,
+    profileInitialized,
+    isAuthChecked,
+    permissionVerified,
+    isFetchingInitialMessages,
+    conversationId,
+    forceRefresh,
     logger
   ]);
 
@@ -253,7 +309,7 @@ export function useMessageViewProps(conversationId: string) {
     isLoading: showLoader,
     isError,
     retryLoad,
-    refreshMessages: handleRefresh,
+    refreshMessages: permissionVerified ? handleRefresh : forceRefresh,
     isRefreshing,
     loadMoreMessages,
     isLoadingMore: isLoadingMore || isFetchingMore,
@@ -271,6 +327,8 @@ export function useMessageViewProps(conversationId: string) {
     isError,
     retryLoad,
     handleRefresh,
+    forceRefresh,
+    permissionVerified,
     isRefreshing,
     loadMoreMessages,
     isLoadingMore,

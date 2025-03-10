@@ -22,6 +22,7 @@ export const useMessageViewState = () => {
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [profileInitialized, setProfileInitialized] = useState(false);
   const [isFetchingInitialMessages, setIsFetchingInitialMessages] = useState(false);
+  const [permissionVerified, setPermissionVerified] = useState(false);
   
   // Track page visibility for state synchronization
   const { isVisible, wasHidden, setWasHidden } = usePageVisibility();
@@ -31,6 +32,7 @@ export const useMessageViewState = () => {
   const firstLoad = useRef(true);
   const logger = useLogger("useMessageViewState");
   const lastVisibleTimeRef = useRef(Date.now());
+  const conversationIdRef = useRef<string | null>(null);
 
   // Sync with central profile state
   useEffect(() => {
@@ -49,18 +51,26 @@ export const useMessageViewState = () => {
       logger.info("MessageView became visible again after being hidden", {
         timeSinceLastVisible: `${Math.round(timeSinceLastVisible / 1000)}s`,
         hasMessages: messages.length > 0,
-        profileId: currentProfileId
+        profileId: currentProfileId,
+        conversationId: conversationIdRef.current
       });
       
-      // If visibility was lost for more than 20 seconds or we lost profile state, check session
-      if (timeSinceLastVisible > 20000 || !currentProfileId) {
+      // If visibility was lost for more than 5 seconds or we lost profile state, check session
+      if (timeSinceLastVisible > 5000 || !currentProfileId) {
         logger.info("Checking session state after visibility change");
         checkAndRefreshSession().then(valid => {
-          if (valid && centralProfileId && !currentProfileId) {
-            logger.info("Restoring profile ID after visibility change", { centralProfileId });
-            setCurrentProfileId(centralProfileId);
-            setProfileInitialized(true);
-            setIsAuthChecked(true);
+          if (valid) {
+            if (centralProfileId && !currentProfileId) {
+              logger.info("Restoring profile ID after visibility change", { centralProfileId });
+              setCurrentProfileId(centralProfileId);
+              setProfileInitialized(true);
+              setIsAuthChecked(true);
+            }
+            
+            // Reset permission verification to force a recheck
+            if (conversationIdRef.current) {
+              setPermissionVerified(false);
+            }
           }
           
           // Reset the hidden state
@@ -128,10 +138,13 @@ export const useMessageViewState = () => {
     setProfileInitialized,
     isFetchingInitialMessages,
     setIsFetchingInitialMessages,
+    permissionVerified,
+    setPermissionVerified,
     
     // Refs
     fetchingRef,
     firstLoad,
-    logger
+    logger,
+    conversationIdRef
   };
 };

@@ -14,6 +14,8 @@ interface UseMessagesLoaderProps {
   markMessagesAsRead: () => Promise<void>;
   messages: any[];
   logger?: any;
+  permissionVerified?: boolean;
+  forceRefresh?: () => Promise<any[] | null>;
 }
 
 /**
@@ -31,7 +33,9 @@ export const useMessagesLoader = ({
   fetchMessages,
   markMessagesAsRead,
   messages,
-  logger
+  logger,
+  permissionVerified,
+  forceRefresh
 }: UseMessagesLoaderProps) => {
   // On mount or when auth and profile are initialized, fetch messages
   useEffect(() => {
@@ -55,26 +59,35 @@ export const useMessagesLoader = ({
     }
     
     // Skip if we already have messages
-    if (messages.length > 0) {
-      log("useMessagesLoader: Already have messages, skipping");
+    if (messages.length > 0 && permissionVerified) {
+      log("useMessagesLoader: Already have messages and permission verified, skipping");
       return;
     }
     
     const loadInitialMessages = async () => {
-      log("useMessagesLoader: Loading initial messages for conversation", conversationId);
+      log("useMessagesLoader: Loading initial messages for conversation", {
+        conversationId,
+        hasPermission: permissionVerified
+      });
+      
       setIsFetchingInitialMessages(true);
       
       try {
-        const result = await fetchMessages(true);
+        // Use forceRefresh if permission is not verified yet
+        const result = permissionVerified 
+          ? await fetchMessages(true)
+          : forceRefresh ? await forceRefresh() : await fetchMessages(false, true);
+          
         log("useMessagesLoader: Initial messages fetch result", { 
           success: !!result, 
-          messageCount: result?.length || 0 
+          messageCount: result?.length || 0,
+          permissionVerified 
         });
         
         if (!result || result.length === 0) {
           // Try one more time without cache if the first attempt failed
-          log("useMessagesLoader: No messages found in cache, trying again without cache");
-          const freshResult = await fetchMessages(false);
+          log("useMessagesLoader: No messages found, trying again without cache");
+          const freshResult = await fetchMessages(false, true);
           log("useMessagesLoader: Fresh fetch result", {
             success: !!freshResult,
             messageCount: freshResult?.length || 0
@@ -105,7 +118,9 @@ export const useMessagesLoader = ({
     setIsLoading,
     setIsFetchingInitialMessages,
     messages.length,
-    logger
+    logger,
+    permissionVerified,
+    forceRefresh
   ]);
   
   // When messages are loaded, mark them as read
@@ -128,16 +143,23 @@ export const useMessagesLoader = ({
     
     log("useMessagesLoader: Manual refresh requested", {
       conversationId,
-      currentProfileId
+      currentProfileId,
+      permissionVerified
     });
+    
     setIsLoading(true);
     
     try {
-      const result = await fetchMessages(false); // Skip cache on manual refresh
+      // Use forceRefresh if permission verification is missing
+      const result = permissionVerified 
+        ? await fetchMessages(false) 
+        : forceRefresh ? await forceRefresh() : await fetchMessages(false, true);
+        
       log("useMessagesLoader: Manual refresh result", { 
         success: !!result, 
         messageCount: result?.length || 0 
       });
+      
       setIsError(!result);
     } catch (error) {
       log("useMessagesLoader: Error refreshing messages:", error);
@@ -145,7 +167,16 @@ export const useMessagesLoader = ({
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, currentProfileId, fetchMessages, setIsError, setIsLoading, logger]);
+  }, [
+    conversationId, 
+    currentProfileId, 
+    fetchMessages, 
+    setIsError, 
+    setIsLoading, 
+    logger, 
+    permissionVerified,
+    forceRefresh
+  ]);
   
   return { handleRefresh };
 };
