@@ -1,3 +1,4 @@
+
 import React, { useCallback, useMemo, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLogger } from "@/hooks/useLogger";
@@ -121,7 +122,7 @@ export function useMessageViewProps(conversationId: string) {
     isLoading: refreshLoading, 
     setIsError, 
     setIsLoading: setRefreshLoading, 
-    refreshMessages, 
+    refreshMessages: refreshMessagesOriginal, 
     retryLoad 
   } = useMessageRefresh({
     conversationId,
@@ -295,6 +296,20 @@ export function useMessageViewProps(conversationId: string) {
     logger
   ]);
 
+  // Create a wrapped refreshMessages function that adapts the return type to Promise<void>
+  const refreshMessages = useCallback(async () => {
+    logger.info("Wrapped refreshMessages called");
+    
+    // Call the appropriate refresh method based on permission state
+    if (permissionVerified) {
+      await handleRefresh();
+    } else {
+      await forceRefresh();
+    }
+    
+    // Don't return anything (void)
+  }, [permissionVerified, handleRefresh, forceRefresh, logger]);
+
   // Create a wrapped sendMessage function that handles undefined event properly
   const handleSendMessage = useCallback((e?: React.FormEvent) => {
     // Call the actual sendMessage function with the event, which now properly handles optional events
@@ -309,7 +324,7 @@ export function useMessageViewProps(conversationId: string) {
     isLoading: showLoader,
     isError,
     retryLoad,
-    refreshMessages: permissionVerified ? handleRefresh : forceRefresh,
+    refreshMessages,
     isRefreshing,
     loadMoreMessages,
     isLoadingMore: isLoadingMore || isFetchingMore,
@@ -326,9 +341,7 @@ export function useMessageViewProps(conversationId: string) {
     showLoader,
     isError,
     retryLoad,
-    handleRefresh,
-    forceRefresh,
-    permissionVerified,
+    refreshMessages,
     isRefreshing,
     loadMoreMessages,
     isLoadingMore,

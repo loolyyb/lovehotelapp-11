@@ -76,7 +76,7 @@ export const useMessagesLoader = ({
         // Use forceRefresh if permission is not verified yet
         const result = permissionVerified 
           ? await fetchMessages(true)
-          : forceRefresh ? await forceRefresh() : await fetchMessages(false, true);
+          : forceRefresh ? await forceRefresh() : await fetchMessages(false);
           
         log("useMessagesLoader: Initial messages fetch result", { 
           success: !!result, 
@@ -87,7 +87,7 @@ export const useMessagesLoader = ({
         if (!result || result.length === 0) {
           // Try one more time without cache if the first attempt failed
           log("useMessagesLoader: No messages found, trying again without cache");
-          const freshResult = await fetchMessages(false, true);
+          const freshResult = await fetchMessages(false);
           log("useMessagesLoader: Fresh fetch result", {
             success: !!freshResult,
             messageCount: freshResult?.length || 0
@@ -153,7 +153,7 @@ export const useMessagesLoader = ({
       // Use forceRefresh if permission verification is missing
       const result = permissionVerified 
         ? await fetchMessages(false) 
-        : forceRefresh ? await forceRefresh() : await fetchMessages(false, true);
+        : forceRefresh ? await forceRefresh() : await fetchMessages(false);
         
       log("useMessagesLoader: Manual refresh result", { 
         success: !!result, 
