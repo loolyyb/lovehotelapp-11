@@ -171,8 +171,7 @@ export const findConversationsByProfileId = async (profileId: string) => {
           return {
             ...conversation,
             otherUser: { id: otherUserId, username: 'Utilisateur inconnu' },
-            messages: [],
-            latest_message_time: conversation.updated_at || conversation.created_at
+            messages: []
           };
         }
         
@@ -194,22 +193,15 @@ export const findConversationsByProfileId = async (profileId: string) => {
           return {
             ...conversation,
             otherUser: otherUserProfile || { id: otherUserId, username: 'Utilisateur inconnu' },
-            messages: [],
-            latest_message_time: conversation.updated_at || conversation.created_at
+            messages: []
           };
         }
         
-        // Find the latest message timestamp or fall back to conversation updated_at/created_at
-        const latestMessageTime = messages && messages.length > 0 
-          ? messages[0].created_at 
-          : conversation.updated_at || conversation.created_at;
-        
-        // Return full conversation data with latest message timestamp
+        // Return full conversation data
         return {
           ...conversation,
           otherUser: otherUserProfile || { id: otherUserId, username: 'Utilisateur inconnu' },
-          messages: messages || [],
-          latest_message_time: latestMessageTime
+          messages: messages || []
         };
       } catch (error) {
         logger.error(`Error processing conversation ${conversation.id}:`, {
@@ -221,24 +213,17 @@ export const findConversationsByProfileId = async (profileId: string) => {
         return {
           ...conversation,
           otherUser: { id: conversation.user1_id === profileId ? conversation.user2_id : conversation.user1_id, username: 'Erreur' },
-          messages: [],
-          latest_message_time: conversation.updated_at || conversation.created_at
+          messages: []
         };
       }
     }));
     
-    // Sort conversations by the latest message time, most recent first
-    const sortedConversations = conversationsWithDetails.sort((a, b) => {
-      const timeA = new Date(a.latest_message_time).getTime();
-      const timeB = new Date(b.latest_message_time).getTime();
-      return timeB - timeA; // Descending order (newest first)
+    logger.info(`Successfully processed ${conversationsWithDetails.length} conversations with details`, {
+      component: "findConversationsByProfileId",
+      conversationIds: conversationsWithDetails.map(c => c.id)
     });
     
-    logger.info(`Successfully processed ${sortedConversations.length} conversations with details and sorted by latest message`, {
-      component: "findConversationsByProfileId"
-    });
-    
-    return sortedConversations;
+    return conversationsWithDetails;
   } catch (error) {
     logger.error('Error in findConversationsByProfileId:', {
       error,

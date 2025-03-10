@@ -197,41 +197,27 @@ export function useStableConversations() {
       if (!updatePendingRef.current) {
         updatePendingRef.current = true;
         setTimeout(() => {
-          // Sort by latest message time before displaying
-          const sortedConversations = [...pendingConversations].sort((a, b) => {
-            const timeA = new Date(a.latest_message_time || a.updated_at || a.created_at).getTime();
-            const timeB = new Date(b.latest_message_time || b.updated_at || b.created_at).getTime();
-            return timeB - timeA; // Descending order (newest first)
-          });
-          
-          setDisplayedConversations(sortedConversations);
+          setDisplayedConversations(pendingConversations);
           initialLoadCompleteRef.current = true;
           setIsVisiblyLoading(false);
           lastDisplayUpdateRef.current = Date.now();
           updatePendingRef.current = false;
-          logger.info("Updated displayed conversations (delayed)", { count: sortedConversations.length });
+          logger.info("Updated displayed conversations (delayed)", { count: pendingConversations.length });
         }, 300);
       }
       return;
     }
     
-    // Sort by latest message time before updating displayed conversations
-    const sortedConversations = [...pendingConversations].sort((a, b) => {
-      const timeA = new Date(a.latest_message_time || a.updated_at || a.created_at).getTime();
-      const timeB = new Date(b.latest_message_time || b.updated_at || b.created_at).getTime();
-      return timeB - timeA; // Descending order (newest first)
-    });
-    
     // Update displayed conversations and cache them
-    setDisplayedConversations(sortedConversations);
+    setDisplayedConversations(pendingConversations);
     initialLoadCompleteRef.current = true;
     setIsVisiblyLoading(false);
     lastDisplayUpdateRef.current = now;
     
     // Cache the conversations if they're valid
-    if (currentProfileId && sortedConversations.length > 0) {
-      cacheConversations(currentProfileId, sortedConversations);
-      logger.info("Updated displayed conversations and cache", { count: sortedConversations.length });
+    if (currentProfileId && pendingConversations.length > 0) {
+      cacheConversations(currentProfileId, pendingConversations);
+      logger.info("Updated displayed conversations and cache", { count: pendingConversations.length });
     }
   }, [pendingConversations, currentProfileId, cacheConversations, logger, conversationsLoading]);
 

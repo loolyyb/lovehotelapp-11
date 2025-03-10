@@ -19,19 +19,12 @@ export const ConversationItems = memo(function ConversationItems({
 }: ConversationItemsProps) {
   const logger = useLogger("ConversationItems");
   
-  // Log conversation details on render, including sorting information
+  // Log conversation details on render
   useEffect(() => {
     logger.info("Rendering conversation items with data", { 
       count: conversations.length, 
       selectedId: selectedConversationId,
-      conversationIds: conversations.map(c => c.id),
-      // Log the latest message times to verify sorting
-      latest_message_times: conversations.length > 0 
-        ? conversations.map(c => ({
-            id: c.id,
-            time: c.latest_message_time || c.updated_at || c.created_at
-          }))
-        : []
+      conversationIds: conversations.map(c => c.id)
     });
   }, [conversations, selectedConversationId, logger]);
   
