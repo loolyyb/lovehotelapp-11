@@ -4,7 +4,24 @@ import { useMessageViewProps } from './logic/useMessageViewProps';
 
 interface MessageViewLogicProps {
   conversationId: string;
-  renderContent: (props: any) => React.ReactNode;
+  renderContent: (props: {
+    messages: any[];
+    currentProfileId: string | null;
+    otherUser: any;
+    isLoading: boolean;
+    isError: boolean;
+    retryLoad: () => Promise<void>;
+    refreshMessages: () => Promise<void>;
+    isRefreshing: boolean;
+    loadMoreMessages: () => Promise<void>;
+    isLoadingMore: boolean;
+    hasMoreMessages: boolean;
+    newMessage: string;
+    setNewMessage: (message: string) => void;
+    sendMessage: (e?: React.FormEvent) => void;
+    authStatus: string;
+    profileInitialized: boolean;
+  }) => React.ReactNode;
 }
 
 export function MessageViewLogic({ 

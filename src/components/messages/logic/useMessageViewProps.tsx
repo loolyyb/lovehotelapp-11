@@ -1,4 +1,3 @@
-
 import React, { useCallback, useMemo, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLogger } from "@/hooks/useLogger";
@@ -262,7 +261,8 @@ export function useMessageViewProps(conversationId: string) {
     newMessage,
     setNewMessage,
     sendMessage: handleSendMessage,
-    authStatus // Add auth status for debugging
+    authStatus,
+    profileInitialized
   }), [
     messages,
     currentProfileId,
@@ -279,6 +279,7 @@ export function useMessageViewProps(conversationId: string) {
     newMessage,
     setNewMessage,
     handleSendMessage,
-    authStatus
+    authStatus,
+    profileInitialized
   ]);
 }
