@@ -58,7 +58,7 @@ export const useMessagesLoader = ({
       return;
     }
     
-    // Skip if we already have messages
+    // Skip if we already have messages and permission verified
     if (messages.length > 0 && permissionVerified) {
       log("useMessagesLoader: Already have messages and permission verified, skipping");
       return;
@@ -74,9 +74,26 @@ export const useMessagesLoader = ({
       
       try {
         // Use forceRefresh if permission is not verified yet
-        const result = permissionVerified 
-          ? await fetchMessages(true)
-          : forceRefresh ? await forceRefresh() : await fetchMessages(false);
+        let result = null;
+        if (permissionVerified) {
+          result = await fetchMessages(true);
+          log("useMessagesLoader: Fetched messages with verified permission", {
+            success: !!result,
+            messageCount: result?.length || 0
+          });
+        } else if (forceRefresh) {
+          // If permission not verified, use force refresh
+          log("useMessagesLoader: Using forceRefresh because permission not verified");
+          result = await forceRefresh();
+          log("useMessagesLoader: Force refresh result", {
+            success: !!result,
+            messageCount: result?.length || 0
+          });
+        } else {
+          // Fallback to normal fetch
+          log("useMessagesLoader: Using normal fetch as fallback");
+          result = await fetchMessages(false);
+        }
           
         log("useMessagesLoader: Initial messages fetch result", { 
           success: !!result, 
@@ -151,9 +168,25 @@ export const useMessagesLoader = ({
     
     try {
       // Use forceRefresh if permission verification is missing
-      const result = permissionVerified 
-        ? await fetchMessages(false) 
-        : forceRefresh ? await forceRefresh() : await fetchMessages(false);
+      let result = null;
+      if (permissionVerified) {
+        result = await fetchMessages(false);
+        log("useMessagesLoader: Refreshed messages with regular fetch", {
+          success: !!result,
+          messageCount: result?.length || 0
+        });
+      } else if (forceRefresh) {
+        log("useMessagesLoader: Using forceRefresh for manual refresh");
+        result = await forceRefresh();
+        log("useMessagesLoader: Force refresh result", {
+          success: !!result,
+          messageCount: result?.length || 0
+        });
+      } else {
+        // Fallback to normal fetch
+        log("useMessagesLoader: Using normal fetch as fallback for manual refresh");
+        result = await fetchMessages(false);
+      }
         
       log("useMessagesLoader: Manual refresh result", { 
         success: !!result, 

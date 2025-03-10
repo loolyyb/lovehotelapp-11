@@ -11,7 +11,7 @@ interface MessageViewLogicProps {
     isLoading: boolean;
     isError: boolean;
     retryLoad: () => Promise<void>;
-    refreshMessages: () => Promise<void>;
+    refreshMessages: () => Promise<void>;  // Changed to Promise<void> to match the actual implementation
     isRefreshing: boolean;
     loadMoreMessages: () => Promise<void>;
     isLoadingMore: boolean;

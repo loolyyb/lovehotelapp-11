@@ -248,9 +248,16 @@ export function useMessageViewProps(conversationId: string) {
       });
       
       // Use forceRefresh for more aggressive refresh when needed
-      if (!permissionVerified) {
-        forceRefresh();
+      if (!permissionVerified && forceRefresh) {
+        logger.info("Using forceRefresh because permission not verified");
+        forceRefresh().then(result => {
+          logger.info("forceRefresh result", {
+            success: !!result,
+            messageCount: result?.length || 0
+          });
+        });
       } else {
+        logger.info("Using handleRefresh for regular refresh");
         handleRefresh();
       }
     }
@@ -276,14 +283,20 @@ export function useMessageViewProps(conversationId: string) {
       profileInitialized && 
       isAuthChecked && 
       !permissionVerified && 
-      !isFetchingInitialMessages
+      !isFetchingInitialMessages &&
+      forceRefresh
     ) {
       logger.info("Forcing permission verification", {
         conversationId,
         currentProfileId
       });
       
-      forceRefresh();
+      forceRefresh().then(result => {
+        logger.info("Permission verification result", {
+          success: !!result,
+          messageCount: result?.length || 0
+        });
+      });
     }
   }, [
     currentProfileId,
@@ -300,11 +313,25 @@ export function useMessageViewProps(conversationId: string) {
   const refreshMessages = useCallback(async () => {
     logger.info("Wrapped refreshMessages called");
     
-    // Call the appropriate refresh method based on permission state
-    if (permissionVerified) {
-      await handleRefresh();
-    } else {
-      await forceRefresh();
+    try {
+      // Call the appropriate refresh method based on permission state
+      if (permissionVerified) {
+        logger.info("Using handleRefresh for refreshMessages (permission verified)");
+        await handleRefresh();
+      } else if (forceRefresh) {
+        logger.info("Using forceRefresh for refreshMessages (permission not verified)");
+        const result = await forceRefresh();
+        logger.info("forceRefresh result", {
+          success: !!result,
+          messageCount: result?.length || 0
+        });
+      } else {
+        // Fallback if neither are available
+        logger.info("Fallback: Using handleRefresh even though permission not verified");
+        await handleRefresh();
+      }
+    } catch (error) {
+      logger.error("Error in refreshMessages:", error);
     }
     
     // Don't return anything (void)
