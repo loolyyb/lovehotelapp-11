@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/services/LogService";
+import { useLogger } from "@/hooks/useLogger";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -37,10 +38,10 @@ const isPreviewEnvironment = () => {
 export const AppRoutes = ({ session }: AppRoutesProps) => {
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
   const { toast } = useToast();
-  const routeLogger = logger.createLogger('AppRoutes');
+  const { info, error } = useLogger('AppRoutes');
 
   useEffect(() => {
-    routeLogger.info("AppRoutes mounted", { 
+    info("AppRoutes mounted", { 
       isAuthenticated: !!session,
       currentPath: window.location.pathname
     });
@@ -54,7 +55,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     if (!session?.user) return;
 
     try {
-      const { data: preferences, error } = await supabase
+      const { data: preferences, error: supabaseError } = await supabase
         .from('preferences')
         .select('qualification_completed, created_at')
         .eq('user_id', session.user.id)
@@ -62,9 +63,9 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
         .limit(1)
         .single();
 
-      if (error) {
-        console.error('Error checking qualification status:', error);
-        if (error.code === 'PGRST116') {
+      if (supabaseError) {
+        console.error('Error checking qualification status:', supabaseError);
+        if (supabaseError.code === 'PGRST116') {
           setNeedsQualification(true);
           return;
         }
@@ -78,8 +79,8 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       }
 
       setNeedsQualification(!preferences?.qualification_completed);
-    } catch (error) {
-      console.error('Error:', error);
+    } catch (err) {
+      console.error('Error:', err);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -93,7 +94,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
   }
 
   const ProtectedRoute = ({ element }: { element: React.ReactNode }) => {
-    routeLogger.info("Protected route accessed", { 
+    info("Protected route accessed", { 
       isAuthenticated: !!session,
       path: window.location.pathname 
     });
