@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLogger } from "@/hooks/useLogger";
 import { useProfileState } from "@/hooks/useProfileState";
+import { usePageVisibility } from "@/hooks/usePageVisibility";
 
 /**
  * Centralized state management for the message view component
@@ -12,7 +13,7 @@ export const useMessageViewState = () => {
   const [newMessage, setNewMessage] = useState("");
   
   // User information - now using useProfileState for central profile management
-  const { profileId: centralProfileId, isInitialized: profileStateInitialized } = useProfileState();
+  const { profileId: centralProfileId, isInitialized: profileStateInitialized, checkAndRefreshSession } = useProfileState();
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<any>(null);
   
@@ -22,10 +23,14 @@ export const useMessageViewState = () => {
   const [profileInitialized, setProfileInitialized] = useState(false);
   const [isFetchingInitialMessages, setIsFetchingInitialMessages] = useState(false);
   
+  // Track page visibility for state synchronization
+  const { isVisible, wasHidden, setWasHidden } = usePageVisibility();
+  
   // Refs for preventing duplicate operations
   const fetchingRef = useRef(false);
   const firstLoad = useRef(true);
   const logger = useLogger("useMessageViewState");
+  const lastVisibleTimeRef = useRef(Date.now());
 
   // Sync with central profile state
   useEffect(() => {
@@ -36,6 +41,41 @@ export const useMessageViewState = () => {
       setIsAuthChecked(true);
     }
   }, [centralProfileId, profileStateInitialized, currentProfileId, logger]);
+
+  // Handle visibility changes - ensure profile state is fresh when tab becomes visible again
+  useEffect(() => {
+    if (isVisible && wasHidden) {
+      const timeSinceLastVisible = Date.now() - lastVisibleTimeRef.current;
+      logger.info("MessageView became visible again after being hidden", {
+        timeSinceLastVisible: `${Math.round(timeSinceLastVisible / 1000)}s`,
+        hasMessages: messages.length > 0,
+        profileId: currentProfileId
+      });
+      
+      // If visibility was lost for more than 20 seconds or we lost profile state, check session
+      if (timeSinceLastVisible > 20000 || !currentProfileId) {
+        logger.info("Checking session state after visibility change");
+        checkAndRefreshSession().then(valid => {
+          if (valid && centralProfileId && !currentProfileId) {
+            logger.info("Restoring profile ID after visibility change", { centralProfileId });
+            setCurrentProfileId(centralProfileId);
+            setProfileInitialized(true);
+            setIsAuthChecked(true);
+          }
+          
+          // Reset the hidden state
+          setWasHidden(false);
+        });
+      } else {
+        setWasHidden(false);
+      }
+    }
+    
+    // Update the last visible time
+    if (isVisible) {
+      lastVisibleTimeRef.current = Date.now();
+    }
+  }, [isVisible, wasHidden, logger, checkAndRefreshSession, setWasHidden, messages.length, currentProfileId, centralProfileId]);
 
   // Enhanced debugging
   useEffect(() => {

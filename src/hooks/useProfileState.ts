@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLogger } from "@/hooks/useLogger";
@@ -30,6 +29,7 @@ export function useProfileState() {
   const logger = useLogger("useProfileState");
   const { toast } = useToast();
   const initialFetchAttemptedRef = useRef(false);
+  const lastRefreshTime = useRef(Date.now());
 
   // Get cached profile from localStorage
   const getCachedProfile = useCallback(() => {
@@ -77,7 +77,7 @@ export function useProfileState() {
     logger.info("Profile cache cleared");
   }, [logger]);
 
-  // Fetch fresh profile from Supabase
+  // Fetch fresh profile from Supabase with improved caching control
   const fetchProfile = useCallback(async (forceRefresh = false) => {
     // Prevent multiple concurrent fetch attempts
     if (initialFetchAttemptedRef.current && !forceRefresh) {
@@ -85,10 +85,21 @@ export function useProfileState() {
       return null;
     }
     
+    // Check last refresh time to avoid too frequent refreshes
+    const now = Date.now();
+    const timeSinceLastRefresh = now - lastRefreshTime.current;
+    if (!forceRefresh && timeSinceLastRefresh < 5000) { // 5 seconds minimum between refreshes
+      logger.info("Skipping profile refresh, too soon since last refresh", {
+        timeSinceLastRefresh: `${Math.round(timeSinceLastRefresh / 1000)}s`
+      });
+      return profile;
+    }
+    
     initialFetchAttemptedRef.current = true;
     logger.info("Starting profile fetch", { forceRefresh });
     setIsLoading(true);
     setError(null);
+    lastRefreshTime.current = now;
     
     try {
       // First check if we already have a cached profile
@@ -189,7 +200,7 @@ export function useProfileState() {
       
       return null;
     }
-  }, [getCachedProfile, cacheProfile, logger, toast]);
+  }, [getCachedProfile, cacheProfile, logger, toast, profile]);
 
   // Initial profile loading - run only once on mount
   useEffect(() => {
@@ -235,6 +246,38 @@ export function useProfileState() {
     };
   }, [fetchProfile, clearProfileCache, logger, isInitialized]);
 
+  // Add a function to check and refresh session if needed
+  const checkAndRefreshSession = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        logger.error("Error checking session", { error });
+        return false;
+      }
+      
+      if (!data.session) {
+        logger.warn("No active session found during check");
+        setProfile(null);
+        setProfileId(null);
+        clearProfileCache();
+        setIsInitialized(true);
+        setIsLoading(false);
+        return false;
+      }
+      
+      // If we have a session but no profile, refresh the profile
+      if (data.session && !profileId) {
+        logger.info("Session exists but no profile loaded, refreshing profile");
+        await fetchProfile(true);
+      }
+      
+      return true;
+    } catch (err) {
+      logger.error("Exception in checkAndRefreshSession", { error: err });
+      return false;
+    }
+  }, [logger, profileId, clearProfileCache, fetchProfile]);
+  
   return {
     profile,
     profileId,
@@ -242,6 +285,7 @@ export function useProfileState() {
     error,
     isInitialized,
     refreshProfile: () => fetchProfile(true),
-    clearProfileCache
+    clearProfileCache,
+    checkAndRefreshSession
   };
 }
