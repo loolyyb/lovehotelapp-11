@@ -1,46 +1,52 @@
 
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileDescriptionProps {
-  initialDescription?: string | null;
+  initialDescription: string | null;
   onSave: (description: string) => void;
   onChange: (description: string) => void;
 }
 
 export function ProfileDescription({ initialDescription, onSave, onChange }: ProfileDescriptionProps) {
-  const [localDescription, setLocalDescription] = useState(initialDescription ?? "");
+  const [description, setDescription] = useState(initialDescription || "");
+  const [hasChanges, setHasChanges] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    setLocalDescription(initialDescription ?? "");
+    setDescription(initialDescription || "");
   }, [initialDescription]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    if (newValue.length <= 300) {
-      setLocalDescription(newValue);
-      onChange(newValue);
-    }
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(e.target.value);
+    onChange(e.target.value);
+    setHasChanges(true);
+  };
+
+  const handleSave = () => {
+    onSave(description);
+    setHasChanges(false);
+    toast({
+      title: "Description mise à jour",
+      description: "Votre description a été enregistrée avec succès.",
+    });
   };
 
   return (
     <div className="space-y-4">
-      <Label htmlFor="description" className="text-gray-800">
-        Description (300 caractères max)
-      </Label>
       <Textarea
-        id="description"
-        value={localDescription}
-        onChange={handleChange}
         placeholder="Décrivez-vous en quelques mots..."
-        className="min-h-[100px]"
+        value={description}
+        onChange={handleDescriptionChange}
+        className="min-h-[150px] bg-white/10 text-[#f3ebad] border-[#f3ebad]/30 resize-none"
       />
-      <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-800">
-          {localDescription.length}/300 caractères
-        </p>
-      </div>
+      {hasChanges && (
+        <Button onClick={handleSave} className="w-full md:w-auto bg-[#ce0067] text-white hover:bg-[#ce0067]/90">
+          Enregistrer les modifications
+        </Button>
+      )}
     </div>
   );
 }

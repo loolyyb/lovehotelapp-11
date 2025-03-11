@@ -60,7 +60,7 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
               checked={currentSeeking.includes(option.value)}
               onCheckedChange={(checked) => handleSeekingChange(option.value, checked as boolean)}
             />
-            <Label htmlFor={option.value} className="flex items-center gap-2">
+            <Label htmlFor={option.value} className="flex items-center gap-2 text-[#f3ebad]">
               {option.icon}
               {option.label}
             </Label>

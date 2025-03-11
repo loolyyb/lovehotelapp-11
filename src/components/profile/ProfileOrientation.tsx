@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 interface ProfileOrientationProps {
   orientation?: string | null;
   onOrientationChange: (orientation: string) => void;
-  onChange: (orientation: string) => void;  // Add onChange prop
+  onChange: (orientation: string) => void;
 }
 
 export function ProfileOrientation({ 
@@ -28,7 +28,7 @@ export function ProfileOrientation({
 
   return (
     <div className="space-y-4">
-      <Label className="text-gray-800">Orientation sexuelle</Label>
+      <Label className="text-[#f3ebad]">Orientation sexuelle</Label>
       <RadioGroup
         value={currentOrientation}
         onValueChange={handleOrientationChange}
@@ -36,28 +36,28 @@ export function ProfileOrientation({
       >
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="hetero" id="hetero" />
-          <Label htmlFor="hetero" className="flex items-center gap-2 text-gray-800">
+          <Label htmlFor="hetero" className="flex items-center gap-2 text-[#f3ebad]">
             <Heart className="w-4 h-4" />
             Hétéro
           </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="gay" id="gay" />
-          <Label htmlFor="gay" className="flex items-center gap-2 text-gray-800">
+          <Label htmlFor="gay" className="flex items-center gap-2 text-[#f3ebad]">
             <Heart className="w-4 h-4" />
             Gay
           </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="bisexual" id="bisexual" />
-          <Label htmlFor="bisexual" className="flex items-center gap-2 text-gray-800">
+          <Label htmlFor="bisexual" className="flex items-center gap-2 text-[#f3ebad]">
             <Heart className="w-4 h-4" />
             Bisexuel(le)
           </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="pansexual" id="pansexual" />
-          <Label htmlFor="pansexual" className="flex items-center gap-2 text-gray-800">
+          <Label htmlFor="pansexual" className="flex items-center gap-2 text-[#f3ebad]">
             <Heart className="w-4 h-4" />
             Pansexuel(le)
           </Label>
