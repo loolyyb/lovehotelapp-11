@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { useMessageViewProps } from './logic/useMessageViewProps';
 
 interface MessageViewLogicProps {
@@ -11,7 +11,7 @@ interface MessageViewLogicProps {
     isLoading: boolean;
     isError: boolean;
     retryLoad: () => Promise<void>;
-    refreshMessages: () => Promise<void>;  // Changed to Promise<void> to match the actual implementation
+    refreshMessages: () => Promise<void>;
     isRefreshing: boolean;
     loadMoreMessages: () => Promise<void>;
     isLoadingMore: boolean;
@@ -24,7 +24,8 @@ interface MessageViewLogicProps {
   }) => React.ReactNode;
 }
 
-export function MessageViewLogic({ 
+// Memoized component to prevent unnecessary renders
+function MessageViewLogicComponent({ 
   conversationId, 
   renderContent 
 }: MessageViewLogicProps) {
@@ -32,26 +33,28 @@ export function MessageViewLogic({
   const props = useMessageViewProps(conversationId);
   const renderCountRef = useRef(0);
   
-  // Enhanced debug render counts and state
+  // Enhanced debug render counts and state - only log in development
   useEffect(() => {
-    renderCountRef.current += 1;
-    console.log(`MessageViewLogic rendered for conversation: ${conversationId} (render #${renderCountRef.current})`, {
-      hasMessages: props.messages.length > 0,
-      messageCount: props.messages.length,
-      currentProfileId: props.currentProfileId,
-      hasOtherUser: !!props.otherUser,
-      isLoading: props.isLoading,
-      isError: props.isError,
-      authStatus: props.authStatus,
-      profileInitialized: props.profileInitialized
-    });
-    
-    // Additional auth check logging
-    if (!props.currentProfileId) {
-      console.warn('MessageViewLogic rendered without a profile ID', {
-        conversationId,
-        authStatus: props.authStatus
+    if (process.env.NODE_ENV === 'development') {
+      renderCountRef.current += 1;
+      console.log(`MessageViewLogic rendered for conversation: ${conversationId} (render #${renderCountRef.current})`, {
+        hasMessages: props.messages.length > 0,
+        messageCount: props.messages.length,
+        currentProfileId: props.currentProfileId,
+        hasOtherUser: !!props.otherUser,
+        isLoading: props.isLoading,
+        isError: props.isError,
+        authStatus: props.authStatus,
+        profileInitialized: props.profileInitialized
       });
+      
+      // Additional auth check logging
+      if (!props.currentProfileId) {
+        console.warn('MessageViewLogic rendered without a profile ID', {
+          conversationId,
+          authStatus: props.authStatus
+        });
+      }
     }
   }, [
     conversationId, 
@@ -67,3 +70,6 @@ export function MessageViewLogic({
   // Simply pass all the props to the render function
   return <>{renderContent(props)}</>;
 }
+
+// Export memoized component to prevent unnecessary re-renders
+export const MessageViewLogic = memo(MessageViewLogicComponent);
