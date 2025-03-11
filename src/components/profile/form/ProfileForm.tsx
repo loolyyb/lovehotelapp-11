@@ -42,9 +42,9 @@ export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileForm
   };
 
   return (
-    <div className="space-y-8 w-full text-[#f3ebad]">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-8">
+    <div className="space-y-8 w-full text-[#f3ebad] bg-transparent">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-transparent">
+        <div className="space-y-8 bg-transparent">
           <LocationSection 
             preferences={preferences}
             onPreferenceChange={handlePreferenceChange}
@@ -74,7 +74,7 @@ export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileForm
           />
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-8 bg-transparent">
           <SeekingSection
             seeking={profile?.seeking}
             status={profile?.status}

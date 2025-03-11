@@ -1,3 +1,4 @@
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { LucideIcon } from "lucide-react";
@@ -25,9 +26,10 @@ export function RelationshipTypeCheckbox({
         id={id}
         checked={checked}
         onCheckedChange={(checked) => onCheckedChange(checked as boolean)}
+        className="border-[#f3ebad]/50"
       />
-      <Label htmlFor={id} className="flex items-center gap-2 text-gray-800">
-        <Icon className={`w-4 h-4 ${iconColor} fill-current`} />
+      <Label htmlFor={id} className="flex items-center gap-2 text-[#f3ebad]">
+        <Icon className={`w-4 h-4 ${iconColor}`} />
         {label}
       </Label>
     </div>

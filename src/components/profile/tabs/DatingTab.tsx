@@ -32,7 +32,7 @@ export function DatingTab({
   }
 
   return (
-    <div className="p-0 w-full">
+    <div className="p-0 w-full bg-transparent">
       <div className="mb-8">
         <Button 
           onClick={() => setShowQualification(true)} 
@@ -42,7 +42,7 @@ export function DatingTab({
         </Button>
       </div>
       
-      <div className="w-full">
+      <div className="w-full bg-transparent">
         <ProfileForm 
           profile={profile} 
           onUpdate={handleUpdate}

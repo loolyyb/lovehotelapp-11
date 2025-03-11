@@ -43,7 +43,7 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
 
   if (options.length === 0) {
     return (
-      <div className="text-gray-500 italic">
+      <div className="text-[#f3ebad] italic">
         Veuillez d'abord sélectionner votre statut et votre orientation
       </div>
     );
@@ -51,7 +51,7 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
 
   return (
     <div className="space-y-4">
-      <Label>Je recherche</Label>
+      <Label className="text-[#f3ebad]">Je recherche</Label>
       <div className="space-y-2">
         {options.map((option) => (
           <div key={option.value} className="flex items-center space-x-2">
@@ -59,6 +59,7 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
               id={option.value}
               checked={currentSeeking.includes(option.value)}
               onCheckedChange={(checked) => handleSeekingChange(option.value, checked as boolean)}
+              className="border-[#f3ebad]/50 text-[#f3ebad]"
             />
             <Label htmlFor={option.value} className="flex items-center gap-2 text-[#f3ebad]">
               {option.icon}
@@ -68,7 +69,7 @@ export function ProfileSeeking({ seeking, status, orientation, onSeekingChange }
         ))}
       </div>
       {hasChanges && (
-        <Button onClick={handleSave} className="w-full md:w-auto bg-primary hover:bg-primary/90">
+        <Button onClick={handleSave} className="w-full md:w-auto bg-[#ce0067] text-white hover:bg-[#ce0067]/90">
           Enregistrer
         </Button>
       )}

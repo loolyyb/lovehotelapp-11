@@ -40,7 +40,7 @@ export function ProfileDescription({ initialDescription, onSave, onChange }: Pro
         placeholder="Décrivez-vous en quelques mots..."
         value={description}
         onChange={handleDescriptionChange}
-        className="min-h-[150px] bg-white/10 text-[#f3ebad] border-[#f3ebad]/30 resize-none"
+        className="min-h-[150px] bg-transparent text-[#f3ebad] border-[#f3ebad]/30 resize-none"
       />
       {hasChanges && (
         <Button onClick={handleSave} className="w-full md:w-auto bg-[#ce0067] text-white hover:bg-[#ce0067]/90">

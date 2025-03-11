@@ -35,28 +35,28 @@ export function ProfileOrientation({
         className="flex flex-col space-y-2"
       >
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="hetero" id="hetero" />
+          <RadioGroupItem value="hetero" id="hetero" className="border-[#f3ebad]/50 text-[#f3ebad]" />
           <Label htmlFor="hetero" className="flex items-center gap-2 text-[#f3ebad]">
             <Heart className="w-4 h-4" />
             Hétéro
           </Label>
         </div>
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="gay" id="gay" />
+          <RadioGroupItem value="gay" id="gay" className="border-[#f3ebad]/50 text-[#f3ebad]" />
           <Label htmlFor="gay" className="flex items-center gap-2 text-[#f3ebad]">
             <Heart className="w-4 h-4" />
             Gay
           </Label>
         </div>
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="bisexual" id="bisexual" />
+          <RadioGroupItem value="bisexual" id="bisexual" className="border-[#f3ebad]/50 text-[#f3ebad]" />
           <Label htmlFor="bisexual" className="flex items-center gap-2 text-[#f3ebad]">
             <Heart className="w-4 h-4" />
             Bisexuel(le)
           </Label>
         </div>
         <div className="flex items-center space-x-2">
-          <RadioGroupItem value="pansexual" id="pansexual" />
+          <RadioGroupItem value="pansexual" id="pansexual" className="border-[#f3ebad]/50 text-[#f3ebad]" />
           <Label htmlFor="pansexual" className="flex items-center gap-2 text-[#f3ebad]">
             <Heart className="w-4 h-4" />
             Pansexuel(le)
