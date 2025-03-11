@@ -123,15 +123,21 @@ export function useProfileState() {
         
         // Get authenticated user with retries - optimized with a Promise timeout
         const userPromise = supabase.auth.getUser();
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise<{data: {user: null}, error: Error}>((_, reject) => 
           setTimeout(() => reject(new Error('Auth timeout')), 3000)
         );
         
-        const { data, error } = await Promise.race([userPromise, timeoutPromise])
-          .catch(() => {
-            // If timeout, try one more time with a longer timeout
-            return supabase.auth.getUser();
-          });
+        // Correctly type the result from Promise.race
+        let authResult;
+        try {
+          authResult = await Promise.race([userPromise, timeoutPromise]);
+        } catch (e) {
+          // If timeout or other error, try one more time with a longer timeout
+          authResult = await supabase.auth.getUser();
+        }
+        
+        // Destructure after we have the result
+        const { data, error } = authResult;
         
         if (error) {
           throw error;
