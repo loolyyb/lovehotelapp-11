@@ -17,17 +17,17 @@ export function LocationSection({ preferences, onPreferenceChange }: LocationSec
   return (
     <WidgetContainer title="Localisation">
       <div className="space-y-4">
-        <Label htmlFor="location" className="text-white">Quartier</Label>
+        <Label htmlFor="location" className="text-[#f3ebad]">Quartier</Label>
         <Select
           value={preferences?.location}
           onValueChange={(value) => onPreferenceChange({ location: value })}
         >
-          <SelectTrigger className="w-full bg-white/10 text-white border-white/30">
+          <SelectTrigger className="w-full bg-white/10 text-[#f3ebad] border-[#f3ebad]/30">
             <SelectValue placeholder="Sélectionnez votre quartier" />
           </SelectTrigger>
-          <SelectContent className="bg-[#40192C] border-white/30 text-white">
+          <SelectContent className="bg-[#40192C] border-[#f3ebad]/30 text-[#f3ebad]">
             {parisLocations.map((location) => (
-              <SelectItem key={location.value} value={location.value} className="text-white focus:bg-white/10 focus:text-white">
+              <SelectItem key={location.value} value={location.value} className="text-[#f3ebad] focus:bg-[#f3ebad]/10 focus:text-[#f3ebad]">
                 {location.label}
               </SelectItem>
             ))}

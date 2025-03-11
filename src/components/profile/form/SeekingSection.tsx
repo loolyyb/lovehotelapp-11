@@ -12,7 +12,7 @@ interface SeekingSectionProps {
 export function SeekingSection({ seeking, status, orientation, onUpdate }: SeekingSectionProps) {
   return (
     <WidgetContainer title="Je recherche">
-      <div className="text-white">
+      <div className="text-[#f3ebad]">
         <ProfileSeeking
           seeking={seeking}
           status={status}

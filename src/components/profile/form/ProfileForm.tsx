@@ -42,7 +42,7 @@ export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileForm
   };
 
   return (
-    <div className="space-y-8 w-full text-white">
+    <div className="space-y-8 w-full text-[#f3ebad]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-8">
           <LocationSection 
@@ -105,7 +105,7 @@ export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileForm
             <Button 
               onClick={handleCancel}
               variant="outline"
-              className="w-full md:w-auto border-white/30 text-white hover:bg-white/10"
+              className="w-full md:w-auto border-[#f3ebad]/30 text-[#f3ebad] hover:bg-[#f3ebad]/10"
               disabled={isSaving}
             >
               Annuler
