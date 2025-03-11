@@ -28,7 +28,7 @@ export function SubscriptionSection() {
   }
   if (!cards || !cards["hydra:member"] || cards["hydra:member"].length === 0) {
     return <WidgetContainer title="Abonnement">
-        <p className="text-gray-500">Aucun abonnement actif</p>
+        <p className="text-gray-200">Aucun abonnement actif</p>
       </WidgetContainer>;
   }
   return <WidgetContainer title="Abonnement">

@@ -18,11 +18,11 @@ export function LoyaltyPointsSection({
   const bookingsUntilBonus = Math.max(0, 10 - totalBookings);
   return <WidgetContainer title="Points Fidélité">
       <div className="space-y-6">
-        <div className="text-lg text-gray-200">
+        <div className="text-lg text-gray-100">
           Vous avez actuellement <span className="font-semibold text-burgundy">{totalBookings}</span> points de fidélité
         </div>
 
-        <p className="text-sm text-gray-800">
+        <p className="text-sm text-gray-200">
           Les points de fidélité sont attribués automatiquement lors de vos réservations et peuvent être échangés contre des avantages exclusifs.
         </p>
 
