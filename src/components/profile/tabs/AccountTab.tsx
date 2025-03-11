@@ -88,12 +88,12 @@ export function AccountTab({
         <Card className="bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
           <div className="p-6 space-y-6">
             <div>
-              <Label htmlFor="full-name" className="text-white">Nom complet</Label>
+              <Label htmlFor="full-name" className="text-[#f3ebad]">Nom complet</Label>
               <Input id="full-name" value={fullName} onChange={handleFullNameChange} placeholder="Votre nom complet" minLength={2} />
             </div>
 
             <div>
-              <Label htmlFor="email" className="text-white">Email</Label>
+              <Label htmlFor="email" className="text-[#f3ebad]">Email</Label>
               <Input id="email" type="email" value={profile?.email || ""} disabled className="bg-gray-100" />
             </div>
 
