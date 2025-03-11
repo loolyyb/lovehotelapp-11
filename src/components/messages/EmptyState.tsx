@@ -1,6 +1,5 @@
-
 import { Button } from "@/components/ui/button";
-import { RefreshCw, AlertTriangle, MessageSquare, UserPlus } from "lucide-react";
+import { RefreshCw, AlertTriangle, MessageSquare, UserPlus, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface EmptyStateProps {
@@ -26,7 +25,7 @@ export function EmptyState({
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <MessageSquare className="w-16 h-16 mb-4 text-[#f3ebad]/60" />
+        <Loader2 className="w-16 h-16 mb-4 text-[#f3ebad]/60 animate-spin" />
         <h2 className="mb-6 text-xl font-semibold text-[#f3ebad]">
           Les messages sont en cours de chargement
         </h2>

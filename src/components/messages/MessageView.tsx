@@ -1,10 +1,8 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import { MessageViewLogic } from "./MessageViewLogic";
 import { MessageViewContainer } from "./MessageViewContainer";
 import { MessageContent } from "./MessageContent";
 import { MessageInput } from "./MessageInput";
-import { MessageLoadingState } from "./MessageLoadingState";
 import { MessageErrorState } from "./MessageErrorState";
 import { EmptyState } from "./EmptyState";
 
