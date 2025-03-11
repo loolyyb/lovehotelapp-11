@@ -1,3 +1,4 @@
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { WidgetContainer } from "./WidgetContainer";
@@ -16,17 +17,17 @@ export function LocationSection({ preferences, onPreferenceChange }: LocationSec
   return (
     <WidgetContainer title="Localisation">
       <div className="space-y-4">
-        <Label htmlFor="location" className="text-gray-800">Quartier</Label>
+        <Label htmlFor="location" className="text-white">Quartier</Label>
         <Select
           value={preferences?.location}
           onValueChange={(value) => onPreferenceChange({ location: value })}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full bg-white/10 text-white border-white/30">
             <SelectValue placeholder="Sélectionnez votre quartier" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[#40192C] border-white/30 text-white">
             {parisLocations.map((location) => (
-              <SelectItem key={location.value} value={location.value}>
+              <SelectItem key={location.value} value={location.value} className="text-white focus:bg-white/10 focus:text-white">
                 {location.label}
               </SelectItem>
             ))}

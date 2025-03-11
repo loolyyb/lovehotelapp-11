@@ -18,8 +18,8 @@ export function TokensSection({ tokens, onUpdate }: TokensSectionProps) {
 
   return (
     <WidgetContainer title="Tokens LooLyyb">
-      <div className="space-y-4 text-gray-800">
-        <Label htmlFor="loolyb-tokens">
+      <div className="space-y-4 text-white">
+        <Label htmlFor="loolyb-tokens" className="text-white">
           Nombre de tokens en votre possession (à partir de mars 2025)
         </Label>
         <Input
@@ -29,7 +29,7 @@ export function TokensSection({ tokens, onUpdate }: TokensSectionProps) {
           value={tokens || 0}
           onChange={handleLooLyybTokensChange}
           placeholder="Entrez le nombre de tokens LooLyyb"
-          className="w-full bg-accent-200 hover:bg-accent-100"
+          className="w-full bg-white/10 text-white border-white/30"
         />
       </div>
     </WidgetContainer>
