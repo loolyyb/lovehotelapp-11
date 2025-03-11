@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import { MessageViewLogic } from "./MessageViewLogic";
 import { MessageViewContainer } from "./MessageViewContainer";
@@ -82,14 +83,18 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
               }
             >
               {showLoading ? (
-                <MessageLoadingState onRefresh={refreshMessages} />
+                <EmptyState 
+                  onRefresh={refreshMessages} 
+                  isRefreshing={isRefreshing} 
+                  isLoading={true}
+                />
               ) : showError ? (
                 <MessageErrorState retryLoad={retryLoad} />
               ) : showEmpty ? (
                 <EmptyState 
                   onRefresh={refreshMessages} 
                   isRefreshing={isRefreshing} 
-                  isLoading={isLoading}
+                  isLoading={false}
                 />
               ) : showMessages ? (
                 <MessageContent 

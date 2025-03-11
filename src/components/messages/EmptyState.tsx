@@ -22,6 +22,7 @@ export function EmptyState({
     navigate("/profiles");
   };
   
+  // When we're in a conversation and messages are loading, show the loading state
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
