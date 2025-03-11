@@ -42,7 +42,7 @@ export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileForm
   };
 
   return (
-    <div className="space-y-8 w-full">
+    <div className="space-y-8 w-full text-[#f3ebad]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-8">
           <LocationSection 
@@ -101,18 +101,18 @@ export function ProfileForm({ profile, onUpdate, isSaving = false }: ProfileForm
 
       {hasChanges && (
         <div className="fixed bottom-4 right-4 left-4 md:left-auto z-50 flex justify-center md:justify-end gap-4">
-          <div className="bg-background/80 backdrop-blur-sm p-4 rounded-lg shadow-lg border flex gap-4">
+          <div className="bg-[#40192C]/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-[#f3ebad]/30 flex gap-4">
             <Button 
               onClick={handleCancel}
               variant="outline"
-              className="w-full md:w-auto"
+              className="w-full md:w-auto border-[#f3ebad]/30 text-[#f3ebad] hover:bg-[#f3ebad]/10"
               disabled={isSaving}
             >
               Annuler
             </Button>
             <Button 
               onClick={handleSave} 
-              className="w-full md:w-auto bg-primary hover:bg-primary/90"
+              className="w-full md:w-auto bg-[#ce0067] text-white hover:bg-[#ce0067]/90"
               disabled={isSaving}
             >
               {isSaving ? "Enregistrement..." : "Enregistrer les modifications"}

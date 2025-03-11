@@ -12,7 +12,7 @@ interface ProfileContainerProps {
 
 export function ProfileContainer({ profile, onUpdate, isSaving = false, setHasUnsavedChanges }: ProfileContainerProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-champagne via-rose-50 to-cream">
+    <div className="min-h-screen bg-gradient-to-b from-[#40192C] via-[#40192C]/90 to-[#2A1520]">
       <div className="container mx-auto px-4 py-4">
         <Card className="p-8 space-y-8 bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 rounded-xl animate-fadeIn">
           <ProfileHeader

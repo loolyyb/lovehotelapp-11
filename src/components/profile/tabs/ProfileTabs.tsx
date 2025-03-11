@@ -36,14 +36,14 @@ export function ProfileTabs({ profile, onUpdate, isSaving = false, setHasUnsaved
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="mb-6">
           <Select value={activeTab} onValueChange={handleTabChange}>
-            <SelectTrigger className="w-full bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+            <SelectTrigger className="w-full bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm text-[#f3ebad]">
               <SelectValue placeholder="Sélectionnez une section">
                 {tabs.find(tab => tab.id === activeTab)?.label}
               </SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 text-[#f3ebad]">
               {tabs.map((tab) => (
-                <SelectItem key={tab.id} value={tab.id}>
+                <SelectItem key={tab.id} value={tab.id} className="text-[#f3ebad] focus:bg-[#f3ebad]/10 focus:text-white">
                   <div className="flex items-center gap-2">
                     <tab.icon className="h-4 w-4" />
                     {tab.label}
@@ -75,12 +75,12 @@ export function ProfileTabs({ profile, onUpdate, isSaving = false, setHasUnsaved
 
   return (
     <Tabs defaultValue="account" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-4 bg-[#40192C]/70">
         {tabs.map((tab) => (
           <TabsTrigger 
             key={tab.id} 
             value={tab.id} 
-            className="flex items-center gap-2 bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm hover:shadow-lg transition-all duration-300 text-white data-[state=active]:text-white data-[state=active]:bg-[#ce0067]"
+            className="flex items-center gap-2 bg-[#40192C] border-[0.5px] border-[#f3ebad]/30 backdrop-blur-sm text-[#f3ebad] data-[state=active]:text-white data-[state=active]:bg-[#ce0067]"
           >
             <tab.icon className="h-4 w-4" />
             {tab.label}
