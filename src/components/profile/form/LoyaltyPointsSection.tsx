@@ -18,7 +18,7 @@ export function LoyaltyPointsSection({
   const bookingsUntilBonus = Math.max(0, 10 - totalBookings);
   return <WidgetContainer title="Points Fidélité">
       <div className="space-y-6">
-        <div className="text-lg text-gray-900">
+        <div className="text-lg text-gray-200">
           Vous avez actuellement <span className="font-semibold text-burgundy">{totalBookings}</span> points de fidélité
         </div>
 
