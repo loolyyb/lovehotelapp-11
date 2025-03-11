@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 import { AlertService } from "@/services/AlertService";
@@ -180,6 +181,14 @@ export const findConversationsByProfileId = async (profileId: string): Promise<C
         // Continue without latest messages
       }
     }
+    
+    // Make sure conversations are sorted by latest_message_time in descending order
+    allConversations.sort((a, b) => {
+      // Use new Date() to convert string dates to comparable Date objects
+      const dateA = new Date(a.latest_message_time);
+      const dateB = new Date(b.latest_message_time);
+      return dateB.getTime() - dateA.getTime(); // Most recent first
+    });
     
     return allConversations;
   } catch (error: any) {
