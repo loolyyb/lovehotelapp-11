@@ -88,7 +88,11 @@ body {
 
 /* Effets visuels pour le thème lover */
 [data-theme="lover-rose"] .glass-card {
-    @apply bg-white/95 backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300;
+    @apply bg-transparent backdrop-blur-sm border border-white/20 shadow-lg transition-all duration-300;
+}
+
+.glass-card {
+    @apply bg-transparent backdrop-blur-sm border border-[#f3ebad]/30 transition-all duration-300;
 }
 
 [data-theme="lover-rose"] .hover-scale {
