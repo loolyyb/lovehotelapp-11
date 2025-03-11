@@ -90,7 +90,7 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
               }
             >
               {showLoading ? (
-                <MessageLoadingState />
+                <MessageLoadingState onRefresh={refreshMessages} />
               ) : showError ? (
                 <MessageErrorState retryLoad={retryLoad} />
               ) : showEmpty ? (

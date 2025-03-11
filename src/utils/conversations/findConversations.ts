@@ -16,6 +16,11 @@ interface ConversationWithOtherUser {
   hasUnread?: boolean;
 }
 
+// Define more specific types for the database responses
+interface LatestMessageTime {
+  latest_message_time: string;
+}
+
 /**
  * Finds all conversations for a given profile ID with detailed information
  * @param profileId The profile ID to find conversations for
@@ -102,16 +107,14 @@ export const findConversationsByProfileId = async (profileId: string): Promise<C
         if (Array.isArray(conv.latest_message)) {
           // If it's an array, take the first element if it exists
           if (conv.latest_message.length > 0) {
-            // Use type assertion to tell TypeScript this is a proper object with latest_message_time
-            const firstMsg = conv.latest_message[0] as { latest_message_time?: string };
-            if (firstMsg && firstMsg.latest_message_time) {
-              latestMessageTime = firstMsg.latest_message_time;
+            const latestMsg = conv.latest_message[0] as LatestMessageTime;
+            if (latestMsg && latestMsg.latest_message_time) {
+              latestMessageTime = latestMsg.latest_message_time;
             }
           }
         } else {
           // If it's an object, access the property directly
-          // Use type assertion to tell TypeScript this is a proper object
-          const msgObj = conv.latest_message as { latest_message_time?: string };
+          const msgObj = conv.latest_message as LatestMessageTime;
           if (msgObj && msgObj.latest_message_time) {
             latestMessageTime = msgObj.latest_message_time;
           }
