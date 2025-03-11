@@ -7,14 +7,48 @@ interface EmptyStateProps {
   onRefresh: () => void;
   isRefreshing: boolean;
   isNetworkError?: boolean;
+  isLoading?: boolean;
 }
 
-export function EmptyState({ onRefresh, isRefreshing, isNetworkError = false }: EmptyStateProps) {
+export function EmptyState({ 
+  onRefresh, 
+  isRefreshing, 
+  isNetworkError = false,
+  isLoading = false
+}: EmptyStateProps) {
   const navigate = useNavigate();
 
   const handleExploreProfiles = () => {
     navigate("/profiles");
   };
+  
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <MessageSquare className="w-16 h-16 mb-4 text-[#f3ebad]/60" />
+        <h2 className="mb-6 text-xl font-semibold text-[#f3ebad]">
+          Les messages sont en cours de chargement
+        </h2>
+        <Button
+          onClick={onRefresh}
+          className="bg-[#f3ebad] text-[#40192C] hover:bg-[#f3ebad]/90"
+          disabled={isRefreshing}
+        >
+          {isRefreshing ? (
+            <>
+              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              Actualisation...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Actualiser
+            </>
+          )}
+        </Button>
+      </div>
+    );
+  }
   
   return (
     <div className="flex flex-col items-center justify-center h-full p-8 text-center">

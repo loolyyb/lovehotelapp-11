@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 import { AlertService } from "@/services/AlertService";
@@ -93,47 +92,47 @@ export const findConversationsByProfileId = async (profileId: string): Promise<C
       });
       throw conversationsError;
     }
+  
+  // Transform results to match expected format
+  const allConversations: ConversationWithOtherUser[] = (conversationsWithTimes || []).map(conv => {
+    const otherUser = conv.user1_id === profileId ? conv.user2 : conv.user1;
     
-    // Transform results to match expected format
-    const allConversations: ConversationWithOtherUser[] = (conversationsWithTimes || []).map(conv => {
-      const otherUser = conv.user1_id === profileId ? conv.user2 : conv.user1;
-      
-      // Fix the latest_message_time access - properly handle the latest_message object
-      let latestMessageTime = conv.updated_at; // Default to conversation updated_at time
-      
-      // Check if latest_message exists and has the right structure
-      if (conv.latest_message && typeof conv.latest_message === 'object') {
-        // Handle both possible structures (direct object or array with first element)
-        if (Array.isArray(conv.latest_message)) {
-          // If it's an array, take the first element if it exists
-          if (conv.latest_message.length > 0) {
-            const latestMsg = conv.latest_message[0] as LatestMessageTime;
-            if (latestMsg && latestMsg.latest_message_time) {
-              latestMessageTime = latestMsg.latest_message_time;
-            }
-          }
-        } else {
-          // If it's an object, access the property directly
-          const msgObj = conv.latest_message as LatestMessageTime;
-          if (msgObj && msgObj.latest_message_time) {
-            latestMessageTime = msgObj.latest_message_time;
+    // Fix the latest_message_time access - properly handle the latest_message object
+    let latestMessageTime = conv.updated_at; // Default to conversation updated_at time
+    
+    // Check if latest_message exists and has the right structure
+    if (conv.latest_message && typeof conv.latest_message === 'object') {
+      // Handle both possible structures (direct object or array with first element)
+      if (Array.isArray(conv.latest_message)) {
+        // If it's an array, take the first element if it exists
+        if (conv.latest_message.length > 0) {
+          const latestMsg = conv.latest_message[0] as LatestMessageTime;
+          if (latestMsg && latestMsg.latest_message_time) {
+            latestMessageTime = latestMsg.latest_message_time;
           }
         }
+      } else {
+        // If it's an object, access the property directly
+        const msgObj = conv.latest_message as LatestMessageTime;
+        if (msgObj && msgObj.latest_message_time) {
+          latestMessageTime = msgObj.latest_message_time;
+        }
       }
-      
-      return {
-        id: conv.id,
-        status: conv.status,
-        blocked_by: conv.blocked_by,
-        otherUser,
-        created_at: conv.created_at,
-        updated_at: conv.updated_at,
-        latest_message_time: latestMessageTime,
-        latestMessage: null, // Will be populated later
-        hasUnread: false // Will be populated later
-      };
-    });
+    }
     
+    return {
+      id: conv.id,
+      status: conv.status,
+      blocked_by: conv.blocked_by,
+      otherUser,
+      created_at: conv.created_at,
+      updated_at: conv.updated_at,
+      latest_message_time: latestMessageTime,
+      latestMessage: null, // Will be populated later
+      hasUnread: false // Will be populated later
+    };
+  });
+  
     logger.info(`Found ${allConversations.length} conversations for profile ${profileId}`, {
       component: "findConversationsByProfileId"
     });

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from "react";
 import { MessageViewLogic } from "./MessageViewLogic";
 import { MessageViewContainer } from "./MessageViewContainer";
@@ -18,7 +17,6 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
   const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   
-  // Ensure parent container has proper dimensions
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.style.height = '100%';
@@ -26,12 +24,10 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
       containerRef.current.style.flexDirection = 'column';
     }
     
-    // Reset state on conversation change
     setInitialLoadAttempted(false);
     setIsFirstLoad(true);
     
     return () => {
-      // Clean up when component unmounts
       setIsFirstLoad(false);
     };
   }, [conversationId]);
@@ -58,17 +54,13 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
           authStatus,
           profileInitialized
         }) => {
-          // Track initial load attempt to avoid flashing states
           useEffect(() => {
             if (!isLoading && !initialLoadAttempted) {
               setInitialLoadAttempted(true);
-              // After first load completes, set isFirstLoad to false with a small delay
-              // to ensure smooth transition
               setTimeout(() => setIsFirstLoad(false), 300);
             }
           }, [isLoading]);
           
-          // Use these simplified states for better UX
           const showLoading = (isLoading && isFirstLoad) || (!initialLoadAttempted && isFirstLoad);
           const showError = isError && initialLoadAttempted && !isFirstLoad;
           const showEmpty = messages.length === 0 && !isLoading && !isError && initialLoadAttempted && !isFirstLoad;
@@ -94,7 +86,11 @@ export function MessageView({ conversationId, onBack }: MessageViewProps) {
               ) : showError ? (
                 <MessageErrorState retryLoad={retryLoad} />
               ) : showEmpty ? (
-                <EmptyState onRefresh={refreshMessages} isRefreshing={isRefreshing} />
+                <EmptyState 
+                  onRefresh={refreshMessages} 
+                  isRefreshing={isRefreshing} 
+                  isLoading={isLoading}
+                />
               ) : showMessages ? (
                 <MessageContent 
                   messages={messages}
