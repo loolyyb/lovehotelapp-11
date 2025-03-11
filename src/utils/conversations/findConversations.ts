@@ -96,7 +96,7 @@ export const findConversationsByProfileId = async (profileId: string): Promise<C
       // Fix the latest_message_time access - properly handle the latest_message object
       const latestMessageTime = conv.latest_message && 
                                typeof conv.latest_message === 'object' && 
-                               'latest_message_time' in conv.latest_message ? 
+                               conv.latest_message.latest_message_time ? 
                                conv.latest_message.latest_message_time : 
                                conv.updated_at;
       
