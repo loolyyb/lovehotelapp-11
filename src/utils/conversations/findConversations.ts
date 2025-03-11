@@ -94,11 +94,23 @@ export const findConversationsByProfileId = async (profileId: string): Promise<C
       const otherUser = conv.user1_id === profileId ? conv.user2 : conv.user1;
       
       // Fix the latest_message_time access - properly handle the latest_message object
-      const latestMessageTime = conv.latest_message && 
-                               typeof conv.latest_message === 'object' && 
-                               conv.latest_message.latest_message_time ? 
-                               conv.latest_message.latest_message_time : 
-                               conv.updated_at;
+      let latestMessageTime = conv.updated_at; // Default to conversation updated_at time
+      
+      // Check if latest_message exists and has the right structure
+      if (conv.latest_message && typeof conv.latest_message === 'object') {
+        // Handle both possible structures (direct object or array with first element)
+        if (Array.isArray(conv.latest_message)) {
+          // If it's an array, take the first element if it exists
+          if (conv.latest_message.length > 0 && conv.latest_message[0]?.latest_message_time) {
+            latestMessageTime = conv.latest_message[0].latest_message_time;
+          }
+        } else {
+          // If it's an object, access the property directly
+          if (conv.latest_message.latest_message_time) {
+            latestMessageTime = conv.latest_message.latest_message_time;
+          }
+        }
+      }
       
       return {
         id: conv.id,
