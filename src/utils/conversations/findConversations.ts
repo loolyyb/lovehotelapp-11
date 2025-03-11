@@ -101,13 +101,19 @@ export const findConversationsByProfileId = async (profileId: string): Promise<C
         // Handle both possible structures (direct object or array with first element)
         if (Array.isArray(conv.latest_message)) {
           // If it's an array, take the first element if it exists
-          if (conv.latest_message.length > 0 && conv.latest_message[0]?.latest_message_time) {
-            latestMessageTime = conv.latest_message[0].latest_message_time;
+          if (conv.latest_message.length > 0) {
+            // Use type assertion to tell TypeScript this is a proper object with latest_message_time
+            const firstMsg = conv.latest_message[0] as { latest_message_time?: string };
+            if (firstMsg && firstMsg.latest_message_time) {
+              latestMessageTime = firstMsg.latest_message_time;
+            }
           }
         } else {
           // If it's an object, access the property directly
-          if (conv.latest_message.latest_message_time) {
-            latestMessageTime = conv.latest_message.latest_message_time;
+          // Use type assertion to tell TypeScript this is a proper object
+          const msgObj = conv.latest_message as { latest_message_time?: string };
+          if (msgObj && msgObj.latest_message_time) {
+            latestMessageTime = msgObj.latest_message_time;
           }
         }
       }
