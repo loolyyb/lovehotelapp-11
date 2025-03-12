@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";

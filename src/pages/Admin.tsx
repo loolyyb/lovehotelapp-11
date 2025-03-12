@@ -87,8 +87,8 @@ export default function Admin() {
           return;
         }
         
-        // User is authenticated and is an admin, but still needs password check
-        if (isMounted) setAuthState('not_authenticated'); // Need admin password
+        // User is authenticated and is an admin, now show password input
+        if (isMounted) setAuthState('not_authenticated'); // This will show password input
       } catch (error: any) {
         logger.error("Auth error:", { error });
         if (isMounted) {
@@ -172,33 +172,36 @@ export default function Admin() {
     );
   }
   
-  // Not authenticated state (needs login or admin password)
+  // Not authenticated state - This is where we either show the admin password input or login prompt
   if (authState === 'not_authenticated') {
-    logger.info("Admin page: Showing admin password check or login prompt");
+    logger.info("Admin page: User authentication state", { isAdminAuthenticated });
     
-    // Show admin password check if user is authenticated
-    if (isAdminAuthenticated) {
-      logger.info("Admin page: User needs admin password");
+    // Here's the important fix: check if the user is logged in at all before showing password input
+    const { data: { session } } = supabase.auth.getSession();
+    
+    // If session exists, show password input, otherwise show login prompt
+    if (session) {
+      logger.info("Admin page: User is logged in, showing password input");
       return <AdminPasswordCheck onPasswordValid={handlePasswordSuccess} />;
-    }
-    
-    // Show login prompt
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50 transition-opacity duration-300">
-        <div className="text-center p-8 bg-[#302234] rounded-lg border border-[#f3ebad]/20 max-w-md shadow-lg">
-          <h2 className="text-2xl font-bold text-[#f3ebad] mb-4">Connexion Requise</h2>
-          <p className="text-[#f3ebad]/80 mb-4">
-            Vous devez être connecté pour accéder au panneau d'administration.
-          </p>
-          <button 
-            onClick={() => navigate("/login")}
-            className="px-4 py-2 bg-[#f3ebad] text-[#40192C] rounded hover:bg-[#f3ebad]/90 transition-colors"
-          >
-            Se connecter
-          </button>
+    } else {
+      logger.info("Admin page: User is not logged in, showing login prompt");
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50 transition-opacity duration-300">
+          <div className="text-center p-8 bg-[#302234] rounded-lg border border-[#f3ebad]/20 max-w-md shadow-lg">
+            <h2 className="text-2xl font-bold text-[#f3ebad] mb-4">Connexion Requise</h2>
+            <p className="text-[#f3ebad]/80 mb-4">
+              Vous devez être connecté pour accéder au panneau d'administration.
+            </p>
+            <button 
+              onClick={() => navigate("/login")}
+              className="px-4 py-2 bg-[#f3ebad] text-[#40192C] rounded hover:bg-[#f3ebad]/90 transition-colors"
+            >
+              Se connecter
+            </button>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
   
   // Authenticated, show dashboard with a gentle fade-in effect
