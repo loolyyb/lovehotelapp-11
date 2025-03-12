@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";
@@ -24,6 +23,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLogger } from "@/hooks/useLogger";
+import { useAdminAuthStore } from "@/stores/adminAuthStore";
 
 interface AppRoutesProps {
   session: Session | null;
@@ -38,6 +38,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
   const { toast } = useToast();
   const { info, error } = useLogger('AppRoutes');
+  const { checkSessionValidity } = useAdminAuthStore();
 
   useEffect(() => {
     info("AppRoutes mounted", { 
@@ -106,10 +107,31 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     return session ? <Outlet /> : <Navigate to="/login" replace />;
   };
 
+  // Admin route check - determines if admin page can be accessed
+  const AdminRoute = () => {
+    info("Admin route accessed");
+    
+    // In preview environment, allow direct access to admin
+    if (isPreviewEnvironment()) {
+      return <Admin />;
+    }
+    
+    // Check if admin auth is valid via the store
+    const isAdminSessionValid = checkSessionValidity();
+    
+    if (isAdminSessionValid) {
+      info("Admin session is valid, allowing access");
+      return <Admin />;
+    }
+    
+    // Otherwise allow accessing the admin page which will handle auth internally
+    return <Admin />;
+  };
+
   return (
     <Routes>
-      {/* Admin route - placed outside ProtectedRoute for direct access */}
-      <Route path="/admin" element={<Admin />} />
+      {/* Place Admin route at the top to ensure it's matched before other routes */}
+      <Route path="/admin" element={<AdminRoute />} />
       
       <Route
         path="/"
