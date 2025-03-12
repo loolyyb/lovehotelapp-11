@@ -212,6 +212,7 @@ export function useMessagesManagement() {
     getConversationMessages,
     searchTerm,
     setSearchTerm: handleSearchChange,
-    clearSearch
+    clearSearch,
+    refetch // Add refetch to the returned object
   };
 }
