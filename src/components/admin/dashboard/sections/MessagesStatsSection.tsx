@@ -2,6 +2,7 @@
 import { AdminStats } from "@/types/admin.types";
 import { MessageSquareIcon, MessageCircleIcon, TrendingUpIcon } from "lucide-react";
 import { StatCard } from "../components/StatCard";
+import { calculateMessagesToday, calculateMessagesTrend } from "../utils/statsUtils";
 
 interface MessagesStatsSectionProps {
   stats: Partial<AdminStats>;
@@ -16,6 +17,14 @@ export function MessagesStatsSection({
   activeConversationsCount,
   totalMessagesCount
 }: MessagesStatsSectionProps) {
+  const messagesToday = calculateMessagesToday(stats.messages);
+  const messageTrend = calculateMessagesTrend(stats.messages);
+  
+  // Calculate percentage of active conversations
+  const conversationPercentage = stats.conversations && stats.conversations.length > 0
+    ? Math.round((activeConversationsCount / stats.conversations.length) * 100)
+    : 0;
+
   return (
     <div>
       <h3 className="text-lg font-cormorant font-semibold mb-4 text-[#f3ebad]">Statistiques Messages</h3>
@@ -23,8 +32,9 @@ export function MessagesStatsSection({
         <StatCard
           icon={MessageSquareIcon}
           title="Messages Aujourd'hui"
-          value={stats.messages?.filter(m => new Date(m.created_at).toDateString() === new Date().toDateString()).length || 0}
+          value={messagesToday}
           chartData={messageData}
+          trend={messageTrend}
           bgClass="bg-gradient-to-br from-[#40192C] to-[#CE0067]/50"
         />
         <StatCard
@@ -36,7 +46,7 @@ export function MessagesStatsSection({
           icon={MessageCircleIcon}
           title="Conversations Actives"
           value={activeConversationsCount}
-          trend={`${Math.round((activeConversationsCount / (stats.conversations?.length || 1)) * 100)}% du total`}
+          trend={`${conversationPercentage}% du total`}
         />
         <StatCard
           icon={TrendingUpIcon}

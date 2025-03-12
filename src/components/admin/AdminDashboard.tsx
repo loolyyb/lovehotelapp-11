@@ -26,57 +26,84 @@ export function AdminDashboard() {
   const { session } = useAuthSession();
   const [searchTerm, setSearchTerm] = useState("");
   
-  const { data: usersData } = useQuery({
+  const { data: usersData, isLoading: usersLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*');
-      
-      if (error) throw error;
-      
-      return safeQueryResult<AdminUser>(profiles);
+      try {
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('*');
+        
+        if (error) throw error;
+        
+        return safeQueryResult<AdminUser>(profiles);
+      } catch (error) {
+        console.error("Error fetching admin users:", error);
+        return [];
+      }
     }
   });
 
   const {
-    data: messages
+    data: messages,
+    isLoading: messagesLoading
   } = useQuery({
     queryKey: ['admin-messages'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*, conversations!inner(user1:profiles!inner(user_id), user2:profiles!inner(user_id))');
-      
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*, conversations(user1:profiles!inner(user_id), user2:profiles!inner(user_id))')
+          .limit(1000);
+        
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching messages for stats:", error);
+        return [];
+      }
     }
   });
 
-  const { data: events } = useQuery({
+  const { data: events, isLoading: eventsLoading } = useQuery({
     queryKey: ['admin-events-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('events').select('*');
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase.from('events').select('*');
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching events for stats:", error);
+        return [];
+      }
     }
   });
 
-  const { data: conversations } = useQuery({
+  const { data: conversations, isLoading: conversationsLoading } = useQuery({
     queryKey: ['admin-conversations-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('conversations').select('*');
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase.from('conversations').select('*');
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching conversations for stats:", error);
+        return [];
+      }
     }
   });
 
-  const { data: profiles } = useQuery({
+  const { data: profiles, isLoading: profilesLoading } = useQuery({
     queryKey: ['admin-profiles-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*');
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase.from('profiles').select('*');
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        console.error("Error fetching profiles for stats:", error);
+        return [];
+      }
     }
   });
 
@@ -89,6 +116,8 @@ export function AdminDashboard() {
     // Force page reload to ensure all state is reset
     window.location.reload();
   };
+  
+  const isDataLoading = usersLoading || messagesLoading || eventsLoading || conversationsLoading || profilesLoading;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -157,15 +186,21 @@ export function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="stats">
-          <StatsContent 
-            stats={{
-              users: usersData || [],
-              messages,
-              events,
-              conversations,
-              profiles
-            }}
-          />
+          {isDataLoading ? (
+            <Card className="p-6 text-center">
+              <p className="text-[#f3ebad]/70">Chargement des statistiques...</p>
+            </Card>
+          ) : (
+            <StatsContent 
+              stats={{
+                users: usersData || [],
+                messages: messages || [],
+                events: events || [],
+                conversations: conversations || [],
+                profiles: profiles || []
+              }}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

@@ -75,14 +75,21 @@ export function useMessagesManagement() {
         // Reset retry counter on success
         fetchAttemptsRef.current = 0;
 
+        // Handle potential null values in conversation and apply defensive programming
         const processedMessages = messages?.map(message => {
-          const conversation = message.conversation;
-          let recipient;
+          const conversation = message.conversation || { user1_id: null, user2_id: null, receiver1: null, receiver2: null };
+          let recipient = null;
 
-          if (message.sender_id === conversation.user1_id) {
-            recipient = conversation.receiver2;
-          } else {
-            recipient = conversation.receiver1;
+          // Only process if we have valid data
+          if (message.sender_id && conversation && 
+             (conversation.user1_id || conversation.user2_id) && 
+             (conversation.receiver1 || conversation.receiver2)) {
+            
+            if (message.sender_id === conversation.user1_id) {
+              recipient = conversation.receiver2;
+            } else {
+              recipient = conversation.receiver1;
+            }
           }
 
           return {
@@ -91,7 +98,7 @@ export function useMessagesManagement() {
           };
         });
         
-        return { messages: processedMessages, totalCount: count };
+        return { messages: processedMessages || [], totalCount: count || 0 };
       } catch (error) {
         console.error("Error in fetchMessages:", error);
         
