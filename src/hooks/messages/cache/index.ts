@@ -1,4 +1,3 @@
-
 /**
  * Improved Message Cache System with two-level caching
  * Combines in-memory cache with IndexedDB persistence
@@ -220,9 +219,10 @@ class MessageCacheImplementation {
   
   /**
    * Check for newer messages and update cache if needed
+   * @returns The updated messages array or null
    */
-  async checkForNewerMessages(supabase: any, conversationId: string, cachedMessages: any[]): Promise<void> {
-    if (!conversationId || !cachedMessages || cachedMessages.length === 0) return;
+  async checkForNewerMessages(supabase: any, conversationId: string, cachedMessages: any[]): Promise<any[] | null> {
+    if (!conversationId || !cachedMessages || cachedMessages.length === 0) return cachedMessages;
     
     try {
       // Get latest message timestamp
@@ -251,12 +251,18 @@ class MessageCacheImplementation {
         // Add to cache
         const updatedMessages = [...cachedMessages, ...newerMessages];
         this.set(conversationId, updatedMessages);
+        return updatedMessages;
       }
+      
+      // Return the original messages if no newer ones were found
+      return cachedMessages;
     } catch (error) {
       logger.error('MessageCache: Error checking for newer messages', { 
         error,
         conversationId
       });
+      // Return the original messages in case of error
+      return cachedMessages;
     }
   }
   

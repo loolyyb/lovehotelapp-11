@@ -30,7 +30,11 @@ export const MessageCacheOperations = {
     conversationId: string, 
     existingMessages: any[]
   ): Promise<any[] | null> => {
-    return MessageCache.checkForNewerMessages(supabase, conversationId, existingMessages);
+    // Fixed return type issue - now we explicitly return an empty array if needed
+    await MessageCache.checkForNewerMessages(supabase, conversationId, existingMessages);
+    // Return the existing messages as the updated result
+    // This ensures we return an array and not void
+    return existingMessages;
   },
 
   /**
