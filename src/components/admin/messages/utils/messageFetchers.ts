@@ -29,20 +29,10 @@ export const fetchMessages = async (
       throw new Error(`Error fetching message count: ${countError.message}`);
     }
 
-    // Build the main query
+    // Simplify the main query - just get messages first
     let messagesQuery = supabase
       .from("messages")
-      .select(`
-        *,
-        sender:profiles!messages_sender_id_fkey(id, username, full_name, avatar_url),
-        conversation:conversations!messages_conversation_id_fkey(
-          id,
-          user1_id,
-          user2_id,
-          receiver1:profiles!conversations_user1_id_fkey(id, username, full_name),
-          receiver2:profiles!conversations_user2_id_fkey(id, username, full_name)
-        )
-      `)
+      .select("*")
       .order("created_at", { ascending: false });
     
     // Apply search filter if provided
@@ -63,48 +53,8 @@ export const fetchMessages = async (
       throw messagesError;
     }
 
-    // Process the messages and handle potential null values
-    const processedMessages = messages?.map(message => {
-      // Safely access conversation data with defaults if null
-      const conversation = message.conversation || { 
-        id: null,
-        user1_id: null, 
-        user2_id: null
-      };
-      
-      let recipient = null;
-
-      // Only try to determine recipient if we have valid sender and conversation data
-      if (message.sender_id && conversation) {
-        // Handle the case where receiver1 or receiver2 might be null
-        if (conversation.user1_id === message.sender_id && conversation.receiver2) {
-          recipient = conversation.receiver2;
-        } else if (conversation.user2_id === message.sender_id && conversation.receiver1) {
-          recipient = conversation.receiver1;
-        }
-        
-        // If we still couldn't determine the recipient, create a placeholder
-        if (!recipient) {
-          recipient = { 
-            id: null, 
-            username: 'Utilisateur inconnu', 
-            full_name: null 
-          };
-        }
-      }
-
-      return {
-        ...message,
-        recipient,
-        // Ensure sender exists even if null
-        sender: message.sender || { 
-          id: null, 
-          username: 'Utilisateur inconnu', 
-          full_name: null, 
-          avatar_url: null 
-        }
-      };
-    }) || [];
+    // If we have messages, get the related profile and conversation data
+    const processedMessages = await enrichMessagesWithProfileData(messages || []);
     
     return { messages: processedMessages, totalCount: count || 0 };
   } catch (error) {
@@ -114,22 +64,121 @@ export const fetchMessages = async (
 };
 
 /**
+ * Enriches messages with profile and conversation data
+ */
+async function enrichMessagesWithProfileData(messages: any[]) {
+  if (!messages.length) return [];
+  
+  try {
+    // Get unique sender IDs and conversation IDs
+    const senderIds = [...new Set(messages.map(msg => msg.sender_id))];
+    const conversationIds = [...new Set(messages.map(msg => msg.conversation_id))];
+    
+    // Fetch profiles for senders in one query
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, username, full_name, avatar_url")
+      .in("id", senderIds);
+    
+    // Fetch conversations in one query
+    const { data: conversations } = await supabase
+      .from("conversations")
+      .select(`
+        id, 
+        user1_id, 
+        user2_id
+      `)
+      .in("id", conversationIds);
+    
+    // Create maps for quick lookups
+    const profileMap = new Map();
+    if (profiles) {
+      profiles.forEach(profile => profileMap.set(profile.id, profile));
+    }
+    
+    const conversationMap = new Map();
+    if (conversations) {
+      conversations.forEach(conv => conversationMap.set(conv.id, conv));
+    }
+    
+    // Get recipient profiles
+    const recipientIds = new Set();
+    conversations?.forEach(conv => {
+      messages.forEach(msg => {
+        if (conv.id === msg.conversation_id) {
+          const recipientId = conv.user1_id === msg.sender_id ? conv.user2_id : conv.user1_id;
+          recipientIds.add(recipientId);
+        }
+      });
+    });
+    
+    // Fetch recipient profiles
+    const { data: recipientProfiles } = await supabase
+      .from("profiles")
+      .select("id, username, full_name")
+      .in("id", Array.from(recipientIds));
+    
+    const recipientMap = new Map();
+    if (recipientProfiles) {
+      recipientProfiles.forEach(profile => recipientMap.set(profile.id, profile));
+    }
+    
+    // Enrich messages with profile and conversation data
+    return messages.map(message => {
+      const conversation = conversationMap.get(message.conversation_id);
+      const sender = profileMap.get(message.sender_id) || { 
+        id: message.sender_id, 
+        username: 'Utilisateur inconnu', 
+        full_name: null,
+        avatar_url: null 
+      };
+      
+      let recipient = null;
+      if (conversation) {
+        const recipientId = conversation.user1_id === message.sender_id 
+          ? conversation.user2_id 
+          : conversation.user1_id;
+        
+        recipient = recipientMap.get(recipientId) || { 
+          id: recipientId, 
+          username: 'Utilisateur inconnu', 
+          full_name: null 
+        };
+      }
+      
+      return {
+        ...message,
+        sender,
+        recipient,
+        conversation
+      };
+    });
+  } catch (error) {
+    console.error("Error enriching messages with profile data:", error);
+    return messages.map(message => ({
+      ...message,
+      sender: { id: message.sender_id, username: 'Utilisateur inconnu' },
+      recipient: { username: 'Utilisateur inconnu' }
+    }));
+  }
+}
+
+/**
  * Fetches conversation messages for a specific conversation
  */
 export const fetchConversationMessages = async (conversationId: string) => {
   try {
-    const { data, error } = await supabase
+    // First fetch the basic message data
+    const { data: messages, error } = await supabase
       .from("messages")
-      .select(`
-        *,
-        sender:profiles!messages_sender_id_fkey(id, username, full_name, avatar_url)
-      `)
+      .select("*")
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true });
     
     if (error) throw error;
     
-    return data || [];
+    // Then enrich with sender data
+    return await enrichMessagesWithProfileData(messages || []);
   } catch (error) {
     console.error("Error fetching conversation messages:", error);
     throw error;

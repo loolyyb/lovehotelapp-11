@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import {
@@ -34,28 +35,54 @@ export function MessagesTable({
   } | null>(null);
 
   const handleViewConversation = (message: any) => {
+    if (!message.conversation_id) {
+      console.error("Cannot view conversation - missing conversation_id", message);
+      return;
+    }
+    
+    console.log("Viewing conversation:", message.conversation_id);
+    
     setSelectedConversation({
       id: message.conversation_id,
-      user1: message.sender,
-      user2: message.recipient
+      user1: message.sender || { username: 'Utilisateur inconnu' },
+      user2: message.recipient || { username: 'Utilisateur inconnu' }
     });
     setIsConversationOpen(true);
   };
 
+  // Render loading state
+  if (isLoading) {
+    return (
+      <Table>
+        <MessageTableHeader />
+        <TableBody>
+          <TableLoadingState />
+        </TableBody>
+      </Table>
+    );
+  }
+
   // Render error state
   if (isError) {
     return (
-      <div className="p-8 text-center">
-        <div className="flex justify-center mb-4">
-          <AlertTriangle className="h-12 w-12 text-amber-500" />
-        </div>
-        <h3 className="text-lg font-semibold text-[#f3ebad] mb-2">
-          Erreur lors du chargement des messages
-        </h3>
-        <p className="text-[#f3ebad]/70 mb-4">
-          Une erreur est survenue lors de la récupération des messages. Veuillez réessayer ultérieurement.
-        </p>
-      </div>
+      <Table>
+        <MessageTableHeader />
+        <TableBody>
+          <TableErrorState />
+        </TableBody>
+      </Table>
+    );
+  }
+
+  // Render empty state
+  if (!messages || messages.length === 0) {
+    return (
+      <Table>
+        <MessageTableHeader />
+        <TableBody>
+          <TableEmptyState />
+        </TableBody>
+      </Table>
     );
   }
 
@@ -64,20 +91,14 @@ export function MessagesTable({
       <Table>
         <MessageTableHeader />
         <TableBody>
-          {isLoading ? (
-            <TableLoadingState />
-          ) : messages.length > 0 ? (
-            messages.map((message: any) => (
-              <MessageTableRow 
-                key={message.id}
-                message={message}
-                markAsRead={markAsRead}
-                onViewConversation={handleViewConversation}
-              />
-            ))
-          ) : (
-            <TableEmptyState />
-          )}
+          {messages.map((message: any) => (
+            <MessageTableRow 
+              key={message.id}
+              message={message}
+              markAsRead={markAsRead}
+              onViewConversation={handleViewConversation}
+            />
+          ))}
         </TableBody>
       </Table>
 

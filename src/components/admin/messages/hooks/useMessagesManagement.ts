@@ -29,12 +29,14 @@ export function useMessagesManagement() {
     queryKey: ["admin-messages", currentPage, debouncedSearchTerm],
     queryFn: async () => {
       fetchAttemptsRef.current += 1;
+      console.log(`Attempting to fetch messages (attempt ${fetchAttemptsRef.current})`);
       
       try {
         const result = await fetchMessages(currentPage, debouncedSearchTerm, MESSAGES_PER_PAGE);
         
         // Reset retry counter on success
         fetchAttemptsRef.current = 0;
+        console.log(`Successfully fetched ${result.messages.length} messages`);
         
         return result;
       } catch (error) {
