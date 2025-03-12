@@ -50,7 +50,6 @@ export default function Admin() {
           // Not authenticated at all
           logger.info("Admin page: User not authenticated");
           setAuthState('not_authenticated');
-          // Don't navigate away automatically, show not authenticated state instead
           return;
         }
         
