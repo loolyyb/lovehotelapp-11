@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,11 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
   }, []);
 
   const checkPassword = async () => {
+    if (!password.trim()) {
+      setError("Veuillez entrer un mot de passe");
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
 

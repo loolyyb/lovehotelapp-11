@@ -21,7 +21,7 @@ import { AnnouncementsManager } from "./announcements/AnnouncementsManager";
 import { MessagesManager } from "./messages/MessagesManager";
 
 export function AdminDashboard() {
-  const setAdminAuthenticated = useAdminAuthStore(state => state.setAdminAuthenticated);
+  const { clearSession } = useAdminAuthStore();
   const { toast } = useToast();
   const { session } = useAuthSession();
   const [searchTerm, setSearchTerm] = useState("");
@@ -81,11 +81,13 @@ export function AdminDashboard() {
   });
 
   const handleLogout = () => {
-    setAdminAuthenticated(false);
+    clearSession();
     toast({
       title: "Déconnexion réussie",
       description: "Vous êtes déconnecté de l'interface administrateur"
     });
+    // Force page reload to ensure all state is reset
+    window.location.reload();
   };
 
   return (

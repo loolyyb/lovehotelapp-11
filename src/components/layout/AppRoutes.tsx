@@ -108,7 +108,7 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
 
   return (
     <Routes>
-      {/* Admin route - explicitly placed first for priority matching */}
+      {/* Admin route - explicitly placed outside ProtectedRoute to handle its own authentication */}
       <Route path="/admin" element={<Admin />} />
       
       <Route
