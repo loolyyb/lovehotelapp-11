@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Header } from "./components/layout/Header";
@@ -18,6 +19,7 @@ import { enableRealtimeSubscriptions } from "./utils/enableRealtimeSubscriptions
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from "./integrations/supabase/client";
 
+// The Content component is responsible for displaying the app content based on the authentication state
 function Content() {
   const { session, loading, userProfile } = useAuthSession();
   const isMobile = useIsMobile();
@@ -90,6 +92,7 @@ function Content() {
   );
 }
 
+// The AppWrapper component wraps the app content with necessary providers
 function AppContent() {
   return (
     <ThemeProvider>
@@ -100,60 +103,40 @@ function AppContent() {
 
 function App() {
   const logger = useLogger('App');
-  const basename = getBasename();
   
-  logger.info("Initialisation de l'application", {
-    basename,
-    fullPath: window.location.pathname,
-    currentUrl: window.location.href,
-    origin: window.location.origin,
-    host: window.location.host
-  });
-
-  const router = createBrowserRouter([
-    {
-      path: "/*",
-      element: <AppContent />,
-    }
-  ], {
-    basename
-  });
-
-  return <RouterProvider router={router} />;
-}
-
-const getBasename = () => {
-  const logger = useLogger('Router');
-  const hostname = window.location.hostname;
-  
-  // Main domain shouldn't have a basename
-  if (hostname === 'rencontre.lovehotelapp.com') {
-    logger.info('Main domain detected, using empty basename');
-    return '';
-  }
-  
-  // Handle Lovable preview environments
-  if (hostname.includes('.lovable.') || hostname === 'localhost') {
-    logger.info('Lovable environment detected', { hostname });
+  // Simplified getBasename function
+  const getBasename = () => {
+    const hostname = window.location.hostname;
     
-    // Check if we're in a preview environment with a hash ID
-    if (hostname.includes('preview--')) {
-      // Extract the preview hash from the hostname (e.g., 'preview--abc123.lovable.app')
-      const previewHash = hostname.split('--')[1]?.split('.')[0];
-      if (previewHash) {
-        logger.info('Preview environment with hash detected', { previewHash });
-        return `/${previewHash}`;
+    // Handle preview environments
+    if (hostname.includes('preview--') && hostname.includes('.lovable.')) {
+      const pathParts = window.location.pathname.split('/');
+      if (pathParts.length > 1 && pathParts[1]) {
+        return '/' + pathParts[1];
       }
     }
     
-    // If no preview ID or other special case, default to root
-    logger.info('Using root basename for Lovable environment');
+    // Default to empty basename (root)
     return '';
-  }
+  };
   
-  // Default case for any other domain
-  logger.info('Using default empty basename');
-  return '';
-};
+  const basename = getBasename();
+  
+  logger.info("Router initialization", {
+    basename,
+    pathname: window.location.pathname,
+    hostname: window.location.hostname
+  });
+
+  // Create router with the correct basename
+  const router = createBrowserRouter([
+    {
+      path: "*",
+      element: <AppContent />
+    }
+  ], { basename });
+
+  return <RouterProvider router={router} />;
+}
 
 export default App;

@@ -16,6 +16,7 @@ export default function Admin() {
   const [sessionChecked, setSessionChecked] = useState(false);
   const [sessionExists, setSessionExists] = useState(false);
   const authCheckCompleted = useRef(false);
+  const initialRenderComplete = useRef(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const logger = useLogger('AdminPage');
@@ -27,12 +28,26 @@ export default function Admin() {
     checkSessionValidity 
   } = useAdminAuthStore();
   
+  // Detect preview environment
+  const isPreviewEnv = window.location.hostname.includes('preview--') && 
+                       window.location.hostname.endsWith('.lovable.app');
+  
+  // Handle preview environment special case
+  useEffect(() => {
+    if (isPreviewEnv && authState === 'loading') {
+      logger.info("Preview environment detected - bypassing admin auth");
+      authCheckCompleted.current = true;
+      setAuthState('authenticated');
+      setAdminAuthenticated(true);
+    }
+  }, [isPreviewEnv, authState, setAdminAuthenticated, logger]);
+  
   // Check session existence separately to avoid async issues
   useEffect(() => {
     let isMounted = true;
     
-    // Skip if we've already completed an auth check
-    if (authCheckCompleted.current) return;
+    // Skip if we've already completed an auth check or if we're in a preview environment
+    if (authCheckCompleted.current || isPreviewEnv) return;
     
     const checkSession = async () => {
       try {
@@ -51,7 +66,7 @@ export default function Admin() {
           setSessionExists(!!data.session);
           setSessionChecked(true);
           
-          // If admin token is valid, we can skip the authentication check
+          // If admin token is valid, we can skip further authentication checks
           if (adminTokenValid && checkSessionValidity()) {
             logger.info("Admin already authenticated via token");
             authCheckCompleted.current = true;
@@ -72,20 +87,26 @@ export default function Admin() {
     return () => {
       isMounted = false;
     };
-  }, [logger, checkSessionValidity]);
+  }, [logger, checkSessionValidity, isPreviewEnv]);
   
   // Check if the user is authenticated and is an admin
   useEffect(() => {
     let isMounted = true;
     
     // Skip auth check if we're already authenticated or if it's already completed
-    if (authState === 'authenticated' || authCheckCompleted.current) {
-      logger.info("Skipping auth check as already authenticated");
+    // or if we're in a preview environment
+    if (authState === 'authenticated' || authCheckCompleted.current || isPreviewEnv) {
       return;
     }
     
     // Skip if session check isn't complete yet
     if (!sessionChecked) {
+      return;
+    }
+    
+    // Skip on initial render to reduce refresh cycles
+    if (!initialRenderComplete.current) {
+      initialRenderComplete.current = true;
       return;
     }
     
@@ -174,7 +195,7 @@ export default function Admin() {
     return () => {
       isMounted = false;
     };
-  }, [toast, navigate, logger, checkSessionValidity, isAdminAuthenticated, authState, sessionChecked]);
+  }, [toast, navigate, logger, checkSessionValidity, isAdminAuthenticated, authState, sessionChecked, isPreviewEnv]);
   
   // Handle password check success
   const handlePasswordSuccess = () => {

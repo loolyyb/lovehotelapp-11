@@ -6,6 +6,7 @@ interface AdminAuthState {
   isAdminAuthenticated: boolean;
   lastAuthTime: number | null;
   sessionExpiry: number; // session expiry in milliseconds (4 hours)
+  lastCheckedAt: number | null; // Track when we last checked authentication
   setAdminAuthenticated: (state: boolean) => void;
   checkSessionValidity: () => boolean;
   clearSession: () => void;
@@ -16,6 +17,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
     (set, get) => ({
       isAdminAuthenticated: false,
       lastAuthTime: null,
+      lastCheckedAt: null,
       sessionExpiry: 4 * 60 * 60 * 1000, // 4 hours
       
       setAdminAuthenticated: (state) => {
@@ -25,13 +27,23 @@ export const useAdminAuthStore = create<AdminAuthState>()(
           console.log("Setting admin authentication state to:", state);
           set({ 
             isAdminAuthenticated: state,
-            lastAuthTime: state ? Date.now() : null
+            lastAuthTime: state ? Date.now() : null,
+            lastCheckedAt: Date.now()
           });
         }
       },
       
       checkSessionValidity: () => {
-        const { isAdminAuthenticated, lastAuthTime, sessionExpiry } = get();
+        const { isAdminAuthenticated, lastAuthTime, sessionExpiry, lastCheckedAt } = get();
+        
+        // Reduce frequency of checks to prevent render loops
+        const now = Date.now();
+        if (lastCheckedAt && now - lastCheckedAt < 1000) {
+          return isAdminAuthenticated; // Return cached result if checked recently
+        }
+        
+        // Update last checked time
+        set({ lastCheckedAt: now });
         
         // Log only when needed to prevent console spam
         if (isAdminAuthenticated) {
@@ -39,9 +51,9 @@ export const useAdminAuthStore = create<AdminAuthState>()(
             isAdminAuthenticated, 
             lastAuthTime, 
             sessionExpiry,
-            now: Date.now(),
-            timeSinceAuth: lastAuthTime ? (Date.now() - lastAuthTime) : null,
-            isExpired: lastAuthTime ? (Date.now() - lastAuthTime > sessionExpiry) : true,
+            now,
+            timeSinceAuth: lastAuthTime ? (now - lastAuthTime) : null,
+            isExpired: lastAuthTime ? (now - lastAuthTime > sessionExpiry) : true,
             hostname: window.location.hostname,
             isPreview: window.location.hostname.includes('preview--')
           });
@@ -56,7 +68,6 @@ export const useAdminAuthStore = create<AdminAuthState>()(
         
         if (!isAdminAuthenticated || !lastAuthTime) return false;
         
-        const now = Date.now();
         const isValid = now - lastAuthTime < sessionExpiry;
         
         if (!isValid) {

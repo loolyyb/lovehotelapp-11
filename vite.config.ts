@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => {
   let basePath = '/';
   if (isPreview && process.env.PREVIEW_ID) {
     basePath = `/${process.env.PREVIEW_ID}/`;
+    console.log('Using preview base path:', basePath);
   }
   
   return {
@@ -37,6 +38,19 @@ export default defineConfig(({ mode }) => {
     build: {
       commonjsOptions: {
         include: [/crypto-js/, /node_modules/]
+      },
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            ui: [
+              '@radix-ui/react-avatar', 
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-tabs'
+            ],
+          }
+        }
       }
     }
   };

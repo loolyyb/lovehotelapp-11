@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";
@@ -117,11 +118,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       isAuthenticated: !!session,
       isPreview
     });
-    
-    if (isPreview) {
-      logger.info("Preview environment - allowing admin access");
-      return <Admin />;
-    }
     
     return <Admin />;
   };
