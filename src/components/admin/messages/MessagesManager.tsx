@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { MessageCircle, TriangleAlert, Search, X } from "lucide-react";
+import { MessageCircle, TriangleAlert, Search, X, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,17 +17,20 @@ export function MessagesManager() {
     currentPage,
     setCurrentPage,
     isLoading,
+    isError,
     markAsRead,
     getConversationMessages,
     searchTerm,
     setSearchTerm,
-    clearSearch
+    clearSearch,
+    refetch
   } = useMessagesManagement();
 
   // Count messages with suspicious keywords
-  const suspiciousCount = messages.filter(
-    message => detectSuspiciousKeywords(message.content).hasSuspiciousKeywords
-  ).length;
+  const suspiciousCount = messages
+    .filter(message => message.content) // Only check messages with content
+    .filter(message => detectSuspiciousKeywords(message.content).hasSuspiciousKeywords)
+    .length;
 
   return (
     <motion.div
@@ -42,16 +45,30 @@ export function MessagesManager() {
               <MessageCircle className="h-6 w-6 text-[#f3ebad]" />
             </div>
             <h2 className="text-2xl font-cormorant font-semibold text-[#f3ebad]">
-              Messages ({totalCount})
+              Messages ({isLoading ? "..." : totalCount})
             </h2>
           </div>
           
-          {suspiciousCount > 0 && (
-            <div className="flex items-center gap-2 bg-amber-950/30 text-amber-400 px-3 py-1.5 rounded-md">
-              <TriangleAlert className="h-5 w-5" />
-              <span className="font-medium">{suspiciousCount} message{suspiciousCount > 1 ? 's' : ''} suspect{suspiciousCount > 1 ? 's' : ''}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {suspiciousCount > 0 && (
+              <div className="flex items-center gap-2 bg-amber-950/30 text-amber-400 px-3 py-1.5 rounded-md">
+                <TriangleAlert className="h-5 w-5" />
+                <span className="font-medium">{suspiciousCount} message{suspiciousCount > 1 ? 's' : ''} suspect{suspiciousCount > 1 ? 's' : ''}</span>
+              </div>
+            )}
+            
+            {isError && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-2 text-[#f3ebad] border-[#f3ebad]/30"
+                onClick={() => refetch()}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Réessayer
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="mb-4 relative">
@@ -94,15 +111,18 @@ export function MessagesManager() {
           <MessagesTable 
             messages={messages}
             isLoading={isLoading}
+            isError={isError}
             markAsRead={markAsRead}
             getConversationMessages={getConversationMessages}
           />
           
-          <MessagesPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            setCurrentPage={setCurrentPage}
-          />
+          {!isLoading && !isError && messages.length > 0 && (
+            <MessagesPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              setCurrentPage={setCurrentPage}
+            />
+          )}
         </div>
       </Card>
     </motion.div>

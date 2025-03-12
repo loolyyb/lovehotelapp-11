@@ -75,30 +75,50 @@ export function useMessagesManagement() {
         // Reset retry counter on success
         fetchAttemptsRef.current = 0;
 
-        // Handle potential null values in conversation and apply defensive programming
+        // Process the messages and handle potential null values
         const processedMessages = messages?.map(message => {
-          const conversation = message.conversation || { user1_id: null, user2_id: null, receiver1: null, receiver2: null };
+          // Safely access conversation data with defaults if null
+          const conversation = message.conversation || { 
+            id: null,
+            user1_id: null, 
+            user2_id: null
+          };
+          
           let recipient = null;
 
-          // Only process if we have valid data
-          if (message.sender_id && conversation && 
-             (conversation.user1_id || conversation.user2_id) && 
-             (conversation.receiver1 || conversation.receiver2)) {
-            
-            if (message.sender_id === conversation.user1_id) {
+          // Only try to determine recipient if we have valid sender and conversation data
+          if (message.sender_id && conversation) {
+            // Handle the case where receiver1 or receiver2 might be null
+            if (conversation.user1_id === message.sender_id && conversation.receiver2) {
               recipient = conversation.receiver2;
-            } else {
+            } else if (conversation.user2_id === message.sender_id && conversation.receiver1) {
               recipient = conversation.receiver1;
+            }
+            
+            // If we still couldn't determine the recipient, create a placeholder
+            if (!recipient) {
+              recipient = { 
+                id: null, 
+                username: 'Utilisateur inconnu', 
+                full_name: null 
+              };
             }
           }
 
           return {
             ...message,
-            recipient
+            recipient,
+            // Ensure sender exists even if null
+            sender: message.sender || { 
+              id: null, 
+              username: 'Utilisateur inconnu', 
+              full_name: null, 
+              avatar_url: null 
+            }
           };
-        });
+        }) || [];
         
-        return { messages: processedMessages || [], totalCount: count || 0 };
+        return { messages: processedMessages, totalCount: count || 0 };
       } catch (error) {
         console.error("Error in fetchMessages:", error);
         

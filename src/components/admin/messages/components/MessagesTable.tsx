@@ -3,7 +3,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { motion } from "framer-motion";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -20,13 +20,15 @@ import { detectSuspiciousKeywords } from "../utils/keywordDetection";
 interface MessagesTableProps {
   messages: any[];
   isLoading: boolean;
+  isError?: boolean;
   markAsRead: (messageId: string) => Promise<void>;
   getConversationMessages: (conversationId: string) => Promise<any[]>;
 }
 
 export function MessagesTable({ 
   messages, 
-  isLoading, 
+  isLoading,
+  isError = false,
   markAsRead,
   getConversationMessages 
 }: MessagesTableProps) {
@@ -45,6 +47,23 @@ export function MessagesTable({
     });
     setIsConversationOpen(true);
   };
+
+  // Render error state
+  if (isError) {
+    return (
+      <div className="p-8 text-center">
+        <div className="flex justify-center mb-4">
+          <AlertTriangle className="h-12 w-12 text-amber-500" />
+        </div>
+        <h3 className="text-lg font-semibold text-[#f3ebad] mb-2">
+          Erreur lors du chargement des messages
+        </h3>
+        <p className="text-[#f3ebad]/70 mb-4">
+          Une erreur est survenue lors de la récupération des messages. Veuillez réessayer ultérieurement.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -77,7 +96,10 @@ export function MessagesTable({
             </TableRow>
           ) : messages.length > 0 ? (
             messages.map((message: any) => {
-              const { detectedKeywords } = detectSuspiciousKeywords(message.content);
+              // Safely check for content before running detection
+              const { detectedKeywords } = message.content 
+                ? detectSuspiciousKeywords(message.content) 
+                : { detectedKeywords: [] };
               const hasSuspiciousContent = detectedKeywords.length > 0;
               
               return (
@@ -99,7 +121,7 @@ export function MessagesTable({
                     {message.recipient?.username || message.recipient?.full_name || 'Utilisateur inconnu'}
                   </TableCell>
                   <TableCell className="font-montserrat text-[#f3ebad]/70">
-                    {message.content}
+                    {message.content || '(Aucun contenu)'}
                   </TableCell>
                   <TableCell className="font-montserrat text-[#f3ebad]/70">
                     {message.read_at ? (
@@ -141,9 +163,15 @@ export function MessagesTable({
             <TableRow>
               <TableCell
                 colSpan={7}
-                className="text-center font-montserrat text-[#f3ebad]/50"
+                className="text-center font-montserrat text-[#f3ebad]/50 py-12"
               >
-                Aucun message
+                <div className="flex flex-col items-center justify-center">
+                  <MessageSquare className="h-12 w-12 mb-4 text-[#f3ebad]/30" />
+                  <p className="text-lg mb-2">Aucun message trouvé</p>
+                  <p className="text-sm text-[#f3ebad]/40">
+                    Aucun message ne correspond à vos critères actuels
+                  </p>
+                </div>
               </TableCell>
             </TableRow>
           )}
