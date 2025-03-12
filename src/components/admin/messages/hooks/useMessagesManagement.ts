@@ -1,16 +1,26 @@
 
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useMessagesPagination } from "./useMessagesPagination";
+import { 
+  fetchMessages, 
+  fetchConversationMessages, 
+  markMessageAsRead 
+} from "../utils/messageFetchers";
 
 export const MESSAGES_PER_PAGE = 10;
 
 export function useMessagesManagement() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const { 
+    currentPage, 
+    setCurrentPage, 
+    searchTerm, 
+    debouncedSearchTerm, 
+    setSearchTerm, 
+    clearSearch 
+  } = useMessagesPagination();
+  
   const { toast } = useToast();
   const fetchAttemptsRef = useRef(0);
   const maxRetryAttempts = 3;
@@ -18,109 +28,17 @@ export function useMessagesManagement() {
   const { data, isLoading, refetch, error } = useQuery({
     queryKey: ["admin-messages", currentPage, debouncedSearchTerm],
     queryFn: async () => {
-      console.log("Fetching messages for page:", currentPage, "search:", debouncedSearchTerm);
       fetchAttemptsRef.current += 1;
       
       try {
-        // Build the base query to get total count
-        let countQuery = supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true });
-          
-        // Apply search filter if provided
-        if (debouncedSearchTerm) {
-          countQuery = countQuery.ilike('content', `%${debouncedSearchTerm}%`);
-        }
+        const result = await fetchMessages(currentPage, debouncedSearchTerm, MESSAGES_PER_PAGE);
         
-        const { count, error: countError } = await countQuery;
-        
-        if (countError) {
-          throw new Error(`Error fetching message count: ${countError.message}`);
-        }
-
-        // Build the main query
-        let messagesQuery = supabase
-          .from("messages")
-          .select(`
-            *,
-            sender:profiles!messages_sender_id_fkey(id, username, full_name, avatar_url),
-            conversation:conversations!messages_conversation_id_fkey(
-              id,
-              user1_id,
-              user2_id,
-              receiver1:profiles!conversations_user1_id_fkey(id, username, full_name),
-              receiver2:profiles!conversations_user2_id_fkey(id, username, full_name)
-            )
-          `)
-          .order("created_at", { ascending: false });
-        
-        // Apply search filter if provided
-        if (debouncedSearchTerm) {
-          messagesQuery = messagesQuery.ilike('content', `%${debouncedSearchTerm}%`);
-        }
-        
-        // Apply pagination
-        messagesQuery = messagesQuery.range(
-          (currentPage - 1) * MESSAGES_PER_PAGE, 
-          currentPage * MESSAGES_PER_PAGE - 1
-        );
-
-        const { data: messages, error: messagesError } = await messagesQuery;
-
-        if (messagesError) {
-          console.error("Error fetching messages:", messagesError);
-          throw messagesError;
-        }
-
         // Reset retry counter on success
         fetchAttemptsRef.current = 0;
-
-        // Process the messages and handle potential null values
-        const processedMessages = messages?.map(message => {
-          // Safely access conversation data with defaults if null
-          const conversation = message.conversation || { 
-            id: null,
-            user1_id: null, 
-            user2_id: null
-          };
-          
-          let recipient = null;
-
-          // Only try to determine recipient if we have valid sender and conversation data
-          if (message.sender_id && conversation) {
-            // Handle the case where receiver1 or receiver2 might be null
-            if (conversation.user1_id === message.sender_id && conversation.receiver2) {
-              recipient = conversation.receiver2;
-            } else if (conversation.user2_id === message.sender_id && conversation.receiver1) {
-              recipient = conversation.receiver1;
-            }
-            
-            // If we still couldn't determine the recipient, create a placeholder
-            if (!recipient) {
-              recipient = { 
-                id: null, 
-                username: 'Utilisateur inconnu', 
-                full_name: null 
-              };
-            }
-          }
-
-          return {
-            ...message,
-            recipient,
-            // Ensure sender exists even if null
-            sender: message.sender || { 
-              id: null, 
-              username: 'Utilisateur inconnu', 
-              full_name: null, 
-              avatar_url: null 
-            }
-          };
-        }) || [];
         
-        return { messages: processedMessages, totalCount: count || 0 };
+        return result;
       } catch (error) {
-        console.error("Error in fetchMessages:", error);
+        console.error("Error in fetchMessages query function:", error);
         
         // Implement retry logic
         if (fetchAttemptsRef.current < maxRetryAttempts) {
@@ -137,12 +55,7 @@ export function useMessagesManagement() {
 
   const markAsRead = useCallback(async (messageId: string) => {
     try {
-      const { error } = await supabase
-        .from('messages')
-        .update({ read_at: new Date().toISOString() })
-        .eq('id', messageId);
-      
-      if (error) throw error;
+      await markMessageAsRead(messageId);
       
       toast({
         title: "Message marqué comme lu",
@@ -151,7 +64,7 @@ export function useMessagesManagement() {
       
       refetch();
     } catch (error) {
-      console.error("Error marking message as read:", error);
+      console.error("Error in markAsRead:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -162,20 +75,9 @@ export function useMessagesManagement() {
 
   const getConversationMessages = useCallback(async (conversationId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("messages")
-        .select(`
-          *,
-          sender:profiles!messages_sender_id_fkey(id, username, full_name, avatar_url)
-        `)
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-      
-      if (error) throw error;
-      
-      return data || [];
+      return await fetchConversationMessages(conversationId);
     } catch (error) {
-      console.error("Error fetching conversation messages:", error);
+      console.error("Error in getConversationMessages:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -190,16 +92,6 @@ export function useMessagesManagement() {
   const totalPages = Math.ceil(totalCount / MESSAGES_PER_PAGE);
   const isError = !!error;
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1); // Reset to first page when searching
-  }, []);
-
-  const clearSearch = useCallback(() => {
-    setSearchTerm("");
-    setCurrentPage(1);
-  }, []);
-
   return {
     messages,
     totalCount,
@@ -211,8 +103,8 @@ export function useMessagesManagement() {
     markAsRead,
     getConversationMessages,
     searchTerm,
-    setSearchTerm: handleSearchChange,
+    setSearchTerm,
     clearSearch,
-    refetch // Add refetch to the returned object
+    refetch
   };
 }
