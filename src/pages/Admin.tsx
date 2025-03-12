@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertService } from "@/services/AlertService";
 import { useLogger } from "@/hooks/useLogger";
 import { useAdminAuthStore } from "@/stores/adminAuthStore";
+import { AuthService } from "@/services/AuthService";
 
 export default function Admin() {
   const [authState, setAuthState] = useState<'loading' | 'authenticated' | 'not_authenticated' | 'not_admin' | 'error'>('loading');
@@ -31,10 +32,26 @@ export default function Admin() {
     
     const checkSession = async () => {
       try {
+        logger.info("Checking Supabase session");
         const { data } = await supabase.auth.getSession();
+        
+        // Also check admin token
+        const adminTokenValid = AuthService.isAuthenticated();
+        
+        logger.info("Session check results", {
+          hasSupabaseSession: !!data.session,
+          adminTokenValid
+        });
+        
         if (isMounted) {
           setSessionExists(!!data.session);
           setSessionChecked(true);
+          
+          // If admin token is valid, we can skip the authentication check
+          if (adminTokenValid && checkSessionValidity()) {
+            logger.info("Admin already authenticated via token");
+            setAuthState('authenticated');
+          }
         }
       } catch (err) {
         logger.error("Error checking session:", err);
@@ -50,11 +67,17 @@ export default function Admin() {
     return () => {
       isMounted = false;
     };
-  }, [logger]);
+  }, [logger, checkSessionValidity]);
   
   // Check if the user is authenticated and is an admin
   useEffect(() => {
     let isMounted = true;
+    
+    // Skip auth check if we're already authenticated
+    if (authState === 'authenticated') {
+      logger.info("Skipping auth check as already authenticated");
+      return;
+    }
     
     const checkAuth = async () => {
       try {
@@ -130,17 +153,29 @@ export default function Admin() {
       }
     };
     
-    checkAuth();
+    // Only run auth check if not already authenticated and session check is complete
+    if (authState === 'loading' && sessionChecked) {
+      checkAuth();
+    }
     
     return () => {
       isMounted = false;
     };
-  }, [toast, navigate, logger, checkSessionValidity, isAdminAuthenticated]);
+  }, [toast, navigate, logger, checkSessionValidity, isAdminAuthenticated, authState, sessionChecked]);
   
   // Handle password check success
   const handlePasswordSuccess = () => {
     setAdminAuthenticated(true);
     setAuthState('authenticated');
+    
+    // Also trigger the AuthService login to get the API token
+    AuthService.login().then(token => {
+      if (token) {
+        logger.info("Admin API token obtained successfully");
+      } else {
+        logger.warn("Failed to obtain admin API token");
+      }
+    });
   };
   
   // Loading state - show a more substantial loading component to reduce perception of flicker

@@ -106,7 +106,9 @@ function App() {
   logger.info("Initialisation de l'application", {
     basename,
     fullPath: window.location.pathname,
-    currentUrl: window.location.href
+    currentUrl: window.location.href,
+    origin: window.location.origin,
+    host: window.location.host
   });
 
   const router = createBrowserRouter([
@@ -126,6 +128,12 @@ const getBasename = () => {
   const hostname = window.location.hostname;
   const pathname = window.location.pathname;
   
+  // Main domain shouldn't have a basename
+  if (hostname === 'rencontre.lovehotelapp.com') {
+    logger.info('Main domain detected, using empty basename');
+    return '';
+  }
+  
   const isLovableEnv = hostname.includes('.lovable.') || hostname === 'localhost';
   
   logger.info('Environnement détecté', {
@@ -135,8 +143,9 @@ const getBasename = () => {
   });
 
   if (isLovableEnv) {
+    // Extract the first segment of the path
     const firstSegment = pathname.split('/')[1];
-    if (firstSegment) {
+    if (firstSegment && firstSegment !== '') {
       logger.info('Basename Lovable détecté', { basename: `/${firstSegment}` });
       return `/${firstSegment}`;
     }

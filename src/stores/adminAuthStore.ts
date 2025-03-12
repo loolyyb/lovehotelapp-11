@@ -28,6 +28,17 @@ export const useAdminAuthStore = create<AdminAuthState>()(
       
       checkSessionValidity: () => {
         const { isAdminAuthenticated, lastAuthTime, sessionExpiry } = get();
+        
+        // Always log the current state for debugging
+        console.log("Checking admin session validity:", { 
+          isAdminAuthenticated, 
+          lastAuthTime, 
+          sessionExpiry,
+          now: Date.now(),
+          timeSinceAuth: lastAuthTime ? (Date.now() - lastAuthTime) : null,
+          isExpired: lastAuthTime ? (Date.now() - lastAuthTime > sessionExpiry) : true
+        });
+        
         if (!isAdminAuthenticated || !lastAuthTime) return false;
         
         const now = Date.now();
@@ -35,6 +46,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
         
         if (!isValid) {
           // Auto clear expired session
+          console.log("Admin session has expired, clearing");
           set({ isAdminAuthenticated: false, lastAuthTime: null });
         }
         
@@ -42,6 +54,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
       },
       
       clearSession: () => {
+        console.log("Clearing admin session");
         set({ isAdminAuthenticated: false, lastAuthTime: null });
       }
     }),

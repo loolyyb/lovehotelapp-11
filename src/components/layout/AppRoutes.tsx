@@ -44,7 +44,8 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
   useEffect(() => {
     info("AppRoutes mounted", { 
       isAuthenticated: !!session,
-      currentPath: window.location.pathname
+      currentPath: window.location.pathname,
+      hostname: window.location.hostname
     });
 
     if (session?.user && !isPreviewEnvironment()) {
@@ -107,30 +108,38 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     return session ? <Outlet /> : <Navigate to="/login" replace />;
   };
 
-  const AdminRoute = () => {
-    info("Admin route accessed");
-    return <Admin />;
-  };
-
   return (
     <Routes>
-      <Route path="/admin" element={<AdminRoute />} />
-      
+      {/* Root route with conditional rendering based on session */}
       <Route
         path="/"
-        element={session ? <Dashboard /> : <Landing />}
+        element={session ? <Navigate to="/dashboard" replace /> : <Landing />}
+      />
+      
+      {/* Dashboard as its own route */}
+      <Route
+        path="/dashboard"
+        element={session ? <Dashboard /> : <Navigate to="/login" replace />}
       />
 
+      {/* Login route - redirect to dashboard if already logged in */}
       <Route
         path="/login"
-        element={!session ? <Login /> : <Navigate to="/" replace />}
+        element={!session ? <Login /> : <Navigate to="/dashboard" replace />}
       />
 
-      <Route
-        path="/password-reset"
-        element={<PasswordReset />}
-      />
+      {/* Public routes - no authentication required */}
+      <Route path="/password-reset" element={<PasswordReset />} />
+      <Route path="/features" element={<Features />} />
+      <Route path="/options" element={<Options />} />
+      <Route path="/lover-coin" element={<LoverCoin />} />
+      <Route path="/rideaux-ouverts" element={<RideauxOuverts />} />
+      <Route path="/restaurant-du-love" element={<RestaurantDuLove />} />
+      
+      {/* Admin route with its own authentication */}
+      <Route path="/admin" element={<Admin />} />
 
+      {/* Protected routes - require authentication */}
       <Route element={<ProtectedRoute />}>
         <Route path="/profile" element={<Profile />} />
         <Route path="/profiles" element={<Navigate to="/matching-scores" replace />} />
@@ -142,13 +151,8 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
         <Route path="/reserver-room" element={<ReserverRoom />} />
         <Route path="/announcements" element={<Announcements />} />
       </Route>
-
-      <Route path="/features" element={<Features />} />
-      <Route path="/options" element={<Options />} />
-      <Route path="/lover-coin" element={<LoverCoin />} />
-      <Route path="/rideaux-ouverts" element={<RideauxOuverts />} />
-      <Route path="/restaurant-du-love" element={<RestaurantDuLove />} />
       
+      {/* Catch all - redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
