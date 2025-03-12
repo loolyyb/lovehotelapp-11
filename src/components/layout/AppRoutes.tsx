@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import Login from "@/pages/Login";
@@ -31,27 +30,30 @@ interface AppRoutesProps {
 }
 
 const isPreviewEnvironment = () => {
-  return window.location.hostname.includes('preview--') && 
-         window.location.hostname.endsWith('.lovable.app');
+  const hostname = window.location.hostname;
+  const isPreview = hostname.includes('preview--') && hostname.endsWith('.lovable.app');
+  return isPreview;
 };
 
 export const AppRoutes = ({ session }: AppRoutesProps) => {
   const [needsQualification, setNeedsQualification] = useState<boolean | null>(null);
   const { toast } = useToast();
-  const { info, error } = useLogger('AppRoutes');
+  const logger = useLogger('AppRoutes');
   const { checkSessionValidity } = useAdminAuthStore();
+  const isPreview = isPreviewEnvironment();
 
   useEffect(() => {
-    info("AppRoutes mounted", { 
+    logger.info("AppRoutes mounted", { 
       isAuthenticated: !!session,
       currentPath: window.location.pathname,
-      hostname: window.location.hostname
+      hostname: window.location.hostname,
+      isPreview
     });
 
-    if (session?.user && !isPreviewEnvironment()) {
+    if (session?.user && !isPreview) {
       checkQualificationStatus();
     }
-  }, [session]);
+  }, [session, isPreview]);
 
   const checkQualificationStatus = async () => {
     if (!session?.user) return;
@@ -91,44 +93,56 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     }
   };
 
-  if (session && needsQualification && !isPreviewEnvironment()) {
+  if (session && needsQualification && !isPreview) {
     return <QualificationJourney onComplete={() => setNeedsQualification(false)} />;
   }
 
   const ProtectedRoute = () => {
-    info("Protected route accessed", { 
+    logger.info("Protected route accessed", { 
       isAuthenticated: !!session,
-      path: window.location.pathname 
+      path: window.location.pathname,
+      isPreview
     });
     
-    if (isPreviewEnvironment()) {
+    if (isPreview) {
+      logger.info("Preview environment - skipping auth check");
       return <Outlet />;
     }
     
     return session ? <Outlet /> : <Navigate to="/login" replace />;
   };
 
+  const AdminRoute = () => {
+    logger.info("Admin route accessed", {
+      isAuthenticated: !!session,
+      isPreview
+    });
+    
+    if (isPreview) {
+      logger.info("Preview environment - allowing admin access");
+      return <Admin />;
+    }
+    
+    return <Admin />;
+  };
+
   return (
     <Routes>
-      {/* Root route with conditional rendering based on session */}
       <Route
         path="/"
         element={session ? <Navigate to="/dashboard" replace /> : <Landing />}
       />
       
-      {/* Dashboard as its own route */}
       <Route
         path="/dashboard"
         element={session ? <Dashboard /> : <Navigate to="/login" replace />}
       />
 
-      {/* Login route - redirect to dashboard if already logged in */}
       <Route
         path="/login"
         element={!session ? <Login /> : <Navigate to="/dashboard" replace />}
       />
 
-      {/* Public routes - no authentication required */}
       <Route path="/password-reset" element={<PasswordReset />} />
       <Route path="/features" element={<Features />} />
       <Route path="/options" element={<Options />} />
@@ -136,10 +150,8 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       <Route path="/rideaux-ouverts" element={<RideauxOuverts />} />
       <Route path="/restaurant-du-love" element={<RestaurantDuLove />} />
       
-      {/* Admin route with its own authentication */}
-      <Route path="/admin" element={<Admin />} />
+      <Route path="/admin/*" element={<AdminRoute />} />
 
-      {/* Protected routes - require authentication */}
       <Route element={<ProtectedRoute />}>
         <Route path="/profile" element={<Profile />} />
         <Route path="/profiles" element={<Navigate to="/matching-scores" replace />} />
@@ -152,7 +164,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
         <Route path="/announcements" element={<Announcements />} />
       </Route>
       
-      {/* Catch all - redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

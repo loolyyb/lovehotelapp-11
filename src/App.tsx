@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Header } from "./components/layout/Header";
@@ -126,7 +125,6 @@ function App() {
 const getBasename = () => {
   const logger = useLogger('Router');
   const hostname = window.location.hostname;
-  const pathname = window.location.pathname;
   
   // Main domain shouldn't have a basename
   if (hostname === 'rencontre.lovehotelapp.com') {
@@ -134,26 +132,28 @@ const getBasename = () => {
     return '';
   }
   
-  const isLovableEnv = hostname.includes('.lovable.') || hostname === 'localhost';
-  
-  logger.info('Environnement détecté', {
-    hostname,
-    pathname,
-    isLovableEnv
-  });
-
-  if (isLovableEnv) {
-    // Extract the first segment of the path
-    const firstSegment = pathname.split('/')[1];
-    if (firstSegment && firstSegment !== '') {
-      logger.info('Basename Lovable détecté', { basename: `/${firstSegment}` });
-      return `/${firstSegment}`;
+  // Handle Lovable preview environments
+  if (hostname.includes('.lovable.') || hostname === 'localhost') {
+    logger.info('Lovable environment detected', { hostname });
+    
+    // Check if we're in a preview environment with a hash ID
+    if (hostname.includes('preview--')) {
+      // Extract the preview hash from the hostname (e.g., 'preview--abc123.lovable.app')
+      const previewHash = hostname.split('--')[1]?.split('.')[0];
+      if (previewHash) {
+        logger.info('Preview environment with hash detected', { previewHash });
+        return `/${previewHash}`;
+      }
     }
-    logger.warn('Aucun segment de chemin trouvé dans un environnement Lovable');
+    
+    // If no preview ID or other special case, default to root
+    logger.info('Using root basename for Lovable environment');
+    return '';
   }
   
-  logger.info('Utilisation du basename par défaut: /');
-  return '/';
+  // Default case for any other domain
+  logger.info('Using default empty basename');
+  return '';
 };
 
 export default App;

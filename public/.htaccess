@@ -1,7 +1,9 @@
 
 Options -MultiViews
 RewriteEngine On
+RewriteBase /
 RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.html [QSA,L]
 
 # Security Headers
@@ -12,4 +14,3 @@ Header set Content-Security-Policy "default-src 'self'; \
   img-src 'self' data: blob: https://*.supabase.co https://*.lovehotelapp.com https://www.dandyhotelparis.com https://lovehotelaparis.fr https://lovehotelapp.com; \
   font-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com; \
   frame-src 'self' https://lovehotelaparis.fr https://booking.lovehotel.io;"
-

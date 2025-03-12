@@ -36,8 +36,17 @@ export const useAdminAuthStore = create<AdminAuthState>()(
           sessionExpiry,
           now: Date.now(),
           timeSinceAuth: lastAuthTime ? (Date.now() - lastAuthTime) : null,
-          isExpired: lastAuthTime ? (Date.now() - lastAuthTime > sessionExpiry) : true
+          isExpired: lastAuthTime ? (Date.now() - lastAuthTime > sessionExpiry) : true,
+          hostname: window.location.hostname,
+          isPreview: window.location.hostname.includes('preview--')
         });
+        
+        // Skip session checks in preview environments
+        if (window.location.hostname.includes('preview--') && 
+            window.location.hostname.endsWith('.lovable.app')) {
+          console.log("Preview environment detected - bypassing admin auth check");
+          return true;
+        }
         
         if (!isAdminAuthenticated || !lastAuthTime) return false;
         
