@@ -116,14 +116,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
       return <Admin />;
     }
     
-    // Check if admin auth is valid via the store
-    const isAdminSessionValid = checkSessionValidity();
-    
-    if (isAdminSessionValid) {
-      info("Admin session is valid, allowing access");
-      return <Admin />;
-    }
-    
     // Otherwise allow accessing the admin page which will handle auth internally
     return <Admin />;
   };
