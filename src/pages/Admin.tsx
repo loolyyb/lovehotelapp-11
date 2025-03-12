@@ -47,15 +47,10 @@ export default function Admin() {
         }
         
         if (!session) {
-          // Not authenticated
+          // Not authenticated at all
           logger.info("Admin page: User not authenticated");
           setAuthState('not_authenticated');
-          toast({
-            variant: "destructive",
-            title: "Non autorisé",
-            description: "Vous devez être connecté pour accéder à cette page"
-          });
-          navigate("/login");
+          // Don't navigate away automatically, show not authenticated state instead
           return;
         }
         
@@ -144,17 +139,43 @@ export default function Admin() {
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50">
         <div className="text-center p-8 bg-[#302234] rounded-lg border border-[#f3ebad]/20 max-w-md">
           <h2 className="text-2xl font-bold text-[#f3ebad] mb-4">Accès Restreint</h2>
-          <p className="text-[#f3ebad]/80">
+          <p className="text-[#f3ebad]/80 mb-4">
             Vous n'avez pas les permissions nécessaires pour accéder au panneau d'administration.
           </p>
+          <button 
+            onClick={() => navigate("/")}
+            className="mt-4 px-4 py-2 bg-[#f3ebad] text-[#40192C] rounded hover:bg-[#f3ebad]/90"
+          >
+            Retour à l'accueil
+          </button>
         </div>
       </div>
     );
   }
   
-  // Need admin password
+  // Not authenticated state (needs login)
   if (authState === 'not_authenticated') {
-    return <AdminPasswordCheck onPasswordValid={handlePasswordSuccess} />;
+    if (!isAdminAuthenticated) {
+      return <AdminPasswordCheck onPasswordValid={handlePasswordSuccess} />;
+    }
+    
+    // Show login prompt
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50">
+        <div className="text-center p-8 bg-[#302234] rounded-lg border border-[#f3ebad]/20 max-w-md">
+          <h2 className="text-2xl font-bold text-[#f3ebad] mb-4">Connexion Requise</h2>
+          <p className="text-[#f3ebad]/80 mb-4">
+            Vous devez être connecté pour accéder au panneau d'administration.
+          </p>
+          <button 
+            onClick={() => navigate("/login")}
+            className="px-4 py-2 bg-[#f3ebad] text-[#40192C] rounded hover:bg-[#f3ebad]/90"
+          >
+            Se connecter
+          </button>
+        </div>
+      </div>
+    );
   }
   
   // Authenticated, show dashboard

@@ -65,33 +65,6 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
     try {
       logger.info("Starting password verification process");
       
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("Vous devez être connecté pour accéder à cette page");
-      }
-
-      // Get the current user profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .single();
-
-      if (profileError) {
-        logger.error("Profile check error:", { error: profileError });
-        AlertService.captureException(new Error("Admin profile check failed"), {
-          context: "AdminPasswordCheck",
-          error: profileError
-        });
-        throw new Error("Impossible de vérifier votre profil");
-      }
-
-      if (!profile || profile.role !== 'admin') {
-        logger.warn("Non-admin access attempt", { userId: session.user.id });
-        throw new Error("Vous n'avez pas les droits pour accéder à cette page");
-      }
-
       // Get admin password hash
       const { data: adminSettings, error: settingsError } = await supabase
         .from('admin_settings')
