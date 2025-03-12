@@ -10,6 +10,8 @@ class AuthService {
   private static readonly TOKEN_KEY = 'love_hotel_jwt';
   private static readonly API_URL = 'https://api.lovehotel.io';
   private static readonly TOKEN_EXPIRY_KEY = 'love_hotel_token_expiry';
+  // Add a flag to prevent multiple simultaneous auth checks
+  private static isCheckingAuth = false;
 
   static async login(): Promise<string | null> {
     try {
@@ -105,50 +107,69 @@ class AuthService {
   }
 
   static isAuthenticated(): boolean {
-    // For preview environments, always return true
-    if (window.location.hostname.includes('preview--') && 
-        window.location.hostname.endsWith('.lovable.app')) {
-      console.log("Preview environment detected - bypassing token check");
-      return true;
+    // Prevent multiple simultaneous checks
+    if (this.isCheckingAuth) {
+      return true; // Return true temporarily to prevent refresh loops
     }
     
-    const token = this.getToken();
-    if (!token) return false;
+    this.isCheckingAuth = true;
+    
+    try {
+      // For preview environments, always return true
+      if (window.location.hostname.includes('preview--') && 
+          window.location.hostname.endsWith('.lovable.app')) {
+        console.log("Preview environment detected - bypassing token check");
+        return true;
+      }
+      
+      const token = this.getToken();
+      if (!token) {
+        return false;
+      }
 
-    // Check token expiry from our own storage
-    const expiryTimeStr = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
-    if (expiryTimeStr) {
-      const expiryTime = parseInt(expiryTimeStr, 10);
-      const isExpired = Date.now() > expiryTime;
-      
-      console.log("Admin token expiry check:", {
-        isExpired,
-        expiryTime: new Date(expiryTime).toISOString(),
-        now: new Date().toISOString()
-      });
-      
-      if (isExpired) {
+      // Check token expiry from our own storage
+      const expiryTimeStr = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
+      if (expiryTimeStr) {
+        const expiryTime = parseInt(expiryTimeStr, 10);
+        const isExpired = Date.now() > expiryTime;
+        
+        // Log less frequently to reduce console spam
+        if (Math.random() < 0.1) { // Only log ~10% of the time
+          console.log("Admin token expiry check:", {
+            isExpired,
+            expiryTime: new Date(expiryTime).toISOString(),
+            now: new Date().toISOString()
+          });
+        }
+        
+        if (isExpired) {
+          this.removeToken();
+          return false;
+        }
+        
+        return true;
+      }
+
+      // Fallback to JWT expiry check
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const isValid = payload.exp * 1000 > Date.now();
+        
+        if (!isValid) {
+          this.removeToken();
+        }
+        
+        return isValid;
+      } catch (error) {
+        console.error("Error parsing JWT:", error);
         this.removeToken();
         return false;
       }
-      
-      return true;
-    }
-
-    // Fallback to JWT expiry check
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const isValid = payload.exp * 1000 > Date.now();
-      
-      if (!isValid) {
-        this.removeToken();
-      }
-      
-      return isValid;
-    } catch (error) {
-      console.error("Error parsing JWT:", error);
-      this.removeToken();
-      return false;
+    } finally {
+      // Reset the flag after check is complete
+      setTimeout(() => {
+        this.isCheckingAuth = false;
+      }, 100);
     }
   }
 }

@@ -14,3 +14,12 @@ Header set Content-Security-Policy "default-src 'self'; \
   img-src 'self' data: blob: https://*.supabase.co https://*.lovehotelapp.com https://www.dandyhotelparis.com https://lovehotelaparis.fr https://lovehotelapp.com; \
   font-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com; \
   frame-src 'self' https://lovehotelaparis.fr https://booking.lovehotel.io;"
+
+# Disable caching for admin routes to prevent stale state
+<FilesMatch "index\.html">
+  <If "%{QUERY_STRING} =~ /admin/">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires "Wed, 11 Jan 1984 05:00:00 GMT"
+  </If>
+</FilesMatch>

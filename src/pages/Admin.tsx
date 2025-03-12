@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { AdminPasswordCheck } from "@/components/admin/AdminPasswordCheck";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ export default function Admin() {
   const [error, setError] = useState<string | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
   const [sessionExists, setSessionExists] = useState(false);
+  const authCheckCompleted = useRef(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const logger = useLogger('AdminPage');
@@ -29,6 +30,9 @@ export default function Admin() {
   // Check session existence separately to avoid async issues
   useEffect(() => {
     let isMounted = true;
+    
+    // Skip if we've already completed an auth check
+    if (authCheckCompleted.current) return;
     
     const checkSession = async () => {
       try {
@@ -50,6 +54,7 @@ export default function Admin() {
           // If admin token is valid, we can skip the authentication check
           if (adminTokenValid && checkSessionValidity()) {
             logger.info("Admin already authenticated via token");
+            authCheckCompleted.current = true;
             setAuthState('authenticated');
           }
         }
@@ -73,9 +78,14 @@ export default function Admin() {
   useEffect(() => {
     let isMounted = true;
     
-    // Skip auth check if we're already authenticated
-    if (authState === 'authenticated') {
+    // Skip auth check if we're already authenticated or if it's already completed
+    if (authState === 'authenticated' || authCheckCompleted.current) {
       logger.info("Skipping auth check as already authenticated");
+      return;
+    }
+    
+    // Skip if session check isn't complete yet
+    if (!sessionChecked) {
       return;
     }
     
@@ -86,7 +96,10 @@ export default function Admin() {
         // First check if we have a valid admin session
         if (checkSessionValidity()) {
           logger.info("Admin page: Valid admin session found");
-          if (isMounted) setAuthState('authenticated');
+          if (isMounted) {
+            authCheckCompleted.current = true;
+            setAuthState('authenticated');
+          }
           return;
         }
         
@@ -165,6 +178,7 @@ export default function Admin() {
   
   // Handle password check success
   const handlePasswordSuccess = () => {
+    authCheckCompleted.current = true;
     setAdminAuthenticated(true);
     setAuthState('authenticated');
     
