@@ -12,6 +12,8 @@ import { useAdminAuthStore } from "@/stores/adminAuthStore";
 export default function Admin() {
   const [authState, setAuthState] = useState<'loading' | 'authenticated' | 'not_authenticated' | 'not_admin' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [sessionExists, setSessionExists] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const logger = useLogger('AdminPage');
@@ -22,6 +24,33 @@ export default function Admin() {
     setAdminAuthenticated, 
     checkSessionValidity 
   } = useAdminAuthStore();
+  
+  // Check session existence separately to avoid async issues
+  useEffect(() => {
+    let isMounted = true;
+    
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (isMounted) {
+          setSessionExists(!!data.session);
+          setSessionChecked(true);
+        }
+      } catch (err) {
+        logger.error("Error checking session:", err);
+        if (isMounted) {
+          setSessionChecked(true);
+          setSessionExists(false);
+        }
+      }
+    };
+    
+    checkSession();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [logger]);
   
   // Check if the user is authenticated and is an admin
   useEffect(() => {
@@ -174,13 +203,10 @@ export default function Admin() {
   
   // Not authenticated state - This is where we either show the admin password input or login prompt
   if (authState === 'not_authenticated') {
-    logger.info("Admin page: User authentication state", { isAdminAuthenticated });
+    logger.info("Admin page: User authentication state", { isAdminAuthenticated, sessionChecked, sessionExists });
     
-    // Here's the important fix: check if the user is logged in at all before showing password input
-    const { data: { session } } = supabase.auth.getSession();
-    
-    // If session exists, show password input, otherwise show login prompt
-    if (session) {
+    // Using our separate sessionExists state instead of trying to directly access the session
+    if (sessionExists) {
       logger.info("Admin page: User is logged in, showing password input");
       return <AdminPasswordCheck onPasswordValid={handlePasswordSuccess} />;
     } else {
