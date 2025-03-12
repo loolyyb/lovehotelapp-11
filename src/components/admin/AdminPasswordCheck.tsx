@@ -49,10 +49,7 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
         });
       } finally {
         if (isMounted) {
-          // Small delay to prevent rapid state changes causing flicker
-          setTimeout(() => {
-            setIsInitializing(false);
-          }, 100);
+          setIsInitializing(false);
         }
       }
     };
@@ -122,7 +119,7 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
   // Show loading state while initializing with a soft transition
   if (isInitializing) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50 transition-opacity duration-300">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50 transition-opacity duration-500">
         <Card className="w-full max-w-md p-6 bg-[#302234] border-[#f3ebad]/20 shadow-lg">
           <div className="text-center text-[#f3ebad] flex items-center justify-center space-x-3">
             <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -137,8 +134,8 @@ export function AdminPasswordCheck({ onPasswordValid }: AdminPasswordCheckProps)
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50 transition-opacity duration-300">
-      <Card className="w-full max-w-md p-6 space-y-4 bg-[#302234] border-[#f3ebad]/20 shadow-lg animate-fade-in">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#40192C] to-[#CE0067]/50 opacity-100 transition-opacity duration-500">
+      <Card className="w-full max-w-md p-6 space-y-4 bg-[#302234] border-[#f3ebad]/20 shadow-lg">
         <h2 className="text-2xl font-bold text-center text-[#f3ebad]">
           Panneau d'Administration
         </h2>

@@ -93,7 +93,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     return <QualificationJourney onComplete={() => setNeedsQualification(false)} />;
   }
 
-  // Improved ProtectedRoute that properly handles authentication
   const ProtectedRoute = () => {
     info("Protected route accessed", { 
       isAuthenticated: !!session,
@@ -107,22 +106,13 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
     return session ? <Outlet /> : <Navigate to="/login" replace />;
   };
 
-  // Admin route check - determines if admin page can be accessed
   const AdminRoute = () => {
     info("Admin route accessed");
-    
-    // In preview environment, allow direct access to admin
-    if (isPreviewEnvironment()) {
-      return <Admin />;
-    }
-    
-    // Otherwise allow accessing the admin page which will handle auth internally
     return <Admin />;
   };
 
   return (
     <Routes>
-      {/* Place Admin route at the top to ensure it's matched before other routes */}
       <Route path="/admin" element={<AdminRoute />} />
       
       <Route
@@ -140,7 +130,6 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
         element={<PasswordReset />}
       />
 
-      {/* Group protected routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/profile" element={<Profile />} />
         <Route path="/profiles" element={<Navigate to="/matching-scores" replace />} />
@@ -153,14 +142,12 @@ export const AppRoutes = ({ session }: AppRoutesProps) => {
         <Route path="/announcements" element={<Announcements />} />
       </Route>
 
-      {/* Public routes */}
       <Route path="/features" element={<Features />} />
       <Route path="/options" element={<Options />} />
       <Route path="/lover-coin" element={<LoverCoin />} />
       <Route path="/rideaux-ouverts" element={<RideauxOuverts />} />
       <Route path="/restaurant-du-love" element={<RestaurantDuLove />} />
       
-      {/* Catch-all route for unknown paths */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

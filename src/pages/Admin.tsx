@@ -101,16 +101,12 @@ export default function Admin() {
       }
     };
     
-    // Small delay to prevent rapid state changes causing flicker
-    const timer = setTimeout(() => {
-      checkAuth();
-    }, 100);
+    checkAuth();
     
     return () => {
       isMounted = false;
-      clearTimeout(timer);
     };
-  }, [toast, navigate, logger, checkSessionValidity]);
+  }, [toast, navigate, logger, checkSessionValidity, isAdminAuthenticated]);
   
   // Handle password check success
   const handlePasswordSuccess = () => {
@@ -176,9 +172,13 @@ export default function Admin() {
     );
   }
   
-  // Not authenticated state (needs login)
+  // Not authenticated state (needs login or admin password)
   if (authState === 'not_authenticated') {
-    if (!isAdminAuthenticated) {
+    logger.info("Admin page: Showing admin password check or login prompt");
+    
+    // Show admin password check if user is authenticated
+    if (isAdminAuthenticated) {
+      logger.info("Admin page: User needs admin password");
       return <AdminPasswordCheck onPasswordValid={handlePasswordSuccess} />;
     }
     
