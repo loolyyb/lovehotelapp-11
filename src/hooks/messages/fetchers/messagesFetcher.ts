@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/services/LogService";
 import { AlertService } from "@/services/AlertService";
@@ -6,8 +7,8 @@ import { MessageCache } from '../cache';
 // Constants for pagination
 const INITIAL_PAGE_SIZE = 15;
 const PAGINATION_SIZE = 10;
-const DEBOUNCE_TIME = 300; // ms
-const THROTTLE_TIME = 2000; // ms - increased to prevent too frequent API calls
+const DEBOUNCE_TIME = 1000; // Increased from 300ms to 1000ms
+const THROTTLE_TIME = 3000; // Increased from 2000ms to 3000ms
 const MAX_RETRY_ATTEMPTS = 3;
 
 // Optimization: Only select fields we need to reduce payload size
@@ -29,7 +30,6 @@ const MESSAGE_FIELDS = `
 `;
 
 // In-memory query debounce tracking
-const pendingQueries = new Map<string, Promise<any[] | null>>();
 const lastFetchTimes = new Map<string, number>();
 const failedAttempts = new Map<string, number>();
 
@@ -76,28 +76,50 @@ export const MessagesFetcher = {
     // Track last time we fetched as a debug point
     const now = Date.now();
     const lastFetchTime = lastFetchTimes.get(conversationId) || 0;
+    const timeSinceLastFetch = now - lastFetchTime;
+    
+    // Apply throttling to prevent too frequent refreshes
+    if (timeSinceLastFetch < THROTTLE_TIME) {
+      logger.info("Throttling message fetch - too soon since last fetch", {
+        conversationId,
+        timeSinceLastFetch: `${Math.round(timeSinceLastFetch / 1000)}s`,
+        throttleTime: `${Math.round(THROTTLE_TIME / 1000)}s`,
+        component: "messagesFetcher"
+      });
+    }
+    
     lastFetchTimes.set(conversationId, now);
     
-    // Log fetch attempt with more details
     logger.info("Fetching messages attempt started", {
       conversationId,
       currentProfileId,
-      timeSinceLastFetch: now - lastFetchTime,
+      timeSinceLastFetch: `${Math.round(timeSinceLastFetch / 1000)}s`,
       useCache,
       component: "messagesFetcher"
     });
     
     try {
       // Try to get from cache first if allowed
-      if (useCache && MessageCache.has(conversationId)) {
-        logger.info("Using cached messages", {
-          conversationId,
-          cachedCount: MessageCache.get(conversationId)?.length || 0,
-          component: "messagesFetcher"
-        });
+      if (useCache) {
+        // Check for any pending request first to avoid duplicate fetches
+        const pendingRequest = MessageCache.getPendingRequest(conversationId);
+        if (pendingRequest) {
+          logger.info("Reusing in-progress query", { 
+            conversationId, 
+            component: "messagesFetcher" 
+          });
+          return pendingRequest;
+        }
         
-        const cachedMessages = MessageCache.get(conversationId);
+        // Try to get from cache
+        const cachedMessages = await MessageCache.get(conversationId);
         if (cachedMessages && cachedMessages.length > 0) {
+          logger.info("Using cached messages", {
+            conversationId,
+            cachedCount: cachedMessages.length,
+            component: "messagesFetcher"
+          });
+          
           // Check for newer messages in the background after a short delay
           // but don't block UI rendering
           setTimeout(() => {
@@ -108,22 +130,13 @@ export const MessagesFetcher = {
         }
       }
 
-      // Check if a query is already in progress for this conversation
-      if (pendingQueries.has(conversationId)) {
-        logger.info("Reusing in-progress query", { 
-          conversationId, 
-          component: "messagesFetcher" 
-        });
-        return pendingQueries.get(conversationId);
-      }
-
-      logger.info("Fetching messages from database", { 
+      logger.info("Fetching messages using database function", { 
         conversationId, 
         currentProfileId,
         component: "messagesFetcher" 
       });
       
-      // Create a new query with multiple fallback approaches
+      // Create a new query promise
       const queryPromise = (async () => {
         try {
           // First verify the user has permission to access this conversation
@@ -139,54 +152,7 @@ export const MessagesFetcher = {
               conversationId,
               component: "messagesFetcher"
             });
-            
-            // Try an alternative approach - direct message query without join
-            logger.info("Attempting direct message fetch due to conversation access error", {
-              conversationId,
-              component: "messagesFetcher"
-            });
-            
-            const { data: directMessages, error: directError } = await supabase
-              .from('messages')
-              .select(`
-                id, 
-                content, 
-                created_at, 
-                read_at, 
-                sender_id, 
-                conversation_id,
-                media_type,
-                media_url
-              `)
-              .eq('conversation_id', conversationId)
-              .order('created_at', { ascending: true })
-              .limit(INITIAL_PAGE_SIZE);
-              
-            if (directError || !directMessages) {
-              logger.error("Both conversation and direct message fetches failed", {
-                convError,
-                directError,
-                conversationId,
-                component: "messagesFetcher"
-              });
-              return null;
-            }
-            
-            logger.info("Direct message fetch succeeded despite conversation access error", {
-              count: directMessages.length,
-              conversationId,
-              component: "messagesFetcher"
-            });
-            
-            // We need to enhance with profile data
-            const enrichedMessages = await this.enrichMessagesWithProfiles(directMessages);
-            
-            // Cache the results
-            if (enrichedMessages && enrichedMessages.length > 0) {
-              MessageCache.set(conversationId, enrichedMessages);
-            }
-            
-            return enrichedMessages;
+            throw convError;
           }
             
           // Check if user is part of this conversation
@@ -198,102 +164,51 @@ export const MessagesFetcher = {
               conversation,
               component: "messagesFetcher"
             });
-            
-            // Even though access is denied, try direct fetch as a desperate measure
-            try {
-              logger.info("Attempting desperate direct fetch despite access denial", {
-                conversationId,
-                component: "messagesFetcher"
-              });
-              
-              const { data: directMessages } = await supabase
-                .from('messages')
-                .select('*')
-                .eq('conversation_id', conversationId)
-                .order('created_at', { ascending: true })
-                .limit(INITIAL_PAGE_SIZE);
-                
-              if (directMessages && directMessages.length > 0) {
-                logger.info("Desperate fetch succeeded despite access denial!", {
-                  count: directMessages.length,
-                  conversationId,
-                  component: "messagesFetcher"
-                });
-                
-                const enrichedMessages = await this.enrichMessagesWithProfiles(directMessages);
-                return enrichedMessages;
-              }
-            } catch (e) {
-              // Just suppress this error, we tried our best
-            }
-            
-            return null;
+            throw new Error("Access denied: User not part of conversation");
           }
           
-          // Debug log the conversation details
-          logger.info("Conversation access verified", {
-            conversationId,
-            user1_id: conversation.user1_id,
-            user2_id: conversation.user2_id,
-            currentProfileId,
-            component: "messagesFetcher"
-          });
-          
-          // Try optimized query with joins
-          try {
-            logger.info("Fetching messages with join", {
+          // Use the optimized database function
+          const { data: messagesData, error } = await supabase.rpc(
+            'get_conversation_messages', 
+            { 
+              conversation_uuid: conversationId,
+              limit_count: INITIAL_PAGE_SIZE
+            }
+          );
+              
+          if (error) {
+            logger.error("Error using get_conversation_messages function", {
+              error,
               conversationId,
               component: "messagesFetcher"
             });
             
-            const { data: messagesData, error } = await supabase
-              .from('messages')
-              .select(MESSAGE_FIELDS)
-              .eq('conversation_id', conversationId)
-              .order('created_at', { ascending: false })
-              .limit(INITIAL_PAGE_SIZE);
-              
-            if (error) {
-              throw error;
-            }
-            
-            // Success - reset failed attempts counter
-            this.resetFailedAttempts(conversationId);
-            
-            // Now sort in ascending order for display - this avoids a double sort in the DB
-            const sortedMessages = messagesData ? 
-              [...messagesData].sort((a, b) => 
-                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-              ) : [];
-            
-            logger.info("Successfully fetched messages with join", { 
-              count: sortedMessages?.length || 0, 
-              conversationId,
-              firstMessage: sortedMessages[0]?.id,
-              component: "messagesFetcher" 
-            });
-            
-            // Cache the results
-            if (sortedMessages && sortedMessages.length > 0) {
-              MessageCache.set(conversationId, sortedMessages);
-            }
-            
-            return sortedMessages || [];
-          } catch (joinError) {
-            // Increment failed attempts counter
-            const attempts = (failedAttempts.get(conversationId) || 0) + 1;
-            failedAttempts.set(conversationId, attempts);
-            
-            logger.error("Error fetching messages with join", { 
-              error: joinError, 
-              conversationId,
-              attempts,
-              component: "messagesFetcher" 
-            });
-            
-            // Try fallback approach with simpler query
+            // Fall back to direct query if the function fails
             return await this.fetchMessagesWithFallback(conversationId, currentProfileId);
           }
+          
+          // Success - reset failed attempts counter
+          this.resetFailedAttempts(conversationId);
+          
+          // Now sort in ascending order for display - this avoids a double sort in the DB
+          const sortedMessages = messagesData ? 
+            [...messagesData].sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            ) : [];
+          
+          logger.info("Successfully fetched messages with database function", { 
+            count: sortedMessages?.length || 0, 
+            conversationId,
+            firstMessageId: sortedMessages[0]?.id,
+            component: "messagesFetcher" 
+          });
+          
+          // Cache the results
+          if (sortedMessages && sortedMessages.length > 0) {
+            await MessageCache.set(conversationId, sortedMessages);
+          }
+          
+          return sortedMessages || [];
         } catch (error: any) {
           logger.error("Network error fetching messages", {
             error: error.message,
@@ -306,22 +221,13 @@ export const MessagesFetcher = {
           const attempts = (failedAttempts.get(conversationId) || 0) + 1;
           failedAttempts.set(conversationId, attempts);
           
-          pendingQueries.delete(conversationId);
-          
           // Try fallback as a last resort
           return await this.fetchMessagesWithFallback(conversationId, currentProfileId);
-        } finally {
-          // Remove from pending queries after a short delay
-          // This prevents immediate duplicate requests but allows
-          // new requests after a reasonable time
-          setTimeout(() => {
-            pendingQueries.delete(conversationId);
-          }, DEBOUNCE_TIME);
         }
       })();
       
-      // Store the promise to deduplicate concurrent requests
-      pendingQueries.set(conversationId, queryPromise);
+      // Register the promise to deduplicate concurrent requests
+      MessageCache.registerPendingRequest(conversationId, queryPromise);
       return await queryPromise;
     } catch (outerError: any) {
       logger.error("Unhandled error in fetchInitialMessages", {
@@ -345,7 +251,7 @@ export const MessagesFetcher = {
     
     try {
       // Get current messages to determine the offset
-      const currentMessages = MessageCache.get(conversationId) || [];
+      const currentMessages = await MessageCache.get(conversationId) || [];
       
       logger.info("Fetching more messages", { 
         conversationId, 
@@ -362,21 +268,43 @@ export const MessagesFetcher = {
         (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       )[0];
       
-      // Fetch older messages with optimized query
-      const { data: olderMessages, error } = await supabase
-        .from('messages')
-        .select(MESSAGE_FIELDS)
-        .eq('conversation_id', conversationId)
-        .lt('created_at', oldestMessage.created_at)
-        .order('created_at', { ascending: true })
-        .limit(PAGINATION_SIZE);
+      // Use the database function with timestamp parameter
+      const { data: olderMessages, error } = await supabase.rpc(
+        'get_conversation_messages',
+        {
+          conversation_uuid: conversationId,
+          limit_count: PAGINATION_SIZE,
+          before_timestamp: oldestMessage.created_at
+        }
+      );
       
       if (error) {
-        logger.error("Error fetching more messages", { 
+        logger.error("Error fetching more messages with function", { 
           error, 
           conversationId,
           component: "messagesFetcher" 
         });
+        
+        // Fall back to direct query
+        const { data: fallbackMessages, error: fallbackError } = await supabase
+          .from('messages')
+          .select(MESSAGE_FIELDS)
+          .eq('conversation_id', conversationId)
+          .lt('created_at', oldestMessage.created_at)
+          .order('created_at', { ascending: true })
+          .limit(PAGINATION_SIZE);
+          
+        if (fallbackError || !fallbackMessages) {
+          throw fallbackError || new Error("Failed to fetch more messages");
+        }
+        
+        // Process and add to cache
+        if (fallbackMessages.length > 0) {
+          const updatedMessages = [...fallbackMessages, ...currentMessages];
+          await MessageCache.set(conversationId, updatedMessages);
+          return updatedMessages;
+        }
+        
         return null;
       }
       
@@ -387,9 +315,14 @@ export const MessagesFetcher = {
       });
       
       if (olderMessages && olderMessages.length > 0) {
+        // Sort messages in ascending order
+        const sortedOlderMessages = [...olderMessages].sort((a, b) => 
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        
         // Update the cache with new messages
-        const updatedMessages = [...olderMessages, ...currentMessages];
-        MessageCache.set(conversationId, updatedMessages);
+        const updatedMessages = [...sortedOlderMessages, ...currentMessages];
+        await MessageCache.set(conversationId, updatedMessages);
         return updatedMessages;
       }
       
@@ -476,7 +409,7 @@ export const MessagesFetcher = {
           
           // Cache the results
           if (enrichedMessages && enrichedMessages.length > 0) {
-            MessageCache.set(conversationId, enrichedMessages);
+            await MessageCache.set(conversationId, enrichedMessages);
           }
           
           return enrichedMessages;
@@ -506,7 +439,7 @@ export const MessagesFetcher = {
       
       // Cache the results
       if (sortedMessages && sortedMessages.length > 0) {
-        MessageCache.set(conversationId, sortedMessages);
+        await MessageCache.set(conversationId, sortedMessages);
       }
       
       return sortedMessages;
@@ -567,5 +500,117 @@ export const MessagesFetcher = {
         }
       }));
     }
+  },
+  
+  /**
+   * Mark conversation messages as read using the database function
+   */
+  async markMessagesAsRead(conversationId: string, userId: string): Promise<number> {
+    if (!conversationId || !userId) return 0;
+    
+    try {
+      logger.info("Marking messages as read with function", {
+        conversationId,
+        userId,
+        component: "messagesFetcher"
+      });
+      
+      const { data, error } = await supabase.rpc(
+        'mark_conversation_messages_as_read',
+        {
+          conversation_uuid: conversationId,
+          user_uuid: userId
+        }
+      );
+      
+      if (error) {
+        logger.error("Error marking messages as read with function", {
+          error,
+          conversationId,
+          component: "messagesFetcher"
+        });
+        
+        // Try direct approach
+        const { error: directError } = await supabase
+          .from('messages')
+          .update({ read_at: new Date().toISOString() })
+          .eq('conversation_id', conversationId)
+          .neq('sender_id', userId)
+          .is('read_at', null);
+        
+        if (directError) {
+          throw directError;
+        }
+        
+        return 0; // We don't know how many were updated
+      }
+      
+      return data || 0;
+    } catch (error) {
+      logger.error("Exception marking messages as read", {
+        error,
+        conversationId,
+        component: "messagesFetcher"
+      });
+      return 0;
+    }
+  },
+  
+  /**
+   * Cache warming for frequent conversations
+   */
+  async warmCache(frequentConversationIds: string[], currentProfileId: string): Promise<void> {
+    if (!frequentConversationIds || frequentConversationIds.length === 0 || !currentProfileId) {
+      return;
+    }
+    
+    logger.info("Warming cache for frequent conversations", {
+      count: frequentConversationIds.length,
+      component: "messagesFetcher"
+    });
+    
+    // Collect profiles to prefetch
+    const profileIds = new Set<string>();
+    
+    // Prefetch conversations in the background, one by one to avoid overloading
+    for (const conversationId of frequentConversationIds) {
+      try {
+        // Skip if already in cache
+        if (await MessageCache.get(conversationId)) {
+          continue;
+        }
+        
+        // Get conversation data to find the other user
+        const { data: conversation } = await supabase
+          .from('conversations')
+          .select('user1_id, user2_id')
+          .eq('id', conversationId)
+          .single();
+        
+        if (conversation) {
+          // Add the other user's profile to prefetch
+          const otherUserId = conversation.user1_id === currentProfileId 
+            ? conversation.user2_id 
+            : conversation.user1_id;
+          
+          profileIds.add(otherUserId);
+        }
+        
+        // Fetch messages at low priority
+        setTimeout(async () => {
+          await this.fetchInitialMessages(conversationId, currentProfileId, true);
+        }, 1000); // Delay to avoid impacting UI
+      } catch (error) {
+        logger.error("Error warming cache for conversation", {
+          error,
+          conversationId,
+          component: "messagesFetcher"
+        });
+        // Continue with next conversation
+      }
+    }
+    
+    // Prefetch profiles
+    await MessageCache.prefetchProfiles(supabase, Array.from(profileIds));
   }
 };

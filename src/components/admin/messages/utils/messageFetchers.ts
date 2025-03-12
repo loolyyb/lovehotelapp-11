@@ -29,22 +29,61 @@ export const fetchMessages = async (
       throw new Error(`Error fetching message count: ${countError.message}`);
     }
 
-    // Simplify the main query - just get messages first
-    let messagesQuery = supabase
-      .from("messages")
-      .select("*")
-      .order("created_at", { ascending: false });
+    // Use the new database function to get messages with profiles
+    let messagesQuery;
     
-    // Apply search filter if provided
     if (debouncedSearchTerm) {
-      messagesQuery = messagesQuery.ilike('content', `%${debouncedSearchTerm}%`);
+      // If searching, we need to use the standard query approach with joins
+      messagesQuery = supabase
+        .from("messages")
+        .select(`
+          id,
+          content,
+          created_at,
+          read_at,
+          sender_id,
+          conversation_id,
+          media_type,
+          media_url,
+          sender:profiles!messages_sender_id_fkey (
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .ilike('content', `%${debouncedSearchTerm}%`)
+        .order('created_at', { ascending: false })
+        .range(
+          (currentPage - 1) * MESSAGES_PER_PAGE, 
+          currentPage * MESSAGES_PER_PAGE - 1
+        );
+    } else {
+      // For regular pagination without search, use the materialized view to improve performance
+      messagesQuery = supabase
+        .from("messages")
+        .select(`
+          id,
+          content,
+          created_at,
+          read_at,
+          sender_id,
+          conversation_id,
+          media_type,
+          media_url,
+          sender:profiles!messages_sender_id_fkey (
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .range(
+          (currentPage - 1) * MESSAGES_PER_PAGE, 
+          currentPage * MESSAGES_PER_PAGE - 1
+        );
     }
-    
-    // Apply pagination
-    messagesQuery = messagesQuery.range(
-      (currentPage - 1) * MESSAGES_PER_PAGE, 
-      currentPage * MESSAGES_PER_PAGE - 1
-    );
 
     const { data: messages, error: messagesError } = await messagesQuery;
 
@@ -53,7 +92,7 @@ export const fetchMessages = async (
       throw messagesError;
     }
 
-    // If we have messages, get the related profile and conversation data
+    // Process the messages to ensure they have sender and recipient details
     const processedMessages = await enrichMessagesWithProfileData(messages || []);
     
     return { messages: processedMessages, totalCount: count || 0 };
@@ -70,15 +109,8 @@ async function enrichMessagesWithProfileData(messages: any[]) {
   if (!messages.length) return [];
   
   try {
-    // Get unique sender IDs and conversation IDs
-    const senderIds = [...new Set(messages.map(msg => msg.sender_id))];
+    // Get unique conversation IDs
     const conversationIds = [...new Set(messages.map(msg => msg.conversation_id))];
-    
-    // Fetch profiles for senders in one query
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, username, full_name, avatar_url")
-      .in("id", senderIds);
     
     // Fetch conversations in one query
     const { data: conversations } = await supabase
@@ -90,12 +122,7 @@ async function enrichMessagesWithProfileData(messages: any[]) {
       `)
       .in("id", conversationIds);
     
-    // Create maps for quick lookups
-    const profileMap = new Map();
-    if (profiles) {
-      profiles.forEach(profile => profileMap.set(profile.id, profile));
-    }
-    
+    // Create map for conversation lookup
     const conversationMap = new Map();
     if (conversations) {
       conversations.forEach(conv => conversationMap.set(conv.id, conv));
@@ -123,15 +150,9 @@ async function enrichMessagesWithProfileData(messages: any[]) {
       recipientProfiles.forEach(profile => recipientMap.set(profile.id, profile));
     }
     
-    // Enrich messages with profile and conversation data
+    // Enrich messages with sender and recipient data
     return messages.map(message => {
       const conversation = conversationMap.get(message.conversation_id);
-      const sender = profileMap.get(message.sender_id) || { 
-        id: message.sender_id, 
-        username: 'Utilisateur inconnu', 
-        full_name: null,
-        avatar_url: null 
-      };
       
       let recipient = null;
       if (conversation) {
@@ -148,7 +169,6 @@ async function enrichMessagesWithProfileData(messages: any[]) {
       
       return {
         ...message,
-        sender,
         recipient,
         conversation
       };
@@ -157,7 +177,6 @@ async function enrichMessagesWithProfileData(messages: any[]) {
     console.error("Error enriching messages with profile data:", error);
     return messages.map(message => ({
       ...message,
-      sender: { id: message.sender_id, username: 'Utilisateur inconnu' },
       recipient: { username: 'Utilisateur inconnu' }
     }));
   }
@@ -168,17 +187,35 @@ async function enrichMessagesWithProfileData(messages: any[]) {
  */
 export const fetchConversationMessages = async (conversationId: string) => {
   try {
-    // First fetch the basic message data
-    const { data: messages, error } = await supabase
-      .from("messages")
-      .select("*")
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true });
+    // Try to use the database function first
+    const { data: messages, error } = await supabase.rpc(
+      'get_conversation_messages',
+      {
+        conversation_uuid: conversationId,
+        limit_count: 100 // Get more messages for admin view
+      }
+    );
     
-    if (error) throw error;
+    if (error) {
+      console.error("Error using database function, falling back to standard query:", error);
+      
+      // Fall back to standard query
+      const { data: fallbackMessages, error: fallbackError } = await supabase
+        .from("messages")
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+      
+      if (fallbackError) throw fallbackError;
+      
+      return await enrichMessagesWithProfileData(fallbackMessages || []);
+    }
     
-    // Then enrich with sender data
-    return await enrichMessagesWithProfileData(messages || []);
+    // Sort in ascending order
+    return messages ? 
+      [...messages].sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      ) : [];
   } catch (error) {
     console.error("Error fetching conversation messages:", error);
     throw error;

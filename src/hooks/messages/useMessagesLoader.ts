@@ -41,7 +41,7 @@ export const useMessagesLoader = ({
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fetchingRef = useRef(false);
   const retryCountRef = useRef(0);
-  const MAX_RETRIES = 3; // Increased from 2
+  const MAX_RETRIES = 3; 
   const permissionCheckedRef = useRef(false);
 
   // On mount or when auth and profile are initialized, fetch messages
@@ -88,7 +88,7 @@ export const useMessagesLoader = ({
       
       // Increased timeout for more reliable loading
       fetchTimeoutRef.current = setTimeout(() => {
-        log("useMessagesLoader: Fetch operation timeout after 30 seconds");
+        log("useMessagesLoader: Fetch operation timeout after 20 seconds");
         if (fetchingRef.current && isFetchingInitialMessages) {
           setIsFetchingInitialMessages(false);
           fetchingRef.current = false;
@@ -99,7 +99,7 @@ export const useMessagesLoader = ({
             setIsError(true);
           }
         }
-      }, 30000); // 30 second timeout (increased from 20s)
+      }, 20000); // 20 second timeout
       
       try {
         // Choose the appropriate fetch method based on permission status

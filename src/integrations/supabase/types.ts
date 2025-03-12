@@ -898,6 +898,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "mv_recent_conversations"
+            referencedColumns: ["conversation_id"]
+          },
+          {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
             isOneToOne: false
@@ -1259,6 +1266,61 @@ export type Database = {
             referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "mv_recent_conversations"
+            referencedColumns: ["conversation_id"]
+          },
+        ]
+      }
+      mv_recent_conversations: {
+        Row: {
+          conversation_created_at: string | null
+          conversation_id: string | null
+          conversation_updated_at: string | null
+          last_message_time: string | null
+          status: string | null
+          unread_count: number | null
+          user1_avatar_url: string | null
+          user1_full_name: string | null
+          user1_id: string | null
+          user1_username: string | null
+          user2_avatar_url: string | null
+          user2_full_name: string | null
+          user2_id: string | null
+          user2_username: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user1_id_fkey"
+            columns: ["user1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_user1_profile_fkey"
+            columns: ["user1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_user2_id_fkey"
+            columns: ["user2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_user2_profile_fkey"
+            columns: ["user2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -1281,9 +1343,36 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_conversation_messages: {
+        Args: {
+          conversation_uuid: string
+          limit_count?: number
+          before_timestamp?: string
+        }
+        Returns: {
+          id: string
+          conversation_id: string
+          sender_id: string
+          content: string
+          created_at: string
+          read_at: string
+          media_url: string
+          media_type: string
+          sender_username: string
+          sender_full_name: string
+          sender_avatar_url: string
+        }[]
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      mark_conversation_messages_as_read: {
+        Args: {
+          conversation_uuid: string
+          user_uuid: string
+        }
+        Returns: number
       }
       sync_missing_profiles: {
         Args: Record<PropertyKey, never>

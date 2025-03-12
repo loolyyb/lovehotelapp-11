@@ -118,16 +118,6 @@ export const useMessageRetrieval = ({
           conversation,
           component: "useMessageRetrieval.verifyConversationPermission"
         });
-        
-        // Also log the raw IDs to help with debugging
-        logger.error("Permission check details", {
-          user1_id: conversation?.user1_id,
-          user2_id: conversation?.user2_id,
-          currentProfileId,
-          matches1: conversation?.user1_id === currentProfileId,
-          matches2: conversation?.user2_id === currentProfileId,
-          component: "useMessageRetrieval.verifyConversationPermission"
-        });
       } else {
         permissionVerifiedRef.current = true;
         setPermissionVerified(true);
@@ -155,55 +145,8 @@ export const useMessageRetrieval = ({
     if (!conversationId || !currentProfileId) return;
 
     try {
-      // Find unread messages for this conversation that were sent by the other user
-      const { data: unreadMessages, error: fetchError } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', currentProfileId)
-        .is('read_at', null);
-
-      if (fetchError) {
-        logger.error("Error finding unread messages", {
-          error: fetchError,
-          conversationId,
-          component: "useMessageRetrieval.markMessagesAsRead"
-        });
-        return;
-      }
-
-      if (!unreadMessages || unreadMessages.length === 0) {
-        logger.info("No unread messages to mark as read", {
-          conversationId,
-          component: "useMessageRetrieval.markMessagesAsRead"
-        });
-        return;
-      }
-
-      logger.info(`Marking ${unreadMessages.length} messages as read`, {
-        conversationId,
-        component: "useMessageRetrieval.markMessagesAsRead"
-      });
-
-      // Mark them all as read
-      const { error: updateError } = await supabase
-        .from('messages')
-        .update({ read_at: new Date().toISOString() })
-        .in('id', unreadMessages.map(msg => msg.id));
-
-      if (updateError) {
-        logger.error("Error marking messages as read", {
-          error: updateError,
-          conversationId,
-          component: "useMessageRetrieval.markMessagesAsRead"
-        });
-      } else {
-        logger.info("Successfully marked messages as read", {
-          count: unreadMessages.length,
-          conversationId,
-          component: "useMessageRetrieval.markMessagesAsRead"
-        });
-      }
+      // Use the improved function from MessagesFetcher
+      await MessagesFetcher.markMessagesAsRead(conversationId, currentProfileId);
     } catch (error) {
       logger.error("Exception in markMessagesAsRead", {
         error,
@@ -288,66 +231,6 @@ export const useMessageRetrieval = ({
           conversationId,
           component: "useMessageRetrieval.fetchMessages"
         });
-        
-        // If no messages were returned, try a direct query as a last resort
-        logger.info("Attempting direct messages query as fallback", {
-          conversationId,
-          component: "useMessageRetrieval.fetchMessages"
-        });
-        
-        try {
-          const { data: directMessages, error: directError } = await supabase
-            .from('messages')
-            .select(`
-              id,
-              content,
-              created_at,
-              read_at,
-              sender_id,
-              conversation_id,
-              media_type,
-              media_url
-            `)
-            .eq('conversation_id', conversationId)
-            .order('created_at', { ascending: true });
-          
-          if (directError) {
-            logger.error("Direct messages query failed", {
-              error: directError,
-              conversationId,
-              component: "useMessageRetrieval.fetchMessages"
-            });
-          } else if (directMessages && directMessages.length > 0) {
-            logger.info(`Direct query succeeded with ${directMessages.length} messages`, {
-              conversationId,
-              component: "useMessageRetrieval.fetchMessages"
-            });
-            
-            if (isMountedRef.current) {
-              setMessages(directMessages);
-              
-              // Auto-mark messages as read after a short delay
-              setTimeout(() => {
-                if (isMountedRef.current) {
-                  markMessagesAsRead();
-                }
-              }, 1000);
-              
-              return directMessages;
-            }
-          } else {
-            logger.info("Direct query returned no messages", {
-              conversationId,
-              component: "useMessageRetrieval.fetchMessages"
-            });
-          }
-        } catch (directQueryError) {
-          logger.error("Exception in direct messages query", {
-            error: directQueryError,
-            conversationId,
-            component: "useMessageRetrieval.fetchMessages"
-          });
-        }
       }
 
       if (isMountedRef.current && messagesData) {
@@ -359,7 +242,7 @@ export const useMessageRetrieval = ({
           if (isMountedRef.current) {
             markMessagesAsRead();
           }
-        }, 1000);
+        }, 500); // Reduced from 1000ms to 500ms for better UX
       }
 
       return messagesData;
@@ -458,7 +341,7 @@ export const useMessageRetrieval = ({
     
     // Then fetch messages with forced permission check and no cache
     return fetchMessages(false, true);
-  }, [conversationId, fetchMessages, setPermissionVerified, logger]);
+  }, [conversationId, fetchMessages, setPermissionVerified]);
 
   return {
     fetchMessages,
